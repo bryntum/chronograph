@@ -10,7 +10,7 @@ export type ChronoValue         = any
 // export type ChronoGraphLayer    = number
 
 //-----------------------------------------------------------------------------
-export const ChronoAtom = <T extends Constructable<any>, Z>(base : T) => {
+export const ChronoAtom = <T extends Constructable<Base>>(base : T) => {
 
     abstract class ChronoAtom extends base {
         id                  : ChronoId = chronoId()
@@ -78,13 +78,13 @@ export const Writable = <T extends Constructable<ChronoAtom>>(base : T) => {
 
                 this.value  = value
 
-                this.publish()
+                this.publishChange()
             }
 
             return this
         }
 
-        abstract publish ()
+        abstract publishChange ()
     }
 
     return Writable

@@ -36,7 +36,3 @@ export type Constructable<T = Base> = new (...args : any[]) => T
 
 export type Mixin<T extends (...args : any[]) => any> = InstanceType<ReturnType<T>>;
 
-
-const aa = class Maze extends Base {
-    some            : string
-}
