@@ -1,0 +1,25 @@
+{
+    "compilerOptions" : {
+        "target"                : "es6",
+        "experimentalDecorators" : true,
+//        "sourceMap"             : true,
+        "lib"                   : [
+            "es2015",
+            "es2016"
+        ],
+        "module"                 : "ESNext",
+        "moduleResolution"      : "Node",
+        "baseUrl": ".",
+        "plugins": [
+            { "transform" : "ts-transformer-imports" }
+        ]
+    },
+
+    "include" : [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+    ],
+
+    "exclude" : [
+    ]
+}

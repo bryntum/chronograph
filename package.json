@@ -1,0 +1,24 @@
+{
+  "name": "chronograph",
+  "version": "0.0.1",
+  "description": "Graph-based computational engine",
+  "main": "index.js",
+  "module": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "graph",
+    "computation"
+  ],
+  "author": "Nickolay Platonov, Bryntum",
+  "license": "MIT",
+  "dependencies": {
+    "esm": "^3.0.84"
+  },
+  "devDependencies": {
+    "@types/node": "^10.12.10",
+    "rollup": "^0.67.3",
+    "typescript": "^3.1.6"
+  }
+}
