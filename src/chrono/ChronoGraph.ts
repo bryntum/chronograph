@@ -1,10 +1,31 @@
-import {Constructable, Mixin} from "../util/Mixin.js";
-import {ChronoAtom, ChronoValue, Readable, TraceableRead} from "./ChronoAtom.js";
+import {Base, Constructable, Mixin} from "../util/Mixin.js";
+import {ChronoAtom, ChronoValue, Readable, Observable, Writable} from "./ChronoAtom.js";
 import {chronoId, ChronoId} from "./ChronoId.js";
 import {ChronoMutation} from "./ChronoMutation.js";
 
 
-export const ChronoGraphNode = <T extends Constructable<ChronoAtom & TraceableRead>>(base : T) => {
+//
+// TODO BIG THING POTENTIALLY
+// ==========================
+//
+// all chrono graph nodes are current read/write by default (on type level), to enforce the distinction
+// we need some type magic, to write a class like
+//
+//     class Some {
+//
+//         someField   : Field<Date, Readable, Writable>
+//
+//         fields  : { me : ChronoAtom<Date, Readable, Writable> }
+//
+//
+//         someMethod : {
+//
+//             this.someField.getTime()
+//         }
+//     }
+// this can quickly go wild, need to consult TS devs
+
+export const ChronoGraphNode = <T extends Constructable<ChronoAtom & Observable>>(base : T) => {
 
     abstract class ChronoGraphNode extends base {
         id                  : ChronoId = chronoId()
@@ -12,27 +33,33 @@ export const ChronoGraphNode = <T extends Constructable<ChronoAtom & TraceableRe
         graph               : ChronoGraphLayer
 
 
-        get () : ChronoValue {
-            if (this.graph) {}
+        joinGraph (graph : ChronoGraphLayer) {
+            if (this.graph) {
+                this.unjoinGraph()
+            }
 
-            return super.get()
+            this.graph  = graph
         }
 
 
-        publishChange () {
-            this.graph.onPublish(this)
+        unjoinGraph () {
+            delete this.graph
         }
 
-        traceRead () {
-            this.graph.onTraceRead(this)
-        }
 
+        propagateChanges () {
+            this.graph && this.graph.calculateNextLayer()
+        }
     }
 
     return ChronoGraphNode
 }
 
 export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
+
+
+// ChronoGraphNode with minimal dependencies, for type-checking purposes only
+export const GenericChronoGraphNode     = ChronoGraphNode(Observable(Readable(Writable((ChronoAtom(Base))))))
 
 
 
@@ -107,6 +134,11 @@ export class ChronoGraphLayer {
     //         throw new Error("[chronograph] Atom with this id already exists: " + atomId)
     //     }
     // }
+
+
+    calculateNextLayer () {
+
+    }
 }
 
 

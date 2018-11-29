@@ -30,9 +30,25 @@ export class Base {
     }
 }
 
+export type AnyFunction         = (...args : any[]) => any
+export type AnyFunction1<A>     = <A>(...args : any[]) => any
+export type AnyFunction2<A, B>  = <A, B>(...args : any[]) => any
+
 
 //---------------------------------------------------------------------------------------
-export type Constructable<T = Base> = new (...args : any[]) => T
+export type Constructable<T extends typeof Base> = new (...args : any[]) => InstanceType<T>
 
-export type Mixin<T extends (...args : any[]) => any> = InstanceType<ReturnType<T>>;
+
+export type Mixin<T extends AnyFunction> =
+    T extends AnyFunction2<infer A, infer B>
+    ?
+        InstanceType<ReturnType<AnyFunction2<A, B>>>
+    :
+        T extends AnyFunction1<infer A>
+        ?
+            InstanceType<ReturnType<AnyFunction1<A>>>
+        :
+            InstanceType<ReturnType<T>>
+
+export type Mixin1<A, T extends AnyFunction = AnyFunction> = InstanceType<ReturnType<T>>
 

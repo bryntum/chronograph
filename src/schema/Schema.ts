@@ -1,4 +1,7 @@
-import {Base} from "../util/Mixin.js";
+import {ChronoAtom, Observable, Readable, Writable} from "../chrono/ChronoAtom.js";
+import {ChronoGraphLayer, ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
+import {Base, Constructable} from "../util/Mixin.js";
+import {ChronoObject} from "./Object.js";
 
 
 export type Name    = string | Symbol
@@ -9,7 +12,15 @@ export type Type    = string
 export class Field extends Base {
     name                : Name
     type                : Type
+
+
+    generateNodes (self : ChronoObject, cls : typeof GenericChronoGraphNode)  {
+        return cls.new()
+    }
 }
+
+
+export type ChronoGraphFieldsNamedCollection = { [s in keyof any] : ChronoGraphNode }
 
 
 //-----------------------------------------------------------------------------
@@ -21,6 +32,15 @@ export class Entity extends Base {
 
     field (name : Name) : Field {
         return this.fields.get(name)
+    }
+
+
+    generateNodes (self : ChronoObject, cls : typeof GenericChronoGraphNode) : ChronoGraphFieldsNamedCollection {
+        let res     = {}
+
+        this.fields.forEach((field, name : string) => res[ name ] = field.generateNodes(self, cls))
+
+        return res
     }
 }
 

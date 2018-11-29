@@ -1,5 +1,5 @@
 import {Base, Constructable, Mixin} from "../util/Mixin.js";
-import {ChronoAtom, Readable, Writable} from "./ChronoAtom.js";
+import {ChronoAtom, Readable, Observable} from "./ChronoAtom.js";
 
 
 export type NamedInput      =  { [s : string] : ChronoAtom & Readable}
@@ -11,7 +11,7 @@ export const ChronoMutation = <T extends Constructable<Base>>(base : T) => {
     abstract class ChronoMutation extends base {
         input           : NamedInput | ArrayInput
 
-        as              : (ChronoAtom & Writable)[]
+        as              : (ChronoAtom & Observable)[]
 
         mapInput (func : (atom : ChronoAtom & Readable) => any) {
             const input     = this.input
