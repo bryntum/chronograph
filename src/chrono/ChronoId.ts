@@ -1,5 +1,3 @@
-import {Base} from "../util/Mixin.js";
-
 //-----------------------------------------------------------------------------
 export type ChronoId        = string
 

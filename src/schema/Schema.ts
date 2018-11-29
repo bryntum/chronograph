@@ -1,4 +1,4 @@
-import {Base, Constructable, Mixin} from "../util/Mixin.js";
+import {Base} from "../util/Mixin.js";
 
 
 export type Name    = string | Symbol
@@ -53,11 +53,20 @@ export const as            = (...args) : any => {}
 export const lifecycle     = (...args) : any => {}
 export const before        = (...args) : any => {}
 export const after          = (...args) : any => {}
-export const superOf        = (...args) : any => {}
+
 export const context       = (...args) : any => {}
 export const inputs        = (...args) : any => {}
 export const mutation       = (...args) : any => {}
 
+
+
+export function compute (fieldName) : MethodDecorator {
+
+    return function <T>(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) : TypedPropertyDescriptor<T> | void {
+
+        if ((<any>(descriptor.value)).length > 0) throw new Error("Computed values should be pure")
+    }
+}
 
 // export function inputs(value: { [s : string] : ChronoAtomReference }) {
 //

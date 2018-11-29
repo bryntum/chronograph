@@ -1,20 +1,15 @@
 import {Base, Constructable, Mixin} from "../util/Mixin.js";
-import {chronoId, ChronoId, namespacedId} from "./ChronoId.js";
-
 
 
 //-----------------------------------------------------------------------------
-export type ChronoValue         = any
+export type ChronoValue         = unknown
 
 
-// export type ChronoGraphLayer    = number
 
 //-----------------------------------------------------------------------------
 export const ChronoAtom = <T extends Constructable<Base>>(base : T) => {
 
     abstract class ChronoAtom extends base {
-        id                  : ChronoId = chronoId()
-
         protected value     : ChronoValue
     }
 
@@ -22,7 +17,6 @@ export const ChronoAtom = <T extends Constructable<Base>>(base : T) => {
 }
 
 export type ChronoAtom = Mixin<typeof ChronoAtom>
-
 
 
 //-----------------------------------------------------------------------------

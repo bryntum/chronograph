@@ -1,142 +1,192 @@
-import {ChronoAtom, ChronoValue} from "../chrono/ChronoAtom.js";
-import {ChronoGraphLayer, ChronoGraphNode} from "../chrono/ChronoGraph.js";
-import {ChronoMutation} from "../chrono/ChronoMutation.js";
-import {ChronoEntity} from "../chrono/ChronoObject.js";
-import {ChronoNamespacedAtomReference, ChronoNamespaceReference} from "../chrono/ChronoReference.js";
-import {after, entity, field, lifecycle, mutation, superOf} from "../schema/Schema.js";
-import {Base} from "../util/Mixin.js";
+import {compute, field, mutation} from "../schema/Schema.js";
+import {Base, Constructable, Mixin} from "../util/Mixin.js";
 
 
-// @entity('Event')
-class Event extends ChronoEntity(Base) {
+// type Field<V> = ChronoGraphNode & { get : () => V }
+//
+// type WritableField<V> = ChronoGraphNode & Writable & { get : () => V, set : (v : V) => unknown }
 
-    // startDate       : Field<Date>   = Field.new(this)
-
-
-    @field({ type : 'Date' })
-    startDate       : Date
-
-    @field({ type : 'Date' })
-    endDate         : Date
-
-    @field({ type : 'number' })
-    duration        : number
+// type FieldOf<Entity extends Constructable<Instance>, Name extends keyof Instance, Instance = Base> =
+//
+//     Entity extends Constructable<infer Instance> ?
+//         Pick<Instance, Name> extends Field<infer Value> ? Value : never
+//     :
+//         never
 
 
-    graph           : ChronoGraphLayer
+    // InstanceType<Entity>[ Name ] extends Field<infer Value> ? Value : never
+
+export const Event = <T extends Constructable<Base>>(base : T) => {
+
+    abstract class Event extends base {
+
+        @field
+        startDate       : Date
+
+        @field
+        endDate         : Date
+
+        @field
+        duration        : number
+
+        @field
+        schedulingMode  : string
+
+        // @lifecycle(after())
+        // @mutation((selfNs : ChronoNamespaceReference) => {
+        //     return {
+        //         inputs      : {
+        //             startDate           : ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'startDate' }),
+        //             duration            : ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'duration' }),
+        //
+        //             parentStartDate     : ChronoNamespacedAtomReference.new({
+        //                 ns : ChronoNamespacedAtomReference.new({
+        //                     ns : selfNs,
+        //                     id : 'parentId'
+        //                 }),
+        //                 id : 'startDate'
+        //             }),
+        //
+        //             super               : superOf(ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'endDate' }))
+        //         },
+        //         as          : [
+        //             ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'endDate' })
+        //         ]
+        //     }
+        // })
+        // calculateEndDateBasedOnStartDateAndDuration (
+        //     { selfStartDate, selfDuration } : { selfStartDate : Date, selfDuration : number },
+        //     next : () => ChronoValue
+        // ) : Date {
+        //     return new Date(selfStartDate.getTime() + selfDuration)
+        //
+        //     // return final(new Date(selfStartDate.getTime() + selfDuration))
+        // }
 
 
-    @lifecycle(after())
-    @mutation((selfNs : ChronoNamespaceReference) => {
-        return {
-            inputs      : {
-                startDate           : ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'startDate' }),
-                duration            : ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'duration' }),
+        // @action
+        setStartDate (value : Date, keepDuration : boolean = true) {
+            // this.startDate
 
-                parentStartDate     : ChronoNamespacedAtomReference.new({
-                    ns : ChronoNamespacedAtomReference.new({
-                        ns : selfNs,
-                        id : 'parentId'
-                    }),
-                    id : 'startDate'
-                }),
-
-                super               : superOf(ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'endDate' }))
-            },
-            as          : [
-                ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'endDate' })
-            ]
-        }
-    })
-    calculateEndDateBasedOnStartDateAndDuration (
-        { selfStartDate, selfDuration } : { selfStartDate : Date, selfDuration : number },
-        next : () => ChronoValue
-    ) : Date {
-        return new Date(selfStartDate.getTime() + selfDuration)
-
-        // return final(new Date(selfStartDate.getTime() + selfDuration))
-    }
-
-
-    @action
-    setStartDate (value : Date, keepDuration : boolean = true) {
-        this.startDate.set(value)
-
-        if (keepDuration) {
-
-            this.runMutation(
-                [ this ],
-                this.calculateEndDateBasedOnStartDateAndDuration
-            )
-        } else {
-
-            this.duration.set(
-                this.calculateDurationBasedOnStartAndEndDate(this.startDate.get(), this.endDate.get())
-            )
-        }
-
-        return this.commit()
-    }
-
-
-    onAnyFieldChange (field) {
-
-        if (field.name == 'startDate') {
-
-            if (this.project.get().schedulingDirection === SchedulingDirection.Forward) {
-
-                this.calculateEndDateBasedOnStartDate(this.startDate)
-
-            } else
-                this.duration.set(
-                    this.calculateDurationBasedOnStartAndEndDate(this.startDate.get(), this.endDate.get())
-                )
+            // this.startDate.set(value)
+            //
+            // if (keepDuration) {
+            //
+            //     this.runMutation(
+            //         [ this ],
+            //         this.moveTask
+            //     )
+            // } else {
+            //
+            //     this.duration.set(
+            //         this.calculateDurationBasedOnStartAndEndDate(this.startDate.get(), this.endDate.get())
+            //     )
+            // }
+            //
+            // return this.commit()
         }
 
-        return this.commit()
-    }
 
+        onAnyFieldChange (field) {
 
-    @mutation((me : Event) : ChronoMutation => {
-        return {
-            inputs      : [ me.startDate ],
-            as          : [ me.endDate ]
+            // if (field.name == 'startDate') {
+            //
+            //     if (this.project.get().schedulingDirection === SchedulingDirection.Forward) {
+            //
+            //         this.calculateEndDateBasedOnStartDate(this.startDate)
+            //
+            //     } else
+            //         this.duration.set(
+            //             this.calculateDurationBasedOnStartAndEndDate(this.startDate.get(), this.endDate.get())
+            //         )
+            // }
+            //
+            // return this.commit()
         }
-    })
-    moveTask<T extends this> (startDate : T[ 'startDate' ]) : Date {
-        throw new Error("Abstract method `calculateEndDateBasedOnStartDate` called")
-    }
 
 
-    @mutation((me : Event) => {
-        return {
-            inputs      : [ me.startDate ],
-            as          : [ me.endDate ]
+        @compute('endDate')
+        calculateEndDateMobXStyle () : Date {
+            if (this.schedulingMode === 'EffortDriven') {
+
+                return new Date(this.startDate.getTime() + this.duration)
+            }
         }
-    })
-    resizeTaskByEndDate<T extends this> (endDate : T[ 'startDate' ]) : Date {
-        throw new Error("Abstract method `calculateEndDateBasedOnStartDate` called")
-    }
 
 
-    @mutation((me : Event) => {
-        return {
-            inputs      : [ me.startDate ],
-            as          : [ me.endDate ]
+        @mutation((me : Event) => {
+            return {
+                input       : [ me.schedulingMode, me.startDate, me.duration ],
+                as          : [ me.endDate ]
+            }
+        })
+        calculateEndDateChronoStyleExtraSafe<T extends this>(
+            schedulingMode  : T[ 'schedulingMode' ],
+            startDate       : T[ 'startDate' ],
+            duration        : T[ 'duration' ],
+        ) : Date {
+            if (schedulingMode === 'EffortDriven') {
+
+                return new Date(startDate.getTime() + duration)
+            }
         }
-    })
-    resizeTaskByDuration<T extends this> (endDate : T[ 'startDate' ]) : Date {
-        throw new Error("Abstract method `calculateEndDateBasedOnStartDate` called")
+
+
+        @mutation((me : Event) => {
+            return {
+                input       : [ me.startDate ],
+                as          : [ me.endDate ]
+            }
+        })
+        pushEndDate<T extends this> (startDate : T[ 'startDate' ], ...args) : Date {
+            throw new Error("Abstract method called")
+        }
+
+        @mutation((me : Event) => {
+            return {
+                input       : [ me.endDate ],
+                as          : [ me.startDate ]
+            }
+        })
+        pushStartDate<T extends this> (endDate : T[ 'endDate' ], ...args) : Date {
+            throw new Error("Abstract method called")
+        }
+
+
+        @mutation((me : Event) => {
+            return {
+                inputs      : [ me.endDate ],
+                as          : [ me.endDate ]
+            }
+        })
+        resizeTaskByEndDate<T extends this> (endDate : T[ 'startDate' ]) : Date {
+            throw new Error("Abstract method called")
+        }
+
+        @mutation((me : Event) => {
+            return {
+                inputs      : [ me.startDate ],
+                as          : [ me.startDate ]
+            }
+        })
+        resizeTaskByStartDate<T extends this> (endDate : T[ 'startDate' ]) : Date {
+            throw new Error("Abstract method called")
+        }
     }
 
-
+    return Event
 }
 
+export type Event = Mixin<typeof Event>
 
 
 
-// export const NormalizedEvent = <T extends Constructable<Event>>(base : T) => class NormalizedEvent extends base {
-//
+const BaseEvent = Event(Base)
+
+
+export const Normalized = <T extends Constructable<Event>>(base : T) => {
+
+    abstract class Normalized extends base {
 //     @context('SELF')
 //     @lifecycle(before())
 //     @inputs({
@@ -170,71 +220,69 @@ class Event extends ChronoEntity(Base) {
 //             this.runScenario(SetEndDateBasedOnStartDateAndDuration, entity('Event', this))
 //         }
 //     }
-// }
-//
-//
-//
-//
-// export const DurationDrivenEventMixin = <T extends Constructable<Event>>(base : T) =>
-//
-// class DurationDrivenEvent extends base {
-//     static tag          : Symbol = Symbol("duration based event")
-//
-//
-//     // @lifecycle(after())
-//     // @mutation((selfNs : ChronoNamespaceReference) => {
-//     //     return {
-//     //         inputs      : {
-//     //             startDate           : ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'startDate' }),
-//     //             duration            : ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'duration' }),
-//     //
-//     //             parentStartDate     : ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'parentId' }),
-//     //
-//     //             super               : superOf(ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'endDate' }))
-//     //         },
-//     //         as          : [
-//     //             ChronoNamespacedAtomReference.new({ ns : selfNs, id : 'endDate' })
-//     //         ]
-//     //     }
-//     // })
-//     calculateEndDateBasedOnStartDateAndDuration (selfStartDate : Date, selfDuration : number) : Date {
-//         return new Date(selfStartDate.getTime() + selfDuration)
-//
-//         // return final(new Date(selfStartDate.getTime() + selfDuration))
-//     }
-//
-//
-//     @context(entity('Event'))
-//     @inputs({
-//         endate                  : field('Event.endDate'), // entity('Event').field('endDate')
-//         duration                : field('Event.duration') // entity('Event').field('duration')
-//     })
-//     @as([ field('Event.startDate') ])
-//     calculateStartDateBasedOnEndDateAndDuration (inputs : object, currentValue : Date, previous : () => Date, context : CalculationContext) {
-//         return inputs.endDate - inputs.duration
-//     }
-//
-//
-//     @context(entity('Event'))
-//     @inputs({
-//         endate                  : field('Event.startDate'), // entity('Event').field('startDate')
-//         duration                : field('Event.duration') // entity('Event').field('duration')
-//     })
-//     @as([ field('Event.endDate') ])
-//     calculateEndDateBasedOnStartDateAndDuration (inputs : object, currentValue : Date, previous : () => Date, context : CalculationContext) {
-//         return inputs.startDate + inputs.duration
-//     }
-//
-//
-//     @context(entity('Event'))
-//     @inputs({
-//         startDate               : SelfVar('startDate'),
-//         duration                : SelfVar('duration')
-//     })
-//     @as([ field('Event.endDate') ])
-//     calculateDurationBasedOnStartEndDates (inputs : object, currentValue : Date, previous : () => Date, context : CalculationContext) {
-//         return inputs.endDate - inputs.duration
-//     }
-//
-//
-// }
+
+    }
+
+    return Normalized
+}
+
+export type Normalized = Mixin<typeof Normalized>
+
+
+
+export const DurationDriven = <T extends Constructable<Event & Normalized>>(base : T) => {
+
+    abstract class DurationDriven extends base {
+
+        @mutation((me : Event) => {
+            return {
+                inputs      : [ me.startDate, me.duration ],
+                as          : [ me.endDate ]
+            }
+        })
+        moveTaskByStartDate<T extends this> (startDate : T[ 'startDate' ], duration : T[ 'duration' ]) : Date {
+            return
+        }
+
+
+        // @context(entity('Event'))
+        // @inputs({
+        //     endate                  : field('Event.endDate'), // entity('Event').field('endDate')
+        //     duration                : field('Event.duration') // entity('Event').field('duration')
+        // })
+        // @as([ field('Event.startDate') ])
+        // calculateStartDateBasedOnEndDateAndDuration (inputs : object, currentValue : Date, previous : () => Date, context : CalculationContext) {
+        //     return inputs.endDate - inputs.duration
+        // }
+        //
+        //
+        // @context(entity('Event'))
+        // @inputs({
+        //     endate                  : field('Event.startDate'), // entity('Event').field('startDate')
+        //     duration                : field('Event.duration') // entity('Event').field('duration')
+        // })
+        // @as([ field('Event.endDate') ])
+        // calculateEndDateBasedOnStartDateAndDuration (inputs : object, currentValue : Date, previous : () => Date, context : CalculationContext) {
+        //     return inputs.startDate + inputs.duration
+        // }
+        //
+        //
+        // @context(entity('Event'))
+        // @inputs({
+        //     startDate               : SelfVar('startDate'),
+        //     duration                : SelfVar('duration')
+        // })
+        // @as([ field('Event.endDate') ])
+        // calculateDurationBasedOnStartEndDates (inputs : object, currentValue : Date, previous : () => Date, context : CalculationContext) {
+        //     return inputs.endDate - inputs.duration
+        // }
+    }
+
+    return DurationDriven
+}
+
+export type DurationDriven = Mixin<typeof DurationDriven>
+
+
+
+

@@ -1,13 +1,22 @@
 import {Constructable, Mixin} from "../util/Mixin.js";
 import {ChronoAtom, ChronoValue, Readable, TraceableRead} from "./ChronoAtom.js";
-import {ChronoId} from "./ChronoId.js";
+import {chronoId, ChronoId} from "./ChronoId.js";
 import {ChronoMutation} from "./ChronoMutation.js";
 
 
 export const ChronoGraphNode = <T extends Constructable<ChronoAtom & TraceableRead>>(base : T) => {
 
     abstract class ChronoGraphNode extends base {
-        graph           : ChronoGraphLayer
+        id                  : ChronoId = chronoId()
+
+        graph               : ChronoGraphLayer
+
+
+        get () : ChronoValue {
+            if (this.graph) {}
+
+            return super.get()
+        }
 
 
         publishChange () {
@@ -47,7 +56,6 @@ export class ChronoGraphLayer {
 
 
     onPublish (node : ChronoGraphNode) {
-        node.
     }
 
 
