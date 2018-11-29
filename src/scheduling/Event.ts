@@ -151,27 +151,6 @@ export const Event = <T extends Constructable<Base>>(base : T) => {
         pushStartDate<T extends this> (endDate : T[ 'endDate' ], ...args) : Date {
             throw new Error("Abstract method called")
         }
-
-
-        @mutation((me : Event) => {
-            return {
-                inputs      : [ me.endDate ],
-                as          : [ me.endDate ]
-            }
-        })
-        resizeTaskByEndDate<T extends this> (endDate : T[ 'startDate' ]) : Date {
-            throw new Error("Abstract method called")
-        }
-
-        @mutation((me : Event) => {
-            return {
-                inputs      : [ me.startDate ],
-                as          : [ me.startDate ]
-            }
-        })
-        resizeTaskByStartDate<T extends this> (endDate : T[ 'startDate' ]) : Date {
-            throw new Error("Abstract method called")
-        }
     }
 
     return Event

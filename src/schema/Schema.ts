@@ -63,8 +63,9 @@ export const mutation       = (...args) : any => {}
 export function compute (fieldName) : MethodDecorator {
 
     return function <T>(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) : TypedPropertyDescriptor<T> | void {
+        const method : Function   = descriptor.value as any
 
-        if ((<any>(descriptor.value)).length > 0) throw new Error("Computed values should be pure")
+        if (method.length > 0) throw new Error("Computed values should be pure")
     }
 }
 
