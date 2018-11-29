@@ -1,322 +1,193 @@
-import {ChronoValue} from "../chrono/ChronoAtom.js";
-import {Base, Constructable, Mixin, Mixin1} from "../util/Mixin.js";
+import {Base, Constructable, Mixin} from "../util/Mixin.js";
 
+export type GraphWalkContext    = {
+    direction               : 'forward' | 'backward'
 
-
-
-//-----------------------------------------------------------------------------
-export const ChronoAtom = <V, T extends Constructable<typeof Base> = typeof Base>(base : T) =>
-
-class ChronoAtom extends base {
-    value     : V
-}
-
-export type ChronoAtom<Value> = Mixin1<Value, typeof ChronoAtom>
-
-
-const aa = ChronoAtom<Date, typeof Base>(Base)
-
-aa.new().value.zxc
-
-aa.new().value.getTime()
-
-function zxc(aa : ChronoAtom<Date>) {
-    aa.value.zxc
-
-    aa.value.getTime()
+    onNode                  : (node : GraphNode) => any,
+    onTopologicalNode       : (node : GraphNode) => any
+    onCycle                 : (node : GraphNode) => any
 }
 
 
-export type GraphNode   = unknown
+
+export const GraphNode = <T extends Constructable<Base>>(base : T) =>
+
+class GraphNode extends base {
+    fromEdges           : Set<this>         = new Set()
+    toEdges             : Set<this>         = new Set()
 
 
-export const Graph = <T extends Constructable<Base>>(base : T) => {
-
-    abstract class Graph extends base {
-
-
-        aa () {
-
-        // calculateTopologicalOrder () : [ Array<ChronoAtom>, Map<ChronoAtomId, number> ] {
-            // let result          = []
-            // let indices         = new Map<ChronoAtomId, number>()
-            //
-            // let visited         = new Map<ChronoAtom, number>()
-            //
-            // this.atoms.forEach((atom, atomId) => {
-            //     if (indices.has(atomId)) return
-            //
-            //     let depth           = 1
-            //     let toVisit         = [ atomId ]
-            //
-            //     while (toVisit.length) {
-            //
-            //         atom            = this.atoms.get(toVisit[ toVisit.length - 1 ])
-            //
-            //         if (indices.has(atom.id)) {
-            //             toVisit.pop()
-            //             depth--
-            //             continue
-            //         }
-            //
-            //         const visitedAtDepth    = visited.get(atom)
-            //
-            //         if (visitedAtDepth != null) {
-            //             if (visitedAtDepth < depth)
-            //                 throw new Error("Cycle in graph")
-            //             else {
-            //                 result.push(atom)
-            //                 indices.set(atom.id, result.length - 1)
-            //
-            //                 toVisit.pop()
-            //                 depth--
-            //             }
-            //         } else {
-            //             visited.set(atom, depth)
-            //
-            //             const children  = this.fromIdEdges.get(atom.id)
-            //
-            //             if (children.size) {
-            //                 children.forEach(child => toVisit.push(child))
-            //
-            //                 depth       += children.size
-            //             } else {
-            //                 result.push(atom)
-            //                 indices.set(atom.id, result.length - 1)
-            //
-            //                 toVisit.pop()
-            //                 depth--
-            //             }
-            //         }
-            //     }
-            // })
-            //
-            // return [ result, indices ]
-        }
-
+    hasEdgeTo(toNode : this) : boolean {
+        return this.fromEdges.has(toNode)
     }
 
-    return Graph
+
+    hasEdgeFrom(fromNode : this) : boolean {
+        return this.toEdges.has(fromNode)
+    }
+
+
+    addEdgeTo(toNode : this) {
+        this.fromEdges.add(toNode)
+        toNode.toEdges.add(this)
+    }
+
+
+    addEdgeFrom(fromNode : this) {
+        fromNode.fromEdges.add(this)
+        this.toEdges.add(fromNode)
+    }
+
+
+    removeEdgeTo(toNode : this) {
+        this.fromEdges.delete(toNode)
+        toNode.toEdges.delete(this)
+    }
+
+
+    removeEdgeFrom(fromNode : this) {
+        fromNode.fromEdges.delete(this)
+        this.toEdges.delete(fromNode)
+    }
+
+
+    /**
+
+     TODO generalize to arbitrary JSON, instead of GraphNode instance
+
+     POSSIBLE OPTIMIZATION (need to benchmark)
+     instead of the separate map for visited data
+          const visitedAt             = new Map<this, number>()
+     store the number in the node itself (as non-enumerable symbol property)
+
+     */
+    walkDepth (context : GraphWalkContext) {
+        const visitedAt             = new Map<this, number>()
+
+        let toVisit : this[]        = [ this ]
+
+        let depth
+
+        while (depth = toVisit.length) {
+            let node                = toVisit[ depth - 1 ]
+
+            const visitedAtDepth    = visitedAt.get(node)
+
+            // node has been already visited
+            if (visitedAtDepth != null) {
+
+                // it is valid to find itself in the visited map, but only if visited at the current depth
+                // (which indicates stack unwinding)
+                // if the node has been visited at earlier depth - its a cycle
+                if (visitedAtDepth < depth)
+                    context.onCycle(node)
+                else {
+                    // we've processed all outgoing edges from this node,
+                    // now we can add it to topologically sorted results (if needed)
+                    context.onTopologicalNode(node)
+
+                    toVisit.pop()
+                    depth--
+                }
+            } else {
+                visitedAt.set(node, depth)
+
+                context.onNode(node)
+
+                const next          = context.direction === 'forward' ? node.fromEdges : node.toEdges
+
+                if (next.size) {
+                    // TODO check that this iteration is performant (need to benchmark)
+                    next.forEach(child => toVisit.push(child))
+                } else {
+                    toVisit.pop()
+
+                    // if there's no outgoing edges, node is at topological position
+                    context.onTopologicalNode(node)
+                }
+            }
+        }
+    }
+}
+
+export type GraphNode = Mixin<typeof GraphNode>
+
+
+
+
+
+export const Graph = <T extends Constructable<Base>>(base : T) =>
+
+class Graph extends base {
+    nodes               : Set<GraphNode>    = new Set()
+
+
+    hasNode (node : GraphNode) : boolean {
+        return this.nodes.has(node)
+    }
+
+
+    addNodes (nodes : GraphNode[]) {
+        nodes.forEach(node => this.addNode(node))
+    }
+
+
+    addNode (node : GraphNode) {
+        // <debug>
+        if (this.hasNode(node)) throw new Error("The node already exists")
+        // </debug>
+
+        this.nodes.add(node)
+    }
+
+
+    removeNodes (nodes : GraphNode[]) {
+        nodes.forEach(node => this.removeNode(node))
+    }
+
+
+    removeNode (node : GraphNode) {
+        // <debug>
+        if (!this.hasNode(node)) throw new Error("The node does not exists")
+        // </debug>
+
+        this.nodes.delete(node)
+    }
+
+
+    hasEdge(fromNode : GraphNode, toNode : GraphNode) : boolean {
+        return fromNode.hasEdgeTo(toNode)
+    }
+
+
+    addEdge(fromNode : GraphNode, toNode : GraphNode) {
+        // <debug>
+        if (fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes already exists")
+        // </debug>
+
+        fromNode.addEdgeTo(toNode)
+    }
+
+
+    removeEdge(fromNode : GraphNode, toNode : GraphNode) {
+        // <debug>
+        if (!fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes does not exists")
+        // </debug>
+
+        fromNode.removeEdgeTo(toNode)
+    }
+
 }
 
 export type Graph = Mixin<typeof Graph>
 
 
-// export class ChronoGraphLayer {
-//
-//     previous            : ChronoGraphLayer
-//
-//     atoms               : Map<ChronoId, ChronoGraphNode> = new Map()
-//
-//     isOpened            : boolean = true
-//
-//     dirtyValues         : Map<ChronoId, ChronoValue> = new Map()
-//
-//
-//     runMutation (mutation : ChronoMutation) {
-//
-//     }
-//
-//
-//     onPublish (node : ChronoGraphNode) {
-//     }
-//
-//
-//     onTraceRead (node : ChronoGraphNode & Readable) {
-//         node.get()
-//     }
-//
-//
-//     // inputs          : [ ChronoAtom ]
-//     //
-//     // outputs         : [ ChronoAtom ]
-//
-//
-//     // fromIdEdges         : ChronoEdgeAdjacencyMap = new Map()
-//     //
-//     // toIdEdges           : ChronoEdgeAdjacencyMap = new Map()
-//     //
-//     //
-//     // getAtomById (id : ChronoId) : ChronoAtom {
-//     //     return this.atoms.get(id)
-//     // }
-//     //
-//     //
-//     // addAtoms (atoms : ChronoAtom[]) {
-//     //     atoms.forEach((atom) => this.addAtom(atom))
-//     // }
-//     //
-//     //
-//     // addAtom (atom : ChronoAtom) {
-//     //     const atomId    = atom.id
-//     //
-//     //     const prevAtom  = this.atoms.get(atomId)
-//     //
-//     //     if (!prevAtom) {
-//     //
-//     //         this.fromIdEdges.set(atomId, new Set())
-//     //         this.toIdEdges.set(atomId, new Set())
-//     //
-//     //         this.atoms.set(atomId, atom)
-//     //
-//     //         atom.register(this)
-//     //
-//     //         // this.addEdgesForAtom(atom)
-//     //
-//     //         // if (atom.getValue() === undefined) {
-//     //         //     this.markAtomDirty(atom)
-//     //         // }
-//     //     } else {
-//     //         throw new Error("[chronograph] Atom with this id already exists: " + atomId)
-//     //     }
-//     // }
-//
-//
-//     calculateNextLayer () {
-//
-//     }
-// }
-//
-//
-//
-//
-// //
-// //
-// //
-// //
-// //
-// //
-// //
-// //
-// // //-----------------------------------------------------------------------------
-// // type ChronoEdgeAdjacencyMap     = Map<ChronoId, Set<ChronoId>>
-// //
-// //
-// // export class ChronoGraph {
-// //
-// //     fromIdEdges         : ChronoEdgeAdjacencyMap = new Map()
-// //
-// //     toIdEdges           : ChronoEdgeAdjacencyMap = new Map()
-// //
-// //     atoms               : Map<ChronoId, ChronoAtom> = new Map()
-// //
-// //
-// //     getAtomById (id : ChronoId) : ChronoAtom {
-// //         return this.atoms.get(id)
-// //     }
-// //
-// //
-// //     addAtoms (atoms : ChronoAtom[]) {
-// //         atoms.forEach((atom) => this.addAtom(atom))
-// //     }
-// //
-// //
-// //     addAtom (atom : ChronoAtom) {
-// //         const atomId    = atom.id
-// //
-// //         const prevAtom  = this.atoms.get(atomId)
-// //
-// //         if (!prevAtom) {
-// //
-// //             this.fromIdEdges.set(atomId, new Set())
-// //             this.toIdEdges.set(atomId, new Set())
-// //
-// //             this.atoms.set(atomId, atom)
-// //
-// //             atom.register(this)
-// //
-// //             // this.addEdgesForAtom(atom)
-// //
-// //             // if (atom.getValue() === undefined) {
-// //             //     this.markAtomDirty(atom)
-// //             // }
-// //         } else {
-// //             throw new Error("[chronograph] Atom with this id already exists: " + atomId)
-// //         }
-// //     }
-// //
-// //
-// //     // addEdgesForAtom (atom : ChronoAtom) {
-// //     //     // atom.tags.forEach(defVar => {
-// //     //     //
-// //     //     //     defVar && this.globalNamespace.forEachAtomReferencingDefVar(defVar, (inputName, toAtom) => {
-// //     //     //         this.addEdge(atom, toAtom)
-// //     //     //     })
-// //     //     // })
-// //     //     //
-// //     //     // Object.keys(atom.inputs).forEach(inputName => {
-// //     //     //     const defVar        = atom.inputs[ inputName ]
-// //     //     //
-// //     //     //     defVar && this.globalNamespace.forEachAtomPublishingToDefVar(
-// //     //     //         defVar,
-// //     //     //         fromAtom => this.addEdge(fromAtom, atom)
-// //     //     //     )
-// //     //     // })
-// //     // }
-// //     //
-// //     //
-// //     // removeEdgesForAtom (atom : ChronoAtom) {
-// //     //     // atom.tags.forEach(defVar => {
-// //     //     //
-// //     //     //     defVar && this.globalNamespace.forEachAtomReferencingDefVar(defVar, (inputName, toAtom) => {
-// //     //     //         this.removeEdge(atom, toAtom)
-// //     //     //     })
-// //     //     // })
-// //     //     //
-// //     //     // Object.keys(atom.inputs).forEach(inputName => {
-// //     //     //     const defVar        = atom.inputs[ inputName ]
-// //     //     //
-// //     //     //     defVar && this.globalNamespace.forEachAtomPublishingToDefVar(
-// //     //     //         defVar,
-// //     //     //         fromAtom => this.removeEdge(fromAtom, atom)
-// //     //     //     )
-// //     //     // })
-// //     // }
-// //     //
-// //     //
-// //     // removeAtoms (atoms : ChronoAtom[]) {
-// //     //     atoms.forEach(atom => this.removeAtom(atom))
-// //     // }
-// //     //
-// //     //
-// //     // removeAtom (atom : ChronoAtom) : void {
-// //     //     if (!atom) return
-// //     //
-// //     //     this.removeEdgesForAtom(atom)
-// //     //
-// //     //     this.atoms.delete(atom.id)
-// //     //
-// //     //     this.fromIdEdges.delete(atom.id)
-// //     //     this.toIdEdges.delete(atom.id)
-// //     //
-// //     //     // this.dirty.delete(atom.id)
-// //     // }
-// //     //
-// //     //
-// //     // addEdge(fromAtom : ChronoAtom, toAtom : ChronoAtom) {
-// //     //     if (!this.atoms.has(fromAtom.id)) throw new Error("No `from` atom")
-// //     //     if (!this.atoms.has(toAtom.id))   throw new Error("No `to` atom")
-// //     //
-// //     //     const fromSet   = this.fromIdEdges.get(fromAtom.id)
-// //     //
-// //     //     fromSet.add(toAtom.id)
-// //     //
-// //     //     const toSet     = this.toIdEdges.get(toAtom.id)
-// //     //
-// //     //     toSet.add(fromAtom.id)
-// //     //
-// //     //     // this._topologicalOrder = null
-// //     //
-// //     //     this.markAtomDirty(toAtom)
-// //     // }
-// //     //
-// //     //
-// //     // removeEdge(fromAtom : ChronoAtom, toAtom : ChronoAtom) {
-// //     //     this.edgeLabels.delete(fromAtom.id + '-' + toAtom.id)
-// //     //
-// //     //     this.fromIdEdges.get(fromAtom.id).delete(toAtom.id)
-// //     //     this.toIdEdges.get(toAtom.id).delete(fromAtom.id)
-// //     //
-// //     //     this.markAtomDirty(toAtom)
-// //     // }
-// // }
+export const ChronoGraphLayer = <T extends Constructable<Graph>>(base : T) =>
+
+class ChronoGraphLayer extends base {
+
+    previous            : ChronoGraphLayer
+
+}
+
+export type ChronoGraphLayer = Mixin<typeof ChronoGraphLayer>

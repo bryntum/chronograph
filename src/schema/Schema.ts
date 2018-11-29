@@ -66,17 +66,19 @@ export class Schema extends Base {
 
 
 
-export const atom          = (...args) : any => {}
-export const field         = (...args) : any => {}
-export const entity        = (...args) : any => {}
-export const as            = (...args) : any => {}
-export const lifecycle     = (...args) : any => {}
-export const before        = (...args) : any => {}
+export const atom           = (...args) : any => {}
+export const field          = (...args) : any => {}
+export const entity         = (...args) : any => {}
+export const as             = (...args) : any => {}
+export const lifecycle      = (...args) : any => {}
+export const before         = (...args) : any => {}
 export const after          = (...args) : any => {}
 
-export const context       = (...args) : any => {}
-export const inputs        = (...args) : any => {}
+export const context        = (...args) : any => {}
+export const inputs         = (...args) : any => {}
 export const mutation       = (...args) : any => {}
+export const behavior       = (...args) : any => {}
+
 
 
 

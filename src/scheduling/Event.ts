@@ -16,7 +16,7 @@ import {Base, Constructable, Mixin} from "../util/Mixin.js";
 
     // InstanceType<Entity>[ Name ] extends Field<infer Value> ? Value : never
 
-export const Event = <T extends Constructable<Base>>(base : T) => {
+export const Event = <T extends Constructable<typeof Base>>(base : T) => {
 
     abstract class Event extends base {
 

@@ -19,7 +19,7 @@ export type ChronoValue         = unknown
 // but will introduce much more type-safety
 
 //-----------------------------------------------------------------------------
-export const ChronoAtom = <T extends Constructable<typeof Base>>(base : T) =>
+export const ChronoAtom = <T extends Constructable<Base>>(base : T) =>
 
 class ChronoAtom extends base {
     protected value     : ChronoValue
