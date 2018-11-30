@@ -1,3 +1,5 @@
+import {ChronoValue} from "../chrono/ChronoAtom.js";
+import {chronoId, ChronoId} from "../chrono/ChronoId.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 
 
@@ -81,6 +83,8 @@ class GraphNode extends base {
 
     /**
 
+     TODO move to observable/observedby (different directions)
+
      TODO generalize to arbitrary JSON, instead of GraphNode instance
 
      POSSIBLE OPTIMIZATION (need to benchmark)
@@ -141,4 +145,24 @@ class GraphNode extends base {
 export type GraphNode = Mixin<typeof GraphNode>
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export const VersionedNode = <T extends Constructable<GraphNode>>(base : T) => {
 
+    abstract class VersionedNode extends base {
+        version             : ChronoId = chronoId()
+
+        // can not add edge from `previous`
+        previous            : ObservedBy
+
+
+        bump (value : ChronoValue) {
+            const cls   = <VersionedNode>(this.class() as any)
+
+            cls.new({ value : value, previous : this }) as VersionedNode
+        }
+    }
+
+    return VersionedNode
+}
+
+export type VersionedNode = Mixin<typeof VersionedNode>

@@ -32,6 +32,9 @@ export const ChronoGraphNode = <T extends Constructable<Observable & GraphNode>>
     abstract class ChronoGraphNode extends base {
         id                  : ChronoId = chronoId()
 
+        // this reference may introduce additional workload for garbage collector
+        // figure out if it can be removed (in this case, the node has access to the graph only
+        // inside the `joinGraph` and `unjoinGraph` methods, which should be enough
         graph               : ChronoGraphNode
 
 
@@ -66,14 +69,20 @@ export class MinimalChronoGraphNode extends ChronoGraphNode(
 
 export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphNode>>(base : T) => {
 
-
-
     abstract class ChronoGraphSnapshot extends base {
 
         addNode (node : this) {
             if (node.graph.id > this.id) throw new Error("Can not reference future nodes, cyclic calculation?")
 
             super.addNode(node)
+
+            node.joinGraph(this)
+        }
+
+        removeNode (node : this) {
+            node.unjoinGraph()
+
+            super.removeNode(node)
         }
     }
 
@@ -102,7 +111,7 @@ export type CalculableGraphSnapshot = Mixin<typeof CalculableGraphSnapshot>
 
 
 
-export const SynchronousGraphRunCore = <T extends Constructable<GraphNode & CalculableGraphSnapshot>>(base : T) =>
+export const SynchronousGraphRunCore = <T extends Constructable<CalculableGraphSnapshot>>(base : T) =>
 
 class SynchronousGraphRunCore extends base {
 
@@ -114,13 +123,14 @@ class SynchronousGraphRunCore extends base {
 
         return new Set([ ...super.getFromEdges(), ...implicitEdgesfromItselfToMutations ])
     }
-    
-    runCalculation () {
+
+
+    runMutation (mutation : ChronoMutationNode) {
         let newSnapshot = this.class().new()
 
         this.walkDepth({
             direction           : 'forward',
-            onTopologicalNode   : (node : SynchronousGraphRunCore) => {
+            onTopologicalNode   : (node : ChronoMutationNode) => {
                 // const mutationNode : this     = node.constructor.new({
                 //
                 // })

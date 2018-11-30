@@ -1,4 +1,6 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {GraphNode} from "../graph/GraphNode.js";
+import {chronoId, ChronoId} from "./ChronoId.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -39,11 +39,12 @@ export class Base {
 
 //---------------------------------------------------------------------------------------------------------------------
 
-export type AnyConstructor  = new (...input: any[]) => any
+export type AnyConstructor          = new (...input: any[]) => any
+export type AnyConstructor1<A>      = new (...input: any[]) => A
 
-export type AnyFunction     = (...input: any[]) => any
 
-export type AnyFunction1<A> = (...input: any[]) => A
+export type AnyFunction             = (...input: any[]) => any
+export type AnyFunction1<A>         = (...input: any[]) => A
 
 
 //---------------------------------------------------------------------------------------------------------------------

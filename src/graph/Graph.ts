@@ -50,4 +50,3 @@ class Graph extends base {
 }
 
 export type Graph = Mixin<typeof Graph>
-

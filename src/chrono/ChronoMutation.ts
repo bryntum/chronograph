@@ -1,9 +1,10 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {VersionedNode} from "../graph/GraphNode.js";
 import {Calculable, ChronoAtom, Observable, Readable} from "./ChronoAtom.js";
 import {MinimalChronoGraphNode} from "./ChronoGraph.js";
 
 
-export type NamedInput      =  { [s : string] : ChronoAtom & Readable}
+export type NamedInput      =  { [s : string] : ChronoAtom & Readable }
 export type ArrayInput      =  [ ChronoAtom & Readable ]
 
 /*
@@ -55,7 +56,7 @@ export const PureChronoCalculation = <T extends Constructable<Calculable & Chron
 
             const result    = this.calculation(values)
 
-            this.as.forEach(atom => atom.set(result))
+            // this.as.forEach((atom : VersionedNode) => atom.bump(result))
         }
     }
 
