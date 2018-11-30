@@ -1,17 +1,15 @@
-import {ChronoGraphLayer, ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
-import {Base, Constructable, Mixin} from "../util/Mixin.js";
+import {ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
 import {Entity} from "./Schema.js";
 
 // Possibly split to ChronoObject (just has fields) + ChronoGraphObject (fields are graph nodes)
-export const ChronoObject = <T extends Constructable<Base & ChronoGraphNode>>(base : T) => {
+export const ChronoObject = <T extends Constructable<ChronoGraphNode>>(base : T) => {
 
     abstract class ChronoObject extends base {
         meta            : Entity
 
         // TODO figure out how to filter fields only
         fields          : { [s in keyof this] : ChronoGraphNode }
-
-        graph           : ChronoGraphLayer
 
 
         initialize (...args) {
@@ -21,7 +19,7 @@ export const ChronoObject = <T extends Constructable<Base & ChronoGraphNode>>(ba
         }
 
 
-        joinGraph (graph : ChronoGraphLayer) {
+        joinGraph (graph : ChronoGraphNode) {
             super.joinGraph(graph)
 
             const fields        = this.fields

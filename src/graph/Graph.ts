@@ -1,11 +1,12 @@
-import {Base, Constructable, Mixin} from "../util/Mixin.js";
+import {Base, Constructable, Mixin} from "../class/Mixin.js";
+
 
 export type GraphWalkContext    = {
     direction               : 'forward' | 'backward'
 
-    onNode                  : (node : GraphNode) => any,
-    onTopologicalNode       : (node : GraphNode) => any
-    onCycle                 : (node : GraphNode) => any
+    onNode?                 : (node : GraphNode) => any,
+    onTopologicalNode?      : (node : GraphNode) => any
+    onCycle?                : (node : GraphNode) => any,
 }
 
 
@@ -15,6 +16,19 @@ export const GraphNode = <T extends Constructable<Base>>(base : T) =>
 class GraphNode extends base {
     fromEdges           : Set<this>         = new Set()
     toEdges             : Set<this>         = new Set()
+
+
+    defaultContext      : GraphWalkContext = { direction : 'forward' }
+
+
+    getFromEdges () : Set<this> {
+        return this.fromEdges
+    }
+
+
+    getToEdges () : Set<this> {
+        return this.toEdges
+    }
 
 
     hasEdgeTo(toNode : this) : boolean {
@@ -94,7 +108,7 @@ class GraphNode extends base {
 
                 context.onNode(node)
 
-                const next          = context.direction === 'forward' ? node.fromEdges : node.toEdges
+                const next          = context.direction === 'forward' ? node.getFromEdges() : node.getToEdges()
 
                 if (next.size) {
                     // TODO check that this iteration is performant (need to benchmark)
@@ -155,27 +169,27 @@ class Graph extends base {
     }
 
 
-    hasEdge(fromNode : GraphNode, toNode : GraphNode) : boolean {
-        return fromNode.hasEdgeTo(toNode)
-    }
-
-
-    addEdge(fromNode : GraphNode, toNode : GraphNode) {
-        // <debug>
-        if (fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes already exists")
-        // </debug>
-
-        fromNode.addEdgeTo(toNode)
-    }
-
-
-    removeEdge(fromNode : GraphNode, toNode : GraphNode) {
-        // <debug>
-        if (!fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes does not exists")
-        // </debug>
-
-        fromNode.removeEdgeTo(toNode)
-    }
+    // hasEdge(fromNode : GraphNode, toNode : GraphNode) : boolean {
+    //     return fromNode.hasEdgeTo(toNode)
+    // }
+    //
+    //
+    // addEdge(fromNode : GraphNode, toNode : GraphNode) {
+    //     // <debug>
+    //     if (fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes already exists")
+    //     // </debug>
+    //
+    //     fromNode.addEdgeTo(toNode)
+    // }
+    //
+    //
+    // removeEdge(fromNode : GraphNode, toNode : GraphNode) {
+    //     // <debug>
+    //     if (!fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes does not exists")
+    //     // </debug>
+    //
+    //     fromNode.removeEdgeTo(toNode)
+    // }
 
 }
 

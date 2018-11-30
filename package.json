@@ -18,7 +18,6 @@
   },
   "devDependencies": {
     "@types/node": "^10.12.10",
-    "rollup": "^0.67.3",
     "typescript": "^3.1.6"
   }
 }

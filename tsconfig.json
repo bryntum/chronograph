@@ -9,10 +9,10 @@
         ],
         "module"                 : "ESNext",
         "moduleResolution"      : "Node",
-        "baseUrl": ".",
-        "plugins": [
-            { "transform" : "ts-transformer-imports" }
-        ]
+        "baseUrl": "."
+//        "plugins": [
+//            { "transform" : "ts-transformer-imports" }
+//        ]
     },
 
     "include" : [

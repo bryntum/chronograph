@@ -1,4 +1,5 @@
-import {Base, Constructable, Mixin} from "../util/Mixin.js";
+import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Calculable} from "./ChronoMutation.js";
 
 
 //-----------------------------------------------------------------------------
@@ -78,7 +79,7 @@ export type ComparatorFn<T> = (a : T, b : T) => number
 
 
 //-----------------------------------------------------------------------------
-export const Observable = <T extends Constructable<ChronoAtom & Readable & Writable>>(base : T) => {
+export const Observable = <T extends Constructable<ChronoAtom & Readable & Writable & Calculable>>(base : T) => {
 
     abstract class Observable extends base {
 
@@ -90,13 +91,11 @@ export const Observable = <T extends Constructable<ChronoAtom & Readable & Writa
             if (this.valuesComparator(this.value, value) !== 0) {
                 super.set(value)
 
-                return this.propagateChanges()
+                return this.runCalculation()
             }
 
             return this
         }
-
-        abstract propagateChanges ()
     }
 
     return Observable

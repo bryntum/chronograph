@@ -1,6 +1,6 @@
 import {ChronoAtom, Observable, Readable, Writable} from "../chrono/ChronoAtom.js";
-import {ChronoGraphLayer, ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
-import {Base, Constructable} from "../util/Mixin.js";
+import {ChronoGraphSnapshot, ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
+import {Base, Constructable} from "../class/Mixin.js";
 import {ChronoObject} from "./Object.js";
 
 

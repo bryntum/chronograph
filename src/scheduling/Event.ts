@@ -1,5 +1,5 @@
 import {compute, field, mutation} from "../schema/Schema.js";
-import {Base, Constructable, Mixin} from "../util/Mixin.js";
+import {Base, Constructable, Mixin} from "../class/Mixin.js";
 
 
 // type Field<V> = ChronoGraphNode & { get : () => V }
@@ -16,7 +16,7 @@ import {Base, Constructable, Mixin} from "../util/Mixin.js";
 
     // InstanceType<Entity>[ Name ] extends Field<infer Value> ? Value : never
 
-export const Event = <T extends Constructable<typeof Base>>(base : T) => {
+export const Event = <T extends Constructable<Base>>(base : T) => {
 
     abstract class Event extends base {
 

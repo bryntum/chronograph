@@ -31,7 +31,28 @@ export class Base {
 }
 
 //---------------------------------------------------------------------------------------
-export type Constructable<T extends Base> = new (...args : any[]) => T
+export type Constructable<T extends any> = new (...args : any[]) => T
 
 
-export type Mixin<T extends (...args : any[]) => any> = InstanceType<ReturnType<T>>
+export type AnyFunction = (...input: any[]) => any
+
+
+export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
+
+
+
+/*
+
+When you feel frivolous and want to have some useful distraction please feel free to encode your favorite
+mixin typization scheme below, or another crazy experiment
+
+*/
+//----------------            go wild here              ------------------
+class ChronoNumber extends Number {
+    constructor (number : number) {
+        super(number)
+
+        return Number(number)
+    }
+}
+
