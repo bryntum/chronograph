@@ -89,7 +89,6 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
     return ChronoGraphSnapshot
 }
 
-// @ ts-ignore - silence cyclic type references
 export type ChronoGraphSnapshot = Mixin<typeof ChronoGraphSnapshot>
 
 
@@ -139,8 +138,8 @@ class SynchronousGraphRunCore extends base {
                 //
                 // mutationNode.runCalculation()
             },
-            onNode                  : () => null,
-            onCycle                 : () => null
+            onNode              : () => null,
+            onCycle             : () => null
         })
     }
 }

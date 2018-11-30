@@ -32,10 +32,12 @@ export class Base {
     }
 
 
-    class<T extends typeof Base>() : T {
-        return this.constructor as T
+    class<T extends Base>(this : T) : AnyConstructor1<T> & BaseConstructor {
+        return this.constructor as (AnyConstructor1<T> & BaseConstructor)
     }
 }
+
+type BaseConstructor       = typeof Base
 
 //---------------------------------------------------------------------------------------------------------------------
 
@@ -53,6 +55,8 @@ export type Constructable<T extends any> = new (...args : any[]) => T
 
 //---------------------------------------------------------------------------------------------------------------------
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
+export type MixinConstructor<T extends AnyFunction> =
+    T extends AnyFunction1<Base> ? ReturnType<T> & typeof Base : ReturnType<T>
 
 
 

@@ -1,6 +1,6 @@
-import {ChronoValue} from "../chrono/ChronoAtom.js";
+import {ChronoAtom, ChronoValue} from "../chrono/ChronoAtom.js";
 import {chronoId, ChronoId} from "../chrono/ChronoId.js";
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 
 
 export type GraphWalkContext    = {
@@ -146,7 +146,7 @@ export type GraphNode = Mixin<typeof GraphNode>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const VersionedNode = <T extends Constructable<GraphNode>>(base : T) => {
+export const VersionedNode = <T extends Constructable<GraphNode & ChronoAtom>>(base : T) => {
 
     abstract class VersionedNode extends base {
         version             : ChronoId = chronoId()
@@ -155,14 +155,15 @@ export const VersionedNode = <T extends Constructable<GraphNode>>(base : T) => {
         previous            : ObservedBy
 
 
-        bump (value : ChronoValue) {
-            const cls   = <VersionedNode>(this.class() as any)
+        bump (value : ChronoValue) : this {
+            const cls   = <VersionedNodeConstructor>(this.constructor as any)
 
-            cls.new({ value : value, previous : this }) as VersionedNode
+            return cls.new({ value : value, previous : this }) as this
         }
     }
 
     return VersionedNode
 }
 
-export type VersionedNode = Mixin<typeof VersionedNode>
+export type VersionedNode               = Mixin<typeof VersionedNode>
+export type VersionedNodeConstructor    = MixinConstructor<typeof VersionedNode>

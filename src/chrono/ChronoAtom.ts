@@ -23,7 +23,12 @@ export type ChronoValue         = unknown
 export const ChronoAtom = <T extends Constructable<Base>>(base : T) =>
 
 class ChronoAtom extends base {
-    protected value     : ChronoValue
+    value               : ChronoValue
+
+
+    hasValue () : boolean {
+        return this.hasOwnProperty('value')
+    }
 }
 
 export type ChronoAtom = Mixin<typeof ChronoAtom>

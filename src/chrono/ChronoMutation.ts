@@ -1,4 +1,4 @@
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {AnyFunction, Base, Constructable, Mixin} from "../class/Mixin.js";
 import {VersionedNode} from "../graph/GraphNode.js";
 import {Calculable, ChronoAtom, Observable, Readable} from "./ChronoAtom.js";
 import {MinimalChronoGraphNode} from "./ChronoGraph.js";
@@ -49,14 +49,14 @@ export const PureChronoCalculation = <T extends Constructable<Calculable & Chron
 
     abstract class PureChronoCalculation extends base {
 
-        calculation         : (...input: any[]) => any
+        calculation         : AnyFunction
 
         runCalculation () {
             const values    = this.mapInput(atom => atom.get())
 
             const result    = this.calculation(values)
 
-            // this.as.forEach((atom : VersionedNode) => atom.bump(result))
+            this.as.forEach(atom => atom.set(result))
         }
     }
 
