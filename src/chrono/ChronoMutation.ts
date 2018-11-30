@@ -1,5 +1,5 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {ChronoAtom, Observable, Readable} from "./ChronoAtom.js";
+import {Calculable, ChronoAtom, Observable, Readable} from "./ChronoAtom.js";
 import {GenericChronoGraphNode} from "./ChronoGraph.js";
 
 
@@ -43,19 +43,6 @@ class ChronoMutation extends base {
 export type ChronoMutation = Mixin<typeof ChronoMutation>
 
 
-// Calculable<V>
-export const Calculable = <T extends Constructable<Base>>(base : T) => {
-
-    abstract class Calculable extends base {
-        abstract runCalculation ()
-    }
-
-    return Calculable
-}
-
-export type Calculable = Mixin<typeof Calculable>
-
-
 
 export const PureChronoCalculation = <T extends Constructable<Calculable & ChronoMutation>>(base : T) => {
 
@@ -79,7 +66,7 @@ export type PureChronoCalculation = Mixin<typeof PureChronoCalculation>
 
 
 
-export const ChronoMutationNode = <T extends Constructable<GenericChronoGraphNode & ChronoMutation & Calculable>>(base : T) => {
+export const ChronoMutationNode = <T extends Constructable<GenericChronoGraphNode & ChronoMutation & PureChronoCalculation>>(base : T) => {
 
     abstract class ChronoMutationNode extends base {
 

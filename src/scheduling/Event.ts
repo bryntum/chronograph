@@ -1,5 +1,5 @@
-import {compute, field, mutation} from "../schema/Schema.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {compute, field, mutation} from "../schema/Schema.js";
 
 
 // type Field<V> = ChronoGraphNode & { get : () => V }

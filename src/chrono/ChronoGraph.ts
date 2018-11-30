@@ -1,8 +1,8 @@
-import {Graph, GraphNode} from "../graph/Graph.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {ChronoAtom, Observable, Readable, Writable} from "./ChronoAtom.js";
+import {Graph, GraphNode} from "../graph/Graph.js";
+import {Calculable, ChronoAtom, Observable, Readable, Writable} from "./ChronoAtom.js";
 import {chronoId, ChronoId} from "./ChronoId.js";
-import {Calculable, GenericChronoMutationNode} from "./ChronoMutation.js";
+import {GenericChronoMutationNode} from "./ChronoMutation.js";
 
 
 //
@@ -65,11 +65,9 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
     abstract class ChronoGraphSnapshot extends base {
 
         addNode (node : ChronoGraphNode) {
-            // node.zcxxzc
-
             if (node.graph.id > this.id) throw new Error("Can not reference future nodes, cyclic calculation?")
 
-            // super.addNode(node)
+            super.addNode(node)
         }
     }
 

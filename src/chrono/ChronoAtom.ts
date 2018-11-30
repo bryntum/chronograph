@@ -1,25 +1,23 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Calculable} from "./ChronoMutation.js";
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
+/*
+    TODO BIG THING POTENTIALLY
+    ==========================
+
+    figure out how to specialize the "ChronoAtom" type with type of value argument
+
+        class ChronoAtom<V> extends base {
+            protected value     : V
+        }
+
+    will require the specialization in all downstream mixins + universal wrapper for the graph node,
+    but will introduce much more type-safety
+*/
+
 export type ChronoValue         = unknown
 
-
-//
-// TODO BIG THING POTENTIALLY
-// ==========================
-//
-// figure out how to specialize the "ChronoAtom" type with type of value argument
-//
-//     class ChronoAtom<V> extends base {
-//         protected value     : V
-//     }
-//
-// will require the specialization in all downstream mixins + universal wrapper for the graph node,
-// but will introduce much more type-safety
-
-//-----------------------------------------------------------------------------
 export const ChronoAtom = <T extends Constructable<Base>>(base : T) =>
 
 class ChronoAtom extends base {
@@ -29,7 +27,7 @@ class ChronoAtom extends base {
 export type ChronoAtom = Mixin<typeof ChronoAtom>
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 export const Readable = <T extends Constructable<ChronoAtom>>(base : T) =>
 
 class Readable extends base {
@@ -41,7 +39,7 @@ class Readable extends base {
 export type Readable = Mixin<typeof Readable>
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 export const Writable = <T extends Constructable<ChronoAtom>>(base : T) =>
 
 class Writable extends base {
@@ -53,32 +51,32 @@ class Writable extends base {
 export type Writable = Mixin<typeof Writable>
 
 
+//---------------------------------------------------------------------------------------------------------------------
+/*
+    Calculable<V> ?
 
-// //-----------------------------------------------------------------------------
-// export const TraceableRead = <T extends Constructable<ChronoAtom & Readable>>(base : T) => {
-//
-//     abstract class TraceableRead extends base {
-//         get ()              : ChronoValue {
-//             this.traceRead()
-//
-//             return super.get()
-//         }
-//
-//         abstract traceRead ()
-//     }
-//
-//     return TraceableRead
-// }
-//
-// export type TraceableRead = Mixin<typeof TraceableRead>
+    This is probably an abstract version of "can grow graph" "effect",
+    (which implements it as "propagateChanges")
+    but using it everywhere instead for now
+*/
+export const Calculable = <T extends Constructable<Base>>(base : T) => {
+
+    abstract class Calculable extends base {
+        abstract runCalculation ()
+    }
+
+    return Calculable
+}
+
+export type Calculable = Mixin<typeof Calculable>
 
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 export type ComparatorFn<T> = (a : T, b : T) => number
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 export const Observable = <T extends Constructable<ChronoAtom & Readable & Writable & Calculable>>(base : T) => {
 
     abstract class Observable extends base {
@@ -102,3 +100,24 @@ export const Observable = <T extends Constructable<ChronoAtom & Readable & Writa
 }
 
 export type Observable = Mixin<typeof Observable>
+
+
+
+
+// //---------------------------------------------------------------------------------------------------------------------
+// export const TraceableRead = <T extends Constructable<ChronoAtom & Readable>>(base : T) => {
+//
+//     abstract class TraceableRead extends base {
+//         get ()              : ChronoValue {
+//             this.traceRead()
+//
+//             return super.get()
+//         }
+//
+//         abstract traceRead ()
+//     }
+//
+//     return TraceableRead
+// }
+//
+// export type TraceableRead = Mixin<typeof TraceableRead>

@@ -1,6 +1,5 @@
-import {ChronoAtom, Observable, Readable, Writable} from "../chrono/ChronoAtom.js";
-import {ChronoGraphSnapshot, ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
-import {Base, Constructable} from "../class/Mixin.js";
+import {ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
+import {Base} from "../class/Mixin.js";
 import {ChronoObject} from "./Object.js";
 
 
@@ -8,7 +7,7 @@ export type Name    = string | Symbol
 export type Type    = string
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 export class Field extends Base {
     name                : Name
     type                : Type
@@ -23,7 +22,7 @@ export class Field extends Base {
 export type ChronoGraphFieldsNamedCollection = { [s in keyof any] : ChronoGraphNode }
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 export class Entity extends Base {
     name                : Name
 
@@ -45,7 +44,7 @@ export class Entity extends Base {
 }
 
 
-//-----------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------
 export class Schema extends Base {
     name                : Name
 
