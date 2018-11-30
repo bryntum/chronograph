@@ -3,6 +3,7 @@ import {Graph} from "../graph/Graph.js";
 import {GraphNode, ObservedBy, Observer} from "../graph/GraphNode.js";
 import {Calculable, ChronoAtom, Observable, Readable, Writable} from "./ChronoAtom.js";
 import {chronoId, ChronoId} from "./ChronoId.js";
+import {ChronoMutationNode} from "./ChronoMutation.js";
 
 
 //
@@ -102,30 +103,30 @@ export const SynchronousGraphRunCore = <T extends Constructable<GraphNode & Calc
 
 class SynchronousGraphRunCore extends base {
 
-    plan
+    mutationsToRun          : ChronoMutationNode[]
 
 
-    // getFromEdges () : Set<this> {
-    //     const implicitEdgesfromItselfToAllNodes     = new Set<this>(<any>[ ...this.nodes ])
-    //
-    //     return new Set([ ...super.getFromEdges(), ...implicitEdgesfromItselfToAllNodes ])
-    // }
+    getFromEdges () : Set<this> {
+        const implicitEdgesfromItselfToMutations     = new Set<this>(<any>[ ...this.mutationsToRun ])
+
+        return new Set([ ...super.getFromEdges(), ...implicitEdgesfromItselfToMutations ])
+    }
 
 
     runCalculation () {
 
-        let newSnapshot : this        //= //this.constructor.new()
+        let newSnapshot : this        = this.constructor.new
 
         this.walkDepth({
             direction           : 'forward',
             onTopologicalNode   : (node : SynchronousGraphRunCore) => {
-                const mutationNode : this     = node.constructor.new({
+                // const mutationNode : this     = node.constructor.new({
+                //
+                // })
 
-                })
-
-                newSnapshot.addNode(mutationNode)
-
-                mutationNode.runCalculation()
+                // newSnapshot.addNode(mutationNode)
+                //
+                // mutationNode.runCalculation()
             },
             onNode                  : () => null,
             onCycle                 : () => null
