@@ -1,6 +1,6 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
-import {GraphNode} from "../graph/GraphNode.js";
+import {GraphNode, ObservedBy, Observer} from "../graph/GraphNode.js";
 import {Calculable, ChronoAtom, Observable, Readable, Writable} from "./ChronoAtom.js";
 import {chronoId, ChronoId} from "./ChronoId.js";
 
@@ -55,7 +55,9 @@ export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
 
 
 // ChronoGraphNode with minimal dependencies, for type-checking purposes only
-export class GenericChronoGraphNode extends ChronoGraphNode(GraphNode(Observable(Calculable(Readable(Writable((ChronoAtom(Base)))))))) {
+export class MinimalChronoGraphNode extends ChronoGraphNode(
+    GraphNode(Observable(Observer(ObservedBy(Calculable(Readable(Writable((ChronoAtom(Base)))))))))
+) {
 
 }
 

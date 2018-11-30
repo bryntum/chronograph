@@ -1,4 +1,4 @@
-import {ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
+import {ChronoGraphNode, MinimalChronoGraphNode} from "../chrono/ChronoGraph.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
 import {Entity} from "./Schema.js";
 
@@ -13,7 +13,7 @@ export const ChronoObject = <T extends Constructable<ChronoGraphNode>>(base : T)
 
 
         initialize (...args) {
-            this.fields     = this.meta.generateNodes(this, GenericChronoGraphNode) as any
+            this.fields     = this.meta.generateNodes(this, MinimalChronoGraphNode) as any
 
             super.initialize(...args)
         }

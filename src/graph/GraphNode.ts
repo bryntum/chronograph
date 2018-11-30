@@ -10,44 +10,40 @@ export type GraphWalkContext    = {
 }
 
 
+
+//---------------------------------------------------------------------------------------------------------------------
 export const Observer = <T extends Constructable<Base>>(base : T) =>
 
 class Observer extends base {
     fromEdges           : Set<this>         = new Set()
+
+    getFromEdges () : Set<this> {
+        return this.fromEdges
+    }
 }
 
 export type Observer = Mixin<typeof Observer>
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export const ObservedBy = <T extends Constructable<Base>>(base : T) =>
-
-
 
 class ObservedBy extends base {
     toEdges             : Set<this>         = new Set()
+
+    getToEdges () : Set<this> {
+        return this.toEdges
+    }
 }
 
 export type ObservedBy = Mixin<typeof ObservedBy>
 
 
 
-export const GraphNode = <T extends Constructable<Base>>(base : T) =>
+//---------------------------------------------------------------------------------------------------------------------
+export const GraphNode = <T extends Constructable<Observer & ObservedBy>>(base : T) =>
 
 class GraphNode extends base {
-    // this 2 properties should also implement the "Traversable" interface ("for each")
-    fromEdges           : Set<this>         = new Set()
-    toEdges             : Set<this>         = new Set()
-
-
-    getFromEdges () : Set<this> {
-        return this.fromEdges
-    }
-
-
-    getToEdges () : Set<this> {
-        return this.toEdges
-    }
-
 
     hasEdgeTo(toNode : this) : boolean {
         return this.fromEdges.has(toNode)

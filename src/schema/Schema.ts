@@ -1,4 +1,4 @@
-import {ChronoGraphNode, GenericChronoGraphNode} from "../chrono/ChronoGraph.js";
+import {ChronoGraphNode, MinimalChronoGraphNode} from "../chrono/ChronoGraph.js";
 import {Base} from "../class/Mixin.js";
 import {ChronoObject} from "./Object.js";
 
@@ -13,7 +13,7 @@ export class Field extends Base {
     type                : Type
 
 
-    generateNodes (self : ChronoObject, cls : typeof GenericChronoGraphNode)  {
+    generateNodes (self : ChronoObject, cls : typeof MinimalChronoGraphNode)  {
         return cls.new()
     }
 }
@@ -34,7 +34,7 @@ export class Entity extends Base {
     }
 
 
-    generateNodes (self : ChronoObject, cls : typeof GenericChronoGraphNode) : ChronoGraphFieldsNamedCollection {
+    generateNodes (self : ChronoObject, cls : typeof MinimalChronoGraphNode) : ChronoGraphFieldsNamedCollection {
         let res     = {}
 
         this.fields.forEach((field, name : string) => res[ name ] = field.generateNodes(self, cls))
