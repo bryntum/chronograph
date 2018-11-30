@@ -1,8 +1,8 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Graph, GraphNode} from "../graph/Graph.js";
+import {Graph} from "../graph/Graph.js";
+import {GraphNode} from "../graph/GraphNode.js";
 import {Calculable, ChronoAtom, Observable, Readable, Writable} from "./ChronoAtom.js";
 import {chronoId, ChronoId} from "./ChronoId.js";
-import {GenericChronoMutationNode} from "./ChronoMutation.js";
 
 
 //
@@ -26,7 +26,7 @@ import {GenericChronoMutationNode} from "./ChronoMutation.js";
 //     }
 // this can quickly go wild, need to consult TS devs
 
-export const ChronoGraphNode = <T extends Constructable<ChronoAtom & Observable & GraphNode>>(base : T) => {
+export const ChronoGraphNode = <T extends Constructable<Observable & GraphNode>>(base : T) => {
 
     abstract class ChronoGraphNode extends base {
         id                  : ChronoId = chronoId()
@@ -64,7 +64,7 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
     abstract class ChronoGraphSnapshot extends base {
 
-        addNode (node : ChronoGraphNode) {
+        addNode (node : this) {
             if (node.graph.id > this.id) throw new Error("Can not reference future nodes, cyclic calculation?")
 
             super.addNode(node)
@@ -100,12 +100,14 @@ export const SynchronousGraphRunCore = <T extends Constructable<GraphNode & Calc
 
 class SynchronousGraphRunCore extends base {
 
+    plan
 
-    getFromEdges () : Set<this> {
-        const implicitEdgesfromItselfToAllNodes     = new Set<this>(<any>[ ...this.nodes ])
 
-        return new Set([ ...super.getFromEdges(), ...implicitEdgesfromItselfToAllNodes ])
-    }
+    // getFromEdges () : Set<this> {
+    //     const implicitEdgesfromItselfToAllNodes     = new Set<this>(<any>[ ...this.nodes ])
+    //
+    //     return new Set([ ...super.getFromEdges(), ...implicitEdgesfromItselfToAllNodes ])
+    // }
 
 
     runCalculation () {
@@ -114,15 +116,17 @@ class SynchronousGraphRunCore extends base {
 
         this.walkDepth({
             direction           : 'forward',
-            onTopologicalNode   : () => {
-                const mutationNode      = GenericChronoMutationNode.new({
+            onTopologicalNode   : (node : SynchronousGraphRunCore) => {
+                const mutationNode : this     = node.constructor.new({
 
                 })
 
                 newSnapshot.addNode(mutationNode)
 
                 mutationNode.runCalculation()
-            }
+            },
+            onNode                  : () => null,
+            onCycle                 : () => null
         })
     }
 }
