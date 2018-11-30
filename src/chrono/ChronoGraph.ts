@@ -63,7 +63,10 @@ export class MinimalChronoGraphNode extends ChronoGraphNode(
 }
 
 
+
 export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphNode>>(base : T) => {
+
+
 
     abstract class ChronoGraphSnapshot extends base {
 
@@ -111,11 +114,9 @@ class SynchronousGraphRunCore extends base {
 
         return new Set([ ...super.getFromEdges(), ...implicitEdgesfromItselfToMutations ])
     }
-
-
+    
     runCalculation () {
-
-        let newSnapshot : this        = this.constructor.new
+        let newSnapshot = this.class().new()
 
         this.walkDepth({
             direction           : 'forward',

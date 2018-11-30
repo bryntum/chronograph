@@ -1,13 +1,23 @@
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {GraphNode} from "./GraphNode.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
+import {Observer} from "./GraphNode.js";
 
 
-export const Graph = <T extends Constructable<GraphNode>>(base : T) =>
+//---------------------------------------------------------------------------------------------------------------------
+/*
+    A graph which is also a node - this is an Observer, that observes a set of ObservedBy nodes - whole graph
+
+    walking from such Observer will visit the whole graph
+
+    note, that graph itself is not observable by its nodes
+
+*/
+
+export const Graph = <T extends Constructable<Observer>>(base : T) =>
 
 class Graph extends base {
 
     hasNode (node : this) : boolean {
-        return this.toEdges.has(node)
+        return this.fromEdges.has(node)
     }
 
 
@@ -21,7 +31,7 @@ class Graph extends base {
         if (this.hasNode(node)) throw new Error("The node already exists")
         // </debug>
 
-        this.toEdges.add(node)
+        this.fromEdges.add(node)
     }
 
 
@@ -35,43 +45,9 @@ class Graph extends base {
         if (!this.hasNode(node)) throw new Error("The node does not exists")
         // </debug>
 
-        this.toEdges.delete(node)
+        this.fromEdges.delete(node)
     }
-
-
-    // hasEdge(fromNode : GraphNode, toNode : GraphNode) : boolean {
-    //     return fromNode.hasEdgeTo(toNode)
-    // }
-    //
-    //
-    // addEdge(fromNode : GraphNode, toNode : GraphNode) {
-    //     // <debug>
-    //     if (fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes already exists")
-    //     // </debug>
-    //
-    //     fromNode.addEdgeTo(toNode)
-    // }
-    //
-    //
-    // removeEdge(fromNode : GraphNode, toNode : GraphNode) {
-    //     // <debug>
-    //     if (!fromNode.hasEdgeTo(toNode)) throw new Error("The edge between `from` and `to` nodes does not exists")
-    //     // </debug>
-    //
-    //     fromNode.removeEdgeTo(toNode)
-    // }
-
 }
 
 export type Graph = Mixin<typeof Graph>
 
-
-export const ChronoGraphLayer = <T extends Constructable<Graph>>(base : T) =>
-
-class ChronoGraphLayer extends base {
-
-    previous            : ChronoGraphLayer
-
-}
-
-export type ChronoGraphLayer = Mixin<typeof ChronoGraphLayer>
