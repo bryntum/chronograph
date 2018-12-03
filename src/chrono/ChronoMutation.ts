@@ -1,7 +1,7 @@
+import {Observable} from "../chronograph/ChronoAtom.js";
 import {AnyFunction, Base, Constructable, Mixin} from "../class/Mixin.js";
-import {VersionedNode} from "../graph/GraphNode.js";
-import {Calculable, ChronoAtom, Observable, Readable} from "./ChronoAtom.js";
-import {MinimalChronoGraphNode} from "./ChronoGraph.js";
+import {Calculable, ChronoAtom, Readable} from "./ChronoAtom.js";
+import {MinimalChronoGraphNode} from "../chronograph/ChronoGraph.js";
 
 
 export type NamedInput      =  { [s : string] : ChronoAtom & Readable }

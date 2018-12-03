@@ -18,6 +18,7 @@
   },
   "devDependencies": {
     "@types/node": "^10.12.10",
+    "siesta-lite": "file:../siesta",
     "typescript": "^3.1.6"
   }
 }

@@ -1,9 +1,10 @@
+import {Observable} from "./ChronoAtom.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
-import {GraphNode, ObservedBy, Observer} from "../graph/GraphNode.js";
-import {Calculable, ChronoAtom, Observable, Readable, Writable} from "./ChronoAtom.js";
-import {chronoId, ChronoId} from "./ChronoId.js";
-import {ChronoMutationNode} from "./ChronoMutation.js";
+import {Node, ObservedBy, Observer} from "../graph/Node.js";
+import {Calculable, ChronoAtom, Readable, Writable} from "../chrono/ChronoAtom.js";
+import {chronoId, ChronoId} from "../chrono/ChronoId.js";
+import {ChronoMutationNode} from "../chrono/ChronoMutation.js";
 
 
 //
@@ -27,7 +28,7 @@ import {ChronoMutationNode} from "./ChronoMutation.js";
 //     }
 // this can quickly go wild, need to consult TS devs
 
-export const ChronoGraphNode = <T extends Constructable<Observable & GraphNode>>(base : T) => {
+export const ChronoGraphNode = <T extends Constructable<Observable & Node>>(base : T) => {
 
     abstract class ChronoGraphNode extends base {
         id                  : ChronoId = chronoId()
@@ -60,9 +61,9 @@ export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
 
 // ChronoGraphNode with minimal dependencies, for type-checking purposes only
 export class MinimalChronoGraphNode extends ChronoGraphNode(
-    GraphNode(Observable(Observer(ObservedBy(Calculable(Readable(Writable((ChronoAtom(Base)))))))))
+    Node(Observable(Observer(ObservedBy(Calculable(Readable(Writable((ChronoAtom(Base)))))))))
 ) {
-
+    runCalculation () {}
 }
 
 

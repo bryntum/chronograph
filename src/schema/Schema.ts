@@ -1,4 +1,4 @@
-import {ChronoGraphNode, MinimalChronoGraphNode} from "../chrono/ChronoGraph.js";
+import {ChronoGraphNode, MinimalChronoGraphNode} from "../chronograph/ChronoGraph.js";
 import {Base} from "../class/Mixin.js";
 import {ChronoObject} from "./Object.js";
 

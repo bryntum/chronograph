@@ -7,9 +7,9 @@
             "es2015",
             "es2016"
         ],
-        "module"                 : "ESNext",
-        "moduleResolution"      : "Node",
-        "baseUrl": "."
+        "module"                : "ESNext",
+        "moduleResolution"      : "Node"
+//        "baseUrl": "."
 //        "plugins": [
 //            { "transform" : "ts-transformer-imports" }
 //        ]

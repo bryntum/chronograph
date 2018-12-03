@@ -6,9 +6,9 @@ import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 export type GraphWalkContext    = {
     direction               : 'forward' | 'backward'
 
-    onNode                  : (node : GraphNode) => any,
-    onTopologicalNode       : (node : GraphNode) => any
-    onCycle                 : (node : GraphNode) => any,
+    onNode                  : (node : Node) => any,
+    onTopologicalNode       : (node : Node) => any
+    onCycle                 : (node : Node) => any,
 }
 
 
@@ -43,9 +43,9 @@ export type ObservedBy = Mixin<typeof ObservedBy>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const GraphNode = <T extends Constructable<Observer & ObservedBy>>(base : T) =>
+export const Node = <T extends Constructable<Observer & ObservedBy>>(base : T) =>
 
-class GraphNode extends base {
+class Node extends base {
 
     hasEdgeTo(toNode : this) : boolean {
         return this.fromEdges.has(toNode)
@@ -142,11 +142,11 @@ class GraphNode extends base {
     }
 }
 
-export type GraphNode = Mixin<typeof GraphNode>
+export type Node = Mixin<typeof Node>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const VersionedNode = <T extends Constructable<GraphNode & ChronoAtom>>(base : T) => {
+export const VersionedNode = <T extends Constructable<Node & ChronoAtom>>(base : T) => {
 
     abstract class VersionedNode extends base {
         version             : ChronoId = chronoId()

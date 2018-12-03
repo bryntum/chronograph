@@ -1,5 +1,5 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {GraphNode} from "../graph/GraphNode.js";
+import {Node, ObservedBy} from "../graph/Node.js";
 import {chronoId, ChronoId} from "./ChronoId.js";
 
 
@@ -77,54 +77,3 @@ export const Calculable = <T extends Constructable<Base>>(base : T) => {
 
 export type Calculable = Mixin<typeof Calculable>
 
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export type ComparatorFn<T> = (a : T, b : T) => number
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const Observable = <T extends Constructable<ChronoAtom & Readable & Writable & Calculable>>(base : T) => {
-
-    abstract class Observable extends base {
-
-        valuesComparator        : ComparatorFn<ChronoValue>
-
-
-        set (value : ChronoValue) {
-
-            if (this.valuesComparator(this.value, value) !== 0) {
-                super.set(value)
-
-                return this.runCalculation()
-            }
-
-            return this
-        }
-    }
-
-    return Observable
-}
-
-export type Observable = Mixin<typeof Observable>
-
-
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export const TraceableRead = <T extends Constructable<ChronoAtom & Readable>>(base : T) => {
-//
-//     abstract class TraceableRead extends base {
-//         get ()              : ChronoValue {
-//             this.traceRead()
-//
-//             return super.get()
-//         }
-//
-//         abstract traceRead ()
-//     }
-//
-//     return TraceableRead
-// }
-//
-// export type TraceableRead = Mixin<typeof TraceableRead>

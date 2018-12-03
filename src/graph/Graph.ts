@@ -1,5 +1,5 @@
 import {Constructable, Mixin} from "../class/Mixin.js";
-import {Observer} from "./GraphNode.js";
+import {Observer} from "./Node.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
