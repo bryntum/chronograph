@@ -1,5 +1,4 @@
-import {ChronoAtom, ChronoValue} from "../chrono/ChronoAtom.js";
-import {chronoId, ChronoId} from "../chrono/ChronoId.js";
+import {VersionedNode} from "../chronograph/Node.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 
 
@@ -145,25 +144,3 @@ class Node extends base {
 export type Node = Mixin<typeof Node>
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export const VersionedNode = <T extends Constructable<Node & ChronoAtom>>(base : T) => {
-
-    abstract class VersionedNode extends base {
-        version             : ChronoId = chronoId()
-
-        // can not add edge from `previous`
-        previous            : ObservedBy
-
-
-        bump (value : ChronoValue) : this {
-            const cls   = <VersionedNodeConstructor>(this.constructor as any)
-
-            return cls.new({ value : value, previous : this }) as this
-        }
-    }
-
-    return VersionedNode
-}
-
-export type VersionedNode               = Mixin<typeof VersionedNode>
-export type VersionedNodeConstructor    = MixinConstructor<typeof VersionedNode>

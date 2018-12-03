@@ -1,10 +1,9 @@
-import {Observable} from "./ChronoAtom.js";
+import {Calculable, Atom, Readable, Writable} from "../chrono/Atom.js";
+import {ChronoMutationNode} from "./Node.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
-import {Calculable, ChronoAtom, Readable, Writable} from "../chrono/ChronoAtom.js";
-import {chronoId, ChronoId} from "../chrono/ChronoId.js";
-import {ChronoMutationNode} from "../chrono/ChronoMutation.js";
+import {ChronoGraphNode, Observable} from "./Node.js";
 
 
 //
@@ -27,44 +26,6 @@ import {ChronoMutationNode} from "../chrono/ChronoMutation.js";
 //         }
 //     }
 // this can quickly go wild, need to consult TS devs
-
-export const ChronoGraphNode = <T extends Constructable<Observable & Node>>(base : T) => {
-
-    abstract class ChronoGraphNode extends base {
-        id                  : ChronoId = chronoId()
-
-        // this reference may introduce additional workload for garbage collector
-        // figure out if it can be removed (in this case, the node has access to the graph only
-        // inside the `joinGraph` and `unjoinGraph` methods, which should be enough
-        graph               : ChronoGraphNode
-
-
-        joinGraph (graph : this['graph']) {
-            if (this.graph) {
-                this.unjoinGraph()
-            }
-
-            this.graph  = graph
-        }
-
-
-        unjoinGraph () {
-            delete this.graph
-        }
-    }
-
-    return ChronoGraphNode
-}
-
-export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
-
-
-// ChronoGraphNode with minimal dependencies, for type-checking purposes only
-export class MinimalChronoGraphNode extends ChronoGraphNode(
-    Node(Observable(Observer(ObservedBy(Calculable(Readable(Writable((ChronoAtom(Base)))))))))
-) {
-    runCalculation () {}
-}
 
 
 
@@ -130,7 +91,7 @@ class SynchronousGraphRunCore extends base {
 
         this.walkDepth({
             direction           : 'forward',
-            onTopologicalNode   : (node : ChronoMutationNode) => {
+            onTopologicalNode   : (node : Node) => {
                 // const mutationNode : this     = node.constructor.new({
                 //
                 // })

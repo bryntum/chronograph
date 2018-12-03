@@ -15,6 +15,7 @@ import {Observer} from "./Node.js";
 export const Graph = <T extends Constructable<Observer>>(base : T) =>
 
 class Graph extends base {
+    // graph extends the observer and thus, observers all its nodes through the "fromEdges" collection
 
     hasNode (node : this) : boolean {
         return this.fromEdges.has(node)

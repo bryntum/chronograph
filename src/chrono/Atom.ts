@@ -20,9 +20,9 @@ import {chronoId, ChronoId} from "./ChronoId.js";
 
 export type ChronoValue         = unknown
 
-export const ChronoAtom = <T extends Constructable<Base>>(base : T) =>
+export const Atom = <T extends Constructable<Base>>(base : T) =>
 
-class ChronoAtom extends base {
+class Atom extends base {
     value               : ChronoValue
 
 
@@ -31,11 +31,11 @@ class ChronoAtom extends base {
     }
 }
 
-export type ChronoAtom = Mixin<typeof ChronoAtom>
+export type Atom = Mixin<typeof Atom>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Readable = <T extends Constructable<ChronoAtom>>(base : T) =>
+export const Readable = <T extends Constructable<Atom>>(base : T) =>
 
 class Readable extends base {
     get ()              : ChronoValue {
@@ -46,8 +46,9 @@ class Readable extends base {
 export type Readable = Mixin<typeof Readable>
 
 
+
 //---------------------------------------------------------------------------------------------------------------------
-export const Writable = <T extends Constructable<ChronoAtom>>(base : T) =>
+export const Writable = <T extends Constructable<Atom>>(base : T) =>
 
 class Writable extends base {
     set (value : ChronoValue) : void {
@@ -77,3 +78,7 @@ export const Calculable = <T extends Constructable<Base>>(base : T) => {
 
 export type Calculable = Mixin<typeof Calculable>
 
+
+
+
+export const MinimalRWAtom = Writable(Readable(Atom(Base)))
