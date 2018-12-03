@@ -51,8 +51,12 @@ export type Readable = Mixin<typeof Readable>
 export const Writable = <T extends Constructable<Atom>>(base : T) =>
 
 class Writable extends base {
-    set (value : ChronoValue) : void {
+    set (value : ChronoValue) : this {
+        if (this.hasValue()) throw new Error("Can't mutate value")
+
         this.value  = value
+
+        return this
     }
 }
 

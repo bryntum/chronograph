@@ -56,7 +56,7 @@ export const PureChronoCalculation = <T extends Constructable<Calculable & Mutat
 
             const result    = Array.isArray(values) ? this.calculation.apply(this, values) : this.calculation(values)
 
-            this.as.forEach(atom => atom.set(result))
+            return this.as.map(atom => atom.set(result))
         }
     }
 

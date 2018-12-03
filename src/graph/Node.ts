@@ -1,5 +1,4 @@
-import {VersionedNode} from "../chronograph/Node.js";
-import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {Base, Constructable, Mixin} from "../class/Mixin.js";
 
 
 export type GraphWalkContext    = {
@@ -58,24 +57,24 @@ class Node extends base {
 
     addEdgeTo(toNode : this) {
         this.fromEdges.add(toNode)
-        toNode.toEdges.add(this)
+        // toNode.toEdges.add(this)
     }
 
 
     addEdgeFrom(fromNode : this) {
-        fromNode.fromEdges.add(this)
+        // fromNode.fromEdges.add(this)
         this.toEdges.add(fromNode)
     }
 
 
     removeEdgeTo(toNode : this) {
         this.fromEdges.delete(toNode)
-        toNode.toEdges.delete(this)
+        // toNode.toEdges.delete(this)
     }
 
 
     removeEdgeFrom(fromNode : this) {
-        fromNode.fromEdges.delete(this)
+        // fromNode.fromEdges.delete(this)
         this.toEdges.delete(fromNode)
     }
 

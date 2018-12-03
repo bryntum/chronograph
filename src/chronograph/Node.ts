@@ -6,22 +6,34 @@ import {Node, ObservedBy, Observer} from "../graph/Node.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Box = <T extends Constructable<Node & Atom>>(base: T) => {
+export const CanBeReferenced = <T extends Constructable<Atom>>(base: T) => {
 
-    abstract class Box extends base {
+    abstract class CanBeReferenced extends base {
         id          : ChronoId = chronoId()
     }
 
-    return Box
+    return CanBeReferenced
 }
-export type Box = Mixin<typeof Box>
+export type CanBeReferenced = Mixin<typeof CanBeReferenced>
 
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Reference = <T extends Constructable<Atom>>(base: T) => {
+
+    abstract class Reference extends base {
+        value       : Atom
+    }
+
+    return Reference
+}
+export type Reference = Mixin<typeof Reference>
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type VersionedNodeConstructor    = MixinConstructor<typeof VersionedNode>
 
-export const VersionedNode = <T extends Constructable<Node & Atom>>(base: T) => {
+export const VersionedNode = <T extends Constructable<Node & Writable & CanBeReferenced>>(base: T) => {
 
     abstract class VersionedNode extends base {
         version         : ChronoId = chronoId()
@@ -30,10 +42,22 @@ export const VersionedNode = <T extends Constructable<Node & Atom>>(base: T) => 
         previous        : Node & Atom
 
 
-        bump(value: ChronoValue): this {
-            const cls = <VersionedNodeConstructor>(this.constructor as any)
+        set (value : ChronoValue) : this {
+            if (this.hasValue()) {
+                return this.bump(value)
+            } else {
+                return super.set(value)
+            }
+        }
 
-            return cls.new({value: value, previous: this}) as this
+
+        abstract getNextVersion () : ChronoId
+
+
+        bump (value: ChronoValue) : this {
+            const cls       = <VersionedNodeConstructor>(this.constructor as any)
+
+            return cls.new({ id : this.id, version : this.getNextVersion(), previous : this, value : value }) as this
         }
     }
 
@@ -44,18 +68,19 @@ export type VersionedNode = Mixin<typeof VersionedNode>
 
 
 
-export const ChronoGraphNode = <T extends Constructable<Box & VersionedNode>>(base: T) => {
+export const ChronoGraphNode = <T extends Constructable<CanBeReferenced & VersionedNode>>(base: T) => {
 
     abstract class ChronoGraphNode extends base {
-        id          : ChronoId = chronoId()
 
-        // this reference may introduce additional workload for garbage collector
-        // figure out if it can be removed (in this case, the node has access to the graph only
-        // inside the `joinGraph` and `unjoinGraph` methods, which should be enough
         graph       : ChronoGraphNode
 
 
-        joinGraph(graph: this['graph']) {
+        getNextVersion () : ChronoId {
+            return this.graph.version
+        }
+
+
+        joinGraph(graph : this['graph']) {
             if (this.graph) {
                 this.unjoinGraph()
             }
@@ -71,12 +96,13 @@ export const ChronoGraphNode = <T extends Constructable<Box & VersionedNode>>(ba
 
     return ChronoGraphNode
 }
+
 export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
 
 
 // ChronoGraphNode with minimal dependencies, for type-checking purposes only
 export class MinimalChronoGraphNode extends ChronoGraphNode(
-    Node(VersionedNode(Box(Node(Observer(ObservedBy(Readable(Writable(Atom(Base)))))))))
+    Node(VersionedNode(CanBeReferenced(Node(Observer(ObservedBy(Readable(Writable(Atom(Base)))))))))
 ) {
     // runCalculation () {}
 }
