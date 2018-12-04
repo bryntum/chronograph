@@ -1,4 +1,4 @@
-import {Calculable, Atom, ChronoValue, Readable, Writable} from "../chrono/Atom.js";
+import {Calculable, Atom, ChronoValue, Readable, Writable, Immutable, MinimalRWAtom} from "../chrono/Atom.js";
 import {chronoId, ChronoId} from "../chrono/ChronoId.js";
 import {MutationData, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
@@ -18,7 +18,7 @@ export type HasId = Mixin<typeof HasId>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Reference = <T extends Constructable<Atom>>(base: T) =>
+export const Reference = <T extends Constructable<Writable & Atom>>(base: T) =>
 
 class Reference extends base {
     value       : Atom & Readable
@@ -30,11 +30,12 @@ export type Reference = Mixin<typeof Reference>
 //---------------------------------------------------------------------------------------------------------------------
 export type VersionedNodeConstructor    = MixinConstructor<typeof VersionedNode>
 
-export const VersionedNode = <T extends Constructable<Node & Readable & Writable & HasId>>(base: T) => {
+export const VersionedNode = <T extends Constructable<Node & Readable & Writable & Immutable & HasId>>(base: T) => {
 
     abstract class VersionedNode extends base {
         version         : ChronoId = chronoId()
 
+        // immutable
         // can not add edge from `previous`
         previous        : Node & Atom & Readable
 
@@ -54,7 +55,13 @@ export const VersionedNode = <T extends Constructable<Node & Readable & Writable
         bump (value: ChronoValue) : this {
             const cls       = <VersionedNodeConstructor>(this.constructor as any)
 
-            return cls.new({ id : this.id, version : this.getNextVersion(), previous : this, value : value }) as this
+            return cls.new({
+                id              : this.id,
+                version         : this.getNextVersion(),
+                previous        : this,
+                value           : value,
+                get             : MinimalRWAtom.prototype.get
+            }) as this
         }
     }
 
@@ -63,19 +70,23 @@ export const VersionedNode = <T extends Constructable<Node & Readable & Writable
 export type VersionedNode = Mixin<typeof VersionedNode>
 
 
-
 //---------------------------------------------------------------------------------------------------------------------
-export const VersionedReference = <T extends Constructable<Reference & VersionedNode>>(base: T) => {
+export const VersionedReference = <T extends Constructable<Reference & HasId>>(base: T) => {
 
     abstract class VersionedReference extends base {
 
+        cls         : VersionedNodeConstructor
+
+        // mutable
         previous    : VersionedNode
+        // mutable
         value       : VersionedNode
 
 
         get () {
-            return this.value ? this.value.get() : undefined
+            return this.value ? MinimalRWAtom.prototype.get.call(this.value) : undefined
         }
+
 
         set (value : ChronoValue) : this {
             if (this.hasValue()) {
@@ -83,17 +94,25 @@ export const VersionedReference = <T extends Constructable<Reference & Versioned
 
                 const nextNode              = referencedNode.bump(value)
 
-                return super.set(nextNode)
+                this.previous               = referencedNode
+
+                return MinimalRWAtom.prototype.set.call(this, nextNode)
             } else {
-                return super.set(this.bump(value))
+                return MinimalRWAtom.prototype.set.call(this, this.bumpEmpty(value))
             }
         }
 
-        // bump (value: ChronoValue) : this {
-        //     const cls       = <VersionedNodeConstructor>(this.constructor as any)
-        //
-        //     return cls.new({ id : this.id, version : this.getNextVersion(), previous : this, value : value }) as this
-        // }
+
+        bumpEmpty (value: ChronoValue) : VersionedNode {
+            const cls       = <VersionedNodeConstructor>(this.cls || this.constructor as any)
+
+            return cls.new({
+                id              : this.id,
+                previous        : null,
+                value           : value,
+                get             : MinimalRWAtom.prototype.get
+            })
+        }
 
     }
 
@@ -104,15 +123,16 @@ export type VersionedReference = Mixin<typeof VersionedReference>
 
 
 
-export const ChronoGraphNode = <T extends Constructable<Graph & HasId & VersionedReference & Readable>>(base: T) => {
+export const ChronoGraphNode = <T extends Constructable<Graph & HasId & VersionedNode & Readable>>(base: T) => {
 
     abstract class ChronoGraphNode extends base {
+        cls         : ChronoGraphNode
 
         graph       : ChronoGraphNode
 
 
         getNextVersion () : ChronoId {
-            return this.graph.version
+            return this.graph ? this.graph.version : chronoId()
         }
 
 

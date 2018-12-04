@@ -50,8 +50,6 @@ export const Writable = <T extends Constructable<Atom>>(base : T) =>
 
 class Writable extends base {
     set (value : ChronoValue) : this {
-        if (this.hasValue()) throw new Error("Can't mutate value")
-
         this.value  = value
 
         return this
@@ -59,6 +57,21 @@ class Writable extends base {
 }
 
 export type Writable = Mixin<typeof Writable>
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Immutable = <T extends Constructable<Writable>>(base : T) =>
+
+class Immutable extends base {
+    set (value : ChronoValue) : this {
+        if (this.hasValue()) throw new Error("Can't mutate value")
+
+        return super.set(value)
+    }
+}
+
+export type Immutable = Mixin<typeof Immutable>
+
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -26,7 +26,27 @@ StartTest(t => {
     })
 
 
-    t.it('Minimal mutation in graph context', t => {
+    t.it('Minimal reference mutation', t => {
+        const node      = MinimalChronoGraphNode.new()
+
+        t.is(node.hasValue(), false, 'No value initially provided')
+        t.is(node.get(), undefined, 'No value initially provided')
+
+        node.set(1)
+
+        t.is(node.hasValue(), true, 'Can set value')
+        t.is(node.get(), 1, 'Can set value')
+
+        node.set(2)
+
+        t.is(node.get(), 2, 'Can update value')
+        t.is(node.previous.get(), 1, 'Can track the old value')
+
+    })
+
+
+
+    t.xit('Minimal mutation in graph context', t => {
         const graph : ChronoGraphSnapshot   = MinimalChronoGraphSnapshot.new()
 
         const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 1 }))

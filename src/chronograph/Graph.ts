@@ -58,16 +58,17 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
         }
 
 
-        propagate () : ChronoGraphSnapshot {
-
-
-            this.mutations.forEach(mutation => {
-                const newLayerAtoms     = mutation.runCalculation()
-
-                this.addNodes(newLayerAtoms)
-            })
-
+        propagate () : this {
             return
+            // const newLayer      = this.bump()
+            //
+            // this.mutations.forEach(mutation => {
+            //     const newLayerAtoms     = mutation.runCalculation()
+            //
+            //     newLayer.addNodes(newLayerAtoms)
+            // })
+            //
+            // return this.set(newLayer)
         }
     }
 
