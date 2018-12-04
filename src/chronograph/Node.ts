@@ -131,6 +131,11 @@ export const ChronoGraphNode = <T extends Constructable<Graph & HasId & Versione
         graph       : ChronoGraphNode
 
 
+        // getFromEdges(): Set<this> {
+        //     return new Set<this>([ <any>this.graph ])
+        // }
+
+
         getNextVersion () : ChronoId {
             return this.graph ? this.graph.getNextVersion() : chronoId()
         }
@@ -239,20 +244,23 @@ export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNod
 
 
         unjoinGraph() {
-            // this.input.map(x => x.joinGraph(x))
         }
 
-        // getFromEdges(): Set<this> {
-        //     const res = []
-        //
-        //     this.mapInput(x => res.push(x))
-        //
-        //     return new Set<this>([...res])
-        // }
-        //
-        // getToEdges(): Set<this> {
-        //     return new Set<this>([...<any>(this.as)])
-        // }
+
+        // TODO cache
+        getToEdges(): Set<this> {
+            const res = []
+
+            this.mapInput(x => res.push(x))
+
+            return new Set<this>([...res])
+        }
+
+
+        // TODO cache
+        getFromEdges(): Set<this> {
+            return new Set<this>([...<any>(this.as)])
+        }
     }
 
     return ChronoMutationNode

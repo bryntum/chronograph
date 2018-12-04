@@ -1,5 +1,5 @@
 import {Constructable, Mixin} from "../class/Mixin.js";
-import {Node, Observer} from "./Node.js";
+import {Node, ObservedBy, Observer} from "./Node.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -12,18 +12,18 @@ import {Node, Observer} from "./Node.js";
 
 */
 
-export const Graph = <T extends Constructable<Observer>>(base : T) =>
+export const Graph = <T extends Constructable<ObservedBy>>(base : T) =>
 
 // graph extends the observer and thus, observers all its nodes through the "fromEdges" collection
 class Graph extends base {
 
     getNodes () : Set<Node> {
-        return <any>this.fromEdges
+        return <any>this.toEdges
     }
 
 
     hasNode (node : Node) : boolean {
-        return this.fromEdges.has(<any>node)
+        return this.toEdges.has(<any>node)
     }
 
 
@@ -37,7 +37,7 @@ class Graph extends base {
         if (this.hasNode(node)) throw new Error("The node already exists")
         // </debug>
 
-        this.fromEdges.add(<any>node)
+        this.toEdges.add(<any>node)
 
         return node
     }
@@ -53,7 +53,7 @@ class Graph extends base {
         if (!this.hasNode(node)) throw new Error("The node does not exists")
         // </debug>
 
-        this.fromEdges.delete(<any>node)
+        this.toEdges.delete(<any>node)
     }
 }
 

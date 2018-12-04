@@ -4,7 +4,7 @@ import {ChronoCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
-import {ChronoGraphNode, ChronoMutationNode, HasId, Reference, VersionedNode, VersionedReference} from "./Node.js";
+import {ChronoGraphNode, ChronoMutationNode, HasId, MinimalChronoMutationNode, Reference, VersionedNode, VersionedReference} from "./Node.js";
 
 
 //
@@ -59,6 +59,7 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
             return <any>res
         }
 
+
         removeNode (node : ChronoGraphNode) {
             node.unjoinGraph()
 
@@ -74,11 +75,31 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
         propagate () : this {
             const candidate         = this.getCandidate()
 
-            candidate.mutations.forEach(mutation => {
-                const newLayerAtoms     = mutation.runCalculation()
+            // const topo
 
-                candidate.addNodes(newLayerAtoms)
+            candidate.walkDepth({
+                direction               : 'backward',
+
+                onNode                  : () => null,
+                onCycle                 : () => null,
+
+                onTopologicalNode       : (node : ChronoGraphNode) => {
+                    if (node instanceof MinimalChronoMutationNode) {
+                        const newLayerAtoms     = node.runCalculation()
+
+                        candidate.addNodes(newLayerAtoms)
+                    }
+                }
             })
+
+            this.commit()
+
+            return this
+        }
+
+
+        commit () {
+            const candidate         = this.getCandidate()
 
             if (candidate.getNodes().size > 0) {
                 this.candidate      = null
@@ -87,6 +108,11 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
             }
 
             return this
+        }
+
+
+        reject () {
+            this.candidate          = null
         }
 
 
