@@ -21,7 +21,7 @@ export type HasId = Mixin<typeof HasId>
 export const Reference = <T extends Constructable<Atom>>(base: T) =>
 
 class Reference extends base {
-    value       : Atom
+    value       : Atom & Readable
 }
 
 export type Reference = Mixin<typeof Reference>
@@ -30,13 +30,13 @@ export type Reference = Mixin<typeof Reference>
 //---------------------------------------------------------------------------------------------------------------------
 export type VersionedNodeConstructor    = MixinConstructor<typeof VersionedNode>
 
-export const VersionedNode = <T extends Constructable<Node & Writable & HasId>>(base: T) => {
+export const VersionedNode = <T extends Constructable<Node & Readable & Writable & HasId>>(base: T) => {
 
     abstract class VersionedNode extends base {
         version         : ChronoId = chronoId()
 
         // can not add edge from `previous`
-        previous        : Node & Atom
+        previous        : Node & Atom & Readable
 
 
         set (value : ChronoValue) : this {
@@ -62,6 +62,38 @@ export const VersionedNode = <T extends Constructable<Node & Writable & HasId>>(
 }
 export type VersionedNode = Mixin<typeof VersionedNode>
 
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const VersionedReference = <T extends Constructable<Reference & VersionedNode>>(base: T) => {
+
+    abstract class VersionedReference extends base {
+
+        previous    : VersionedNode
+        value       : VersionedNode
+
+
+        get () {
+            return this.value ? this.value.get() : undefined
+        }
+
+        set (value : ChronoValue) : this {
+            if (this.hasValue()) {
+                const referencedNode        = this.value
+
+                const nextValue             = referencedNode.bump(value)
+
+                return super.set(this.bump(value))
+            } else {
+                return super.set(value)
+            }
+        }
+    }
+
+    return VersionedReference
+}
+
+export type VersionedReference = Mixin<typeof VersionedReference>
 
 
 
