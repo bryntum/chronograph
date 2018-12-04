@@ -1,4 +1,4 @@
-import {Calculable, Atom, ChronoValue, Readable, Writable, Immutable, MinimalRWAtom} from "../chrono/Atom.js";
+import {Atom, Calculable, ChronoValue, Immutable, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
 import {chronoId, ChronoId} from "../chrono/ChronoId.js";
 import {MutationData, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
@@ -37,7 +37,7 @@ export const VersionedNode = <T extends Constructable<Node & Readable & Writable
 
         // immutable
         // can not add edge from `previous`
-        previous        : Node & Atom & Readable
+        previous        : VersionedNode
 
 
         // set (value : ChronoValue) : this {

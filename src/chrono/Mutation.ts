@@ -1,6 +1,6 @@
 import {ChronoGraphNode} from "../chronograph/Node.js";
 import {AnyFunction, Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Calculable, Atom, Readable, Writable, ChronoValue} from "./Atom.js";
+import {Atom, Calculable, ChronoValue, Readable, Writable} from "./Atom.js";
 
 
 export type NamedInput      =  { [s : string] : Atom & Readable }

@@ -1,9 +1,9 @@
-import {Atom, Readable, Writable} from "../chrono/Atom.js";
-import {ChronoCalculation, PureCalculation} from "../chrono/Mutation.js";
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Atom, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
+import {ChronoCalculation} from "../chrono/Mutation.js";
+import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
-import {HasId, ChronoGraphNode, VersionedNode, VersionedReference, Reference} from "./Node.js";
+import {ChronoGraphNode, HasId, Reference, VersionedNode, VersionedReference} from "./Node.js";
 
 
 //
@@ -27,7 +27,7 @@ import {HasId, ChronoGraphNode, VersionedNode, VersionedReference, Reference} fr
 //     }
 // this can quickly go wild, need to consult TS devs
 
-
+export type ChronoGraphSnapshotConstructor  = MixinConstructor<typeof ChronoGraphSnapshot>
 
 export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphNode>>(base : T) => {
 
@@ -59,17 +59,27 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
 
         propagate () : this {
-            return
-            // const newLayer      = this.bump()
-            //
-            // this.mutations.forEach(mutation => {
-            //     const newLayerAtoms     = mutation.runCalculation()
-            //
-            //     newLayer.addNodes(newLayerAtoms)
-            // })
-            //
-            // return this.set(newLayer)
+            const newLayer      = this.bump()
+
+            this.mutations.forEach(mutation => {
+                const newLayerAtoms     = mutation.runCalculation()
+
+                newLayer.addNodes(newLayerAtoms)
+            })
+
+            return MinimalRWAtom.prototype.set.call(this, newLayer)
         }
+
+
+        bump () : this {
+            const cls       = <ChronoGraphSnapshotConstructor>(this.constructor as any)
+
+            return cls.new({
+                id              : this.id,
+                previous        : this
+            }) as this
+        }
+
     }
 
     return ChronoGraphSnapshot
