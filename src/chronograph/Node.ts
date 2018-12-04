@@ -1,6 +1,6 @@
 import {Atom, Calculable, ChronoValue, Immutable, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
 import {chronoId, ChronoId} from "../chrono/ChronoId.js";
-import {MutationData, PureCalculation} from "../chrono/Mutation.js";
+import {ChronoCalculation, MutationData, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
@@ -222,21 +222,37 @@ export const UserInput = new MinimalObservable()
 
 
 
-export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNode & MutationData & PureCalculation>>(base: T) => {
+export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNode & ChronoCalculation>>(base: T) => {
 
     abstract class ChronoMutationNode extends base {
 
-        getFromEdges(): Set<this> {
-            const res = []
+        input               : ChronoGraphNode[]
+        as                  : ChronoGraphNode[]
 
-            this.mapInput(x => res.push(x))
 
-            return new Set<this>([...res])
+        joinGraph(graph : this['graph']) {
+            super.joinGraph(graph)
+
+            this.input.map(x => x.joinGraph(x))
+            this.as.map(x => x.joinGraph(x))
         }
 
-        getToEdges(): Set<this> {
-            return new Set<this>([...<any>(this.as)])
+
+        unjoinGraph() {
+            // this.input.map(x => x.joinGraph(x))
         }
+
+        // getFromEdges(): Set<this> {
+        //     const res = []
+        //
+        //     this.mapInput(x => res.push(x))
+        //
+        //     return new Set<this>([...res])
+        // }
+        //
+        // getToEdges(): Set<this> {
+        //     return new Set<this>([...<any>(this.as)])
+        // }
     }
 
     return ChronoMutationNode
@@ -244,27 +260,27 @@ export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNod
 export type ChronoMutationNode = Mixin<typeof ChronoMutationNode>
 
 
-export const GenericChronoMutationNode  = MutationData(Calculable(MinimalChronoGraphNode))
+export const MinimalChronoMutationNode  = ChronoMutationNode(ChronoCalculation(PureCalculation(MutationData(Calculable(MinimalChronoGraphNode)))))
 
 
 
-
-//---------------------------------------------------------------------------------------------------------------------
-export const GraphNode2 = <T extends Constructable<Base>>(base: T) => {
-
-    class GraphNode2 extends base {
-        values          : (Atom & Readable)[]
-
-        get () {
-            return this.values[ this.values.length - 1 ].get()
-        }
-
-        set () {
-            return this.values[ this.values.length - 1 ].get()
-        }
-
-    }
-
-    return GraphNode2
-}
-export type GraphNode2 = Mixin<typeof GraphNode2>
+//
+// //---------------------------------------------------------------------------------------------------------------------
+// export const GraphNode2 = <T extends Constructable<Base>>(base: T) => {
+//
+//     class GraphNode2 extends base {
+//         values          : (Atom & Readable)[]
+//
+//         get () {
+//             return this.values[ this.values.length - 1 ].get()
+//         }
+//
+//         set () {
+//             return this.values[ this.values.length - 1 ].get()
+//         }
+//
+//     }
+//
+//     return GraphNode2
+// }
+// export type GraphNode2 = Mixin<typeof GraphNode2>

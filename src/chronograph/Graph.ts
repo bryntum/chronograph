@@ -4,7 +4,7 @@ import {ChronoCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
-import {ChronoGraphNode, HasId, Reference, VersionedNode, VersionedReference} from "./Node.js";
+import {ChronoGraphNode, ChronoMutationNode, HasId, Reference, VersionedNode, VersionedReference} from "./Node.js";
 
 
 //
@@ -34,7 +34,7 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
     abstract class ChronoGraphSnapshot extends base {
 
-        mutations       : ChronoCalculation[]     = []
+        mutations       : ChronoMutationNode[]     = []
 
         candidate       : this
 
@@ -66,7 +66,7 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
         }
 
 
-        addMutation (mutation : ChronoCalculation) {
+        addMutation (mutation : ChronoMutationNode) {
             this.getCandidate().mutations.push(mutation)
         }
 
