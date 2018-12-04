@@ -29,8 +29,8 @@ StartTest(t => {
     t.it('Minimal mutation in graph context', t => {
         const graph : ChronoGraphSnapshot   = MinimalChronoGraphSnapshot.new()
 
-        const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 1, value : 0 }))
-        const node2 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 2, value : 1 }))
+        const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 1 }))
+        const node2 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 2 }))
 
         const resultNode : ChronoGraphNode  = graph.addNode(MinimalChronoGraphNode.new({ id : 3 }))
 
@@ -42,6 +42,9 @@ StartTest(t => {
         })
 
         graph.addMutation(mutation)
+
+        node1.set(0)
+        node2.set(1)
 
         graph.propagate()
 

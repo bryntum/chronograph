@@ -39,13 +39,13 @@ export const VersionedNode = <T extends Constructable<Node & Readable & Writable
         previous        : Node & Atom & Readable
 
 
-        set (value : ChronoValue) : this {
-            if (this.hasValue()) {
-                return this.bump(value)
-            } else {
-                return super.set(value)
-            }
-        }
+        // set (value : ChronoValue) : this {
+        //     if (this.hasValue()) {
+        //         return this.bump(value)
+        //     } else {
+        //         return super.set(value)
+        //     }
+        // }
 
 
         abstract getNextVersion () : ChronoId
@@ -81,13 +81,20 @@ export const VersionedReference = <T extends Constructable<Reference & Versioned
             if (this.hasValue()) {
                 const referencedNode        = this.value
 
-                const nextValue             = referencedNode.bump(value)
+                const nextNode              = referencedNode.bump(value)
 
-                return super.set(this.bump(value))
+                return super.set(nextNode)
             } else {
-                return super.set(value)
+                return super.set(this.bump(value))
             }
         }
+
+        // bump (value: ChronoValue) : this {
+        //     const cls       = <VersionedNodeConstructor>(this.constructor as any)
+        //
+        //     return cls.new({ id : this.id, version : this.getNextVersion(), previous : this, value : value }) as this
+        // }
+
     }
 
     return VersionedReference
@@ -97,7 +104,7 @@ export type VersionedReference = Mixin<typeof VersionedReference>
 
 
 
-export const ChronoGraphNode = <T extends Constructable<Graph & HasId & VersionedNode & Readable>>(base: T) => {
+export const ChronoGraphNode = <T extends Constructable<Graph & HasId & VersionedReference & Readable>>(base: T) => {
 
     abstract class ChronoGraphNode extends base {
 
@@ -130,7 +137,7 @@ export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
 
 
 export class MinimalChronoGraphNode extends ChronoGraphNode(
-    Graph(Node(VersionedNode(HasId(Node(Observer(ObservedBy(Readable(Writable(Atom(Base))))))))))
+    Graph(Node(VersionedReference(Reference(VersionedNode(HasId(Node(Observer(ObservedBy(Readable(Writable(Atom(Base))))))))))))
 ) {
 }
 
