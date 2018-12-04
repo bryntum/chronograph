@@ -1,5 +1,5 @@
 import {Constructable, Mixin} from "../class/Mixin.js";
-import {Observer} from "./Node.js";
+import {Node, Observer} from "./Node.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -14,45 +14,46 @@ import {Observer} from "./Node.js";
 
 export const Graph = <T extends Constructable<Observer>>(base : T) =>
 
+// graph extends the observer and thus, observers all its nodes through the "fromEdges" collection
 class Graph extends base {
 
-    getNodes () : Set<this> {
-        return this.fromEdges
+    getNodes () : Set<Node> {
+        return <any>this.fromEdges
     }
 
 
-    // graph extends the observer and thus, observers all its nodes through the "fromEdges" collection
-
-    hasNode (node : this) : boolean {
-        return this.fromEdges.has(node)
+    hasNode (node : Node) : boolean {
+        return this.fromEdges.has(<any>node)
     }
 
 
-    addNodes (nodes : this[]) {
+    addNodes (nodes : Node[]) {
         nodes.forEach(node => this.addNode(node))
     }
 
 
-    addNode (node : this) {
+    addNode (node : Node) : Node {
         // <debug>
         if (this.hasNode(node)) throw new Error("The node already exists")
         // </debug>
 
-        this.fromEdges.add(node)
+        this.fromEdges.add(<any>node)
+
+        return node
     }
 
 
-    removeNodes (nodes : this[]) {
+    removeNodes (nodes : Node[]) {
         nodes.forEach(node => this.removeNode(node))
     }
 
 
-    removeNode (node : this) {
+    removeNode (node : Node) {
         // <debug>
         if (!this.hasNode(node)) throw new Error("The node does not exists")
         // </debug>
 
-        this.fromEdges.delete(node)
+        this.fromEdges.delete(<any>node)
     }
 }
 

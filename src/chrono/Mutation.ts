@@ -67,4 +67,4 @@ export type PureCalculation = Mixin<typeof PureCalculation>
 
 
 
-export const MinimalMutation = PureCalculation(Calculable(MutationData(Base)))
+export const MinimalMutationData = PureCalculation(Calculable(MutationData(Base)))

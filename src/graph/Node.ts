@@ -10,6 +10,17 @@ export type GraphWalkContext    = {
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+// TODO figure out this pattern
+
+interface IObserver {
+    incoming    : Set<IObservedBy>
+}
+
+interface IObservedBy {
+    outgoing    : Set<IObserver>
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Observer = <T extends Constructable<Base>>(base : T) =>

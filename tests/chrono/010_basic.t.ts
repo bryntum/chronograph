@@ -1,25 +1,64 @@
 import {MinimalRWAtom} from "../../src/chrono/Atom.js";
-import {MinimalMutation} from "../../src/chrono/Mutation.js";
+import {MinimalMutationData} from "../../src/chrono/Mutation.js";
+import {ChronoGraphSnapshot, MinimalChronoGraphSnapshot} from "../../src/chronograph/Graph.js";
+import {ChronoGraphNode, MinimalChronoGraphNode} from "../../src/chronograph/Node.js";
 
 declare const StartTest : any
 
 StartTest(t => {
 
-    const Atom1     = MinimalRWAtom.new({ value : 0 })
-    const Atom2     = MinimalRWAtom.new({ value : 1 })
+    t.it('Minimal mutation (outside of graph)', t => {
+        const atom1     = MinimalRWAtom.new({ value : 0 })
+        const atom2     = MinimalRWAtom.new({ value : 1 })
 
-    const Result    = MinimalRWAtom.new()
+        const result    = MinimalRWAtom.new()
 
-    const mutation  = MinimalMutation.new({
-        input       : [ Atom1, Atom2 ],
-        as          : [ Result ],
+        const mutation  = MinimalMutationData.new({
+            input       : [ atom1, atom2 ],
+            as          : [ result ],
 
-        calculation : (v1, v2) => v1 + v2
+            calculation : (v1, v2) => v1 + v2
+        })
+
+        mutation.runCalculation()
+
+        t.is(result.get(), 1, "Correct result calculated")
     })
 
-    mutation.runCalculation()
 
-    t.is(Result.get(), 1, "Correct result calculated")
+    t.it('Minimal mutation in graph context', t => {
+        const graph : ChronoGraphSnapshot   = MinimalChronoGraphSnapshot.new()
+
+        const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 1, value : 0 }))
+        const node2 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 2, value : 1 }))
+
+        const resultNode : ChronoGraphNode  = graph.addNode(MinimalChronoGraphNode.new({ id : 3 }))
+
+        const mutation  = MinimalMutationData.new({
+            input       : [ node1, node2 ],
+            as          : [ resultNode ],
+
+            calculation : (v1, v2) => v1 + v2
+        })
+
+        graph.addMutation(mutation)
+
+        graph.propagate()
+
+        t.is(resultNode.get(), 1, "Correct result calculated")
+
+        node1.set(1)
+
+        graph.propagate()
+
+        t.is(resultNode.get(), 2, "Correct result calculated")
+
+        node2.set(2)
+
+        graph.propagate()
+
+        t.is(resultNode.get(), 3, "Correct result calculated")
+    })
 
 
 

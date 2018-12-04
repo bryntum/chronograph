@@ -2,6 +2,7 @@ import {Calculable, Atom, ChronoValue, Readable, Writable} from "../chrono/Atom.
 import {chronoId, ChronoId} from "../chrono/ChronoId.js";
 import {MutationData, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
 
 
@@ -68,7 +69,7 @@ export type VersionedNode = Mixin<typeof VersionedNode>
 
 
 
-export const ChronoGraphNode = <T extends Constructable<CanBeReferenced & VersionedNode>>(base: T) => {
+export const ChronoGraphNode = <T extends Constructable<Graph & CanBeReferenced & VersionedNode & Readable>>(base: T) => {
 
     abstract class ChronoGraphNode extends base {
 
@@ -102,9 +103,13 @@ export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
 
 // ChronoGraphNode with minimal dependencies, for type-checking purposes only
 export class MinimalChronoGraphNode extends ChronoGraphNode(
-    Node(VersionedNode(CanBeReferenced(Node(Observer(ObservedBy(Readable(Writable(Atom(Base)))))))))
+    Graph(Node(VersionedNode(CanBeReferenced(Node(Observer(ObservedBy(Readable(Writable(Atom(Base))))))))))
 ) {
     // runCalculation () {}
+
+    // zxc () {
+    //     this.get()
+    // }
 }
 
 
@@ -199,9 +204,16 @@ export const GenericChronoMutationNode  = MutationData(Calculable(MinimalChronoG
 export const GraphNode2 = <T extends Constructable<Base>>(base: T) => {
 
     class GraphNode2 extends base {
+        values          : (Atom & Readable)[]
 
+        get () {
+            return this.values[ this.values.length - 1 ].get()
+        }
 
-        values          : Atom[]
+        set () {
+            return this.values[ this.values.length - 1 ].get()
+        }
+
     }
 
     return GraphNode2
