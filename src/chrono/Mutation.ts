@@ -16,9 +16,9 @@ This should allow arbitrary JSON graph as input
 */
 
 
-export const Mutation = <T extends Constructable<Base>>(base : T) =>
+export const MutationData = <T extends Constructable<Base>>(base : T) =>
 
-class Mutation extends base {
+class MutationData extends base {
     input           : NamedInput | ArrayInput
 
     as              : (Atom & Writable)[]
@@ -41,13 +41,13 @@ class Mutation extends base {
     }
 }
 
-export type Mutation = Mixin<typeof Mutation>
+export type MutationData = Mixin<typeof MutationData>
 
 
 
-export const PureChronoCalculation = <T extends Constructable<Calculable & Mutation>>(base : T) => {
+export const PureCalculation = <T extends Constructable<Calculable & MutationData>>(base : T) => {
 
-    abstract class PureChronoCalculation extends base {
+    abstract class PureCalculation extends base {
 
         calculation         : AnyFunction
 
@@ -60,25 +60,11 @@ export const PureChronoCalculation = <T extends Constructable<Calculable & Mutat
         }
     }
 
-    return PureChronoCalculation
+    return PureCalculation
 }
 
-export type PureChronoCalculation = Mixin<typeof PureChronoCalculation>
+export type PureCalculation = Mixin<typeof PureCalculation>
 
 
 
-export const MinimalMutation = PureChronoCalculation(Calculable(Mutation(Base)))
-
-//
-//
-// export type SynchronousRunCore = (snapshot : ChronoGraphSnapshot) => ChronoGraphSnapshot
-// export type AsynchronousRunCore = (snapshot : ChronoGraphSnapshot) => Promise<ChronoGraphSnapshot>
-//
-// export type AsynchronousRunCore = (snapshot : ChronoGraphSnapshot) => Promise<ChronoGraphSnapshot>
-//
-//
-//
-//
-//
-//
-//
+export const MinimalMutation = PureCalculation(Calculable(MutationData(Base)))

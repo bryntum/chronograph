@@ -15,6 +15,12 @@ import {Observer} from "./Node.js";
 export const Graph = <T extends Constructable<Observer>>(base : T) =>
 
 class Graph extends base {
+
+    getNodes () : Set<this> {
+        return this.fromEdges
+    }
+
+
     // graph extends the observer and thus, observers all its nodes through the "fromEdges" collection
 
     hasNode (node : this) : boolean {

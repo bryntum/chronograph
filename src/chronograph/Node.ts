@@ -1,6 +1,6 @@
 import {Calculable, Atom, ChronoValue, Readable, Writable} from "../chrono/Atom.js";
 import {chronoId, ChronoId} from "../chrono/ChronoId.js";
-import {Mutation, PureChronoCalculation} from "../chrono/Mutation.js";
+import {MutationData, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
 
@@ -168,7 +168,7 @@ export const UserInput = new MinimalObservable()
 
 
 
-export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNode & Mutation & PureChronoCalculation>>(base: T) => {
+export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNode & MutationData & PureCalculation>>(base: T) => {
 
     abstract class ChronoMutationNode extends base {
 
@@ -190,4 +190,20 @@ export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNod
 export type ChronoMutationNode = Mixin<typeof ChronoMutationNode>
 
 
-export const GenericChronoMutationNode  = Mutation(Calculable(MinimalChronoGraphNode))
+export const GenericChronoMutationNode  = MutationData(Calculable(MinimalChronoGraphNode))
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const GraphNode2 = <T extends Constructable<Base>>(base: T) => {
+
+    class GraphNode2 extends base {
+
+
+        values          : Atom[]
+    }
+
+    return GraphNode2
+}
+export type GraphNode2 = Mixin<typeof GraphNode2>

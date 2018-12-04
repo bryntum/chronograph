@@ -1,12 +1,10 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Node, ObservedBy} from "../graph/Node.js";
-import {chronoId, ChronoId} from "./ChronoId.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
 /*
-    TODO BIG THING POTENTIALLY
-    ==========================
+    TODO
+    ====
 
     figure out how to specialize the "ChronoAtom" type with type of value argument
 
@@ -64,13 +62,6 @@ export type Writable = Mixin<typeof Writable>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-/*
-    Calculable<V> ?
-
-    This is probably an abstract version of "can grow graph" "effect",
-    (which implements it as "propagateChanges")
-    but using it everywhere instead for now
-*/
 export const Calculable = <T extends Constructable<Base>>(base : T) => {
 
     abstract class Calculable extends base {
