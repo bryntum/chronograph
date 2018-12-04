@@ -7,34 +7,30 @@ import {Node, ObservedBy, Observer} from "../graph/Node.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const CanBeReferenced = <T extends Constructable<Atom>>(base: T) => {
+export const HasId = <T extends Constructable<Atom>>(base: T) =>
 
-    abstract class CanBeReferenced extends base {
-        id          : ChronoId = chronoId()
-    }
-
-    return CanBeReferenced
+class HasId extends base {
+    id          : ChronoId = chronoId()
 }
-export type CanBeReferenced = Mixin<typeof CanBeReferenced>
+
+export type HasId = Mixin<typeof HasId>
 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Reference = <T extends Constructable<Atom>>(base: T) => {
+export const Reference = <T extends Constructable<Atom>>(base: T) =>
 
-    abstract class Reference extends base {
-        value       : Atom
-    }
-
-    return Reference
+class Reference extends base {
+    value       : Atom
 }
+
 export type Reference = Mixin<typeof Reference>
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type VersionedNodeConstructor    = MixinConstructor<typeof VersionedNode>
 
-export const VersionedNode = <T extends Constructable<Node & Writable & CanBeReferenced>>(base: T) => {
+export const VersionedNode = <T extends Constructable<Node & Writable & HasId>>(base: T) => {
 
     abstract class VersionedNode extends base {
         version         : ChronoId = chronoId()
@@ -69,7 +65,7 @@ export type VersionedNode = Mixin<typeof VersionedNode>
 
 
 
-export const ChronoGraphNode = <T extends Constructable<Graph & CanBeReferenced & VersionedNode & Readable>>(base: T) => {
+export const ChronoGraphNode = <T extends Constructable<Graph & HasId & VersionedNode & Readable>>(base: T) => {
 
     abstract class ChronoGraphNode extends base {
 
@@ -101,15 +97,9 @@ export const ChronoGraphNode = <T extends Constructable<Graph & CanBeReferenced 
 export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
 
 
-// ChronoGraphNode with minimal dependencies, for type-checking purposes only
 export class MinimalChronoGraphNode extends ChronoGraphNode(
-    Graph(Node(VersionedNode(CanBeReferenced(Node(Observer(ObservedBy(Readable(Writable(Atom(Base))))))))))
+    Graph(Node(VersionedNode(HasId(Node(Observer(ObservedBy(Readable(Writable(Atom(Base))))))))))
 ) {
-    // runCalculation () {}
-
-    // zxc () {
-    //     this.get()
-    // }
 }
 
 
@@ -124,12 +114,12 @@ export const Observable = <T extends Constructable<Atom & Readable & Writable & 
 
     abstract class Observable extends base {
 
-        valuesComparator        : ComparatorFn<ChronoValue>
+        comparator        : ComparatorFn<ChronoValue>
 
 
         set (value : ChronoValue) {
 
-            if (this.valuesComparator(this.value, value) !== 0) {
+            if (this.comparator(this.value, value) !== 0) {
                 super.set(value)
 
                 // push changes to observers

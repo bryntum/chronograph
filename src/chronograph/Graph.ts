@@ -1,9 +1,9 @@
 import {Atom, Readable, Writable} from "../chrono/Atom.js";
-import {PureCalculation} from "../chrono/Mutation.js";
+import {ChronoCalculation, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
-import {CanBeReferenced, ChronoGraphNode, VersionedNode} from "./Node.js";
+import {HasId, ChronoGraphNode, VersionedNode} from "./Node.js";
 
 
 //
@@ -33,6 +33,9 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
     abstract class ChronoGraphSnapshot extends base {
 
+        mutations       : ChronoCalculation[]     = []
+
+
         addNode (node : ChronoGraphNode) : ChronoGraphNode {
             // if (node.graph.id > this.id) throw new Error("Can not reference future nodes, cyclic calculation?")
 
@@ -50,13 +53,20 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
         }
 
 
-        addMutation (mutation : PureCalculation) {
-
+        addMutation (mutation : ChronoCalculation) {
+            this.mutations.push(mutation)
         }
 
 
-        propagate () {
+        propagate () : ChronoGraphSnapshot {
+            this.mutations.forEach(mutation => {
+                const newLayerAtoms     = mutation.runCalculation()
 
+                this.addNodes(newLayerAtoms)
+            })
+
+
+            return
         }
     }
 
@@ -66,7 +76,7 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 export type ChronoGraphSnapshot = Mixin<typeof ChronoGraphSnapshot>
 
 
-export const MinimalChronoGraphSnapshot = ChronoGraphSnapshot(ChronoGraphNode(Graph(VersionedNode(CanBeReferenced(Node(Observer(ObservedBy(Writable(Readable(Atom(Base)))))))))))
+export const MinimalChronoGraphSnapshot = ChronoGraphSnapshot(ChronoGraphNode(Graph(VersionedNode(HasId(Node(Observer(ObservedBy(Writable(Readable(Atom(Base)))))))))))
 
 
 // export const CalculableGraphSnapshot = <T extends Constructable<ChronoGraphSnapshot & Calculable>>(base : T) => {

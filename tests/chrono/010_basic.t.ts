@@ -1,5 +1,5 @@
 import {MinimalRWAtom} from "../../src/chrono/Atom.js";
-import {MinimalMutationData} from "../../src/chrono/Mutation.js";
+import {MinimalChronoMutationData, MinimalMutationData} from "../../src/chrono/Mutation.js";
 import {ChronoGraphSnapshot, MinimalChronoGraphSnapshot} from "../../src/chronograph/Graph.js";
 import {ChronoGraphNode, MinimalChronoGraphNode} from "../../src/chronograph/Node.js";
 
@@ -34,7 +34,7 @@ StartTest(t => {
 
         const resultNode : ChronoGraphNode  = graph.addNode(MinimalChronoGraphNode.new({ id : 3 }))
 
-        const mutation  = MinimalMutationData.new({
+        const mutation  = MinimalChronoMutationData.new({
             input       : [ node1, node2 ],
             as          : [ resultNode ],
 
