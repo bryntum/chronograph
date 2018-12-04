@@ -1,7 +1,5 @@
-import { observable } from "mobx";
+import {MinimalChronoMutationNode} from "./src/chronograph/Node.js";
 
-class Todo {
-    id = Math.random();
-    @observable title = "";
-    @observable finished = false;
+export default {
+    MinimalChronoMutationNode
 }
