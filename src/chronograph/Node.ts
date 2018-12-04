@@ -132,7 +132,7 @@ export const ChronoGraphNode = <T extends Constructable<Graph & HasId & Versione
 
 
         getNextVersion () : ChronoId {
-            return this.graph ? this.graph.version : chronoId()
+            return this.graph ? this.graph.getNextVersion() : chronoId()
         }
 
 

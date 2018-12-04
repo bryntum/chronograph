@@ -1,4 +1,5 @@
 import {Atom, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
+import {chronoId, ChronoId} from "../chrono/ChronoId.js";
 import {ChronoCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
@@ -35,6 +36,18 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
         mutations       : ChronoCalculation[]     = []
 
+        candidate       : this
+
+
+        getNextVersion () : ChronoId {
+            return this.getCandidate().version
+        }
+
+
+        getCandidate () : this {
+            return this.candidate || (this.candidate = this.bump())
+        }
+
 
         addNode (node : ChronoGraphNode) : ChronoGraphNode {
             // if (node.graph.id > this.id) throw new Error("Can not reference future nodes, cyclic calculation?")
@@ -54,20 +67,26 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
 
         addMutation (mutation : ChronoCalculation) {
-            this.mutations.push(mutation)
+            this.getCandidate().mutations.push(mutation)
         }
 
 
         propagate () : this {
-            const newLayer      = this.bump()
+            const candidate         = this.getCandidate()
 
-            this.mutations.forEach(mutation => {
+            candidate.mutations.forEach(mutation => {
                 const newLayerAtoms     = mutation.runCalculation()
 
-                newLayer.addNodes(newLayerAtoms)
+                candidate.addNodes(newLayerAtoms)
             })
 
-            return MinimalRWAtom.prototype.set.call(this, newLayer)
+            if (candidate.getNodes().size > 0) {
+                this.candidate      = null
+
+                MinimalRWAtom.prototype.set.call(this, candidate)
+            }
+
+            return this
         }
 
 

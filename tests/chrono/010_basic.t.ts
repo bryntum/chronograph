@@ -74,9 +74,9 @@ StartTest(t => {
         node1.set(0)
         node2.set(1)
 
-        debugger
-
         graph.propagate()
+
+        graph.addMutation(mutation)
 
         t.is(resultNode.get(), 1, "Correct result calculated")
 
@@ -84,13 +84,17 @@ StartTest(t => {
 
         graph.propagate()
 
+        graph.addMutation(mutation)
+
         t.is(resultNode.get(), 2, "Correct result calculated")
+        t.is(resultNode.previous.get(), 1, "Can track old value")
 
         node2.set(2)
 
         graph.propagate()
 
         t.is(resultNode.get(), 3, "Correct result calculated")
+        t.is(resultNode.previous.get(), 2, "Can track old value")
     })
 
 
