@@ -39,6 +39,11 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
         candidate       : this
 
 
+        getToEdges(): Set<this> {
+            return new Set<this>(<any>this.mutations)
+        }
+
+
         getNextVersion () : ChronoId {
             return this.getCandidate().version
         }
