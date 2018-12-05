@@ -78,7 +78,7 @@ export type Immutable = Mixin<typeof Immutable>
 export const Calculable = <T extends Constructable<Base>>(base : T) => {
 
     abstract class Calculable extends base {
-        abstract runCalculation ()
+        abstract calculate ()
     }
 
     return Calculable
@@ -88,5 +88,5 @@ export type Calculable = Mixin<typeof Calculable>
 
 
 
-
+//---------------------------------------------------------------------------------------------------------------------
 export const MinimalRWAtom = Writable(Readable(Atom(Base)))

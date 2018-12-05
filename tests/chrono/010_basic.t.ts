@@ -20,7 +20,7 @@ StartTest(t => {
             calculation : (v1, v2) => v1 + v2
         })
 
-        mutation.runCalculation()
+        mutation.calculate()
 
         t.is(result.get(), 1, "Correct result calculated")
     })
@@ -99,12 +99,14 @@ StartTest(t => {
 
 
     t.iit('2 mutations in graph context', t => {
-        const graph : ChronoGraphSnapshot   = MinimalChronoGraphSnapshot.new()
+        debugger
 
-        const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 1 }))
-        const node2 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 2 }))
+        const graph : ChronoGraphSnapshot   = MinimalChronoGraphSnapshot.new({ id : 'graph' })
+
+        const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 'inp1' }))
+        const node2 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 'inp2' }))
         const node1p2 : ChronoGraphNode     = graph.addNode(MinimalChronoGraphNode.new({ id : '1p2' }))
-        const node3 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 3 }))
+        const node3 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 'inp3' }))
 
         const resultNode : ChronoGraphNode  = graph.addNode(MinimalChronoGraphNode.new({ id : 'res' }))
 

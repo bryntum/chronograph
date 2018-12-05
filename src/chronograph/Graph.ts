@@ -1,5 +1,5 @@
 import {Atom, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
-import {chronoId, ChronoId} from "../chrono/ChronoId.js";
+import {chronoId, ChronoId} from "../chrono/Id.js";
 import {ChronoCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
@@ -40,11 +40,9 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
 
         getToEdges(): Set<this> {
-            // console.log("YOYOYOY")
+            const implicitEdgesFromMutations        = new Set<this>(<any>[ ...this.mutations ])
 
-            const implicitEdgesfromItselfToMutations     = new Set<this>(<any>[ ...this.mutations ])
-
-            return new Set([ ...super.getToEdges(), ...implicitEdgesfromItselfToMutations ])
+            return new Set([ ...super.getToEdges(), ...implicitEdgesFromMutations ])
         }
 
 
@@ -93,16 +91,16 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
             candidate.walkDepth({
                 direction               : 'backward',
 
-                onNode                  : (node : ChronoGraphNode) => console.log(`Visiting node ${node.id}`),
-                onCycle                 : () => null,
+                onNode                  : (node : ChronoGraphNode) => null,//console.log(`Visiting node ${node.id}, version : ${node.version}`),
+                onCycle                 : () => { throw new Error("Cycle in graph") },
 
                 onTopologicalNode       : (node : ChronoGraphNode) => {
-                    console.log(`Visiting TOPO node ${node.id}`)
+                    console.log(`Visiting TOPO [${node}]`)
 
                     if (node instanceof MinimalChronoMutationNode) {
-                        const newLayerAtoms     = node.runCalculation()
+                        const newLayerAtoms     = node.calculate()
 
-                        candidate.addNodes(newLayerAtoms)
+                        // candidate.addNodes(newLayerAtoms)
                     }
                 }
             })
@@ -149,74 +147,3 @@ export type ChronoGraphSnapshot = Mixin<typeof ChronoGraphSnapshot>
 
 
 export const MinimalChronoGraphSnapshot = ChronoGraphSnapshot(ChronoGraphNode(Graph(VersionedReference(Reference(VersionedNode(HasId(Node(Observer(ObservedBy(Writable(Readable(Atom(Base)))))))))))))
-
-
-// export const CalculableGraphSnapshot = <T extends Constructable<ChronoGraphSnapshot & Calculable>>(base : T) => {
-//
-//     abstract class CalculableGraphSnapshot extends base {
-//         graph               : ChronoGraphNode & Calculable
-//
-//         runCalculation () {
-//             this.graph && this.graph.runCalculation()
-//         }
-//     }
-//
-//     return CalculableGraphSnapshot
-// }
-//
-// export type CalculableGraphSnapshot = Mixin<typeof CalculableGraphSnapshot>
-//
-//
-//
-// export const SynchronousGraphRunCore = <T extends Constructable<CalculableGraphSnapshot>>(base : T) =>
-//
-// class SynchronousGraphRunCore extends base {
-//
-//     mutationsToRun          : ChronoMutationNode[]
-//
-//
-//     getFromEdges () : Set<this> {
-//         const implicitEdgesfromItselfToMutations     = new Set<this>(<any>[ ...this.mutationsToRun ])
-//
-//         return new Set([ ...super.getFromEdges(), ...implicitEdgesfromItselfToMutations ])
-//     }
-//
-//
-//     runMutation (mutation : ChronoMutationNode) {
-//         let newSnapshot = this.class().new()
-//
-//         this.walkDepth({
-//             direction           : 'forward',
-//             onTopologicalNode   : (node : Node) => {
-//                 // const mutationNode : this     = node.constructor.new({
-//                 //
-//                 // })
-//
-//                 // newSnapshot.addNode(mutationNode)
-//                 //
-//                 // mutationNode.runCalculation()
-//             },
-//             onNode              : () => null,
-//             onCycle             : () => null
-//         })
-//     }
-// }
-//
-// export type SynchronousGraphRunCore = Mixin<typeof SynchronousGraphRunCore>
-//
-//
-//
-//
-// export const AsynchronousGraphRunCore = <T extends Constructable<CalculableGraphSnapshot>>(base : T) =>
-//
-// class AsynchronousGraphRunCore extends base {
-//
-//     runCalculation () : Promise<any> {
-//         return
-//     }
-// }
-//
-// export type AsynchronousGraphRunCore = Mixin<typeof AsynchronousGraphRunCore>
-//
-//
-//

@@ -1,5 +1,5 @@
 import {Atom, Calculable, ChronoValue, Immutable, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
-import {chronoId, ChronoId} from "../chrono/ChronoId.js";
+import {chronoId, ChronoId} from "../chrono/Id.js";
 import {ChronoCalculation, MutationData, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
@@ -153,6 +153,11 @@ export const ChronoGraphNode = <T extends Constructable<Graph & HasId & Versione
         unjoinGraph() {
             delete this.graph
         }
+
+
+        toString () {
+            return `node ${this.id}, version : ${this.version}`
+        }
     }
 
     return ChronoGraphNode
@@ -188,7 +193,7 @@ export const Observable = <T extends Constructable<Atom & Readable & Writable & 
 
                 // push changes to observers
 
-                // return this.runCalculation()
+                // return this.calculate()
             }
 
             return this
@@ -236,7 +241,7 @@ export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNod
 
 
         joinGraph(graph : this['graph']) {
-            console.log("YOYOYOY")
+            console.log(`Mutation [${this}] joins graph [${graph}]`)
 
             super.joinGraph(graph)
 

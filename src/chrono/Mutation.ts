@@ -17,6 +17,7 @@ This should allow arbitrary JSON graph as input
 */
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export const MutationData = <T extends Constructable<Base>>(base : T) =>
 
 class MutationData extends base {
@@ -45,14 +46,14 @@ class MutationData extends base {
 export type MutationData = Mixin<typeof MutationData>
 
 
-
+//---------------------------------------------------------------------------------------------------------------------
 export const PureCalculation = <T extends Constructable<Calculable & MutationData>>(base : T) => {
 
     abstract class PureCalculation extends base {
 
         calculation         : AnyFunction
 
-        runCalculation () : ChronoValue {
+        calculate () : ChronoValue {
             const values    = this.mapInput(atom => atom.get())
 
             const result    = Array.isArray(values) ? this.calculation.apply(this, values) : this.calculation(values)
@@ -68,6 +69,7 @@ export type PureCalculation = Mixin<typeof PureCalculation>
 
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export const ChronoCalculation = <T extends Constructable<PureCalculation & MutationData>>(base : T) => {
 
     abstract class ChronoCalculation extends base {
@@ -75,7 +77,7 @@ export const ChronoCalculation = <T extends Constructable<PureCalculation & Muta
 
         calculation         : AnyFunction
 
-        runCalculation () : ChronoGraphNode[] {
+        calculate () : ChronoGraphNode[] {
             const values    = this.mapInput(atom => atom.get())
 
             const result    = Array.isArray(values) ? this.calculation.apply(this, values) : this.calculation(values)
