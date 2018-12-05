@@ -40,7 +40,11 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
 
         getToEdges(): Set<this> {
-            return new Set<this>(<any>this.mutations)
+            // console.log("YOYOYOY")
+
+            const implicitEdgesfromItselfToMutations     = new Set<this>(<any>[ ...this.mutations ])
+
+            return new Set([ ...super.getToEdges(), ...implicitEdgesfromItselfToMutations ])
         }
 
 
@@ -73,7 +77,11 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
 
 
         addMutation (mutation : ChronoMutationNode) {
-            this.getCandidate().mutations.push(mutation)
+            const candidate     = this.getCandidate()
+
+            candidate.mutations.push(mutation)
+
+            mutation.joinGraph(candidate)
         }
 
 
@@ -85,10 +93,12 @@ export const ChronoGraphSnapshot = <T extends Constructable<Graph & ChronoGraphN
             candidate.walkDepth({
                 direction               : 'backward',
 
-                onNode                  : () => null,
+                onNode                  : (node : ChronoGraphNode) => console.log(`Visiting node ${node.id}`),
                 onCycle                 : () => null,
 
                 onTopologicalNode       : (node : ChronoGraphNode) => {
+                    console.log(`Visiting TOPO node ${node.id}`)
+
                     if (node instanceof MinimalChronoMutationNode) {
                         const newLayerAtoms     = node.runCalculation()
 

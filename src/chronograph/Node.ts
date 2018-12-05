@@ -236,10 +236,25 @@ export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNod
 
 
         joinGraph(graph : this['graph']) {
+            console.log("YOYOYOY")
+
             super.joinGraph(graph)
 
-            this.input.map(x => x.joinGraph(x))
-            this.as.map(x => x.joinGraph(x))
+            this.input.map((node : ChronoGraphNode) => {
+                node.joinGraph(graph)
+
+                node.addEdgeTo(this)
+
+                this.addEdgeFrom(<any>node)
+            })
+
+            this.as.map((node : ChronoGraphNode) => {
+                node.joinGraph(graph)
+
+                node.addEdgeFrom(this)
+
+                this.addEdgeTo(<any>node)
+            })
         }
 
 
@@ -247,20 +262,20 @@ export const ChronoMutationNode = <T extends Constructable<MinimalChronoGraphNod
         }
 
 
-        // TODO cache
-        getToEdges(): Set<this> {
-            const res = []
-
-            this.mapInput(x => res.push(x))
-
-            return new Set<this>([...res])
-        }
-
-
-        // TODO cache
-        getFromEdges(): Set<this> {
-            return new Set<this>([...<any>(this.as)])
-        }
+        // // TODO cache
+        // getToEdges(): Set<this> {
+        //     const res = []
+        //
+        //     this.mapInput(x => res.push(x))
+        //
+        //     return new Set<this>([...res])
+        // }
+        //
+        //
+        // // TODO cache
+        // getFromEdges(): Set<this> {
+        //     return new Set<this>([...<any>(this.as)])
+        // }
     }
 
     return ChronoMutationNode
