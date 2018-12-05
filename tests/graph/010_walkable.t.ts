@@ -1,10 +1,10 @@
 import {HasId} from "../../src/chronograph/HasId.js";
 import {Base} from "../../src/class/Mixin.js";
-import {Walkable, WalkableBackward, WalkableFoward, WalkBackwardContext, WalkForwardContext} from "../../src/graph/Walkable.js";
+import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "../../src/graph/Walkable.js";
 
 declare const StartTest : any
 
-const WalkerForward     = HasId(WalkableFoward(Walkable(Base)))
+const WalkerForward     = HasId(WalkableForward(Walkable(Base)))
 type WalkerForward      = InstanceType<typeof WalkerForward>
 
 const WalkerBackward    = HasId(WalkableBackward(Walkable(Base)))

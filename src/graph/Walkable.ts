@@ -105,7 +105,7 @@ export type Walkable = Mixin<typeof Walkable>
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardContext extends WalkContext {
 
-    getNext (node : WalkableFoward) : WalkableFoward[] {
+    getNext (node : WalkableForward) : WalkableForward[] {
         return node.getOutgoing()
     }
 }
@@ -121,16 +121,16 @@ export class WalkBackwardContext extends WalkContext {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableFoward = <T extends Constructable<Walkable>>(base : T) => {
+export const WalkableForward = <T extends Constructable<Walkable>>(base : T) => {
 
-    abstract class WalkableFoward extends base {
+    abstract class WalkableForward extends base {
         abstract getOutgoing () : this[]
     }
 
-    return WalkableFoward
+    return WalkableForward
 }
 
-export type WalkableFoward = Mixin<typeof WalkableFoward>
+export type WalkableForward = Mixin<typeof WalkableForward>
 
 
 
@@ -148,6 +148,6 @@ export type WalkableBackward = Mixin<typeof WalkableBackward>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const MinimalWalkableForward     = WalkableFoward(Walkable(Base))
+export const MinimalWalkableForward     = WalkableForward(Walkable(Base))
 
 export const MinimalWalkableBackward    = WalkableBackward(Walkable(Base))
