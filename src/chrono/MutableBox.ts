@@ -18,7 +18,11 @@ export const MutableBox = <T extends Constructable<Reference>>(base: T) => {
         initialize () {
             super.initialize(...arguments)
 
-            if (this.value$) this.set(this.value$)
+            if (this.hasOwnProperty('value$')) {
+                this.set(this.value$)
+
+                delete this.value$
+            }
         }
 
 

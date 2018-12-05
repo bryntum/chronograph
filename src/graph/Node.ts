@@ -7,6 +7,19 @@ export const WalkableForwardNode = <T extends Constructable<WalkableForward>>(ba
 class WalkableForwardNode extends base {
     outgoing        : Set<WalkableForwardNode>         = new Set()
 
+    outgoing$       : WalkableForwardNode[]
+
+
+    initialize () {
+        super.initialize(...arguments)
+
+        if (this.outgoing$) {
+            this.addEdgesTo(this.outgoing$)
+
+            delete this.outgoing$
+        }
+    }
+
 
     hasEdgeTo (toNode : WalkableForwardNode) : boolean {
         return this.outgoing.has(toNode)
@@ -37,6 +50,19 @@ export const WalkableBackwardNode = <T extends Constructable<WalkableBackward>>(
 
 class WalkableBackwardNode extends base {
     incoming        : Set<WalkableBackwardNode>         = new Set()
+
+    incoming$       : WalkableBackwardNode[]
+
+
+    initialize () {
+        super.initialize(...arguments)
+
+        if (this.incoming$) {
+            this.addEdgesFrom(this.incoming$)
+
+            delete this.incoming$
+        }
+    }
 
 
     hasEdgeFrom (fromNode : WalkableBackwardNode) : boolean {
