@@ -1,9 +1,10 @@
 import {Atom, Calculable, ChronoValue, Immutable, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
-import {ChronoCalculation, MutationData, PureCalculation} from "../chrono/Mutation.js";
+import {MutationData, PureCalculation} from "../chrono/Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";
+import {ChronoCalculation} from "./Mutation.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------

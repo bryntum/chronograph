@@ -1,6 +1,6 @@
 import {Atom, MinimalRWAtom, Readable, Writable} from "../chrono/Atom.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
-import {ChronoCalculation} from "../chrono/Mutation.js";
+import {ChronoCalculation} from "./Mutation.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Node, ObservedBy, Observer} from "../graph/Node.js";

@@ -32,6 +32,7 @@ class Atom extends base {
 export type Atom = Mixin<typeof Atom>
 
 
+
 //---------------------------------------------------------------------------------------------------------------------
 export const Readable = <T extends Constructable<Atom>>(base : T) =>
 
@@ -57,6 +58,7 @@ class Writable extends base {
 }
 
 export type Writable = Mixin<typeof Writable>
+
 
 
 //---------------------------------------------------------------------------------------------------------------------

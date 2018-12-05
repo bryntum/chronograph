@@ -1,4 +1,3 @@
-import {ChronoGraphNode} from "../chronograph/Node.js";
 import {AnyFunction, Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Atom, Calculable, ChronoValue, Readable, Writable} from "./Atom.js";
 
@@ -46,6 +45,10 @@ class MutationData extends base {
 export type MutationData = Mixin<typeof MutationData>
 
 
+export const MinimalMutationData = MutationData(Base)
+
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export const PureCalculation = <T extends Constructable<Calculable & MutationData>>(base : T) => {
 
@@ -68,32 +71,5 @@ export const PureCalculation = <T extends Constructable<Calculable & MutationDat
 export type PureCalculation = Mixin<typeof PureCalculation>
 
 
+export const MinimalPureCalculation = PureCalculation(Calculable(MutationData(Base)))
 
-//---------------------------------------------------------------------------------------------------------------------
-export const ChronoCalculation = <T extends Constructable<PureCalculation & MutationData>>(base : T) => {
-
-    abstract class ChronoCalculation extends base {
-        as                  : ChronoGraphNode[]
-
-        calculation         : AnyFunction
-
-        calculate () : ChronoGraphNode[] {
-            const values    = this.mapInput(atom => atom.get())
-
-            const result    = Array.isArray(values) ? this.calculation.apply(this, values) : this.calculation(values)
-
-            return this.as.map(atom => atom.set(result))
-        }
-    }
-
-    return ChronoCalculation
-}
-
-export type ChronoCalculation = Mixin<typeof ChronoCalculation>
-
-
-
-
-export const MinimalMutationData = PureCalculation(Calculable(MutationData(Base)))
-
-export const MinimalChronoMutationData = ChronoCalculation(PureCalculation(Calculable(MutationData(Base))))
