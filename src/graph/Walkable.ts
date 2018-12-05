@@ -70,10 +70,10 @@ export const Walkable = <T extends Constructable<Base>>(base : T) => {
                         // we've processed all outgoing edges from this node,
                         // now we can add it to topologically sorted results (if needed)
                         context.onTopologicalNode(node)
-
-                        toVisit.pop()
-                        depth--
                     }
+
+                    toVisit.pop()
+
                 } else {
                     visitedAt.set(node, depth)
 
@@ -84,12 +84,12 @@ export const Walkable = <T extends Constructable<Base>>(base : T) => {
                     if (next.length) {
                         toVisit.push.apply(toVisit, next)
                     } else {
-                        toVisit.pop()
-
                         visitedTopologically.add(node)
 
                         // if there's no outgoing edges, node is at topological position
                         context.onTopologicalNode(node)
+
+                        toVisit.pop()
                     }
                 }
             }
@@ -103,7 +103,7 @@ export type Walkable = Mixin<typeof Walkable>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class WalkFowardContext extends WalkContext {
+export class WalkForwardContext extends WalkContext {
 
     getNext (node : WalkableFoward) : WalkableFoward[] {
         return node.getOutgoing()
