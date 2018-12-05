@@ -55,6 +55,7 @@ export type Constructable<T extends any> = new (...args : any[]) => T
 
 //---------------------------------------------------------------------------------------------------------------------
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
+
 export type MixinConstructor<T extends AnyFunction> =
     T extends AnyFunction1<Base> ? ReturnType<T> & typeof Base : ReturnType<T>
 

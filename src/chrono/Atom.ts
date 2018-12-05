@@ -62,21 +62,6 @@ export type Writable = Mixin<typeof Writable>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Immutable = <T extends Constructable<Writable>>(base : T) =>
-
-class Immutable extends base {
-    set (value : ChronoValue) : this {
-        if (this.hasValue()) throw new Error("Can't mutate value")
-
-        return super.set(value)
-    }
-}
-
-export type Immutable = Mixin<typeof Immutable>
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
 export const Calculable = <T extends Constructable<Base>>(base : T) => {
 
     abstract class Calculable extends base {

@@ -1,7 +1,5 @@
 import {MinimalRWAtom} from "../../src/chrono/Atom.js";
 import {MinimalPureCalculation} from "../../src/chrono/Mutation.js";
-import {ChronoGraphSnapshot, MinimalChronoGraphSnapshot} from "../../src/chronograph/Graph.js";
-import {ChronoGraphNode, MinimalChronoGraphNode, MinimalChronoMutationNode} from "../../src/chronograph/Node.js";
 
 declare const StartTest : any
 
