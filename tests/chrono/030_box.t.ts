@@ -49,26 +49,4 @@ StartTest(t => {
         t.is(node.getPrevious().getPrevious().get(), 1, 'Can track the old value')
         t.is(node.getPrevious().getPrevious().getPrevious(), undefined, 'Can track the old value')
     })
-
-
-    // t.it('Can start several branches', t => {
-    //     const node      = MinimalMutableBox.new({ value : 1 })
-    //
-    //     const branch1   = node.set(2)
-    //     const branch2   = node.set(3)
-    //
-    //     t.isnt(branch1, node, 'New branch derived')
-    //     t.isnt(branch2, node, 'New branch derived')
-    //
-    //     t.isnt(branch1, branch2, 'New branch derived')
-    //     t.is(branch1.previous, branch2.previous, 'Both reference the same previous atom')
-    //
-    //     t.is(branch1.get(), 2, 'Can update value')
-    //     t.is(branch1.previous.get(), 1, 'Can track the old value')
-    //
-    //     t.is(branch2.get(), 3, 'Can update value')
-    //     t.is(branch2.previous.get(), 1, 'Can track the old value')
-    // })
-
-
 })
