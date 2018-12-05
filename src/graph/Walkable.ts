@@ -124,7 +124,7 @@ export class WalkBackwardContext extends WalkContext {
 export const WalkableForward = <T extends Constructable<Walkable>>(base : T) => {
 
     abstract class WalkableForward extends base {
-        abstract getOutgoing () : this[]
+        abstract getOutgoing () : WalkableForward[]
     }
 
     return WalkableForward
@@ -138,7 +138,7 @@ export type WalkableForward = Mixin<typeof WalkableForward>
 export const WalkableBackward = <T extends Constructable<Walkable>>(base : T) => {
 
     abstract class WalkableBackward extends base {
-        abstract getIncoming () : this[]
+        abstract getIncoming () : WalkableBackward[]
     }
 
     return WalkableBackward
