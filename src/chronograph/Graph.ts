@@ -36,9 +36,9 @@ class GraphBox extends base {
 
 
     addMutation (mutation : ChronoMutationNode) {
-        this.addNode(mutation)
-
-        mutation.addEdges()
+        // this.addNode(mutation)
+        //
+        // mutation.addEdges()
     }
 
 
@@ -93,12 +93,12 @@ class GraphSnapshot extends base {
                 // console.log(`Visiting TOPO [${node}]`)
 
                 if (node instanceof MinimalChronoMutationNode) {
-                    const resultAtoms   = node.calculate() as ChronoGraphNode[]
-
-                    resultAtoms.forEach((atom, index) => {
-                        // if the new atom has been created for the output, add it to graph
-                        if (atom !== node.as[ index ]) this.addNode(atom)
-                    })
+                    // const resultAtoms   = node.calculate() as ChronoGraphNode[]
+                    //
+                    // resultAtoms.forEach((atom, index) => {
+                    //     // if the new atom has been created for the output, add it to graph
+                    //     if (atom !== node.as[ index ]) this.addNode(atom)
+                    // })
                 }
             }
         }))

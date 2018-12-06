@@ -1,5 +1,4 @@
 import {MinimalRWAtom} from "../../src/chrono/Atom.js";
-import {MinimalPureCalculation} from "../../src/chrono/Mutation.js";
 
 declare const StartTest : any
 

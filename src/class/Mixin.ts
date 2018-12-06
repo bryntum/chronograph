@@ -16,6 +16,7 @@
          }
     works correctly
 */
+
 export class Base {
 
     initialize<T extends Base>(props? : Partial<T>) {
@@ -52,6 +53,8 @@ export type AnyFunction1<A>         = (...input: any[]) => A
 //---------------------------------------------------------------------------------------------------------------------
 export type Constructable<T extends any> = new (...args : any[]) => T
 
+export type Constructable1<T extends InstanceType<AnyConstructor>, Z> = new (...args : any[]) => T
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
@@ -77,3 +80,33 @@ class ChronoNumber extends Number {
 }
 
 
+
+//
+// export const Atom = <V, T extends Constructable<Base>>(base : T) =>
+//
+// class Atom extends base {
+//     value               : V
+//
+//
+//     hasValue () : boolean {
+//         return this.hasOwnProperty('value')
+//     }
+// }
+//
+// export type AtomMixinFunction = Mixin<typeof Atom>
+//
+//
+// type MinimalAtomConstructor<V> = typeof MinimalAtom
+//
+// export type Atom<V> = InstanceType<MinimalAtomConstructor<V>>
+//
+//
+//
+// let a : Atom<Date>
+//
+//
+// a.zxc
+//
+// a.value.getTime()
+//
+// a.value.zxc
