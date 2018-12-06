@@ -1,5 +1,4 @@
-
-// declare const StartTest : any
+declare const StartTest : any
 
 StartTest(t => {
 

@@ -1,27 +1,49 @@
-import {AnyFunction, Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Atom, ChronoValue, Readable} from "./Atom.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
+import {Atom, ChronoValue, Readable, Writable} from "./Atom.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const TraceableRead = <T extends Constructable<Atom & Readable>>(base : T) => {
+export const ObservableRead = <T extends Constructable<Atom & Readable>>(base : T) => {
 
-    abstract class TraceableRead extends base {
+    abstract class ObservableRead extends base {
         get ()              : ChronoValue {
             const res       = super.get()
 
-            this.traceRead(res)
+            this.observeRead(res)
 
             return res
         }
 
-        abstract traceRead (value : ChronoValue)
+        abstract observeRead (value : ChronoValue)
     }
 
-    return TraceableRead
+    return ObservableRead
 }
 
-export type TraceableRead = Mixin<typeof TraceableRead>
+export type ObservableRead = Mixin<typeof ObservableRead>
 
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ObservableWrite = <T extends Constructable<Atom & Writable>>(base : T) => {
+
+    abstract class ObservableWrite extends base {
+        set (value) : this {
+            const res       = super.set(value)
+
+            this.observeWrite(res)
+
+            return res
+        }
+
+        abstract observeWrite (value : ChronoValue)
+    }
+
+    return ObservableWrite
+}
+
+export type ObservableWrite = Mixin<typeof ObservableWrite>
 
 
 

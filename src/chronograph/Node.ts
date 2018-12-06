@@ -1,6 +1,6 @@
 import {Atom, ChronoValue, Readable, Writable} from "../chrono/Atom.js";
 import {Immutable} from "../chrono/Immutable.js";
-import {Constructable, Mixin} from "../class/Mixin.js";
+import {Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {MinimalNode, Node} from "../graph/Node.js";
 import {HasId} from "./HasId.js";
 
@@ -17,9 +17,15 @@ class ChronoGraphNode extends base {
     toString () {
         return `[node ${ this.id }]`
     }
+
+
+    // ???
+    onJoinGraph () {
+    }
 }
 
-export type ChronoGraphNode = Mixin<typeof ChronoGraphNode>
+export type ChronoGraphNode             = Mixin<typeof ChronoGraphNode>
+export type ChronoGraphNodeConstructor  = MixinConstructor<typeof ChronoGraphNode>
 
 
 export const MinimalChronoGraphNode     = ChronoGraphNode(HasId(Immutable(Writable(Readable(Atom(MinimalNode))))))

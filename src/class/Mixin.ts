@@ -27,7 +27,7 @@ export class Base {
     static new<T extends typeof Base>(this: T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance      = new this()
 
-        props && instance.initialize<InstanceType<T>>(props)
+        instance.initialize<InstanceType<T>>(props)
 
         return instance as InstanceType<T>
     }

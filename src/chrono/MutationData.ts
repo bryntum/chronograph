@@ -1,4 +1,4 @@
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {AnyFunction, AnyFunction1, Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Atom, Readable, Writable} from "./Atom.js";
 
 
@@ -16,8 +16,8 @@ This should allow arbitrary JSON graph as input
 */
 
 
-export type InputReference<V>   = () => Input<V>
-export type OutputReference<V>  = () => Output<V>
+export type InputReference<V>   = AnyFunction1<Input<V>>
+export type OutputReference<V>  = AnyFunction1<Output<V>>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -46,11 +46,11 @@ class MutationData extends base {
     }
 }
 
-export type MutationData = Mixin<typeof MutationData>
+export type MutationData            = Mixin<typeof MutationData>
 
 
-export const MinimalMutationData = MutationData(Base)
-
+export const MinimalMutationData    = MutationData(Base)
+export type MinimalMutationData     = InstanceType<typeof MinimalMutationData>
 
 
 // //---------------------------------------------------------------------------------------------------------------------

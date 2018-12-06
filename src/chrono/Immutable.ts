@@ -1,5 +1,12 @@
+import {Box, MinimalBox} from "../chronograph/Box.js";
+import {GraphSnapshot, GraphSnapshotConstructor, MinimalGraphSnapshot} from "../chronograph/Graph.js";
+import {ChronoMutationNode} from "../chronograph/Mutation.js";
+import {ChronoGraphNode, MinimalChronoGraphNode} from "../chronograph/Node.js";
 import {Atom, ChronoValue, Readable, Writable} from "./Atom.js";
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {ChronoId} from "./Id.js";
+import {MutableBox} from "./MutableBox.js";
+import {ObservableRead, ObservableWrite} from "./Observation.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -24,10 +31,10 @@ export const Immutable = <T extends Constructable<Atom & Readable & Writable>>(b
 
 
         nextConfig (value : ChronoValue) : Partial<this> {
-            return {
+            return (value !== undefined ? {
                 previous        : this,
                 value           : value
-            } as unknown as Partial<this> // wtf, TODO submit a bug about this
+            } : {}) as unknown as Partial<this> // wtf, TODO submit a bug about this
         }
 
 
@@ -47,6 +54,44 @@ export type Immutable               = Mixin<typeof Immutable>
 export type ImmutableConstructor    = MixinConstructor<typeof Immutable>
 
 export const MinimalImmutable       = Immutable(Writable(Readable(Atom(Base))))
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const MutableBoxWithCandidate = <T extends Constructable<MutableBox>>(base : T) =>
+
+class MutableBoxWithCandidate extends base {
+    // candidate for `next`
+    candidate       : Immutable
+
+
+    getCandidate () : this['candidate'] {
+        return this.candidate || (this.candidate = this.value.next(undefined))
+    }
+
+
+    commit () {
+        const candidate         = this.getCandidate()
+
+        if (candidate.hasValue()) {
+            this.candidate      = null
+
+            super.set(candidate)
+        }
+    }
+
+
+    reject () {
+        this.candidate          = null
+    }
+}
+
+export type MutableBoxWithCandidate = Mixin<typeof MutableBoxWithCandidate>
+
+
+
+
+
+
 
 
 
