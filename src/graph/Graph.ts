@@ -4,10 +4,9 @@ import {WalkableBackward, WalkableForward} from "./Walkable.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const GraphAsCollection = <T extends Constructable<WalkableForward & WalkableBackward>>(base : T) =>
+export const Graph = <T extends Constructable<WalkableForward & WalkableBackward>>(base : T) =>
 
-// graph extends the observer and thus, observers all its nodes through the "fromEdges" collection
-class GraphAsCollection extends base {
+class Graph extends base {
 
     nodes           : Set<Node>         = new Set()
 
@@ -62,4 +61,4 @@ class GraphAsCollection extends base {
     }
 }
 
-export type GraphAsCollection = Mixin<typeof GraphAsCollection>
+export type Graph = Mixin<typeof Graph>

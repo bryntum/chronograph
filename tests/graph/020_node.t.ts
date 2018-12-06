@@ -1,15 +1,21 @@
 import {HasId} from "../../src/chronograph/HasId.js";
 import {Base} from "../../src/class/Mixin.js";
-import {WalkableBackwardNode, WalkableForwardNode} from "../../src/graph/Node.js";
+import {Node, WalkableBackwardNode, WalkableForwardNode} from "../../src/graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "../../src/graph/Walkable.js";
 
 declare const StartTest : any
 
+// WalkableForwardNode
 const WalkerForward     = WalkableForwardNode(HasId(WalkableForward(Walkable(Base))))
 type WalkerForward      = InstanceType<typeof WalkerForward>
 
+// WalkableBackwardNode
 const WalkerBackward    = WalkableBackwardNode(HasId(WalkableBackward(Walkable(Base))))
 type WalkerBackward     = InstanceType<typeof WalkerBackward>
+
+// Node
+const Walker            = Node(WalkableForwardNode(WalkableBackwardNode(HasId(WalkableForward(WalkableBackward(Walkable(Base)))))))
+type Walker             = InstanceType<typeof Walker>
 
 
 StartTest(t => {
@@ -140,5 +146,35 @@ StartTest(t => {
         t.ok(cycleFound, "Cycle found")
     })
 
+
+    t.it('Minimal walk forward with "duplex" nodes', t => {
+        const node5     = Walker.new({ id : 5 })
+        const node4     = Walker.new({ id : 4 })
+        const node3     = Walker.new({ id : 3 })
+        const node2     = Walker.new({ id : 2 })
+        const node1     = Walker.new({ id : 1 })
+
+        node3.addEdgeTo(node5)
+        node4.addEdgeTo(node3)
+        node2.addEdgesTo([ node3, node4 ].reverse())
+        node1.addEdgeTo(node2)
+
+
+        const walkPath  = []
+        const topoPath  = []
+
+        node1.walkDepth(WalkForwardContext.new({
+            onNode : (node : Walker) => {
+                walkPath.push(node.id)
+            },
+
+            onTopologicalNode : (node : Walker) => {
+                topoPath.push(node.id)
+            }
+        }))
+
+        t.isDeeply(walkPath, [ 1, 2, 3, 5, 4 ], 'Correct walk path')
+        t.isDeeply(topoPath, [ 5, 3, 4, 2, 1 ], 'Correct topo path')
+    })
 
 })
