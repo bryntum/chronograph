@@ -1,53 +1,54 @@
+import {GraphBox, MinimalGraphBox} from "../../src/chronograph/Graph.js";
 
-// declare const StartTest : any
+declare const StartTest : any
 
 StartTest(t => {
 
 
-    // t.it('Minimal mutation in graph context', t => {
-    //     const graph : ChronoGraphSnapshot   = MinimalChronoGraphSnapshot.new()
-    //
-    //     const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 1 }))
-    //     const node2 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 2 }))
-    //
-    //     const resultNode : ChronoGraphNode  = graph.addNode(MinimalChronoGraphNode.new({ id : 3 }))
-    //
-    //     const mutation  = MinimalChronoMutationNode.new({
-    //         input       : [ node1, node2 ],
-    //         as          : [ resultNode ],
-    //
-    //         calculation : (v1, v2) => v1 + v2
-    //     })
-    //
-    //     graph.addMutation(mutation)
-    //
-    //     node1.set(0)
-    //     node2.set(1)
-    //
-    //     graph.propagate()
-    //
-    //     graph.addMutation(mutation)
-    //
-    //     t.is(resultNode.get(), 1, "Correct result calculated")
-    //
-    //     node1.set(1)
-    //
-    //     graph.propagate()
-    //
-    //     graph.addMutation(mutation)
-    //
-    //     t.is(resultNode.get(), 2, "Correct result calculated")
-    //     t.is(resultNode.previous.get(), 1, "Can track old value")
-    //
-    //     node2.set(2)
-    //
-    //     graph.propagate()
-    //
-    //     t.is(resultNode.get(), 3, "Correct result calculated")
-    //     t.is(resultNode.previous.get(), 2, "Can track old value")
-    // })
-    //
-    //
+    t.it('Minimal mutation in graph context', t => {
+        const graph : GraphBox   = MinimalGraphBox.new()
+
+        // const node1 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 1 }))
+        // const node2 : ChronoGraphNode       = graph.addNode(MinimalChronoGraphNode.new({ id : 2 }))
+        //
+        // const resultNode : ChronoGraphNode  = graph.addNode(MinimalChronoGraphNode.new({ id : 3 }))
+        //
+        // const mutation  = MinimalChronoMutationNode.new({
+        //     input       : [ node1, node2 ],
+        //     as          : [ resultNode ],
+        //
+        //     calculation : (v1, v2) => v1 + v2
+        // })
+        //
+        // graph.addMutation(mutation)
+        //
+        // node1.set(0)
+        // node2.set(1)
+        //
+        // graph.propagate()
+        //
+        // graph.addMutation(mutation)
+        //
+        // t.is(resultNode.get(), 1, "Correct result calculated")
+        //
+        // node1.set(1)
+        //
+        // graph.propagate()
+        //
+        // graph.addMutation(mutation)
+        //
+        // t.is(resultNode.get(), 2, "Correct result calculated")
+        // t.is(resultNode.previous.get(), 1, "Can track old value")
+        //
+        // node2.set(2)
+        //
+        // graph.propagate()
+        //
+        // t.is(resultNode.get(), 3, "Correct result calculated")
+        // t.is(resultNode.previous.get(), 2, "Can track old value")
+    })
+
+
     // t.iit('2 mutations in graph context', t => {
     //     debugger
     //

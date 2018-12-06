@@ -114,6 +114,16 @@
 //         }
 //
 //
+//         this.fields.endDate.set()
+//
+//         calculateEndDateMobXStyle () : Date {
+//             if (this.fields.schedulingMode.get() === 'EffortDriven') {
+//
+//                 return new Date(this.fields.startDate.get().getTime() + this.fields.duration.get())
+//             }
+//         }
+
+
 //         @mutation((me : Event) => {
 //             return {
 //                 input       : [ me.schedulingMode, me.startDate, me.duration ],

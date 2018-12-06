@@ -1,11 +1,10 @@
-import {AnyFunction, Base, Constructable, Mixin} from "../class/Mixin.js";
+import {AnyFunction1, Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Atom, Calculable, ChronoValue, Readable, Writable} from "./Atom.js";
 
 
-export type NamedInput      =  { [s : string] : Atom & Readable }
-export type ArrayInput      =  (Atom & Readable)[]
+//---------------------------------------------------------------------------------------------------------------------
+export type Input<V>        =  { [s : string] : V } | V[]
 
-export type ArrayOutput     =  (Atom & Writable)[]
 
 /*
 
@@ -20,7 +19,7 @@ This should allow arbitrary JSON graph as input
 export const MutationData = <T extends Constructable<Base>>(base : T) =>
 
 class MutationData extends base {
-    input           : NamedInput | ArrayInput
+    input           : Input<Atom & Readable>
 
     as              : (Atom & Writable)[]
 
@@ -54,12 +53,12 @@ export const PureCalculation = <T extends Constructable<Calculable & MutationDat
 
     abstract class PureCalculation extends base {
 
-        calculation         : AnyFunction
+        calculation         : AnyFunction1<ChronoValue>
 
-        calculate () : ChronoValue {
-            const values    = this.mapInput(atom => atom.get())
+        calculate () : (Atom & Writable)[] {
+            const input     = this.mapInput(atom => atom.get())
 
-            const result    = Array.isArray(values) ? this.calculation.apply(this, values) : this.calculation(values)
+            const result    = Array.isArray(input) ? this.calculation.apply(this, input) : this.calculation(input)
 
             return this.as.map(atom => atom.set(result))
         }

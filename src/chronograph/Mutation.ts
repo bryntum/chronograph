@@ -1,27 +1,27 @@
-// import {Calculable} from "../chrono/Atom.js";
-// import {MutationData, PureCalculation} from "../chrono/Mutation.js";
-// import {AnyFunction, Base, Constructable, Mixin} from "../class/Mixin.js";
-// import {ChronoGraphNode} from "./Node.js";
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const ChronoCalculation = <T extends Constructable<PureCalculation & MutationData>>(base: T) => {
-//
-//     abstract class ChronoCalculation extends base {
-//         as: ChronoGraphNode[]
-//
-//         calculation: AnyFunction
-//
-//         calculate(): ChronoGraphNode[] {
-//             const values = this.mapInput(atom => atom.get())
-//
-//             const result = Array.isArray(values) ? this.calculation.apply(this, values) : this.calculation(values)
-//
-//             return this.as.map(atom => atom.set(result))
-//         }
-//     }
-//
-//     return ChronoCalculation
-// }
-// export type ChronoCalculation = Mixin<typeof ChronoCalculation>
-// export const MinimalChronoMutationData = ChronoCalculation(PureCalculation(Calculable(MutationData(Base))))
+import {Calculable} from "../chrono/Atom.js";
+import {Input, MutationData, PureCalculation} from "../chrono/Mutation.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
+import {ChronoGraphNode, MinimalChronoGraphNode} from "./Node.js";
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ChronoMutationNode = <T extends Constructable<ChronoGraphNode & PureCalculation>>(base: T) =>
+
+class ChronoMutationNode extends base {
+
+    input           : Input<ChronoGraphNode>
+
+    as              : ChronoGraphNode[]
+
+
+    addEdges () {
+        this.mapInput((node : ChronoGraphNode) => node.addEdgeTo(this))
+        this.as.map((node : ChronoGraphNode) => this.addEdgeTo(node))
+    }
+}
+
+export type ChronoMutationNode = Mixin<typeof ChronoMutationNode>
+
+
+export const MinimalChronoMutationNode  = ChronoMutationNode(PureCalculation(Calculable(MutationData(MinimalChronoGraphNode))))
+
