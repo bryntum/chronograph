@@ -51,13 +51,13 @@ StartTest(t => {
     })
 
 
-    t.iit('2 mutations in graph context', t => {
+    t.it('2 mutations in graph context', t => {
         const graph : GraphBox  = MinimalGraphBox.new({ id : 'graph' })
 
         const box1 : Box        = graph.getBox('inp1')
         const box2 : Box        = graph.getBox('inp2')
         const box1p2 : Box      = graph.getBox('1p2')
-        const box3 : Box        = graph.getBox('inp1')
+        const box3 : Box        = graph.getBox('inp3')
         const res : Box         = graph.getBox('res')
 
         const mutation1 = MinimalChronoMutationNode.new({
@@ -78,7 +78,6 @@ StartTest(t => {
             output      : [ res ],
 
             calculation : (v1, v2) => {
-                // debugger
                 return v1 + v2
             }
         })

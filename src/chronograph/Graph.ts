@@ -55,7 +55,7 @@ class GraphBox extends base {
             // if (!this.candidate.hasDirectNode())
             this.addNode(box.value)
         } else {
-            box.value   = MinimalChronoGraphNode.new()
+            box.value   = MinimalChronoGraphNode.new({ id : box.id })
 
             this.addNode(box.value)
         }
@@ -67,9 +67,9 @@ class GraphBox extends base {
 
 
     getBox (id : ChronoId) : Box {
-        const box       = this.allWatchedBoxes.get(id)
-
-        if (box) return box
+        // const box       = this.allWatchedBoxes.get(id)
+        //
+        // if (box) return box
 
         return this.addBox(MinimalBox.new({ id : id }))
     }
@@ -128,6 +128,8 @@ class GraphSnapshot extends base {
             onCycle                 : () => { throw new Error("Cycle in graph") },
 
             onTopologicalNode       : (node : ChronoGraphNode) => {
+                if (<any>node === <any>this) return
+
                 // console.log(`Visiting TOPO [${node}]`)
 
                 if (node instanceof MinimalChronoMutationNode) {
