@@ -39,6 +39,8 @@ export const Walkable = <T extends Constructable<Base>>(base : T) => {
             store the number in the node itself (as non-enumerable symbol property)
         */
         walkDepth (context : WalkContext) {
+            // POSSIBLE OPTIMIZATION - have a single `visitedAt` map as Map<this, [ number, boolean ]> to
+            // store the "visitedTopologically" flag
             const visitedAt             = new Map<this, number>()
             const visitedTopologically  = new Set<this>()
 
@@ -106,7 +108,7 @@ export type Walkable = Mixin<typeof Walkable>
 export class WalkForwardContext extends WalkContext {
 
     getNext (node : WalkableForward) : WalkableForward[] {
-        return node.getOutgoing()
+        return node.getOutgoing(this)
     }
 }
 
@@ -115,7 +117,7 @@ export class WalkForwardContext extends WalkContext {
 export class WalkBackwardContext extends WalkContext {
 
     getNext (node : WalkableBackward) : WalkableBackward[] {
-        return node.getIncoming()
+        return node.getIncoming(this)
     }
 }
 
@@ -124,7 +126,7 @@ export class WalkBackwardContext extends WalkContext {
 export const WalkableForward = <T extends Constructable<Walkable>>(base : T) => {
 
     abstract class WalkableForward extends base {
-        abstract getOutgoing () : WalkableForward[]
+        abstract getOutgoing (context : WalkForwardContext) : WalkableForward[]
     }
 
     return WalkableForward
@@ -138,7 +140,7 @@ export type WalkableForward = Mixin<typeof WalkableForward>
 export const WalkableBackward = <T extends Constructable<Walkable>>(base : T) => {
 
     abstract class WalkableBackward extends base {
-        abstract getIncoming () : WalkableBackward[]
+        abstract getIncoming (context : WalkBackwardContext) : WalkableBackward[]
     }
 
     return WalkableBackward
