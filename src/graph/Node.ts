@@ -1,5 +1,5 @@
-import {Constructable, Mixin} from "../class/Mixin.js";
-import {WalkableBackward, WalkableForward, WalkContext} from "./Walkable.js";
+import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Walkable, WalkableBackward, WalkableForward, WalkContext} from "./Walkable.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export const WalkableForwardNode = <T extends Constructable<WalkableForward>>(base : T) =>
@@ -110,3 +110,5 @@ class Node extends base {
 export type Node = Mixin<typeof Node>
 
 
+export const MinimalNode    = Node(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(Base))))))
+export type MinimalNode     = InstanceType<typeof MinimalNode>

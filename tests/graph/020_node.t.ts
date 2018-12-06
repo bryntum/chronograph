@@ -1,6 +1,6 @@
 import {HasId} from "../../src/chronograph/HasId.js";
 import {Base} from "../../src/class/Mixin.js";
-import {Node, WalkableBackwardNode, WalkableForwardNode} from "../../src/graph/Node.js";
+import {MinimalNode, WalkableBackwardNode, WalkableForwardNode} from "../../src/graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "../../src/graph/Walkable.js";
 
 declare const StartTest : any
@@ -14,7 +14,7 @@ const WalkerBackward    = WalkableBackwardNode(HasId(WalkableBackward(Walkable(B
 type WalkerBackward     = InstanceType<typeof WalkerBackward>
 
 // Node
-const Walker            = Node(WalkableForwardNode(WalkableBackwardNode(HasId(WalkableForward(WalkableBackward(Walkable(Base)))))))
+const Walker            = HasId(MinimalNode)
 type Walker             = InstanceType<typeof Walker>
 
 
@@ -29,6 +29,8 @@ StartTest(t => {
 
         node3.addEdgeTo(node5)
         node4.addEdgeTo(node3)
+        // For optimization purposes, walker goes into the last "next" walkable node from the `getOutgoing` result
+        // so we use "reverse" to get what we expect
         node2.addEdgesTo([ node3, node4 ].reverse())
         node1.addEdgeTo(node2)
 
