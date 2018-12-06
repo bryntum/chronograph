@@ -7,12 +7,13 @@ import {Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext} from "../graph/Walkable.js";
 import {Box, MinimalBox} from "./Box.js";
+import {HasId} from "./HasId.js";
 import {ChronoMutationNode, MinimalChronoMutationNode} from "./Mutation.js";
 import {ChronoGraphNode, MinimalChronoGraphNode} from "./Node.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const GraphBox = <T extends Constructable<MutableBoxWithCandidate & ObservableRead & ObservableWrite>>(base : T) =>
+export const GraphBox = <T extends Constructable<HasId & MutableBoxWithCandidate & ObservableRead & ObservableWrite>>(base : T) =>
 
 class GraphBox extends base {
     cls             : GraphSnapshotConstructor  = MinimalGraphSnapshot
@@ -100,7 +101,7 @@ class GraphBox extends base {
 
 export type GraphBox                    = Mixin<typeof GraphBox>
 
-export const MinimalGraphBox            = GraphBox(MutableBoxWithCandidate(ObservableRead(ObservableWrite(MinimalMutableBox))))
+export const MinimalGraphBox            = GraphBox(HasId(MutableBoxWithCandidate(ObservableRead(ObservableWrite(MinimalMutableBox)))))
 export type MinimalGraphBox             = InstanceType<typeof MinimalGraphBox>
 
 
@@ -114,6 +115,7 @@ class GraphSnapshot extends base {
     nodes           : Set<ChronoGraphNode>          = new Set()
 
 
+    // used during "commit"
     hasValue () {
         return this.nodes.size > 0
     }
@@ -129,13 +131,13 @@ class GraphSnapshot extends base {
                 // console.log(`Visiting TOPO [${node}]`)
 
                 if (node instanceof MinimalChronoMutationNode) {
-                    const resultAtoms   = node.calculate() as ChronoGraphNode[]
+                    const resultNodes   = node.calculate() as ChronoGraphNode[]
 
-                    resultAtoms.forEach((node, index) => {
+                    resultNodes.forEach((resultNode, index) => {
                         // if the new atom has been created for the output, add it to graph
-                        // if (atom !== node.as[ index ])
+                        // if (resultNode !== node.output[ index ])
 
-                        if (!this.hasDirectNode(node)) this.addNode(node)
+                        if (!this.hasDirectNode(resultNode)) this.addNode(resultNode)
                     })
                 }
             }
