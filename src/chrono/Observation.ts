@@ -29,15 +29,15 @@ export type ObservableRead = Mixin<typeof ObservableRead>
 export const ObservableWrite = <T extends Constructable<Atom & Writable>>(base : T) => {
 
     abstract class ObservableWrite extends base {
-        set (value) : this {
+        set (value : ChronoValue) : this {
             const res       = super.set(value)
 
-            this.observeWrite(res)
+            this.observeWrite(value, res)
 
             return res
         }
 
-        abstract observeWrite (value : ChronoValue)
+        abstract observeWrite (value : ChronoValue, res : Atom & Writable)
     }
 
     return ObservableWrite

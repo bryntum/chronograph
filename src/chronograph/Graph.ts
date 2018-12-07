@@ -40,8 +40,8 @@ class GraphBox extends base {
     }
 
 
-    observeWrite (box : Box) {
-
+    observeWrite (value : ChronoValue, box : Box) {
+        if (box !== <any>this && !this.getCandidate().hasDirectNode(box.value)) this.addNode(box.value)
     }
 
 
@@ -133,14 +133,23 @@ class GraphSnapshot extends base {
                 // console.log(`Visiting TOPO [${node}]`)
 
                 if (node instanceof MinimalChronoMutationNode) {
-                    const resultNodes   = node.calculate() as ChronoGraphNode[]
 
-                    resultNodes.forEach((resultNode, index) => {
-                        // if the new atom has been created for the output, add it to graph
-                        // if (resultNode !== node.output[ index ])
+                    let someIsDirty     = false
 
-                        if (!this.hasDirectNode(resultNode)) this.addNode(resultNode)
+                    node.mapInput(node.input, (box : Box) => {
+                        if (this.hasDirectNode(box.value)) someIsDirty = true
                     })
+
+                    if (someIsDirty) {
+                        const resultNodes   = node.calculate() as ChronoGraphNode[]
+
+                        resultNodes.forEach((resultNode, index) => {
+                            // if the new atom has been created for the output, add it to graph
+                            // if (resultNode !== node.output[ index ])
+
+                            if (!this.hasDirectNode(resultNode)) this.addNode(resultNode)
+                        })
+                    }
                 }
             }
         }))

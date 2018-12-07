@@ -23,8 +23,8 @@ class Box extends base {
     }
 
 
-    observeWrite (value : ChronoValue) {
-        this.graph && this.graph.observeWrite(this)
+    observeWrite (value : ChronoValue, box : Box) {
+        this.graph && this.graph.observeWrite(value, box)
     }
 
 
