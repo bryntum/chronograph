@@ -31,10 +31,14 @@ export const Immutable = <T extends Constructable<Atom & Readable & Writable>>(b
 
 
         nextConfig (value : ChronoValue) : Partial<this> {
-            return (value !== undefined ? {
-                previous        : this,
-                value           : value
-            } : {}) as unknown as Partial<this> // wtf, TODO submit a bug about this
+            return (
+                value !== undefined ? {
+                    previous        : this,
+                    value           : value
+                } : {
+                    previous        : this
+                }
+            ) as unknown as Partial<this> // wtf, TODO submit a bug about this
         }
 
 
