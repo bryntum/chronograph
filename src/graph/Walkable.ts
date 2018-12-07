@@ -81,6 +81,10 @@ export const Walkable = <T extends Constructable<Base>>(base : T) => {
 
                     context.onNode(node)
 
+                    // TODO
+                    // this is a hot path, benchmarking shows it is faster to pass a Set from `getNext`
+                    // and then use `next.forEach()` instead of `Array.from`
+                    // possibly even faster options exists (ArraySet class)
                     const next          = context.getNext(node)
 
                     if (next.length) {
