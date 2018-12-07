@@ -1,5 +1,4 @@
 import {Atom, ChronoValue, Readable, Writable} from "../chrono/Atom.js";
-import {ImmutableConstructor, MinimalImmutable} from "../chrono/Immutable.js";
 import {MutableBox} from "../chrono/MutableBox.js";
 import {ObservableRead, ObservableWrite} from "../chrono/Observation.js";
 import {Reference} from "../chrono/Reference.js";

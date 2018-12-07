@@ -1,4 +1,4 @@
-import {AnyFunction, AnyFunction1, Base, Constructable, Mixin} from "../class/Mixin.js";
+import {AnyFunction1, Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Atom, Readable, Writable} from "./Atom.js";
 
 

@@ -75,11 +75,6 @@ StartTest(t => {
                 // console.profileEnd()
                 console.timeEnd("Calc #1");
 
-                next()
-            },
-            next => {
-
-
                 console.log("Result: ", boxes[ boxes.length - 1 ].get())
 
                 next()
