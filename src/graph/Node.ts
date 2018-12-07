@@ -1,5 +1,5 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Walkable, WalkableBackward, WalkableForward, WalkContext} from "./Walkable.js";
+import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext} from "./Walkable.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export const WalkableForwardNode = <T extends Constructable<WalkableForward>>(base : T) =>
@@ -38,6 +38,11 @@ class WalkableForwardNode extends base {
 
     getOutgoing (context : WalkContext) : WalkableForwardNode[] {
         return Array.from(this.outgoing)
+    }
+
+
+    forEachOutgoing (context : WalkForwardContext, func : (WalkableForward) => any) {
+        this.outgoing.forEach(func)
     }
 }
 
@@ -82,6 +87,10 @@ class WalkableBackwardNode extends base {
 
     getIncoming (context : WalkContext) : WalkableBackwardNode[] {
         return Array.from(this.incoming)
+    }
+
+    forEachIncoming(context : WalkBackwardContext, func : (WalkableBackward) => any) {
+        this.incoming.forEach(func)
     }
 }
 

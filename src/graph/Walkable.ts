@@ -20,7 +20,10 @@ export abstract class WalkContext extends Base {
     }
 
 
-    abstract getNext (node) : Walkable[]
+    abstract getNext (node : Walkable) : Walkable[]
+
+
+    abstract forEachNext (node : Walkable, func : (node : Walkable) => any)
 }
 
 
@@ -41,10 +44,10 @@ export const Walkable = <T extends Constructable<Base>>(base : T) => {
         walkDepth (context : WalkContext) {
             // POSSIBLE OPTIMIZATION - have a single `visitedAt` map as Map<this, [ number, boolean ]> to
             // store the "visitedTopologically" flag
-            const visitedAt             = new Map<this, number>()
-            const visitedTopologically  = new Set<this>()
+            const visitedAt             = new Map<Walkable, number>()
+            const visitedTopologically  = new Set<Walkable>()
 
-            let toVisit : this[]        = [ this ]
+            let toVisit : Walkable[]    = [ this ]
 
             let depth
 
@@ -81,15 +84,12 @@ export const Walkable = <T extends Constructable<Base>>(base : T) => {
 
                     context.onNode(node)
 
-                    // TODO
-                    // this is a hot path, benchmarking shows it is faster to pass a Set from `getNext`
-                    // and then use `next.forEach()` instead of `Array.from`
-                    // possibly even faster options exists (ArraySet class)
-                    const next          = context.getNext(node)
+                    const lengthBefore  = toVisit.length
 
-                    if (next.length) {
-                        toVisit.push.apply(toVisit, next)
-                    } else {
+                    context.forEachNext(node, node => toVisit.push(node))
+
+                    // no new nodes added
+                    if (toVisit.length === lengthBefore) {
                         visitedTopologically.add(node)
 
                         // if there's no outgoing edges, node is at topological position
@@ -114,6 +114,10 @@ export class WalkForwardContext extends WalkContext {
     getNext (node : WalkableForward) : WalkableForward[] {
         return node.getOutgoing(this)
     }
+
+    forEachNext (node : WalkableForward, func : (node : WalkableForward) => any) {
+        node.forEachOutgoing(this, func)
+    }
 }
 
 
@@ -123,6 +127,10 @@ export class WalkBackwardContext extends WalkContext {
     getNext (node : WalkableBackward) : WalkableBackward[] {
         return node.getIncoming(this)
     }
+
+    forEachNext (node : WalkableBackward, func : (node : WalkableBackward) => any) {
+        node.forEachIncoming(this, func)
+    }
 }
 
 
@@ -131,6 +139,10 @@ export const WalkableForward = <T extends Constructable<Walkable>>(base : T) => 
 
     abstract class WalkableForward extends base {
         abstract getOutgoing (context : WalkForwardContext) : WalkableForward[]
+
+        forEachOutgoing (context : WalkForwardContext, func : (WalkableForward) => any) {
+            this.getOutgoing(context).forEach(func)
+        }
     }
 
     return WalkableForward
@@ -145,6 +157,10 @@ export const WalkableBackward = <T extends Constructable<Walkable>>(base : T) =>
 
     abstract class WalkableBackward extends base {
         abstract getIncoming (context : WalkBackwardContext) : WalkableBackward[]
+
+        forEachIncoming(context : WalkBackwardContext, func : (WalkableBackward) => any) {
+            this.getIncoming(context).forEach(func)
+        }
     }
 
     return WalkableBackward
