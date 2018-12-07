@@ -24,7 +24,7 @@ class GraphBox extends base {
     candidate       : GraphSnapshot
 
 
-    allWatchedBoxes     : Map<ChronoId, Box>        = new Map()
+    boxes           : Map<ChronoId, Box>        = new Map()
 
 
 
@@ -50,9 +50,13 @@ class GraphBox extends base {
     }
 
 
+    hasBox (id : ChronoId) {
+        return this.boxes.has(id)
+    }
+
+
     addBox (box : Box) : Box {
         if (box.isResolved()) {
-            // if (!this.candidate.hasDirectNode())
             this.addNode(box.value)
         } else {
             box.value   = MinimalChronoGraphNode.new({ id : box.id })
@@ -62,14 +66,16 @@ class GraphBox extends base {
 
         box.graph   = this
 
+        this.boxes.set(box.id, box)
+
         return box
     }
 
 
     getBox (id : ChronoId) : Box {
-        // const box       = this.allWatchedBoxes.get(id)
-        //
-        // if (box) return box
+        const box       = this.boxes.get(id)
+
+        if (box) return box
 
         return this.addBox(MinimalBox.new({ id : id }))
     }

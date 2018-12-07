@@ -116,7 +116,7 @@ StartTest(t => {
     })
 
 
-    t.iit('2 mutations in graph context', t => {
+    t.it('2 mutations in graph context', t => {
         const graph : GraphBox  = MinimalGraphBox.new({ id : 'graph' })
 
         const box1 : Box        = graph.getBox('inp1')
@@ -153,8 +153,6 @@ StartTest(t => {
         graph.addMutation(mutation1)
         graph.addMutation(mutation2)
 
-        debugger
-
         box1.set(0)
         box2.set(0)
         box3.set(1)
@@ -175,8 +173,6 @@ StartTest(t => {
 
         const calculation1Spy$  = t.spyOn(mutation1, 'calculation')
         const calculation2Spy$  = t.spyOn(mutation2, 'calculation')
-
-        debugger
 
         graph.propagate()
 

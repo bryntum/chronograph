@@ -2,6 +2,7 @@ import {Calculable, ChronoValue} from "../chrono/Atom.js";
 import {Input, MutationData, Output} from "../chrono/MutationData.js";
 import {AnyFunction, AnyFunction1, Constructable, Mixin} from "../class/Mixin.js";
 import {Box} from "./Box.js";
+import {GraphSnapshot} from "./Graph.js";
 //---------------------------------------------------------------------------------------------------------------------
 import {ChronoGraphNode, MinimalChronoGraphNode} from "./Node.js";
 
@@ -40,6 +41,18 @@ class ChronoMutationNode extends base {
             return box.value
         })
     }
+
+
+    referencesChangedData (graph : GraphSnapshot) : boolean {
+        let someIsDirty     = false
+
+        this.mapInput(this.input, (box : Box) => {
+            if (graph.hasDirectNode(box.value)) { someIsDirty = true }
+        })
+
+        return someIsDirty
+    }
+
 
     // calculate () : Output<ChronoGraphNode> {
     //     const input         = this.mapInput(this.inputRef(), box => box.get())
