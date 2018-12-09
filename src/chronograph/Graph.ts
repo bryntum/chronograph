@@ -56,6 +56,8 @@ class GraphBox extends base {
 
 
     addBox (box : Box) : Box {
+        if (this.hasBox(box.id)) return box
+
         if (box.isResolved()) {
             this.addNode(box.value)
         } else {
@@ -91,6 +93,13 @@ class GraphBox extends base {
         this.addNode(mutation)
 
         mutation.addEdges()
+    }
+
+
+    runMutation (func : () => any) {
+        // this.addNode(mutation)
+        //
+        // mutation.addEdges()
     }
 
 
