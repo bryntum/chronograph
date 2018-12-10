@@ -41,7 +41,7 @@ class GraphBox extends base {
 
 
     observeWrite (value : ChronoValue, box : Box) {
-        if (box !== <any>this && !this.getCandidate().hasDirectNode(box.value)) this.addNode(box.value)
+        if (box !== <any>this && !this.getCandidate().hasDirectNode(box.value)) this.addCandidateNode(box.value)
     }
 
 
@@ -59,11 +59,11 @@ class GraphBox extends base {
         if (this.hasBox(box.id)) return box
 
         if (box.isResolved()) {
-            this.addNode(box.value)
+            this.addCandidateNode(box.value)
         } else {
             box.value   = MinimalChronoGraphNode.new({ id : box.id })
 
-            this.addNode(box.value)
+            this.addCandidateNode(box.value)
         }
 
         box.graph   = this
@@ -84,13 +84,13 @@ class GraphBox extends base {
 
 
 
-    addNode (node : ChronoGraphNode) {
+    addCandidateNode (node : ChronoGraphNode) {
         this.getCandidate().addNode(node)
     }
 
 
     addMutation (mutation : ChronoMutationNode) {
-        this.addNode(mutation)
+        this.addCandidateNode(mutation)
 
         mutation.addEdges()
     }

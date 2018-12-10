@@ -31,11 +31,6 @@ export class Base {
 
         return instance as InstanceType<T>
     }
-
-
-    class<T extends Base>(this : T) : AnyConstructor1<T> & BaseConstructor {
-        return this.constructor as (AnyConstructor1<T> & BaseConstructor)
-    }
 }
 
 type BaseConstructor       = typeof Base
@@ -80,7 +75,9 @@ class ChronoNumber extends Number {
 }
 
 
-
+// export type AnyConstructor11<A>      = new <A>(...input: any[]) => A
+//
+//
 //
 // export const Atom = <V, T extends Constructable<Base>>(base : T) =>
 //
@@ -93,20 +90,36 @@ class ChronoNumber extends Number {
 //     }
 // }
 //
-// export type AtomMixinFunction = Mixin<typeof Atom>
+// export type Atom<V> = Mixin<typeof Atom>
 //
+// const mixAtom = <V>() => {
+//     return Atom<V, typeof Base>(Base)
+// }
 //
-// type MinimalAtomConstructor<V> = typeof MinimalAtom
+// const AtomCls       = mixAtom<Date>()
 //
-// export type Atom<V> = InstanceType<MinimalAtomConstructor<V>>
-//
-//
-//
-// let a : Atom<Date>
-//
+// let a : InstanceType<typeof AtomCls>
 //
 // a.zxc
 //
 // a.value.getTime()
 //
 // a.value.zxc
+//
+//
+//
+//
+// // type Atom1<V>       = ReturnType<typeof name>
+//
+// type ReturnType1<T extends <A>(...args: any[]) => any> = T extends <A>(...args: any[]) => infer R ? R : any;
+//
+//
+//
+//
+// function some (a : Atom<Date>) {
+//     a.zxc
+//
+//     a.value.getTime()
+//
+//     a.value.zxc
+// }

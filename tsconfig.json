@@ -1,7 +1,10 @@
 {
     "compilerOptions" : {
+        "experimentalDecorators"    : true,
+        "noStrictGenericChecks"     : true,
+
         "target"                : "es6",
-        "experimentalDecorators" : true,
+
 //        "sourceMap"             : true,
         "lib"                   : [
             "es2015",
