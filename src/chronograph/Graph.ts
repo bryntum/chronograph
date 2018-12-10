@@ -13,7 +13,7 @@ import {ChronoGraphNode, MinimalChronoGraphNode} from "./Node.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const GraphBox = <T extends Constructable<HasId & MutableBoxWithCandidate & ObservableRead & ObservableWrite>>(base : T) =>
+export const GraphBox = <T extends Constructable<Graph & HasId & MutableBoxWithCandidate & ObservableRead & ObservableWrite>>(base : T) =>
 
 class GraphBox extends base {
     cls             : GraphSnapshotConstructor  = MinimalGraphSnapshot
@@ -24,7 +24,8 @@ class GraphBox extends base {
     candidate       : GraphSnapshot
 
 
-    boxes           : Map<ChronoId, Box>        = new Map()
+    nodes           : Set<Box>              = new Set()
+    nodesMap        : Map<ChronoId, Box>    = new Map()
 
 
 
@@ -50,13 +51,10 @@ class GraphBox extends base {
     }
 
 
-    hasBox (id : ChronoId) {
-        return this.boxes.has(id)
-    }
-
-
-    addBox (box : Box) : Box {
+    addNode (box : Box) : Box {
         if (this.hasBox(box.id)) return box
+
+        this.nodesMap.set(box.id, box)
 
         if (box.isResolved()) {
             this.addCandidateNode(box.value)
@@ -68,14 +66,32 @@ class GraphBox extends base {
 
         box.graph   = this
 
-        this.boxes.set(box.id, box)
-
         return box
     }
 
 
+    hasNodeById (id : ChronoId) : boolean {
+        return this.nodesMap.has(id)
+    }
+
+
+    getNodeById (id : ChronoId) : Box {
+        return this.nodesMap.get(id)
+    }
+
+
+    hasBox (id : ChronoId) {
+        return this.hasNodeById(id)
+    }
+
+
+    addBox (box : Box) : Box {
+        return this.addNode(box)
+    }
+
+
     getBox (id : ChronoId) : Box {
-        const box       = this.boxes.get(id)
+        const box       = this.getNodeById(id)
 
         if (box) return box
 
@@ -116,7 +132,7 @@ class GraphBox extends base {
 
 export type GraphBox                    = Mixin<typeof GraphBox>
 
-export const MinimalGraphBox            = GraphBox(HasId(MutableBoxWithCandidate(ObservableRead(ObservableWrite(MinimalMutableBox)))))
+export const MinimalGraphBox            = GraphBox(Graph(WalkableBackward(WalkableForward(Walkable(ObservableRead(ObservableWrite(HasId(MutableBoxWithCandidate(MinimalMutableBox)))))))))
 export type MinimalGraphBox             = InstanceType<typeof MinimalGraphBox>
 
 
