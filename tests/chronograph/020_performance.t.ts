@@ -80,7 +80,7 @@ StartTest(t => {
                 next()
             },
             next => {
-                boxes[ 10000 ].set(0)
+                boxes[ 49990 ].set(0)
 
                 mutations.forEach(mutation => mutation && graph.addMutation(mutation))
 

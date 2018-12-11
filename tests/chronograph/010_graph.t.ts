@@ -116,7 +116,7 @@ StartTest(t => {
     })
 
 
-    t.it('2 mutations in graph context', t => {
+    t.iit('2 mutations in graph context', t => {
         const graph : GraphBox  = MinimalGraphBox.new({ id : 'graph' })
 
         const box1 : Box        = graph.getBox('inp1')
@@ -157,6 +157,10 @@ StartTest(t => {
         box2.set(0)
         box3.set(1)
 
+        console.log("INITIAL PROPAGATE")
+
+        // debugger
+
         graph.propagate()
 
         t.expect(calculation1Spy).toHaveBeenCalled(1)
@@ -165,19 +169,52 @@ StartTest(t => {
         t.is(box1p2.get(), 0, "Correct result calculated")
         t.is(res.get(), 1, "Correct result calculated")
 
+        console.log("SECOND PROPAGATE")
+
         // should only recalculate mutation2
         box3.set(2)
 
-        graph.addMutation(mutation1)
-        graph.addMutation(mutation2)
+        const mutation21 = MinimalChronoMutationNode.new({
+            id          : 'mutation21',
 
-        const calculation1Spy$  = t.spyOn(mutation1, 'calculation')
-        const calculation2Spy$  = t.spyOn(mutation2, 'calculation')
+            input       : [ box1, box2 ],
+            output      : [ box1p2 ],
+
+            calculation : (v1, v2) => {
+                return v1 + v2
+            }
+        })
+
+        const mutation22 = MinimalChronoMutationNode.new({
+            id          : 'mutation22',
+
+            input       : [ box1p2, box3 ],
+            output      : [ res ],
+
+            calculation : (v1, v2) => {
+                return v1 + v2
+            }
+        })
+
+
+        graph.addMutation(mutation21)
+        graph.addMutation(mutation22)
+
+        const calculation1Spy$  = t.spyOn(mutation21, 'calculation')
+        const calculation2Spy$  = t.spyOn(mutation22, 'calculation')
+
+        const spy1              = t.spyOn(box1.value, 'forEachIncoming')
+        const spy2              = t.spyOn(box1.value, 'forEachOutgoing')
+
+        // debugger
 
         graph.propagate()
 
         t.expect(calculation1Spy$).toHaveBeenCalled(0)
         t.expect(calculation2Spy$).toHaveBeenCalled(1)
+
+        t.expect(spy1).toHaveBeenCalled(0) // should not even visit the box1
+        t.expect(spy2).toHaveBeenCalled(0) // should not even visit the box1
 
         t.is(res.get(), 2, "Correct result calculated")
         t.is(res.getPrevious().get(), 1, "Can track old value")
