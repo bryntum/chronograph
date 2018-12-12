@@ -206,18 +206,20 @@ class GraphBox extends base {
             const computedAsResultOf    = box.incoming as Set<ChronoMutationBox>
 
             if (computedAsResultOf) {
-                const computedAsResultOfArr     = Array.from(computedAsResultOf)
+                const computedAsResultOfArr = Array.from(computedAsResultOf)
 
                 if (computedAsResultOfArr.length > 1) throw new Error("Implement mutations combination")
 
                 if (computedAsResultOfArr.length === 1) {
                     const mutationBox       = computedAsResultOfArr[ 0 ]
 
-                    const resultNodes       = mutationBox.calculate()
+                    if (mutationBox.referencesChangedData(candidate)) {
+                        const resultNodes       = mutationBox.calculate()
 
-                    resultNodes.forEach(resultNode => {
-                        if (!candidate.hasDirectNode(resultNode)) candidate.addNode(resultNode)
-                    })
+                        resultNodes.forEach(resultNode => {
+                            if (!candidate.hasDirectNode(resultNode)) candidate.addNode(resultNode)
+                        })
+                    }
                 }
             }
         }

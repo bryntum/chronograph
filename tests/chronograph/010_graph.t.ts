@@ -140,7 +140,7 @@ StartTest(t => {
         box2.set(0)
         box3.set(1)
 
-        console.log("INITIAL PROPAGATE")
+        // console.log("INITIAL PROPAGATE")
 
         graph.propagate()
 
@@ -150,7 +150,7 @@ StartTest(t => {
         t.is(box1p2.get(), 0, "Correct result calculated")
         t.is(res.get(), 1, "Correct result calculated")
 
-        console.log("SECOND PROPAGATE")
+        // console.log("SECOND PROPAGATE")
 
         // should only recalculate mutation2
         box3.set(2)

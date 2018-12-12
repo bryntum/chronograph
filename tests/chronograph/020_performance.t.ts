@@ -13,7 +13,7 @@ StartTest(t => {
 
         let boxes       = []
 
-        console.time("Build graph")
+        // console.time("Build graph")
         // console.profile('Build graph')
 
         for (let i = 0; i < atomNum; ++i) {
@@ -60,19 +60,19 @@ StartTest(t => {
         }
 
         // console.profileEnd()
-        console.timeEnd("Build graph")
+        // console.timeEnd("Build graph")
 
         t.chain(
             next => {
                 boxes[ 0 ].set(0)
 
-                console.time("Calc #1")
+                // console.time("Calc #1")
                 // console.profile('Propagate')
 
                 graph.propagate()
 
                 // console.profileEnd()
-                console.timeEnd("Calc #1");
+                // console.timeEnd("Calc #1");
 
                 console.log("Result: ", boxes[ boxes.length - 1 ].get())
 
@@ -81,11 +81,11 @@ StartTest(t => {
             next => {
                 boxes[ 1 ].set(0)
 
-                console.time("Calc #2");
+                // console.time("Calc #2");
 
                 graph.propagate()
 
-                console.timeEnd("Calc #2");
+                // console.timeEnd("Calc #2");
 
                 console.log("Result: ", boxes[ boxes.length - 1 ].get())
             }

@@ -34,6 +34,17 @@ class ChronoMutationBox extends base {
             return box.value
         })
     }
+
+
+    referencesChangedData (graph : GraphSnapshot) : boolean {
+        let someIsDirty     = false
+
+        this.mapInput(this.input, (box : Box) => {
+            if (graph.hasDirectNode(box.value)) { someIsDirty = true }
+        })
+
+        return someIsDirty
+    }
 }
 
 export type ChronoMutationBox = Mixin<typeof ChronoMutationBox>

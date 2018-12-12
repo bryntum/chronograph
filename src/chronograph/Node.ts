@@ -17,11 +17,6 @@ class ChronoGraphNode extends base {
     toString () {
         return `[node ${ this.id }]`
     }
-
-
-    // ???
-    onJoinGraph () {
-    }
 }
 
 export type ChronoGraphNode             = Mixin<typeof ChronoGraphNode>
