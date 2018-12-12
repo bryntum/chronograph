@@ -1,5 +1,5 @@
-import {MinimalChronoMutationNode} from "./src/chronograph/Node.js";
+import {MinimalChronoMutationBox} from "./src/chronograph/Mutation.js";
 
 export default {
-    MinimalChronoMutationNode
+    MinimalChronoMutationBox
 }
