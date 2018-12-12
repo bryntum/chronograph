@@ -12,7 +12,6 @@ StartTest(t => {
         let atomNum     = 50000
 
         let boxes       = []
-        let mutations   = []
 
         console.time("Build graph")
         // console.profile('Build graph')
@@ -35,7 +34,7 @@ StartTest(t => {
                 if (i % 2 == 0) {
 
                     graph.addMutation(
-                        mutations[ i ] = MinimalChronoMutationBox.new({
+                        MinimalChronoMutationBox.new({
                             input       : inputs,
                             output      : outputs,
 
@@ -47,7 +46,7 @@ StartTest(t => {
                 }
                 else {
                     graph.addMutation(
-                        mutations[ i ] = MinimalChronoMutationBox.new({
+                        MinimalChronoMutationBox.new({
                             input       : inputs,
                             output      : outputs,
 
@@ -60,7 +59,7 @@ StartTest(t => {
             }
         }
 
-        // console.profileEnd('Build graph')
+        // console.profileEnd()
         console.timeEnd("Build graph")
 
         t.chain(
@@ -80,17 +79,15 @@ StartTest(t => {
                 next()
             },
             next => {
-                // boxes[ 49990 ].set(0)
-                //
-                // mutations.forEach(mutation => mutation && graph.addMutation(mutation))
-                //
-                // console.time("Calc #2");
-                //
-                // graph.propagate()
-                //
-                // console.timeEnd("Calc #2");
-                //
-                // console.log("Result: ", boxes[ boxes.length - 1 ].get())
+                boxes[ 1 ].set(0)
+
+                console.time("Calc #2");
+
+                graph.propagate()
+
+                console.timeEnd("Calc #2");
+
+                console.log("Result: ", boxes[ boxes.length - 1 ].get())
             }
         )
     });

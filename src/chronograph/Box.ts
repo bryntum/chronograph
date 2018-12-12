@@ -19,6 +19,11 @@ class Box extends base {
     graph           : ObservableRead & ObservableWrite
 
 
+    initialAtomConfig (value : ChronoValue) : Partial<ChronoGraphNode> {
+        return Object.assign(super.initialAtomConfig(value), { id : this.id })
+    }
+
+
     observeRead (value : ChronoValue) {
         this.graph && this.graph.observeRead(this)
     }

@@ -24,11 +24,14 @@ class GraphBox extends base {
     candidate       : GraphSnapshot
 
 
+    // TODO one of these two is enough
     nodes           : Set<Box>              = new Set()
     nodesMap        : Map<ChronoId, Box>    = new Map()
 
-    mutationReferencingInput    : Map<ChronoId, Set<ChronoMutationBox>> = new Map()
-    mutationReferencingOutput   : Map<ChronoId, Set<ChronoMutationBox>> = new Map()
+    // mutationReferencingInput    : Map<ChronoId, Set<ChronoMutationBox>> = new Map()
+    // mutationReferencingOutput   : Map<ChronoId, Set<ChronoMutationBox>> = new Map()
+
+    mutations       : Set<ChronoMutationBox>    = new Set()
 
 
     // this config will ensure the box will create an empty graph snapshot when instantiated
@@ -82,33 +85,33 @@ class GraphBox extends base {
 
 
     addMutation (mutation : ChronoMutationBox) {
-        this.addNode(mutation)
+        // this.mutations.add(mutation)
 
         mutation.addEdges()
 
-        mutation.mapInput(mutation.input, (box : Box) => {
-            let refsInput       = this.mutationReferencingInput.get(box.id)
-
-            if (!refsInput) {
-                refsInput       = new Set<ChronoMutationBox>()
-
-                this.mutationReferencingInput.set(box.id, refsInput)
-            }
-
-            refsInput.add(mutation)
-        })
-
-        mutation.output.forEach((box : Box) => {
-            let refsOutput      = this.mutationReferencingOutput.get(box.id)
-
-            if (!refsOutput) {
-                refsOutput      = new Set<ChronoMutationBox>()
-
-                this.mutationReferencingOutput.set(box.id, refsOutput)
-            }
-
-            refsOutput.add(mutation)
-        })
+        // mutation.mapInput(mutation.input, (box : Box) => {
+        //     let refsInput       = this.mutationReferencingInput.get(box.id)
+        //
+        //     if (!refsInput) {
+        //         refsInput       = new Set<ChronoMutationBox>()
+        //
+        //         this.mutationReferencingInput.set(box.id, refsInput)
+        //     }
+        //
+        //     refsInput.add(mutation)
+        // })
+        //
+        // mutation.output.forEach((box : Box) => {
+        //     let refsOutput      = this.mutationReferencingOutput.get(box.id)
+        //
+        //     if (!refsOutput) {
+        //         refsOutput      = new Set<ChronoMutationBox>()
+        //
+        //         this.mutationReferencingOutput.set(box.id, refsOutput)
+        //     }
+        //
+        //     refsOutput.add(mutation)
+        // })
     }
 
 
@@ -162,25 +165,10 @@ class GraphBox extends base {
     }
 
 
-
     addCandidateNode (node : ChronoGraphNode) {
         const candidate     = this.getCandidate()
 
         if (!candidate.hasDirectNode(node)) candidate.addNode(node)
-    }
-
-
-    // addMutation (mutation : ChronoMutationBox) {
-    //     // this.addCandidateNode(mutation)
-    //     //
-    //     // mutation.addEdges()
-    // }
-
-
-    runMutation (func : () => any) {
-        // this.addNode(mutation)
-        //
-        // mutation.addEdges()
     }
 
 
@@ -200,7 +188,9 @@ class GraphBox extends base {
                     WalkForwardContext.prototype.forEachNext.call(this, box, func)
             },
 
-            onNode                  : (node : ChronoGraphNode) => { console.log(`Visiting ${node}`) },
+            onNode                  : (node : ChronoGraphNode) => {
+                // console.log(`Visiting ${node}`)
+            },
             onCycle                 : () => { throw new Error("Cycle in graph") },
 
             onTopologicalNode       : (box : Box) => {
@@ -211,7 +201,9 @@ class GraphBox extends base {
         for (var i = topoBox.length - 1; i >= 0; i--) {
             const box                   = topoBox[ i ]
 
-            const computedAsResultOf    = this.mutationReferencingOutput.get(box.id)
+            // const computedAsResultOf    = this.mutationReferencingOutput.get(box.id)
+
+            const computedAsResultOf    = box.incoming as Set<ChronoMutationBox>
 
             if (computedAsResultOf) {
                 const computedAsResultOfArr     = Array.from(computedAsResultOf)
