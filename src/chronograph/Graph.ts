@@ -198,6 +198,9 @@ class GraphBox extends base {
             }
         }))
 
+        // should instead to "walk" forward from the visited nodes, in topo order
+        // with dynamic `outgoing` edges calculation (depending from the result of the mutation)
+
         for (var i = topoBox.length - 1; i >= 0; i--) {
             const box                   = topoBox[ i ]
 
