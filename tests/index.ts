@@ -25,11 +25,8 @@ project.start(
         group       : 'chronograph',
 
         items       : [
-            // 'scheduling/inheritance_from_model.js',
-            // 'scheduling/basic.js',
-            // 'scheduling/basic_with_calendar.js',
-            // 'scheduling/floating.js',
-            // 'scheduling/date_interval.js'
+            'chronograph/010_graph.t.js',
+            'chronograph/020_performance.t.js'
         ]
     },
     {
@@ -37,9 +34,7 @@ project.start(
 
         items       : [
             'graph/010_walkable.t.js',
-            'graph/020_node.t.js',
-            'graph/030_graph.t.js',
-            'graph/040_performance.t.js'
+            'graph/020_node.t.js'
         ]
     }
 );

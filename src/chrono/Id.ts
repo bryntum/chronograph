@@ -3,7 +3,7 @@ export type ChronoId        = string | number
 
 let ATOM_ID : number = 1
 
-export const chronoId = () : ChronoId => <ChronoId>(ATOM_ID++ as unknown)
+export const chronoId = () : ChronoId => 'chrono' + <ChronoId>(ATOM_ID++ as unknown)
 
 
 // //---------------------------------------------------------------------------------------------------------------------

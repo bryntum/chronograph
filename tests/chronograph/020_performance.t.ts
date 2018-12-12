@@ -1,6 +1,6 @@
 import {MinimalBox} from "../../src/chronograph/Box.js";
 import {GraphBox, MinimalGraphBox} from "../../src/chronograph/Graph.js";
-import {MinimalChronoMutationNode} from "../../src/chronograph/Mutation.js";
+import {MinimalChronoMutationBox} from "../../src/chronograph/Mutation.js";
 
 declare const StartTest : any
 
@@ -35,7 +35,7 @@ StartTest(t => {
                 if (i % 2 == 0) {
 
                     graph.addMutation(
-                        mutations[ i ] = MinimalChronoMutationNode.new({
+                        mutations[ i ] = MinimalChronoMutationBox.new({
                             input       : inputs,
                             output      : outputs,
 
@@ -47,7 +47,7 @@ StartTest(t => {
                 }
                 else {
                     graph.addMutation(
-                        mutations[ i ] = MinimalChronoMutationNode.new({
+                        mutations[ i ] = MinimalChronoMutationBox.new({
                             input       : inputs,
                             output      : outputs,
 
@@ -80,17 +80,17 @@ StartTest(t => {
                 next()
             },
             next => {
-                boxes[ 49990 ].set(0)
-
-                mutations.forEach(mutation => mutation && graph.addMutation(mutation))
-
-                console.time("Calc #2");
-
-                graph.propagate()
-
-                console.timeEnd("Calc #2");
-
-                console.log("Result: ", boxes[ boxes.length - 1 ].get())
+                // boxes[ 49990 ].set(0)
+                //
+                // mutations.forEach(mutation => mutation && graph.addMutation(mutation))
+                //
+                // console.time("Calc #2");
+                //
+                // graph.propagate()
+                //
+                // console.timeEnd("Calc #2");
+                //
+                // console.log("Result: ", boxes[ boxes.length - 1 ].get())
             }
         )
     });

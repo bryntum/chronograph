@@ -1,11 +1,10 @@
 import {Box, MinimalBox} from "../../src/chronograph/Box.js";
 import {GraphBox, MinimalGraphBox} from "../../src/chronograph/Graph.js";
-import {MinimalChronoMutationNode} from "../../src/chronograph/Mutation.js";
+import {MinimalChronoMutationBox} from "../../src/chronograph/Mutation.js";
 
 declare const StartTest : any
 
 StartTest(t => {
-
 
     t.it('Minimal mutation in graph context', t => {
         const graph : GraphBox  = MinimalGraphBox.new()
@@ -14,26 +13,18 @@ StartTest(t => {
         const box2 : Box        = graph.getBox(2)
         const box3 : Box        = graph.getBox(3)
 
-        const mutation = MinimalChronoMutationNode.new({
-            input       : [ box1, box2 ],
-
-            output      : [ box3 ],
-
-            calculation : (v1, v2) => v1 + v2
-        })
-
-        graph.addMutation(mutation)
-
         box1.set(0)
         box2.set(1)
 
-        graph.propagate()
+        graph.compute(box3, () => {
+            return box1.get() + box2.get()
+        })
+
+        graph.commit()
 
         t.is(box3.get(), 1, "Correct result calculated")
 
         box1.set(1)
-
-        graph.addMutation(mutation)
 
         graph.propagate()
 
@@ -41,8 +32,6 @@ StartTest(t => {
         t.is(box3.getPrevious().get(), 1, "Can track old value")
 
         box2.set(2)
-
-        graph.addMutation(mutation)
 
         graph.propagate()
 
@@ -60,7 +49,7 @@ StartTest(t => {
         const box3 : Box        = graph.getBox('inp3')
         const res : Box         = graph.getBox('res')
 
-        const mutation1 = MinimalChronoMutationNode.new({
+        const mutation1 = MinimalChronoMutationBox.new({
             id          : 'mutation1',
 
             input       : [ box1, box2 ],
@@ -71,7 +60,7 @@ StartTest(t => {
             }
         })
 
-        const mutation2 = MinimalChronoMutationNode.new({
+        const mutation2 = MinimalChronoMutationBox.new({
             id          : 'mutation2',
 
             input       : [ box1p2, box3 ],
@@ -96,18 +85,12 @@ StartTest(t => {
 
         box1.set(1)
 
-        graph.addMutation(mutation1)
-        graph.addMutation(mutation2)
-
         graph.propagate()
 
         t.is(res.get(), 2, "Correct result calculated")
         t.is(res.getPrevious().get(), 1, "Can track old value")
 
         box2.set(1)
-
-        graph.addMutation(mutation1)
-        graph.addMutation(mutation2)
 
         graph.propagate()
 
@@ -116,7 +99,7 @@ StartTest(t => {
     })
 
 
-    t.iit('2 mutations in graph context', t => {
+    t.it('2 mutations in graph context', t => {
         const graph : GraphBox  = MinimalGraphBox.new({ id : 'graph' })
 
         const box1 : Box        = graph.getBox('inp1')
@@ -125,7 +108,7 @@ StartTest(t => {
         const box3 : Box        = graph.getBox('inp3')
         const res : Box         = graph.getBox('res')
 
-        const mutation1 = MinimalChronoMutationNode.new({
+        const mutation1 = MinimalChronoMutationBox.new({
             id          : 'mutation1',
 
             input       : [ box1, box2 ],
@@ -136,7 +119,7 @@ StartTest(t => {
             }
         })
 
-        const mutation2 = MinimalChronoMutationNode.new({
+        const mutation2 = MinimalChronoMutationBox.new({
             id          : 'mutation2',
 
             input       : [ box1p2, box3 ],
@@ -159,8 +142,6 @@ StartTest(t => {
 
         console.log("INITIAL PROPAGATE")
 
-        // debugger
-
         graph.propagate()
 
         t.expect(calculation1Spy).toHaveBeenCalled(1)
@@ -174,39 +155,11 @@ StartTest(t => {
         // should only recalculate mutation2
         box3.set(2)
 
-        const mutation21 = MinimalChronoMutationNode.new({
-            id          : 'mutation21',
-
-            input       : [ box1, box2 ],
-            output      : [ box1p2 ],
-
-            calculation : (v1, v2) => {
-                return v1 + v2
-            }
-        })
-
-        const mutation22 = MinimalChronoMutationNode.new({
-            id          : 'mutation22',
-
-            input       : [ box1p2, box3 ],
-            output      : [ res ],
-
-            calculation : (v1, v2) => {
-                return v1 + v2
-            }
-        })
-
-
-        graph.addMutation(mutation21)
-        graph.addMutation(mutation22)
-
-        const calculation1Spy$  = t.spyOn(mutation21, 'calculation')
-        const calculation2Spy$  = t.spyOn(mutation22, 'calculation')
+        const calculation1Spy$  = t.spyOn(mutation1, 'calculation')
+        const calculation2Spy$  = t.spyOn(mutation2, 'calculation')
 
         const spy1              = t.spyOn(box1.value, 'forEachIncoming')
         const spy2              = t.spyOn(box1.value, 'forEachOutgoing')
-
-        // debugger
 
         graph.propagate()
 
@@ -219,7 +172,5 @@ StartTest(t => {
         t.is(res.get(), 2, "Correct result calculated")
         t.is(res.getPrevious().get(), 1, "Can track old value")
     })
-
-
 
 })

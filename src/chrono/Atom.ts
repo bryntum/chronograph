@@ -16,7 +16,7 @@ import {Base, Constructable, Mixin} from "../class/Mixin.js";
     but will introduce much more type-safety
 */
 
-export type ChronoValue         = unknown
+export type ChronoValue         = any
 
 export const Atom = <T extends Constructable<Base>>(base : T) =>
 

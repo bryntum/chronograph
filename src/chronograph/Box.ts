@@ -39,7 +39,7 @@ export type Box = Mixin<typeof Box>
 
 export const MinimalBox     = Box(
     Node(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(
-        HasId(MutableBox(ObservableRead(ObservableWrite(Reference(Writable(Readable(Atom(Base))))))))
+        HasId(ObservableRead(ObservableWrite(MutableBox(Reference(Writable(Readable(Atom(Base))))))))
     ))))))
 )
 export type MinimalBox      = InstanceType<typeof MinimalBox>
