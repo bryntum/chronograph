@@ -1,22 +1,27 @@
 import {Atom, ChronoValue, Readable, Writable} from "../chrono/Atom.js";
 import {MutableBox} from "../chrono/MutableBox.js";
+import {Output} from "../chrono/MutationData.js";
 import {ObservableRead, ObservableWrite} from "../chrono/Observation.js";
 import {Reference} from "../chrono/Reference.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Node, WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward} from "../graph/Walkable.js";
 import {HasId} from "./HasId.js";
+import {ChronoBehavior} from "./Mutation.js";
 import {ChronoGraphNode, ChronoGraphNodeConstructor, MinimalChronoGraphNode} from "./Node.js";
 
 
 export const Box = <T extends Constructable<Node & MutableBox & HasId & ObservableRead & ObservableWrite>>(base: T) =>
 
 class Box extends base {
-    cls             : ChronoGraphNodeConstructor  = MinimalChronoGraphNode
+    cls             : ChronoGraphNodeConstructor    = MinimalChronoGraphNode
 
     value           : ChronoGraphNode
 
     graph           : ObservableRead & ObservableWrite
+
+    // TODO figure out the proper typing
+    toBehavior      : Set<any>                      = new Set()
 
 
     initialAtomConfig (value : ChronoValue) : Partial<ChronoGraphNode> {

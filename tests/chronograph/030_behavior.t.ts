@@ -6,13 +6,14 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.xit('Minimal mutation in graph context', t => {
+    t.it('Minimal behavior', t => {
         const graph : GraphBox  = MinimalGraphBox.new()
 
         const box0 : Box        = graph.getBox()
         const box1 : Box        = graph.getBox()
         const box2 : Box        = graph.getBox()
         const box3 : Box        = graph.getBox()
+
 
         graph.addBehavior(
             MinimalChronoBehavior.new({
@@ -21,23 +22,27 @@ StartTest(t => {
                 calculation : (v0) => {
 
                     if (v0 === 'sum')
-                        return MinimalChronoMutationBox.new({
-                            input       : [ box1, box2 ],
-                            output      : [ box3 ],
+                        return [
+                            MinimalChronoMutationBox.new({
+                                input       : [ box1, box2 ],
+                                output      : [ box3 ],
 
-                            calculation : (v1, v2) => {
-                                return v1 + v2
-                            }
-                        })
+                                calculation : (v1, v2) => {
+                                    return v1 + v2
+                                }
+                            })
+                        ]
                     else
-                        return MinimalChronoMutationBox.new({
-                            input       : [ box1, box2 ],
-                            output      : [ box3 ],
+                        return [
+                            MinimalChronoMutationBox.new({
+                                input       : [ box1, box2 ],
+                                output      : [ box3 ],
 
-                            calculation : (v1, v2) => {
-                                return v1 * v2
-                            }
-                        })
+                                calculation : (v1, v2) => {
+                                    return v1 * v2
+                                }
+                            })
+                        ]
                 }
             })
         )
@@ -50,19 +55,33 @@ StartTest(t => {
 
         t.is(box3.get(), 1, "Correct result calculated")
 
-        // box1.set(1)
-        //
-        // graph.propagate()
-        //
-        // t.is(box3.get(), 2, "Correct result calculated")
-        // t.is(box3.getPrevious().get(), 1, "Can track old value")
-        //
-        // box2.set(2)
-        //
-        // graph.propagate()
-        //
-        // t.is(box3.get(), 3, "Correct result calculated")
-        // t.is(box3.getPrevious().get(), 2, "Can track old value")
+        box1.set(1)
+
+        graph.propagate()
+
+        t.is(box3.get(), 2, "Correct result calculated")
+        t.is(box3.getPrevious().get(), 1, "Can track old value")
+
+        box2.set(2)
+
+        graph.propagate()
+
+        t.is(box3.get(), 3, "Correct result calculated")
+        t.is(box3.getPrevious().get(), 2, "Can track old value")
+
+        box0.set('mul')
+
+        graph.propagate()
+
+        t.is(box3.get(), 2, "Correct result calculated after behavior change")
+        t.is(box3.getPrevious().get(), 3, "Can track old value")
+
+        box1.set(2)
+
+        graph.propagate()
+
+        t.is(box3.get(), 4, "Correct result calculated after behavior change")
+        t.is(box3.getPrevious().get(), 2, "Can track old value")
     })
 
 

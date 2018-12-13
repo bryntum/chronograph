@@ -35,11 +35,34 @@ export const MutableBox = <T extends Constructable<Reference>>(base: T) => {
             if (this.hasValue()) {
                 const referencedNode    = this.value
 
-                const nextNode          = referencedNode.next(value)
+                if (referencedNode.hasValue()) {
+                    const nextNode          = referencedNode.next(value)
 
-                return super.set(nextNode)
+                    return super.set(nextNode)
+                } else {
+                    referencedNode.set(value)
+
+                    return this
+                }
             } else {
                 return super.set(this.initialAtom(value))
+            }
+        }
+
+
+        bump () : this {
+            if (this.hasValue()) {
+                const referencedNode    = this.value
+
+                if (referencedNode.hasValue()) {
+                    const nextNode          = referencedNode.next(undefined)
+
+                    return super.set(nextNode)
+                } else {
+                    return this
+                }
+            } else {
+                return super.set(this.initialAtom(undefined))
             }
         }
 
@@ -54,9 +77,9 @@ export const MutableBox = <T extends Constructable<Reference>>(base: T) => {
 
 
         initialAtomConfig (value : ChronoValue) : Partial<Immutable> {
-            return {
+            return value !== undefined ? {
                 value       : value
-            }
+            } : {}
         }
 
 

@@ -8,7 +8,7 @@ import {Graph} from "../graph/Graph.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
 import {Box, MinimalBox} from "./Box.js";
 import {HasId} from "./HasId.js";
-import {ChronoBehavior, ChronoMutationBox, MinimalChronoMutationBox} from "./Mutation.js";
+import {ChronoBehavior, ChronoMutationBox, MinimalChronoBehavior, MinimalChronoMutationBox} from "./Mutation.js";
 import {ChronoGraphNode, MinimalChronoGraphNode} from "./Node.js";
 
 
@@ -91,42 +91,40 @@ class GraphBox extends base {
         if (this.behaviors.get(behavior)) return
 
         this.behaviors.set(behavior, undefined)
+
+        behavior.addEdges()
     }
 
 
     addMutation (mutation : ChronoMutationBox) {
-        // this.mutations.add(mutation)
+        // TODO possibly we don't need `this.mutations` collection at all
+        this.mutations.add(mutation)
 
         mutation.addEdges()
 
-        // mutation.mapInput(mutation.input, (box : Box) => {
-        //     let refsInput       = this.mutationReferencingInput.get(box.id)
-        //
-        //     if (!refsInput) {
-        //         refsInput       = new Set<ChronoMutationBox>()
-        //
-        //         this.mutationReferencingInput.set(box.id, refsInput)
-        //     }
-        //
-        //     refsInput.add(mutation)
-        // })
-        //
-        // mutation.output.forEach((box : Box) => {
-        //     let refsOutput      = this.mutationReferencingOutput.get(box.id)
-        //
-        //     if (!refsOutput) {
-        //         refsOutput      = new Set<ChronoMutationBox>()
-        //
-        //         this.mutationReferencingOutput.set(box.id, refsOutput)
-        //     }
-        //
-        //     refsOutput.add(mutation)
-        // })
+        mutation.output.forEach((box : Box) => {
+            if (!this.getCandidate().hasDirectNode(box.value)) {
+                box.bump()
+
+                this.addCandidateNode(box.value)
+            }
+        })
     }
 
 
     removeMutation (mutation : ChronoMutationBox) {
+        // TODO possibly we don't need `this.mutations` collection at all
+        this.mutations.delete(mutation)
+
         mutation.removeEdges()
+
+        mutation.output.forEach((box : Box) => {
+            if (!this.getCandidate().hasDirectNode(box.value)) {
+                box.bump()
+
+                this.addCandidateNode(box.value)
+            }
+        })
     }
 
 
@@ -191,36 +189,34 @@ class GraphBox extends base {
     }
 
 
+    updateBehavior (behavior : ChronoBehavior) {
+        const prevMutations     = this.behaviors.get(behavior)
+
+        prevMutations && prevMutations.forEach(mutation => this.removeMutation(mutation))
+
+        const resultMutations   = behavior.calculate()
+
+        this.behaviors.set(behavior, resultMutations)
+
+        resultMutations.forEach(mutation => this.addMutation(mutation))
+    }
+
+
     recomputeBehavior () {
         const me        = this
         const candidate = this.getCandidate()
 
-        const mutations = []
+        const topoBox   = []
 
-        this.walkDepth(WalkForwardContext.new({
-            forEachNext             : function (box : Box, func) {
-                if (box === <any>me) {
-                    this.behaviors.forEach(func)
-                } else
-                    WalkForwardContext.prototype.forEachNext.call(this, box, func)
-            },
+        const potentiallyChangedBehaviors : Set<ChronoBehavior>     = new Set()
 
-            onNode                  : (node : ChronoGraphNode) => {
-                // console.log(`Visiting ${node}`)
-            },
-            onCycle                 : () => { throw new Error("Cycle in graph") },
+        candidate.nodes.forEach((node : ChronoGraphNode) => {
+            const box       = me.getBox(node.id)
 
-            onTopologicalNode       : (behavior : ChronoBehavior) => {
-                if (<any>behavior === <any>this) return
+            box.toBehavior.forEach(behavior => potentiallyChangedBehaviors.add(behavior))
+        })
 
-                if (behavior.referencesChangedData(candidate)) {
-                    const resultMutations   = behavior.calculate()
-
-                }
-            }
-        }))
-
-        this.mutations
+        potentiallyChangedBehaviors.forEach(behavior => this.updateBehavior(behavior))
     }
 
 
@@ -228,9 +224,9 @@ class GraphBox extends base {
         const me        = this
         const candidate = this.getCandidate()
 
-        const topoBox   = []
+        this.recomputeBehavior()
 
-        // this.recomputeBehavior()
+        const topoBox   = []
 
         this.walkDepth(WalkForwardContext.new({
             forEachNext             : function (box : Box, func) {
@@ -270,7 +266,7 @@ class GraphBox extends base {
                 if (computedAsResultOfArr.length === 1) {
                     const mutationBox       = computedAsResultOfArr[ 0 ]
 
-                    if (mutationBox.referencesChangedData(candidate)) {
+                    if (mutationBox.needsRecalculation(candidate)) {
                         const resultNodes       = mutationBox.calculate()
 
                         resultNodes.forEach(resultNode => {
@@ -280,7 +276,6 @@ class GraphBox extends base {
                 }
             }
         }
-
 
         this.commit()
     }

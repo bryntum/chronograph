@@ -18,6 +18,8 @@ class ChronoMutationBox extends base {
 
     calculation     : AnyFunction1<ChronoValue>
 
+    timesCalculated : number        = 0
+
 
     addEdges () {
         this.mapInput(this.input, (box : Box) => box.addEdgeTo(this))
@@ -36,6 +38,8 @@ class ChronoMutationBox extends base {
 
         const result    = Array.isArray(input) ? this.calculation.apply(this, input) : this.calculation(input)
 
+        this.timesCalculated++
+
         return this.output.map(box => {
             box.set(result)
 
@@ -44,7 +48,9 @@ class ChronoMutationBox extends base {
     }
 
 
-    referencesChangedData (graph : GraphSnapshot) : boolean {
+    needsRecalculation (graph : GraphSnapshot) : boolean {
+        if (this.timesCalculated === 0) return true
+
         let someIsDirty     = false
 
         this.mapInput(this.input, (box : Box) => {
@@ -72,12 +78,12 @@ class ChronoBehavior extends base {
 
     input           : Input<Box>
 
-    inputs          : Set<Box>
+    inputs          : Set<Box>      = new Set()
 
-    calculation     : AnyFunction1<ChronoValue>
+    calculation     : AnyFunction1<ChronoMutationBox[]>
 
 
-    calculate () : Output<ChronoMutationBox[]> {
+    calculate () : Output<ChronoMutationBox> {
         const input     = this.mapInput(this.input, box => box.get())
 
         const result    = Array.isArray(input) ? this.calculation.apply(this, input) : this.calculation(input)
@@ -86,7 +92,7 @@ class ChronoBehavior extends base {
     }
 
 
-    referencesChangedData (graph : GraphSnapshot) : boolean {
+    needsRecalculation (graph : GraphSnapshot) : boolean {
         let someIsDirty     = false
 
         this.mapInput(this.input, (box : Box) => {
@@ -98,8 +104,11 @@ class ChronoBehavior extends base {
 
 
     addEdges () {
-        this.mapInput(this.input, (node : Box) => this.addEdgeFrom(node))
-        // this.output.map((node : Box) => this.addEdgeTo(node.value))
+        this.mapInput(this.input, (node : Box) => {
+            node.toBehavior.add(this)
+
+            this.inputs.add(node)
+        })
     }
 
 
