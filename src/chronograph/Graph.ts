@@ -94,9 +94,6 @@ class GraphBox extends base {
     }
 
 
-
-
-
     addMutation (mutation : ChronoMutationBox) {
         // this.mutations.add(mutation)
 
@@ -125,6 +122,11 @@ class GraphBox extends base {
         //
         //     refsOutput.add(mutation)
         // })
+    }
+
+
+    removeMutation (mutation : ChronoMutationBox) {
+        mutation.removeEdges()
     }
 
 
@@ -193,9 +195,7 @@ class GraphBox extends base {
         const me        = this
         const candidate = this.getCandidate()
 
-        const topoBox   = []
-
-        this.recomputeBehavior()
+        const mutations = []
 
         this.walkDepth(WalkForwardContext.new({
             forEachNext             : function (box : Box, func) {
@@ -210,10 +210,17 @@ class GraphBox extends base {
             },
             onCycle                 : () => { throw new Error("Cycle in graph") },
 
-            onTopologicalNode       : (box : Box) => {
-                if (<any>box !== <any>this && !(box instanceof MinimalChronoMutationBox)) topoBox.push(box)
+            onTopologicalNode       : (behavior : ChronoBehavior) => {
+                if (<any>behavior === <any>this) return
+
+                if (behavior.referencesChangedData(candidate)) {
+                    const resultMutations   = behavior.calculate()
+
+                }
             }
         }))
+
+        this.mutations
     }
 
 

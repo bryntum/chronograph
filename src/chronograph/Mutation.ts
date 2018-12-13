@@ -1,7 +1,8 @@
 import {Calculable, ChronoValue} from "../chrono/Atom.js";
 import {Input, MutationData, Output} from "../chrono/MutationData.js";
 import {AnyFunction1, Constructable, Mixin} from "../class/Mixin.js";
-import {WalkableBackwardNode} from "../graph/Node.js";
+import {Node, WalkableBackwardNode} from "../graph/Node.js";
+import {WalkBackwardContext, WalkContext} from "../graph/Walkable.js";
 import {Box, MinimalBox} from "./Box.js";
 import {GraphSnapshot} from "./Graph.js";
 import {ChronoGraphNode, MinimalChronoGraphNode} from "./Node.js";
@@ -21,6 +22,12 @@ class ChronoMutationBox extends base {
     addEdges () {
         this.mapInput(this.input, (box : Box) => box.addEdgeTo(this))
         this.output.map((box : Box) => this.addEdgeTo(box))
+    }
+
+
+    removeEdges () {
+        this.mapInput(this.input, (box : Box) => box.removeEdgeTo(this))
+        this.output.map((box : Box) => this.removeEdgeTo(box))
     }
 
 
@@ -58,7 +65,7 @@ export type MinimalChronoMutationBox    = InstanceType<typeof MinimalChronoMutat
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoBehavior = <T extends Constructable<WalkableBackwardNode & MutationData & Calculable>>(base: T) =>
+export const ChronoBehavior = <T extends Constructable<Node & MutationData & Calculable>>(base: T) =>
 
 class ChronoBehavior extends base {
     edgesStorage    : string    = 'inputs'
@@ -99,6 +106,21 @@ class ChronoBehavior extends base {
     getIncoming () {
         return this.input
     }
+
+
+    forEachIncoming(context : WalkContext, func : (Box) => any) {
+        this.input.forEach(func)
+    }
+
+
+    getOutgoing () {
+        return []
+    }
+
+
+    forEachOutgoing(context : WalkContext, func : (Box) => any) {
+    }
+
 }
 
 export type ChronoBehavior = Mixin<typeof ChronoBehavior>

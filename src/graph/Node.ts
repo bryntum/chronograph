@@ -31,6 +31,11 @@ class WalkableForwardNode extends base {
     }
 
 
+    removeEdgeTo (toNode : WalkableForwardNode) {
+        this.outgoing.delete(toNode)
+    }
+
+
     addEdgesTo (toNodes : WalkableForwardNode[]) {
         toNodes.forEach(toNode => this.addEdgeTo(toNode))
     }
@@ -82,6 +87,11 @@ class WalkableBackwardNode extends base {
     }
 
 
+    removeEdgeFrom (fromNode : WalkableBackwardNode) {
+        this[ this.incomingEdgesStorage ].delete(fromNode)
+    }
+
+
     addEdgesFrom (fromNodes : WalkableBackwardNode[]) {
         fromNodes.forEach(fromNode => this.addEdgeFrom(fromNode))
     }
@@ -111,11 +121,25 @@ class Node extends base {
         toNode.incoming.add(this)
     }
 
+    removeEdgeTo (toNode : Node) {
+        super.removeEdgeTo(toNode)
+
+        toNode.incoming.delete(this)
+    }
+
+
     addEdgeFrom (fromNode : Node) {
         super.addEdgeFrom(fromNode)
 
         fromNode.outgoing.add(this)
     }
+
+    removeEdgeFrom (fromNode : Node) {
+        super.removeEdgeFrom(fromNode)
+
+        fromNode.outgoing.delete(this)
+    }
+
 }
 
 export type Node = Mixin<typeof Node>

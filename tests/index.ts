@@ -25,7 +25,8 @@ project.start(
 
         items       : [
             'chronograph/010_graph.t.js',
-            'chronograph/020_performance.t.js'
+            'chronograph/020_performance.t.js',
+            'chronograph/030_behavior.t.js'
         ]
     },
     {
