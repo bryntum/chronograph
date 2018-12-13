@@ -1,13 +1,12 @@
 declare const Siesta : any
 
-const project       = new Siesta.Harness.Browser()
+const project       = new Siesta.Project.Browser()
 
 project.configure({
     title                   : 'ChronoGraph Test Suite',
     isEcmaModule            : true,
 
     preload     : [
-        // '../node_modules/later/later.js'
     ]
 });
 
@@ -35,6 +34,13 @@ project.start(
         items       : [
             'graph/010_walkable.t.js',
             'graph/020_node.t.js'
+        ]
+    },
+    {
+        group       : 'schema',
+
+        items       : [
+            'schema/010_schema.t.js',
         ]
     }
 );

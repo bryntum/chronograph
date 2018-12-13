@@ -48,3 +48,13 @@ export const MinimalBox     = Box(
     ))))))
 )
 export type MinimalBox      = InstanceType<typeof MinimalBox>
+
+
+export const MinimalBoxMixin  = (base) => {
+    return Box(
+        Node(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(
+            HasId(ObservableRead(ObservableWrite(MutableBox(Reference(Writable(Readable(Atom(base))))))))
+        ))))))
+    )
+}
+
