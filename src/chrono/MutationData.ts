@@ -3,7 +3,7 @@ import {Atom, Readable, Writable} from "./Atom.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type Input<V>            =  { [s : string] : V } | V[]
+export type Input<V>            =  V[]
 export type Output<V>           =  V[]
 
 
@@ -31,18 +31,20 @@ class MutationData extends base {
 
     mapInput<V> (input : Input<V>, func : (atom : V) => any) {
 
-        if (input instanceof Array) {
-            return input.map(func)
-        } else {
-            // no Object.map() ? are JS designers serious?
-            let res     = {}
+        // if (input instanceof Array) {
 
-            for (let key in input) {
-                res[ key ] = func(input[ key ])
-            }
+        return input.map(func)
 
-            return res
-        }
+        // } else {
+            // // no Object.map() ? are JS designers serious?
+            // let res     = {}
+            //
+            // for (let key in input) {
+            //     res[ key ] = func(input[ key ])
+            // }
+            //
+            // return res
+        // }
     }
 }
 

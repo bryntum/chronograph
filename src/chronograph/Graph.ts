@@ -5,10 +5,10 @@ import {MinimalMutableBox} from "../chrono/MutableBox.js";
 import {ObservableRead, ObservableWrite} from "../chrono/Observation.js";
 import {AnyFunction1, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
-import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "../graph/Walkable.js";
+import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
 import {Box, MinimalBox} from "./Box.js";
 import {HasId} from "./HasId.js";
-import {ChronoMutationBox, MinimalChronoMutationBox, MinimalChronoMutationNode} from "./Mutation.js";
+import {ChronoBehavior, ChronoMutationBox, MinimalChronoMutationBox} from "./Mutation.js";
 import {ChronoGraphNode, MinimalChronoGraphNode} from "./Node.js";
 
 
@@ -32,6 +32,8 @@ class GraphBox extends base {
     // mutationReferencingOutput   : Map<ChronoId, Set<ChronoMutationBox>> = new Map()
 
     mutations       : Set<ChronoMutationBox>    = new Set()
+
+    behaviors       : Map<ChronoBehavior, ChronoMutationBox[]>    = new Map()
 
 
     // this config will ensure the box will create an empty graph snapshot when instantiated
@@ -82,6 +84,17 @@ class GraphBox extends base {
 
         return this.addCandidateNode(box.value)
     }
+
+
+    addBehavior (behavior : ChronoBehavior) {
+        // already have this behavior
+        if (this.behaviors.get(behavior)) return
+
+        this.behaviors.set(behavior, undefined)
+    }
+
+
+
 
 
     addMutation (mutation : ChronoMutationBox) {
@@ -156,12 +169,16 @@ class GraphBox extends base {
     }
 
 
-    getBox (id : ChronoId) : Box {
-        const box       = this.getNodeById(id)
+    getBox (id? : ChronoId) : Box {
+        if (id !== undefined) {
+            const box       = this.getNodeById(id)
 
-        if (box) return box
+            if (box) return box
 
-        return this.addBox(MinimalBox.new({ id : id }))
+            return this.addBox(MinimalBox.new({ id : id }))
+        } else {
+            return this.addBox(MinimalBox.new())
+        }
     }
 
 
@@ -172,11 +189,41 @@ class GraphBox extends base {
     }
 
 
+    recomputeBehavior () {
+        const me        = this
+        const candidate = this.getCandidate()
+
+        const topoBox   = []
+
+        this.recomputeBehavior()
+
+        this.walkDepth(WalkForwardContext.new({
+            forEachNext             : function (box : Box, func) {
+                if (box === <any>me) {
+                    this.behaviors.forEach(func)
+                } else
+                    WalkForwardContext.prototype.forEachNext.call(this, box, func)
+            },
+
+            onNode                  : (node : ChronoGraphNode) => {
+                // console.log(`Visiting ${node}`)
+            },
+            onCycle                 : () => { throw new Error("Cycle in graph") },
+
+            onTopologicalNode       : (box : Box) => {
+                if (<any>box !== <any>this && !(box instanceof MinimalChronoMutationBox)) topoBox.push(box)
+            }
+        }))
+    }
+
+
     propagate () {
         const me        = this
         const candidate = this.getCandidate()
 
         const topoBox   = []
+
+        // this.recomputeBehavior()
 
         this.walkDepth(WalkForwardContext.new({
             forEachNext             : function (box : Box, func) {

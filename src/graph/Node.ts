@@ -54,29 +54,31 @@ export type WalkableForwardNode = Mixin<typeof WalkableForwardNode>
 export const WalkableBackwardNode = <T extends Constructable<WalkableBackward>>(base : T) =>
 
 class WalkableBackwardNode extends base {
+    incomingEdgesStorage    : string    = 'incoming'
+
     incoming        : Set<WalkableBackwardNode>         = new Set()
 
-    incoming$       : WalkableBackwardNode[]
+    // incoming$       : WalkableBackwardNode[]
 
 
-    initialize () {
-        super.initialize(...arguments)
-
-        if (this.incoming$) {
-            this.addEdgesFrom(this.incoming$)
-
-            delete this.incoming$
-        }
-    }
+    // initialize () {
+    //     super.initialize(...arguments)
+    //
+    //     if (this.incoming$) {
+    //         this.addEdgesFrom(this.incoming$)
+    //
+    //         delete this.incoming$
+    //     }
+    // }
 
 
     hasEdgeFrom (fromNode : WalkableBackwardNode) : boolean {
-        return this.incoming.has(fromNode)
+        return this[ this.incomingEdgesStorage ].has(fromNode)
     }
 
 
     addEdgeFrom (fromNode : WalkableBackwardNode) {
-        this.incoming.add(fromNode)
+        this[ this.incomingEdgesStorage ].add(fromNode)
     }
 
 
@@ -86,11 +88,11 @@ class WalkableBackwardNode extends base {
 
 
     getIncoming (context : WalkContext) : WalkableBackwardNode[] {
-        return Array.from(this.incoming)
+        return Array.from(this[ this.incomingEdgesStorage ])
     }
 
     forEachIncoming(context : WalkBackwardContext, func : (WalkableBackward) => any) {
-        this.incoming.forEach(func)
+        this[ this.incomingEdgesStorage ].forEach(func)
     }
 }
 
