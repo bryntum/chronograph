@@ -1,5 +1,5 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Entity as EntityData} from "../schema/Schema.js";
+import {Entity as EntityData, Field, ForeignKey, Name, PrimaryKey} from "../schema/Schema.js";
 import {FieldBox} from "./FieldBox.js";
 
 
@@ -52,6 +52,26 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
         //
         //     super.unjoinGraph()
         // }
+
+        static addPrimaryKey (key : PrimaryKey) {
+            return this.getEntity().addPrimaryKey(key)
+        }
+
+
+        static addForeignKey (key : ForeignKey) {
+            return this.getEntity().addForeignKey(key)
+        }
+
+
+        static getField (name : Name) : Field {
+            return this.getEntity().getField(name)
+        }
+
+
+        static getEntity () : EntityData {
+            return this.prototype.$entity
+        }
+
     }
 
     return Entity

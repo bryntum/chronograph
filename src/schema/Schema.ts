@@ -1,4 +1,4 @@
-import {AnyConstructor, AnyFunction, Base} from "../class/Mixin.js";
+import {Base} from "../class/Mixin.js";
 
 export type Name    = string | symbol
 export type Type    = string
@@ -7,6 +7,7 @@ export type Type    = string
 //---------------------------------------------------------------------------------------------------------------------
 export class Field extends Base {
     name                : Name
+
     type                : Type
 
     entity              : Entity
@@ -20,6 +21,9 @@ export class Entity extends Base {
     fields              : Map<Name, Field>      = new Map()
 
     schema              : Schema
+
+    primaryKeys         : PrimaryKey[]          = []
+    foreignKeys         : ForeignKey[]          = []
 
 
     hasField (name : Name) : boolean {
@@ -49,6 +53,21 @@ export class Entity extends Base {
     createField (name : Name) : Field {
         return this.addField(Field.new({ name }))
     }
+
+
+    addPrimaryKey (key : PrimaryKey) {
+        key.entity      = this
+
+        this.primaryKeys.push(key)
+    }
+
+
+    addForeignKey (key : ForeignKey) {
+        key.entity      = this
+
+        this.foreignKeys.push(key)
+    }
+
 }
 
 
@@ -114,9 +133,29 @@ export class Schema extends Base {
             entity.createField(propertyKey)
         }
     }
-
 }
 
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class FieldSet extends Base {
+    entity                  : Entity
+
+    fieldSet                : Field[]   = []
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class PrimaryKey extends FieldSet {
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ForeignKey extends FieldSet {
+    referencedFieldSet      : Field[]   = []
+
+    referencedEntity        : Entity
+}
 
 
 
