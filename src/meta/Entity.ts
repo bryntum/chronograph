@@ -1,27 +1,35 @@
-import {ChronoGraphNode} from "../chronograph/Node.js";
-import {AnyConstructor, Constructable, Mixin} from "../class/Mixin.js";
-import {Entity as EntityData, Schema} from "../schema/Schema.js";
+import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Entity as EntityData} from "../schema/Schema.js";
 import {FieldBox} from "./FieldBox.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Entity = <T extends Constructable<any>>(base : T = <any>Object) => {
+export const Entity = <T extends Constructable<Base>>(base : T) => {
 
 
     class Entity extends base {
-        // meta            : EntityData
-        //
-        // // TODO figure out how to filter fields only
-        // fields          : { [s in keyof this] : FieldBox }
-        //
-        //
-        // initialize (...args) {
-        //     // this.fields     = this.meta.generateNodes(this, MinimalChronoGraphNode) as any
-        //
-        //     super.initialize(...args)
-        // }
-        //
-        //
+        $entity         : EntityData
+
+        // TODO figure out how to filter fields only
+        fields          : { [s in keyof this] : FieldBox }
+
+
+        initialize (...args) {
+            const fields : { [s in keyof this] : FieldBox } = <any>{}
+
+            this.$entity.fields.forEach((field, name) => {
+                fields[ name ]      = FieldBox.new({
+                    field       : field,
+                    self        : this
+                })
+            })
+
+            this.fields = fields
+
+            super.initialize(...args)
+        }
+
+
         // joinGraph (graph : ChronoGraphNode) {
         //     super.joinGraph(graph)
         //

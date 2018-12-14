@@ -1,4 +1,6 @@
+import {Base} from "../../src/class/Mixin.js";
 import {Entity} from "../../src/meta/Entity.js";
+import {FieldBox} from "../../src/meta/FieldBox.js";
 import {Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any
@@ -15,7 +17,7 @@ StartTest(t => {
 
 
         @entity
-        class SomeEntity extends Entity() {
+        class SomeEntity extends Entity(Base) {
 
             @field
             someField1      : string        = 'someField'
@@ -28,7 +30,7 @@ StartTest(t => {
         }
 
 
-        const entity1       = new SomeEntity()
+        const entity1       = SomeEntity.new()
 
         t.is(entity1.someField1, 'someField', 'Entity behaves as regular class')
         t.is(entity1.someField2, 11, 'Entity behaves as regular class')
@@ -42,6 +44,10 @@ StartTest(t => {
         t.ok(ent.hasField('someField1'), 'Field has been created in the entity')
         t.ok(ent.hasField('someField2'), 'Field has been created in the entity')
         t.ok(ent.hasField('someField3'), 'Field has been created in the entity')
+
+
+        t.isInstanceOf(entity1.fields.someField1, FieldBox)
+        t.is(entity1.fields.someField1.field, ent.getField('someField1'))
     })
 
 })

@@ -1,7 +1,8 @@
 {
     "compilerOptions" : {
+        //"importHelpers"             : true,
         "experimentalDecorators"    : true,
-        "noStrictGenericChecks"     : true,
+//        "noStrictGenericChecks"     : true,
 
         "target"                : "es6",
 

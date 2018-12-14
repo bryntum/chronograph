@@ -1,4 +1,4 @@
-import {AnyConstructor, Base} from "../class/Mixin.js";
+import {AnyConstructor, AnyFunction, Base} from "../class/Mixin.js";
 
 export type Name    = string | symbol
 export type Type    = string
@@ -89,7 +89,7 @@ export class Schema extends Base {
 
 
     getEntityDecorator () : ClassDecorator {
-        return (target : AnyConstructor) => {
+        return (target : any) => {
             if (!target.name) throw new Error(`Can't add entity - the target class has no name`)
 
             let entity      = target.prototype.$entity
