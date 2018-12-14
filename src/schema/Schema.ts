@@ -1,6 +1,6 @@
-import {Base} from "../class/Mixin.js";
+import {AnyConstructor, Base} from "../class/Mixin.js";
 
-export type Name    = string | Symbol
+export type Name    = string | symbol
 export type Type    = string
 
 
@@ -8,6 +8,8 @@ export type Type    = string
 export class Field extends Base {
     name                : Name
     type                : Type
+
+    entity              : Entity
 }
 
 
@@ -17,25 +19,35 @@ export class Entity extends Base {
 
     fields              : Map<Name, Field>      = new Map()
 
+    schema              : Schema
+
 
     hasField (name : Name) : boolean {
         return this.fields.has(name)
     }
 
 
-    field (name : Name) : Field {
+    getField (name : Name) : Field {
         return this.fields.get(name)
     }
 
 
-    createField (name : Name) : Field {
-        if (this.hasField(name)) throw new Error(`Field with name [${name}] already exists`)
+    addField (field : Field) : Field {
+        const name      = field.name
 
-        const field         = Field.new()
+        if (!name) throw new Error(`Field must have a name`)
+        if (this.hasField(name)) throw new Error(`Field with name [${String(name)}] already exists`)
+
+        field.entity    = this
 
         this.fields.set(name, field)
 
         return field
+    }
+
+
+    createField (name : Name) : Field {
+        return this.addField(Field.new({ name }))
     }
 }
 
@@ -52,15 +64,18 @@ export class Schema extends Base {
     }
 
 
-    entity (name : Name) : Entity {
+    getEntity (name : Name) : Entity {
         return this.entities.get(name)
     }
 
 
-    createEntity (name : Name) : Entity {
-        if (this.hasEntity(name)) throw new Error(`Entity with name [${name}] already exists`)
+    addEntity (entity : Entity) : Entity {
+        const name      = entity.name
 
-        const entity        = Entity.new()
+        if (!name) throw new Error(`Entity must have a name`)
+        if (this.hasEntity(name)) throw new Error(`Entity with name [${String(name)}] already exists`)
+
+        entity.schema   = this
 
         this.entities.set(name, entity)
 
@@ -68,12 +83,40 @@ export class Schema extends Base {
     }
 
 
-    // entityDecorator (name : Name) {
-    //     return () => {
-    //
-    //     }
-    // }
+    createEntity (name : Name) : Entity {
+        return this.addEntity(Entity.new({ name }))
+    }
+
+
+    getEntityDecorator () : ClassDecorator {
+        return (target : AnyConstructor) => {
+            if (!target.name) throw new Error(`Can't add entity - the target class has no name`)
+
+            let entity      = target.prototype.$entity
+
+            if (!entity) entity = target.prototype.$entity = Entity.new()
+
+            entity.name     = target.name
+
+            this.addEntity(entity)
+
+            return target
+        }
+    }
+
+
+    getFieldDecorator () : PropertyDecorator {
+        return function (target : any, propertyKey : string | symbol) : void {
+            let entity      = target.$entity
+
+            if (!entity) entity = target.$entity = Entity.new()
+
+            entity.createField(propertyKey)
+        }
+    }
+
 }
+
 
 
 

@@ -1,5 +1,5 @@
 import {MinimalBoxMixin} from "../chronograph/Box.js";
-import {Entity, Field} from "./Schema.js";
+import {Entity, Field} from "../schema/Schema.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------

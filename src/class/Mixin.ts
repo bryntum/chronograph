@@ -48,7 +48,7 @@ export type AnyFunction1<A>         = (...input: any[]) => A
 //---------------------------------------------------------------------------------------------------------------------
 export type Constructable<T extends any> = new (...args : any[]) => T
 
-export type Constructable1<T extends InstanceType<AnyConstructor>, Z> = new (...args : any[]) => T
+// export type Constructable1<T extends InstanceType<AnyConstructor>, Z> = new (...args : any[]) => T
 
 
 //---------------------------------------------------------------------------------------------------------------------
