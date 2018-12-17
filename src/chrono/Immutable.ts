@@ -51,7 +51,8 @@ export const Immutable = <T extends Constructable<Atom & Readable & Writable>>(b
 export type Immutable               = Mixin<typeof Immutable>
 export type ImmutableConstructor    = MixinConstructor<typeof Immutable>
 
-export const MinimalImmutable       = Immutable(Writable(Readable(Atom(Base))))
+export const MinimalImmutable           = Immutable(Writable(Readable(Atom(Base))))
+// export const MinimalDelegatedImmutable  = Immutable(DelegatedStorage(Writable(Readable(Atom(Base)))))
 
 
 //---------------------------------------------------------------------------------------------------------------------

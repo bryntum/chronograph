@@ -70,11 +70,11 @@ export const MinimalBox     = Box(
 export type MinimalBox      = InstanceType<typeof MinimalBox>
 
 
-export const MinimalBoxMixin  = (base) => {
-    return Box(
-        Node(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(
-            HasId(ObservableRead(ObservableWrite(MutableBox(Reference(Writable(Readable(Atom(base))))))))
-        ))))))
-    )
-}
-
+// export const MinimalDelegatedBox    = Box(
+//     Node(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(
+//         HasId(ObservableRead(ObservableWrite(MutableBox(Reference(DelegatedStorage(Writable(Readable(Atom(Base)))))))))
+//     ))))))
+// )
+// export type MinimalDelegatedBox     = InstanceType<typeof MinimalDelegatedBox>
+//
+//

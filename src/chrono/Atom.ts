@@ -32,6 +32,35 @@ class Atom extends base {
 export type Atom = Mixin<typeof Atom>
 
 
+// //---------------------------------------------------------------------------------------------------------------------
+// export const DelegatedStorage = <T extends Constructable<Readable & Writable>>(base : T) =>
+//
+// class DelegatedStorage extends base {
+//     host            : any
+//
+//     propertyName    : string | symbol
+//
+//
+//     get () : ChronoValue {
+//         return this.host[ this.propertyName ]
+//     }
+//
+//
+//     set (value : ChronoValue) : this {
+//         this.host[ this.propertyName ]  = value
+//
+//         return this
+//     }
+//
+//
+//     hasValue () : boolean {
+//         return this.host.hasOwnProperty(this.propertyName)
+//     }
+// }
+//
+// export type DelegatedStorage = Mixin<typeof DelegatedStorage>
+
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Readable = <T extends Constructable<Atom>>(base : T) =>

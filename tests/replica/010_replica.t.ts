@@ -86,5 +86,11 @@ StartTest(t => {
         replica1.propagate()
 
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
+
+        markTwain.firstName     = 'MARK'
+
+        replica1.propagate()
+
+        t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
     })
 })

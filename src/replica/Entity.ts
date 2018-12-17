@@ -22,7 +22,12 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
             const fields    = {}
 
             this.$entity.fields.forEach((field, name) => {
-                fields[ name ]  = FieldBox.new({ field : field, self : this })
+                const fieldBox = fields[ name ] = FieldBox.new({ field : field, self : this })
+
+                Object.defineProperty(this, name, {
+                    get     : ()        => fieldBox.get(),
+                    set     : (value)   => fieldBox.set(value)
+                })
             })
 
             this.fields     = <any>fields
