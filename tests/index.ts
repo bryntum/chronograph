@@ -38,6 +38,13 @@ project.start(
         ]
     },
     {
+        group       : 'replica',
+
+        items       : [
+            'replica/010_replica.t.js',
+        ]
+    },
+    {
         group       : 'schema',
 
         items       : [

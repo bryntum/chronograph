@@ -158,6 +158,15 @@ export class ForeignKey extends FieldSet {
 }
 
 
+// function id<V> (v : V) { return v }
+//
+// const some : Date = id<Date>(new Date())
+//
+// type IdDate         = typeof id<Date> // TS1005: ';' expected
+//
+// const dateId        = id<Date> // TS1109: Expression expected.
+
+
 
 // export const atom           = (...args) : any => {}
 // export const field          = (...args) : any => {}

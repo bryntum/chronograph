@@ -35,6 +35,8 @@ class GraphBox extends base {
 
     behaviors       : Map<ChronoBehavior, ChronoMutationBox[]>    = new Map()
 
+    potentiallyChangedBehaviors         : Set<ChronoBehavior>     = new Set()
+
 
     // this config will ensure the box will create an empty graph snapshot when instantiated
     value$          : ChronoValue   = null
@@ -93,6 +95,8 @@ class GraphBox extends base {
         this.behaviors.set(behavior, undefined)
 
         behavior.addEdges()
+
+        this.potentiallyChangedBehaviors.add(behavior)
     }
 
 
@@ -208,7 +212,7 @@ class GraphBox extends base {
 
         const topoBox   = []
 
-        const potentiallyChangedBehaviors : Set<ChronoBehavior>     = new Set()
+        const potentiallyChangedBehaviors : Set<ChronoBehavior>     = this.potentiallyChangedBehaviors
 
         candidate.nodes.forEach((node : ChronoGraphNode) => {
             const box       = me.getBox(node.id)
@@ -278,6 +282,13 @@ class GraphBox extends base {
         }
 
         this.commit()
+    }
+
+
+    commit () {
+        super.commit()
+
+        this.potentiallyChangedBehaviors        = new Set()
     }
 }
 

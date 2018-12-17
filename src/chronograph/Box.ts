@@ -1,15 +1,16 @@
 import {Atom, ChronoValue, Readable, Writable} from "../chrono/Atom.js";
 import {MutableBox} from "../chrono/MutableBox.js";
-import {Output} from "../chrono/MutationData.js";
 import {ObservableRead, ObservableWrite} from "../chrono/Observation.js";
 import {Reference} from "../chrono/Reference.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Node, WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward} from "../graph/Walkable.js";
 import {HasId} from "./HasId.js";
-import {ChronoBehavior} from "./Mutation.js";
 import {ChronoGraphNode, ChronoGraphNodeConstructor, MinimalChronoGraphNode} from "./Node.js";
 
+
+//---------------------------------------------------------------------------------------------------------------------
+type IGraph     = ObservableRead & ObservableWrite & { addNode : (box : Box) => any }
 
 export const Box = <T extends Constructable<Node & MutableBox & HasId & ObservableRead & ObservableWrite>>(base: T) =>
 
@@ -18,7 +19,7 @@ class Box extends base {
 
     value           : ChronoGraphNode
 
-    graph           : ObservableRead & ObservableWrite
+    graph           : IGraph
 
     // TODO figure out the proper typing
     toBehavior      : Set<any>                      = new Set()
@@ -36,6 +37,20 @@ class Box extends base {
 
     observeWrite (value : ChronoValue, box : Box) {
         this.graph && this.graph.observeWrite(value, box)
+    }
+
+
+    joinGraph (graph : IGraph) {
+        if (this.graph) this.unjoinGraph()
+
+        this.graph      = graph
+
+        graph.addNode(this)
+    }
+
+
+    unjoinGraph () {
+        this.graph      = null
     }
 
 

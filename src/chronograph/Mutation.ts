@@ -82,17 +82,23 @@ class ChronoBehavior extends base {
 
     calculation     : AnyFunction1<ChronoMutationBox[]>
 
+    timesCalculated : number        = 0
+
 
     calculate () : Output<ChronoMutationBox> {
         const input     = this.mapInput(this.input, box => box.get())
 
         const result    = Array.isArray(input) ? this.calculation.apply(this, input) : this.calculation(input)
 
+        this.timesCalculated++
+
         return result
     }
 
 
     needsRecalculation (graph : GraphSnapshot) : boolean {
+        if (this.timesCalculated === 0) return true
+
         let someIsDirty     = false
 
         this.mapInput(this.input, (box : Box) => {
