@@ -1,8 +1,8 @@
 import {ChronoBehavior, MinimalChronoBehavior, MinimalChronoMutationBox} from "../../src/chronograph/Mutation.js";
 import {Base} from "../../src/class/Mixin.js";
-import {Entity} from "../../src/replica/Entity.js";
+import {Entity, field} from "../../src/replica/Entity.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
-import {ForeignKey, PrimaryKey, Schema} from "../../src/schema/Schema.js";
+import {Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any
 
@@ -13,7 +13,6 @@ StartTest(t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
-        const field             = SomeSchema.getFieldDecorator()
 
         @entity
         class Author extends Entity(Base) {
@@ -73,7 +72,6 @@ StartTest(t => {
         //
         //     referencedEntity        : Author.getEntity()
         // }))
-
 
         const replica1          = MinimalReplica.new({ schema : SomeSchema })
 

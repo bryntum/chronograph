@@ -1,4 +1,5 @@
 import {Base} from "../class/Mixin.js";
+import {OutputResolver} from "../replica/Entity.js";
 
 export type Name    = string | symbol
 export type Type    = string
@@ -122,17 +123,6 @@ export class Schema extends Base {
             return target
         }
     }
-
-
-    getFieldDecorator () : PropertyDecorator {
-        return function (target : any, propertyKey : string | symbol) : void {
-            let entity      = target.$entity
-
-            if (!entity) entity = target.$entity = Entity.new()
-
-            entity.createField(propertyKey)
-        }
-    }
 }
 
 
@@ -156,53 +146,3 @@ export class ForeignKey extends FieldSet {
 
     referencedEntity        : Entity
 }
-
-
-// function id<V> (v : V) { return v }
-//
-// const some : Date = id<Date>(new Date())
-//
-// type IdDate         = typeof id<Date> // TS1005: ';' expected
-//
-// const dateId        = id<Date> // TS1109: Expression expected.
-
-
-
-// export const atom           = (...args) : any => {}
-// export const field          = (...args) : any => {}
-// export const entity         = (...args) : any => {}
-// export const as             = (...args) : any => {}
-// export const lifecycle      = (...args) : any => {}
-// export const before         = (...args) : any => {}
-// export const after          = (...args) : any => {}
-//
-// export const context        = (...args) : any => {}
-// export const inputs         = (...args) : any => {}
-// export const mutation       = (...args) : any => {}
-// export const behavior       = (...args) : any => {}
-
-
-
-
-// export function compute (fieldName) : MethodDecorator {
-//
-//     return function <T>(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) : TypedPropertyDescriptor<T> | void {
-//         const method : Function   = descriptor.value as any
-//
-//         if (method.length > 0) throw new Error("Computed values should be pure")
-//     }
-// }
-
-// export function inputs(value: { [s : string] : ChronoAtomReference }) {
-//
-//     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-//     };
-// }
-//
-//
-//
-// function inputs2(value: { [s : string] : ChronoAtomReference }) {
-//
-//     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-//     };
-// }

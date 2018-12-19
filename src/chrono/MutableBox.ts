@@ -50,6 +50,16 @@ export const MutableBox = <T extends Constructable<Reference>>(base: T) => {
         }
 
 
+        isDirty () : boolean {
+            return false
+        }
+
+
+        markDirty () : this {
+            return this.bump()
+        }
+
+
         bump () : this {
             if (this.hasValue()) {
                 const referencedNode    = this.value

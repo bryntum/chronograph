@@ -1,7 +1,7 @@
 import {Base} from "../../src/class/Mixin.js";
-import {Entity} from "../../src/replica/Entity.js";
+import {Entity, field} from "../../src/replica/Entity.js";
 import {FieldBox} from "../../src/replica/FieldBox.js";
-import {Field, ForeignKey, PrimaryKey, Schema} from "../../src/schema/Schema.js";
+import {ForeignKey, PrimaryKey, Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any
 
@@ -13,7 +13,6 @@ StartTest(t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
-        const field             = SomeSchema.getFieldDecorator()
 
         @entity
         class SomeEntity extends Entity(Base) {
@@ -54,7 +53,6 @@ StartTest(t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
-        const field             = SomeSchema.getFieldDecorator()
 
         @entity
         class Author extends Entity(Base) {
