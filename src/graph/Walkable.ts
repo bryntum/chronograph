@@ -29,80 +29,77 @@ export abstract class WalkContext extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Walkable = <T extends Constructable<Base>>(base : T) => {
+export const Walkable = <T extends Constructable<Base>>(base : T) =>
 
-    abstract class Walkable extends base {
+class Walkable extends base {
 
-        /**
-            POSSIBLE OPTIMIZATION (need to benchmark)
-            instead of the separate map for visited data
+    /**
+        POSSIBLE OPTIMIZATION (need to benchmark)
+        instead of the separate map for visited data
 
-              const visitedAt             = new Map<this, number>()
+          const visitedAt             = new Map<this, number>()
 
-            store the number in the node itself (as non-enumerable symbol property)
-        */
-        walkDepth (context : WalkContext) {
-            // POSSIBLE OPTIMIZATION - have a single `visitedAt` map as Map<this, [ number, boolean ]> to
-            // store the "visitedTopologically" flag
-            const visitedAt             = new Map<Walkable, number>()
-            const visitedTopologically  = new Set<Walkable>()
+        store the number in the node itself (as non-enumerable symbol property)
+    */
+    walkDepth (context : WalkContext) {
+        // POSSIBLE OPTIMIZATION - have a single `visitedAt` map as Map<this, [ number, boolean ]> to
+        // store the "visitedTopologically" flag
+        const visitedAt             = new Map<Walkable, number>()
+        const visitedTopologically  = new Set<Walkable>()
 
-            let toVisit : Walkable[]    = [ this ]
+        let toVisit : Walkable[]    = [ this ]
 
-            let depth
+        let depth
 
-            while (depth = toVisit.length) {
-                let node                = toVisit[ depth - 1 ]
+        while (depth = toVisit.length) {
+            let node                = toVisit[ depth - 1 ]
 
-                if (visitedTopologically.has(node)) {
-                    toVisit.pop()
-                    continue
+            if (visitedTopologically.has(node)) {
+                toVisit.pop()
+                continue
+            }
+
+            const visitedAtDepth    = visitedAt.get(node)
+
+            // node has been already visited
+            if (visitedAtDepth != null) {
+
+                // it is valid to find itself in the visited map, but only if visited at the current depth
+                // (which indicates stack unwinding)
+                // if the node has been visited at earlier depth - its a cycle
+                if (visitedAtDepth < depth)
+                    context.onCycle(node)
+                else {
+                    visitedTopologically.add(node)
+
+                    // we've processed all outgoing edges from this node,
+                    // now we can add it to topologically sorted results (if needed)
+                    context.onTopologicalNode(node)
                 }
 
-                const visitedAtDepth    = visitedAt.get(node)
+                toVisit.pop()
 
-                // node has been already visited
-                if (visitedAtDepth != null) {
+            } else {
+                visitedAt.set(node, depth)
 
-                    // it is valid to find itself in the visited map, but only if visited at the current depth
-                    // (which indicates stack unwinding)
-                    // if the node has been visited at earlier depth - its a cycle
-                    if (visitedAtDepth < depth)
-                        context.onCycle(node)
-                    else {
-                        visitedTopologically.add(node)
+                context.onNode(node)
 
-                        // we've processed all outgoing edges from this node,
-                        // now we can add it to topologically sorted results (if needed)
-                        context.onTopologicalNode(node)
-                    }
+                const lengthBefore  = toVisit.length
+
+                context.forEachNext(node, node => toVisit.push(node))
+
+                // no new nodes added
+                if (toVisit.length === lengthBefore) {
+                    visitedTopologically.add(node)
+
+                    // if there's no outgoing edges, node is at topological position
+                    context.onTopologicalNode(node)
 
                     toVisit.pop()
-
-                } else {
-                    visitedAt.set(node, depth)
-
-                    context.onNode(node)
-
-                    const lengthBefore  = toVisit.length
-
-                    context.forEachNext(node, node => toVisit.push(node))
-
-                    // no new nodes added
-                    if (toVisit.length === lengthBefore) {
-                        visitedTopologically.add(node)
-
-                        // if there's no outgoing edges, node is at topological position
-                        context.onTopologicalNode(node)
-
-                        toVisit.pop()
-                    }
                 }
             }
         }
     }
-
-    return Walkable
 }
 
 export type Walkable = Mixin<typeof Walkable>

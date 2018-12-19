@@ -144,7 +144,7 @@ export const field : PropertyDecorator = function (target : Entity, propertyKey 
 export const property = field
 
 
-export const mutation = function (resolver : OutputResolver) : MethodDecorator {
+export const mutate = function (resolver : OutputResolver) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
     return function (target : Entity, propertyKey : string | symbol, descriptor : TypedPropertyDescriptor<any>) : void {

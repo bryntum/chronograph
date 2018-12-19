@@ -74,7 +74,7 @@ StartTest(t => {
                 // console.profileEnd()
                 // console.timeEnd("Calc #1");
 
-                console.log("Result: ", boxes[ boxes.length - 1 ].get())
+                // console.log("Result: ", boxes[ boxes.length - 1 ].get())
 
                 next()
             },
@@ -87,7 +87,7 @@ StartTest(t => {
 
                 // console.timeEnd("Calc #2");
 
-                console.log("Result: ", boxes[ boxes.length - 1 ].get())
+                // console.log("Result: ", boxes[ boxes.length - 1 ].get())
             }
         )
     });
