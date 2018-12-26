@@ -75,13 +75,13 @@ mixin typization scheme below, or another crazy experiment
 
 */
 //----------------            go wild here              ------------------
-class ChronoNumber extends Number {
-    constructor (number : number) {
-        super(number)
-
-        return Number(number)
-    }
-}
+// class ChronoNumber extends Number {
+//     constructor (number : number) {
+//         super(number)
+//
+//         return Number(number)
+//     }
+// }
 
 
 // export type AnyConstructor11<A>      = new <A>(...input: any[]) => A

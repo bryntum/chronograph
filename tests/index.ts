@@ -12,14 +12,14 @@ project.configure({
 
 
 project.start(
-    {
-        group       : 'chrono',
-        items       : [
-            'chrono/010_atom.t.js',
-            'chrono/020_immutable.t.js',
-            'chrono/030_box.t.js'
-        ]
-    },
+    // {
+    //     group       : 'chrono',
+    //     items       : [
+    //         'chrono/010_atom.t.js',
+    //         'chrono/020_immutable.t.js',
+    //         'chrono/030_box.t.js'
+    //     ]
+    // },
     {
         group       : 'chronograph',
 
@@ -37,18 +37,18 @@ project.start(
             'graph/020_node.t.js'
         ]
     },
-    {
-        group       : 'replica',
-
-        items       : [
-            'replica/010_replica.t.js',
-        ]
-    },
-    {
-        group       : 'schema',
-
-        items       : [
-            'schema/010_schema.t.js',
-        ]
-    }
+    // {
+    //     group       : 'replica',
+    //
+    //     items       : [
+    //         'replica/010_replica.t.js',
+    //     ]
+    // },
+    // {
+    //     group       : 'schema',
+    //
+    //     items       : [
+    //         'schema/010_schema.t.js',
+    //     ]
+    // }
 );

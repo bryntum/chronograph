@@ -7,26 +7,27 @@ import {WalkableBackward, WalkableForward} from "./Walkable.js";
 export const Graph = <T extends Constructable<WalkableForward & WalkableBackward>>(base : T) =>
 
 class Graph extends base {
+    nodeT           : Node
 
-    nodes           : Set<Node>         = new Set()
+    nodes           : Set<this[ 'nodeT' ]>         = new Set()
 
 
-    getNodes () : Set<Node> {
+    getNodes () : Set<this[ 'nodeT' ]> {
         return this.nodes
     }
 
 
-    hasDirectNode (node : Node) : boolean {
+    hasDirectNode (node : this[ 'nodeT' ]) : boolean {
         return this.getNodes().has(node)
     }
 
 
-    addNodes (nodes : Node[]) {
+    addNodes (nodes : this[ 'nodeT' ][]) {
         nodes.forEach(node => this.addNode(node))
     }
 
 
-    addNode (node : Node) : Node {
+    addNode (node : this[ 'nodeT' ]) : this[ 'nodeT' ] {
         // <debug>
         if (this.hasDirectNode(node)) throw new Error(`This [${node}] already exists in the graph`)
         // </debug>
@@ -37,12 +38,12 @@ class Graph extends base {
     }
 
 
-    removeNodes (nodes : Node[]) {
+    removeNodes (nodes : this[ 'nodeT' ][]) {
         nodes.forEach(node => this.removeNode(node))
     }
 
 
-    removeNode (node : Node) {
+    removeNode (node : this[ 'nodeT' ]) {
         // <debug>
         if (!this.hasDirectNode(node)) throw new Error(`This [${node}] does not exists in the graph`)
         // </debug>
@@ -51,12 +52,12 @@ class Graph extends base {
     }
 
 
-    getIncoming () : Node[] {
+    getIncoming () : this[ 'nodeT' ][] {
         return Array.from(this.nodes)
     }
 
 
-    getOutgoing() : Node[] {
+    getOutgoing() : this[ 'nodeT' ][] {
         return Array.from(this.nodes)
     }
 }

@@ -1,4 +1,4 @@
-import {HasId} from "../../src/chronograph/HasId.js";
+import {HasId} from "../../src/chrono/HasId.js";
 import {Base} from "../../src/class/Mixin.js";
 import {MinimalNode, WalkableBackwardNode, WalkableForwardNode} from "../../src/graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "../../src/graph/Walkable.js";
