@@ -1,6 +1,7 @@
-import {Base} from "../class/Mixin.js";
+import {AnyConstructor, Base, BaseConstructor} from "../class/Mixin.js";
+import {FieldAtom} from "../replica/Atom.js";
 
-export type Name    = string | symbol
+export type Name    = string
 export type Type    = string
 
 
@@ -11,6 +12,8 @@ export class Field extends Base {
     type                : Type
 
     entity              : Entity
+
+    cls                 : typeof FieldAtom      = FieldAtom
 }
 
 
@@ -122,6 +125,14 @@ export class Schema extends Base {
             return target
         }
     }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class Reference extends Base {
+    entity                  : Entity
+
+    fieldSet                : Field[]   = []
 }
 
 

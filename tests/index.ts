@@ -31,6 +31,7 @@ project.start(
 
         items       : [
             'replica/010_replica.t.js',
+            'replica/020_relation.t.js'
         ]
     },
     {

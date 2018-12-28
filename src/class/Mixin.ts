@@ -33,7 +33,7 @@ export class Base {
     }
 }
 
-type BaseConstructor       = typeof Base
+export type BaseConstructor         = typeof Base
 
 //---------------------------------------------------------------------------------------------------------------------
 

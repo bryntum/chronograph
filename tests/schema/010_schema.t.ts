@@ -1,6 +1,6 @@
 import {Base} from "../../src/class/Mixin.js";
 import {Entity, field} from "../../src/replica/Entity.js";
-import {FieldAtom} from "../../src/replica/Field.js";
+import {FieldAtom} from "../../src/replica/Atom.js";
 import {ForeignKey, PrimaryKey, Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any

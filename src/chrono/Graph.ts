@@ -1,4 +1,4 @@
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {AnyConstructor1, Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
@@ -118,12 +118,12 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    getOrCreateAtom (id : ChronoId) {
+    getOrCreateAtom (id : ChronoId, cls : MixinConstructor<typeof ChronoAtom> = MinimalChronoAtom) : this[ 'nodeT' ] {
         const existing      = this.nodesMap.get(id)
 
         if (existing) return existing
 
-        return this.addNode(MinimalChronoAtom.new({ id : id }))
+        return this.addNode(cls.new({ id : id }))
     }
 
 

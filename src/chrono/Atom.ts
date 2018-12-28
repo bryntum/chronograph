@@ -42,36 +42,33 @@ class ChronoAtom extends base {
     nextValue           : ChronoValue
     value               : ChronoValue
 
-    // lazy                : boolean                   = false
-
     graph               : IChronoGraph
 
     equality            : (v1, v2) => boolean       = strictEquality
 
 
-    sync                : boolean       = true
+    // sync                : boolean       = true
 
     calculationContext  : any
     calculation         : SyncChronoCalculation     = identity
     calculationAsync    : AsyncChronoCalculation    = identityAsync
 
-
-    // initialize (...args) {
-    //     super.initialize(...args)
-    //
-    //     if (!this.hasStableValue() && !this.lazy && this.calculation) this.set(this.calculate(undefined))
-    // }
+    observedDuringCalculation   :  ChronoAtom[]     = []
 
 
     commit () {
         this.value      = this.nextValue
 
         this.nextValue  = undefined
+
+        this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
+        this.observedDuringCalculation.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
     }
 
 
     reject () {
-        this.nextValue  = undefined
+        this.nextValue                  = undefined
+        this.observedDuringCalculation  = []
     }
 
 
@@ -89,6 +86,7 @@ class ChronoAtom extends base {
                 // this is "cached" behavior
                 // one more possibility would be to just return the calculated value and not cache it
                 // feels strange to use regular `set` inside of `get` - needs to be refactored probably
+                // may be `propagate` should be always required to get the value of the computed property
                 this.set(value)
 
                 if (graph.isObservingRead) graph.onReadObserved(this)
@@ -114,14 +112,10 @@ class ChronoAtom extends base {
             } else {
                 if (this.hasStableValue()) {
                     if (!this.equality(value, this.value)) {
-                        this.nextValue  = value
-
-                        graph.markDirty(this)
+                        this.update(value)
                     }
                 } else {
-                    this.nextValue  = value
-
-                    graph.markDirty(this)
+                    this.update(value)
                 }
             }
         } else {
@@ -129,6 +123,13 @@ class ChronoAtom extends base {
         }
 
         return this
+    }
+
+
+    update (value : ChronoValue) {
+        this.nextValue  = value
+
+        this.graph.markDirty(this)
     }
 
 
@@ -142,30 +143,29 @@ class ChronoAtom extends base {
     calculate (proposedValue : ChronoValue) : ChronoValue {
         this.graph && this.graph.startReadObservation()
 
-        this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
-
         const res       = this.calculation ? this.calculation.call(this.calculationContext || this, proposedValue) : proposedValue
 
-        const observed  = this.graph ? this.graph.stopReadObservation() : []
+        this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
 
-        observed.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
+        // this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
+        // observed.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
 
         return res
     }
 
 
     calculateAsync (proposedValue : ChronoValue) : Promise<ChronoValue> {
-        this.graph && this.graph.startReadObservation()
-
-        this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
-
-        const res       = this.calculation(proposedValue)
-
-        const observed  = this.graph ? this.graph.stopReadObservation() : []
-
-        observed.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
-
-        return res
+        return
+        // this.graph && this.graph.startReadObservation()
+        //
+        // const res       = this.calculation(proposedValue)
+        //
+        // const observed  = this.graph ? this.graph.stopReadObservation() : []
+        //
+        // this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
+        // observed.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
+        //
+        // return res
     }
 
 
@@ -191,8 +191,6 @@ class ChronoAtom extends base {
 
     onEnterGraph (graph : IChronoGraph) {
         this.graph      = graph
-
-        // if (!this.hasStableValue() && !this.lazy && this.calculation) this.set(this.calculate(undefined))
     }
 
 
@@ -207,6 +205,4 @@ export type ChronoAtom = Mixin<typeof ChronoAtom>
 
 //---------------------------------------------------------------------------------------------------------------------
 export const MinimalChronoAtom = ChronoAtom(HasId(MinimalNode))
-
-
-
+export type MinimalChronoAtom = InstanceType<typeof MinimalChronoAtom>
