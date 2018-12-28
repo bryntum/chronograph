@@ -1,5 +1,4 @@
 import {Base} from "../class/Mixin.js";
-import {OutputResolver} from "../replica/Entity.js";
 
 export type Name    = string | symbol
 export type Type    = string
@@ -142,6 +141,8 @@ export class PrimaryKey extends FieldSet {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ForeignKey extends FieldSet {
+    referenceName           : string
+
     referencedFieldSet      : Field[]   = []
 
     referencedEntity        : Entity

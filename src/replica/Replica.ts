@@ -1,4 +1,4 @@
-import {GraphBox, MinimalGraphBox} from "../chronograph/Graph.js";
+import {ChronoGraph, MinimalChronoGraph} from "../chrono/Graph.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Schema} from "../schema/Schema.js";
 import {Entity} from "./Entity.js";
@@ -8,20 +8,13 @@ import {Entity} from "./Entity.js";
 export const Replica = <T extends Constructable<Base>>(base : T) =>
 
 class Replica extends base {
-    graph               : GraphBox
+    graph               : ChronoGraph   = MinimalChronoGraph.new()
 
     schema              : Schema
 
 
-    initialize (...args) {
-        super.initialize(...args)
-
-        this.graph      = MinimalGraphBox.new()
-    }
-
-
     addEntity (entity : Entity) {
-        entity.joinGraph(this.graph)
+        entity.enterGraph(this.graph)
     }
 
 

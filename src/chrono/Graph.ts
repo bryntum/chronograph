@@ -1,8 +1,8 @@
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
-import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "../graph/Walkable.js";
-import {ChronoAtom, ChronoCalculation, MinimalChronoAtom} from "./Atom.js";
+import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
+import {ChronoAtom, MinimalChronoAtom} from "./Atom.js";
 import {ChronoId} from "./Id.js";
 
 
@@ -48,10 +48,12 @@ class ChronoGraph extends base implements IChronoGraph {
 
     nodesMap            : Map<ChronoId, ChronoAtom> = new Map()
 
+    // it seems currently we rely on the Set's `forEach` method to preserve the order of elements addition
+    // see "020_performance" test - initial "graph.propagate()"
+    // need to at least code this explicitly
     changedAtoms        : Set<ChronoAtom>       = new Set()
     dirtyAtoms          : Set<ChronoAtom>       = new Set()
 
-    // calculationsStack   : ChronoCalculation[]   = []
 
 
     startReadObservation () {
@@ -85,7 +87,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
 
     isDirty () : boolean {
-        return this.dirtyAtoms.size > 0
+        return this.changedAtoms.size > 0
     }
 
 
@@ -106,6 +108,7 @@ class ChronoGraph extends base implements IChronoGraph {
         this.changedAtoms.clear()
         this.dirtyAtoms.clear()
     }
+
 
     reject () {
         this.changedAtoms.forEach(atom => atom.reject())
@@ -129,10 +132,21 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
+    needRecalculation (atom : ChronoAtom) : boolean {
+        if (this.dirtyAtoms.has(atom)) return true
+
+        for (let inputAtom of atom.incoming as Set<ChronoAtom>) {
+            if (inputAtom.isDirty()) return true
+        }
+
+        return false
+    }
+
+
     propagate () {
         const me        = this
 
-        const topoOrder = []
+        const topoOrder : ChronoAtom[] = []
 
         this.walkDepth(WalkForwardContext.new({
             forEachNext             : function (atom : ChronoAtom, func) {
@@ -158,7 +172,9 @@ class ChronoGraph extends base implements IChronoGraph {
         for (let i = topoOrder.length - 1; i >= 0; i--) {
             const atom          = topoOrder[ i ]
 
-            atom.set(atom.calculate(atom.nextValue))
+            if (this.needRecalculation(atom)) {
+                atom.set(atom.calculate(atom.nextValue))
+            }
         }
 
         this.commit()
@@ -168,9 +184,11 @@ class ChronoGraph extends base implements IChronoGraph {
     addNode (node : this[ 'nodeT' ]) : this[ 'nodeT' ] {
         const res   = super.addNode(node)
 
-        node.joinGraph(this)
-
         this.nodesMap.set(node.id, node)
+
+        if (!node.hasValue()) this.markDirty(node)
+
+        node.onEnterGraph(this)
 
         return res
     }
@@ -179,9 +197,9 @@ class ChronoGraph extends base implements IChronoGraph {
     removeNode (node : this[ 'nodeT' ]) {
         const res   = super.removeNode(node)
 
-        node.unjoinGraph(this)
-
         this.nodesMap.delete(node.id)
+
+        node.onLeaveGraph(this)
 
         return res
     }

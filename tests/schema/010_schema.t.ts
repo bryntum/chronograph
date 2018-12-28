@@ -1,6 +1,6 @@
 import {Base} from "../../src/class/Mixin.js";
 import {Entity, field} from "../../src/replica/Entity.js";
-import {FieldBox} from "../../src/replica/FieldBox.js";
+import {FieldAtom} from "../../src/replica/Field.js";
 import {ForeignKey, PrimaryKey, Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any
@@ -44,7 +44,7 @@ StartTest(t => {
         t.ok(ent.hasField('someField3'), 'Field has been created in the entity')
 
 
-        t.isInstanceOf(entity1.fields.someField1, FieldBox)
+        t.isInstanceOf(entity1.fields.someField1, FieldAtom)
         t.is(entity1.fields.someField1.field, ent.getField('someField1'))
     })
 
@@ -79,9 +79,11 @@ StartTest(t => {
 
 
         Book.addForeignKey(ForeignKey.new({
-            fieldSet                : [ Book.getField('writtenBy') ],
-            referencedFieldSet      : [ Author.getField('id') ],
+            referenceName           : 'writtenBy',
 
+            fieldSet                : [ Book.getField('writtenBy') ],
+
+            referencedFieldSet      : [ Author.getField('id') ],
             referencedEntity        : Author.getEntity()
         }))
 

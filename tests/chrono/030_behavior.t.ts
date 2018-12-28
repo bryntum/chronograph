@@ -22,8 +22,6 @@ StartTest(t => {
             }
         }))
 
-        graph.commit()
-
         box0.set('sum')
         box1.set(0)
         box2.set(1)

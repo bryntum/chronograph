@@ -12,7 +12,7 @@ StartTest(t => {
         const atom2 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({ value : 1 }))
 
         const atom3 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({
-            lazy            : true,
+            // lazy            : true,
 
             calculation     : (proposedValue : number) => {
                 return atom1.get() + atom2.get()
@@ -25,13 +25,9 @@ StartTest(t => {
 
         t.is(atom3.hasValue(), false, 'Atom has no value')
 
+        graph.propagate()
+
         t.is(atom3.get(), 1, "Correct result calculated")
-
-        t.is(atom3.isDirty(), true, 'Atom considered dirty - now it has value, that has not been commited')
-
-        graph.commit()
-
-        t.is(atom3.isDirty(), false, 'Atom committed')
     })
 
 
@@ -42,15 +38,18 @@ StartTest(t => {
         const atom2 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({ value : 1 }))
 
         const atom3 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({
-            lazy            : false,
+            // lazy            : false,
 
             calculation     : (proposedValue : number) => {
                 return atom1.get() + atom2.get()
             }
         }))
 
+        graph.propagate()
+
         t.is(atom1.isDirty(), false, 'Atom considered not dirty')
         t.is(atom2.isDirty(), false, 'Atom considered not dirty')
+        t.is(atom3.isDirty(), false, 'Atom considered not dirty')
         t.is(atom3.hasValue(), true, 'Atom has value - eager calculation')
 
         t.is(atom3.get(), 1, "Correct result calculated")
@@ -71,14 +70,18 @@ StartTest(t => {
 
         t.is(atom1.isDirty(), false, 'Atom considered not dirty')
         t.is(atom2.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom3.isDirty(), false, 'Atom considered not dirty - has no value')
+        t.is(atom3.isDirty(), false, 'Atom dirty - calculated on graph entry')
+
+        graph.propagate()
 
         atom1.set(0)
         atom2.set(1)
 
         t.is(atom1.isDirty(), true, 'Atom considered not dirty')
         t.is(atom2.isDirty(), true, 'Atom considered not dirty')
-        t.is(atom3.isDirty(), false, 'Atom considered not dirty - has no value')
+        t.is(atom3.isDirty(), false, 'Atom considered not dirty - not propagated yet')
+
+        graph.propagate()
 
         t.is(atom3.get(), 1, "Correct result calculated")
 
@@ -113,10 +116,10 @@ StartTest(t => {
         box2.set(0)
         box3.set(1)
 
+        graph.propagate()
+
         t.is(box1p2.get(), 0, "Correct result calculated")
         t.is(res.get(), 1, "Correct result calculated")
-
-        graph.commit()
 
         box1.set(1)
 

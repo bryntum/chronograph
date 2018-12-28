@@ -9,10 +9,17 @@ export type ChronoValue         = any
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type ChronoCalculation   = (proposedValue : ChronoValue) => ChronoValue
+export type SyncChronoCalculation   = (proposedValue : ChronoValue) => ChronoValue
+export type AsyncChronoCalculation  = (proposedValue : ChronoValue) => Promise<ChronoValue>
 
+//---------------------------------------------------------------------------------------------------------------------
 export const strictEquality     = (v1, v2) => v1 === v2
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export const identity           = v => v
+
+export const identityAsync      = v => Promise.resolve(v)
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculationWalkContext extends WalkContext {
@@ -35,14 +42,18 @@ class ChronoAtom extends base {
     nextValue           : ChronoValue
     value               : ChronoValue
 
-    lazy                : boolean       = false
+    // lazy                : boolean                   = false
 
     graph               : IChronoGraph
 
-    equality            : (v1, v2) => boolean = strictEquality
+    equality            : (v1, v2) => boolean       = strictEquality
 
 
-    calculation         : ChronoCalculation
+    sync                : boolean       = true
+
+    calculationContext  : any
+    calculation         : SyncChronoCalculation     = identity
+    calculationAsync    : AsyncChronoCalculation    = identityAsync
 
 
     // initialize (...args) {
@@ -77,6 +88,7 @@ class ChronoAtom extends base {
 
                 // this is "cached" behavior
                 // one more possibility would be to just return the calculated value and not cache it
+                // feels strange to use regular `set` inside of `get` - needs to be refactored probably
                 this.set(value)
 
                 if (graph.isObservingRead) graph.onReadObserved(this)
@@ -132,7 +144,7 @@ class ChronoAtom extends base {
 
         this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
 
-        const res       = this.calculation ? this.calculation(proposedValue) : proposedValue
+        const res       = this.calculation ? this.calculation.call(this.calculationContext || this, proposedValue) : proposedValue
 
         const observed  = this.graph ? this.graph.stopReadObservation() : []
 
@@ -142,18 +154,24 @@ class ChronoAtom extends base {
     }
 
 
-    // propagate () {
-    //     const graph     = this.graph
-    //
-    //     if (!graph) return
-    //
-    //
-    //     // graph.
-    //     //
-    //     // this.outgoing.forEach((to : ChronoAtom) => {
-    //     //
-    //     // })
-    // }
+    calculateAsync (proposedValue : ChronoValue) : Promise<ChronoValue> {
+        this.graph && this.graph.startReadObservation()
+
+        this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
+
+        const res       = this.calculation(proposedValue)
+
+        const observed  = this.graph ? this.graph.stopReadObservation() : []
+
+        observed.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
+
+        return res
+    }
+
+
+    recalculate () {
+        this.set(this.calculate(this.nextValue !== undefined ? this.nextValue : this.value))
+    }
 
 
     hasValue () : boolean {
@@ -171,14 +189,14 @@ class ChronoAtom extends base {
     }
 
 
-    joinGraph (graph : IChronoGraph) {
+    onEnterGraph (graph : IChronoGraph) {
         this.graph      = graph
 
-        if (!this.hasStableValue() && !this.lazy && this.calculation) this.set(this.calculate(undefined))
+        // if (!this.hasStableValue() && !this.lazy && this.calculation) this.set(this.calculate(undefined))
     }
 
 
-    unjoinGraph (graph : IChronoGraph) {
+    onLeaveGraph (graph : IChronoGraph) {
         this.graph      = undefined
     }
 

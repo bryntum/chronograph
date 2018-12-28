@@ -16,7 +16,7 @@ StartTest(t => {
         // console.profile('Build graph')
 
         for (let i = 0; i < atomNum; ++i) {
-            const atomConfig : Partial<ChronoAtom>   = { id : i, value : i > 3 ? undefined : 1, lazy : false }
+            const atomConfig : Partial<ChronoAtom>   = { id : i, value : i > 3 ? undefined : 1 }
 
             if (i > 3) {
                 if (i % 2 == 0) {
@@ -53,7 +53,7 @@ StartTest(t => {
             graph.addNode(box)
         }
 
-        graph.commit()
+        graph.propagate()
 
         // console.profileEnd()
         console.timeEnd("Build graph")

@@ -1,11 +1,9 @@
-import {ChronoBehavior, MinimalChronoBehavior, MinimalChronoMutationBox} from "../../src/chronograph/Mutation.js";
 import {Base} from "../../src/class/Mixin.js";
-import {Entity, field} from "../../src/replica/Entity.js";
+import {calculate, Entity, field} from "../../src/replica/Entity.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any
-
 
 StartTest(t => {
 
@@ -29,28 +27,11 @@ StartTest(t => {
             fullName        : string
 
 
-            computeBehavior () : ChronoBehavior[] {
-                return [
-                    MinimalChronoBehavior.new({
-                        input       : [],
-
-                        calculation : () => {
-                            return [
-                                MinimalChronoMutationBox.new({
-                                    input       : [ this.fields.firstName, this.fields.lastName ],
-                                    output      : [ this.fields.fullName ],
-
-                                    calculation : (firstName, lastName) => {
-                                        return firstName + ' ' + lastName
-                                    }
-                                })
-                            ]
-                        }
-                    })
-                ]
+            @calculate('fullName')
+            calculateFullName (proposed : string) {
+                return this.firstName + ' ' + this.lastName
             }
         }
-
 
         @entity
         class Book extends Entity(Base) {
