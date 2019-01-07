@@ -1,5 +1,5 @@
 import {Base} from "../../src/class/Mixin.js";
-import {Entity, reference, relation} from "../../src/replica/Entity.js";
+import {Entity, reference, storage} from "../../src/replica/Entity.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
 
@@ -14,7 +14,7 @@ StartTest(t => {
 
         @entity
         class TreeNode extends Entity(Base) {
-            @relation
+            @storage
             children            : Set<TreeNode>
 
             @reference(TreeNode, 'children')

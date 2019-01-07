@@ -14,6 +14,8 @@ export class Field extends Base {
 
     entity              : Entity
 
+    persistent          : boolean   = true
+
     atomCls             : typeof MinimalFieldAtom   = MinimalFieldAtom
 }
 
@@ -28,7 +30,9 @@ export class ReferenceField extends Field {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceStorageField extends Field {
-    atomCls                         : typeof MinimalReferenceStorageAccumulator = MinimalReferenceStorageAccumulator
+    persistent          : boolean   = false
+
+    atomCls             : typeof MinimalReferenceStorageAccumulator = MinimalReferenceStorageAccumulator
 }
 
 

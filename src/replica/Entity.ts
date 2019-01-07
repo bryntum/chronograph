@@ -26,7 +26,7 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
         initialize (...args) {
             const entity    = this.$entity
 
-            this.selfAtom   = MinimalEntityAtom.new({ entity : entity, value : this, self : this })
+            this.selfAtom   = MinimalEntityAtom.new({ entity : entity, self : this })
 
             const fields    = {}
 
@@ -132,7 +132,7 @@ export const property = field
 
 //---------------------------------------------------------------------------------------------------------------------
 // `target` will be a prototype of the class with Entity mixin
-export const relation : PropertyDecorator = function (target : Entity, propertyKey : string) : void {
+export const storage : PropertyDecorator = function (target : Entity, propertyKey : string) : void {
     let entity      = target.$entity
 
     if (!entity) entity = target.$entity = EntityData.new()

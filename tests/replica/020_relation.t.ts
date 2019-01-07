@@ -1,5 +1,5 @@
 import {Base} from "../../src/class/Mixin.js";
-import {Entity, field, reference, relation} from "../../src/replica/Entity.js";
+import {Entity, reference, storage} from "../../src/replica/Entity.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
 
@@ -14,7 +14,7 @@ StartTest(t => {
 
         @entity
         class Author extends Entity(Base) {
-            @relation
+            @storage
             books           : Set<Book>
         }
 
