@@ -1,5 +1,6 @@
-import {AnyConstructor, Base, BaseConstructor} from "../class/Mixin.js";
-import {FieldAtom} from "../replica/Atom.js";
+import {Base} from "../class/Mixin.js";
+import {MinimalFieldAtom} from "../replica/Atom.js";
+import {MinimalReferenceAtom, MinimalReferenceStorageAccumulator} from "../replica/Reference.js";
 
 export type Name    = string
 export type Type    = string
@@ -13,7 +14,21 @@ export class Field extends Base {
 
     entity              : Entity
 
-    cls                 : typeof FieldAtom      = FieldAtom
+    atomCls             : typeof MinimalFieldAtom   = MinimalFieldAtom
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceField extends Field {
+    atomCls             : typeof MinimalFieldAtom   = MinimalReferenceAtom
+
+    storageKey          : Name
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceStorageField extends Field {
+    atomCls                         : typeof MinimalReferenceStorageAccumulator = MinimalReferenceStorageAccumulator
 }
 
 
@@ -25,8 +40,8 @@ export class Entity extends Base {
 
     schema              : Schema
 
-    primaryKeys         : PrimaryKey[]          = []
-    foreignKeys         : ForeignKey[]          = []
+    // primaryKeys         : PrimaryKey[]          = []
+    // foreignKeys         : ForeignKey[]          = []
 
 
     hasField (name : Name) : boolean {
@@ -39,7 +54,7 @@ export class Entity extends Base {
     }
 
 
-    addField (field : Field) : Field {
+    addField <T extends Field>(field : T) : T {
         const name      = field.name
 
         if (!name) throw new Error(`Field must have a name`)
@@ -58,18 +73,18 @@ export class Entity extends Base {
     }
 
 
-    addPrimaryKey (key : PrimaryKey) {
-        key.entity      = this
-
-        this.primaryKeys.push(key)
-    }
-
-
-    addForeignKey (key : ForeignKey) {
-        key.entity      = this
-
-        this.foreignKeys.push(key)
-    }
+    // addPrimaryKey (key : PrimaryKey) {
+    //     key.entity      = this
+    //
+    //     this.primaryKeys.push(key)
+    // }
+    //
+    //
+    // addForeignKey (key : ForeignKey) {
+    //     key.entity      = this
+    //
+    //     this.foreignKeys.push(key)
+    // }
 
 }
 
@@ -128,33 +143,33 @@ export class Schema extends Base {
 }
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export class Reference extends Base {
-    entity                  : Entity
-
-    fieldSet                : Field[]   = []
-}
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class FieldSet extends Base {
-    entity                  : Entity
-
-    fieldSet                : Field[]   = []
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class PrimaryKey extends FieldSet {
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class ForeignKey extends FieldSet {
-    referenceName           : string
-
-    referencedFieldSet      : Field[]   = []
-
-    referencedEntity        : Entity
-}
+// //---------------------------------------------------------------------------------------------------------------------
+// export class Reference extends Base {
+//     entity                  : Entity
+//
+//     fieldSet                : Field[]   = []
+// }
+//
+//
+//
+// //---------------------------------------------------------------------------------------------------------------------
+// export class FieldSet extends Base {
+//     entity                  : Entity
+//
+//     fieldSet                : Field[]   = []
+// }
+//
+//
+// //---------------------------------------------------------------------------------------------------------------------
+// export class PrimaryKey extends FieldSet {
+// }
+//
+//
+// //---------------------------------------------------------------------------------------------------------------------
+// export class ForeignKey extends FieldSet {
+//     referenceName           : string
+//
+//     referencedFieldSet      : Field[]   = []
+//
+//     referencedEntity        : Entity
+// }

@@ -107,7 +107,7 @@ class ChronoAtom extends base {
                 if (!this.equality(value, this.nextValue)) {
                     throw new Error("Cyclic write")
                 } else {
-                    return
+                    return this
                 }
             } else {
                 if (this.hasStableValue()) {
@@ -204,5 +204,4 @@ export type ChronoAtom = Mixin<typeof ChronoAtom>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const MinimalChronoAtom = ChronoAtom(HasId(MinimalNode))
-export type MinimalChronoAtom = InstanceType<typeof MinimalChronoAtom>
+export class MinimalChronoAtom extends ChronoAtom(HasId(MinimalNode)) {}

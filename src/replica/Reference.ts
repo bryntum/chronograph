@@ -1,11 +1,15 @@
-import {ChronoAtom, ChronoValue} from "../chrono/Atom.js";
+import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph, IChronoGraph} from "../chrono/Graph.js";
-import {FieldAtom} from "./Atom.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
+import {Field as FieldData, Name, ReferenceField} from "../schema/Schema.js";
+import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
 import {Entity} from "./Entity.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReferenceStorageAccumulator extends FieldAtom {
+export const ReferenceStorageAtom = <T extends Constructable<FieldAtom>>(base : T) =>
+
+class ReferenceStorageAtom extends base {
 
     oldRefs         : Set<ChronoAtom>       = new Set()
     newRefs         : Set<ChronoAtom>       = new Set()
@@ -14,14 +18,12 @@ export class ReferenceStorageAccumulator extends FieldAtom {
     initialize () {
         super.initialize(...arguments)
 
-        // delete value config
-        delete this.calculation
-        delete this.calculationContext
+        this.calculation            = this.doCalculation
+        this.calculationContext     = this
     }
 
 
-    // @ts-ignore
-    calculation () : Set<Entity> {
+    doCalculation () : Set<Entity> {
         const result        = new Set()
 
         this.incoming.forEach((atom : ChronoAtom) => {
@@ -57,20 +59,24 @@ export class ReferenceStorageAccumulator extends FieldAtom {
     }
 }
 
+export type ReferenceStorageAtom = Mixin<typeof ReferenceStorageAtom>
+
+export class MinimalReferenceStorageAccumulator extends ReferenceStorageAtom(MinimalFieldAtom) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReferenceAtom extends FieldAtom {
-    referenceStorageAccumulator     : string
+export const ReferenceAtom = <T extends Constructable<FieldAtom>>(base : T) =>
+
+class ReferenceAtom extends base {
+    field           : ReferenceField
 
     value           : Entity
 
 
-    // /author/$id/books
-    getReferenceStorageAccumulator (entity : Entity) : ReferenceStorageAccumulator {
-        const id        = `${entity.internalId}/${this.referenceStorageAccumulator}`
+    getStorage (entity : Entity) : ReferenceStorageAtom {
+        const id        = `${entity.internalId}/${this.field.storageKey}`
 
-        return (this.graph as ChronoGraph).getOrCreateAtom(id, ReferenceStorageAccumulator) as ReferenceStorageAccumulator
+        return (this.graph as ChronoGraph).getOrCreateAtom(id, MinimalReferenceStorageAccumulator) as ReferenceStorageAtom
     }
 
 
@@ -78,41 +84,52 @@ export class ReferenceAtom extends FieldAtom {
         super.onEnterGraph(graph)
 
         if (this.hasValue()) {
-            const referenceStorage  = this.getReferenceStorageAccumulator(this.value)
+            const referenceStorage  = this.getStorage(this.value)
 
-            referenceStorage.newRefs.add(this.self.selfAtom)
-
-            this.graph.markDirty(referenceStorage)
+            this.addToStorage(referenceStorage)
         }
     }
 
 
-    // onLeaveGraph (graph : IChronoGraph) {
-    //     super.onEnterGraph(graph)
-    //
-    //     if (this.hasValue()) {
-    //         this.getReferenceStorageAccumulator(this.value).newRefs.add(this.self.selfAtom)
-    //     }
-    // }
+    onLeaveGraph (graph : IChronoGraph) {
+        super.onLeaveGraph(graph)
+
+        if (this.hasValue()) {
+            const referenceStorage  = this.getStorage(this.value)
+
+            this.removeFromStorage(referenceStorage)
+        }
+    }
+
+
+    addToStorage (storage : ReferenceStorageAtom) {
+        storage.newRefs.add(this.self.selfAtom)
+
+        this.graph.markDirty(storage)
+    }
+
+
+    removeFromStorage (storage : ReferenceStorageAtom) {
+        storage.oldRefs.add(this.self.selfAtom)
+
+        this.graph.markDirty(storage)
+    }
 
 
     update (value : ChronoValue) {
-        if (this.value !== undefined) {
-            const prevStorage       = this.getReferenceStorageAccumulator(this.value)
-
-            prevStorage.oldRefs.add(this.self.selfAtom)
-
-            this.graph.markDirty(prevStorage)
+        if (this.value != null) {
+            this.removeFromStorage(this.getStorage(this.value))
         }
 
         super.update(value)
 
         if (value != null) {
-            const newStorage = this.getReferenceStorageAccumulator(value)
-
-            newStorage.newRefs.add(this.self.selfAtom)
-
-            this.graph.markDirty(newStorage)
+            this.addToStorage(this.getStorage(value))
         }
     }
 }
+
+export type ReferenceAtom = Mixin<typeof ReferenceAtom>
+
+
+export class MinimalReferenceAtom extends ReferenceAtom(FieldAtom(MinimalChronoAtom)) {}

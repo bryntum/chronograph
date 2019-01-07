@@ -2,10 +2,9 @@ import {AsyncChronoCalculation, SyncChronoCalculation} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
 import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Entity as EntityData, Field, ForeignKey, Name, PrimaryKey} from "../schema/Schema.js";
-import {EntityAtom, FieldAtom} from "./Atom.js";
-import {ReferenceAtom, ReferenceStorageAccumulator} from "./Reference.js";
-
+import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
+import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
+import {MinimalReferenceStorageAccumulator} from "./Reference.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -17,20 +16,23 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
         $calculations   : { [s in keyof this] : SyncChronoCalculation | AsyncChronoCalculation }
 
         // TODO figure out how to filter fields only (see OnlyPropertiesOfType)
-        fields          : { [s in keyof this] : FieldAtom }
+        fields          : { [s in keyof this] : MinimalFieldAtom }
 
-        selfAtom        : EntityAtom
+        selfAtom        : MinimalEntityAtom
 
         internalId      : ChronoId      = chronoId()
 
 
         initialize (...args) {
-            this.selfAtom   = EntityAtom.new({ entity : this.$entity, value : this, self : this })
+            const entity    = this.$entity
+
+            this.selfAtom   = MinimalEntityAtom.new({ entity : entity, value : this, self : this })
 
             const fields    = {}
 
-            this.$entity.fields.forEach((field, name) => {
-                const fieldAtom = fields[ name ] = field.cls.new({
+            entity.fields.forEach((field : Field, name : Name) => {
+
+                const fieldAtom = fields[ name ] = field.atomCls.new({
                     id          : `${this.internalId}/${name}`,
 
                     field       : field,
@@ -40,9 +42,7 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
                     value       : this[ name ],
 
                     calculationContext  : this,
-                    calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined,
-
-                    referenceStorageAccumulator : field.referenceStorageAccumulator
+                    calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined
                 })
 
                 Object.defineProperty(this, name, {
@@ -62,7 +62,7 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
         }
 
 
-        forEachField (func : (field : FieldAtom, name : Name) => any) {
+        forEachField (func : (field : MinimalFieldAtom, name : Name) => any) {
             const fields        = this.fields
 
             for (let name in fields) {
@@ -89,14 +89,14 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
         }
 
 
-        static addPrimaryKey (key : PrimaryKey) {
-            return this.getEntity().addPrimaryKey(key)
-        }
-
-
-        static addForeignKey (key : ForeignKey) {
-            return this.getEntity().addForeignKey(key)
-        }
+        // static addPrimaryKey (key : PrimaryKey) {
+        //     return this.getEntity().addPrimaryKey(key)
+        // }
+        //
+        //
+        // static addForeignKey (key : ForeignKey) {
+        //     return this.getEntity().addForeignKey(key)
+        // }
 
 
         static getField (name : Name) : Field {
@@ -137,7 +137,9 @@ export const relation : PropertyDecorator = function (target : Entity, propertyK
 
     if (!entity) entity = target.$entity = EntityData.new()
 
-    entity.createField(propertyKey).cls     = ReferenceStorageAccumulator
+    entity.addField(ReferenceStorageField.new({
+        name            : propertyKey
+    }))
 }
 
 
@@ -156,16 +158,16 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const reference = function (entity : AnyConstructor1<Entity>, referenceStorageAccumulator : string) : PropertyDecorator {
+export const reference = function (entity : AnyConstructor1<Entity>, storageKey : string) : PropertyDecorator {
 
     return function (target : Entity, propertyKey : string) : void {
         let entity      = target.$entity
 
         if (!entity) entity = target.$entity = EntityData.new()
 
-        const field     = entity.createField(propertyKey)
-
-        field.cls                           = ReferenceAtom
-        field.referenceStorageAccumulator   = referenceStorageAccumulator
+        entity.addField(ReferenceField.new({
+            name            : propertyKey,
+            storageKey      : storageKey
+        }))
     }
 }

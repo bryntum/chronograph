@@ -1,4 +1,4 @@
-import {AnyConstructor1, Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
@@ -48,9 +48,6 @@ class ChronoGraph extends base implements IChronoGraph {
 
     nodesMap            : Map<ChronoId, ChronoAtom> = new Map()
 
-    // it seems currently we rely on the Set's `forEach` method to preserve the order of elements addition
-    // see "020_performance" test - initial "graph.propagate()"
-    // need to at least code this explicitly
     changedAtoms        : Set<ChronoAtom>       = new Set()
     dirtyAtoms          : Set<ChronoAtom>       = new Set()
 
