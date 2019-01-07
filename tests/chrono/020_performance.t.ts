@@ -15,7 +15,7 @@ StartTest(t => {
         console.time("Build graph")
         // console.profile('Build graph')
 
-        for (let i = 0; i < atomNum; ++i) {
+        for (let i = 0; i < atomNum; i++) {
             const atomConfig : Partial<ChronoAtom>   = { id : i, value : i > 3 ? undefined : 1 }
 
             if (i > 3) {
