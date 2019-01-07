@@ -107,10 +107,12 @@ export class ReferenceAtom extends FieldAtom {
 
         super.update(value)
 
-        const newStorage = this.getReferenceStorageAccumulator(value)
+        if (value != null) {
+            const newStorage = this.getReferenceStorageAccumulator(value)
 
-        newStorage.newRefs.add(this.self.selfAtom)
+            newStorage.newRefs.add(this.self.selfAtom)
 
-        this.graph.markDirty(newStorage)
+            this.graph.markDirty(newStorage)
+        }
     }
 }

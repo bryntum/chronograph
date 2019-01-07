@@ -43,9 +43,13 @@ StartTest(t => {
 
         replica1.propagate()
 
-        console.log("Books ", Array.from(markTwain.books))
-
         t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
+
+        tomSoyer2.writtenBy     = null
+
+        replica1.propagate()
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
     })
 
 
