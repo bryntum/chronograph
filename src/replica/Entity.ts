@@ -1,4 +1,3 @@
-import {AsyncChronoCalculation, SyncChronoCalculation} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
 import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
@@ -7,12 +6,12 @@ import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Entity = <T extends Constructable<Base>>(base : T) => {
+export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
-    class Entity extends base {
+    class EntityAny extends base {
         $entity         : EntityData
 
-        $calculations   : { [s in keyof this] : SyncChronoCalculation | AsyncChronoCalculation }
+        $calculations   : { [s in keyof this] : string }
 
         // TODO figure out how to filter fields only (see OnlyPropertiesOfType)
         $fields         : { [s in keyof this] : MinimalFieldAtom }
@@ -22,10 +21,10 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
         internalId      : ChronoId      = chronoId()
 
 
-        initialize (...args) {
+        initAtoms () {
             const entity    = this.$entity
 
-            this.selfAtom   = MinimalEntityAtom.new({ entity : entity, self : this })
+            this.selfAtom   = MinimalEntityAtom.new({ entity : entity, value : this, self : this })
 
             const fields    = {}
 
@@ -44,6 +43,7 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
                     calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined
                 })
 
+                // TODO move getters/setters to the prototype, inside the decorator
                 Object.defineProperty(this, name, {
                     get     : ()        => fieldAtom.get(),
                     set     : (value)   => fieldAtom.set(value)
@@ -51,8 +51,6 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
             })
 
             this.$fields     = <any>fields
-
-            super.initialize(...args)
         }
 
 
@@ -109,15 +107,30 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
 
     }
 
-    return Entity
+    return EntityAny
 }
 
-export type Entity = Mixin<typeof Entity>
+export type EntityAny = Mixin<typeof EntityAny>
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const EntityBase = <T extends Constructable<EntityAny & Base>>(base : T) =>
+
+class EntityBase extends base {
+
+    initialize (...args) {
+        this.initAtoms()
+
+        super.initialize(...args)
+    }
+}
+
+export type EntityBase = Mixin<typeof EntityBase>
 
 
 //---------------------------------------------------------------------------------------------------------------------
 // `target` will be a prototype of the class with Entity mixin
-export const field : PropertyDecorator = function (target : Entity, propertyKey : string) : void {
+export const field : PropertyDecorator = function (target : EntityAny, propertyKey : string) : void {
     let entity      = target.$entity
 
     if (!entity) entity = target.$entity = EntityData.new()
@@ -131,7 +144,7 @@ export const property = field
 
 //---------------------------------------------------------------------------------------------------------------------
 // `target` will be a prototype of the class with Entity mixin
-export const storage : PropertyDecorator = function (target : Entity, propertyKey : string) : void {
+export const storage : PropertyDecorator = function (target : EntityAny, propertyKey : string) : void {
     let entity      = target.$entity
 
     if (!entity) entity = target.$entity = EntityData.new()
@@ -146,7 +159,7 @@ export const storage : PropertyDecorator = function (target : Entity, propertyKe
 export const calculate = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
-    return function (target : Entity, propertyKey : string, descriptor : TypedPropertyDescriptor<any>) : void {
+    return function (target : EntityAny, propertyKey : string, descriptor : TypedPropertyDescriptor<any>) : void {
         let calculations        = target.$calculations
 
         if (!calculations) calculations = target.$calculations = <any>{}
@@ -157,9 +170,9 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const reference = function (entity : AnyConstructor1<Entity>, storageKey : string) : PropertyDecorator {
+export const reference = function (entity : AnyConstructor1<EntityAny>, storageKey : string) : PropertyDecorator {
 
-    return function (target : Entity, propertyKey : string) : void {
+    return function (target : EntityAny, propertyKey : string) : void {
         let entity      = target.$entity
 
         if (!entity) entity = target.$entity = EntityData.new()

@@ -1,6 +1,6 @@
 import {Base} from "../../src/class/Mixin.js";
 import {MinimalFieldAtom} from "../../src/replica/Atom.js";
-import {Entity, field} from "../../src/replica/Entity.js";
+import {EntityAny, EntityBase, field} from "../../src/replica/Entity.js";
 import {Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any
@@ -15,7 +15,7 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class SomeEntity extends Entity(Base) {
+        class SomeEntity extends EntityBase(EntityAny(Base)) {
 
             @field
             someField1      : string        = 'someField'

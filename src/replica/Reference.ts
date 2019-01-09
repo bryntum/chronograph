@@ -1,9 +1,9 @@
 import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph, IChronoGraph} from "../chrono/Graph.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
-import {Field as FieldData, Name, ReferenceField} from "../schema/Schema.js";
+import {ReferenceField} from "../schema/Schema.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
-import {Entity} from "./Entity.js";
+import {EntityAny} from "./Entity.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ class ReferenceStorageAtom extends base {
     }
 
 
-    doCalculation () : Set<Entity> {
+    doCalculation () : Set<EntityAny> {
         const result        = new Set()
 
         this.incoming.forEach((atom : ChronoAtom) => {
@@ -70,10 +70,10 @@ export const ReferenceAtom = <T extends Constructable<FieldAtom>>(base : T) =>
 class ReferenceAtom extends base {
     field           : ReferenceField
 
-    value           : Entity
+    value           : EntityAny
 
 
-    getStorage (entity : Entity) : ReferenceStorageAtom {
+    getStorage (entity : EntityAny) : ReferenceStorageAtom {
         const id        = `${entity.internalId}/${this.field.storageKey}`
 
         return (this.graph as ChronoGraph).getOrCreateAtom(id, MinimalReferenceStorageAccumulator) as ReferenceStorageAtom

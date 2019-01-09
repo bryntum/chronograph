@@ -1,5 +1,5 @@
 import {Base} from "../../src/class/Mixin.js";
-import {Entity, reference, storage} from "../../src/replica/Entity.js";
+import {EntityAny, EntityBase, reference, storage} from "../../src/replica/Entity.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
 
@@ -13,7 +13,7 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class TreeNode extends Entity(Base) {
+        class TreeNode extends EntityBase(EntityAny(Base)) {
             @storage
             children            : Set<TreeNode>
 
