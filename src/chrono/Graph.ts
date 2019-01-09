@@ -88,14 +88,19 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
+    isAtomDirty (atom : ChronoAtom) : boolean {
+        return this.dirtyAtoms.has(atom)
+    }
+
+
     markDirty (atom : ChronoAtom) {
         this.changedAtoms.add(atom)
         this.dirtyAtoms.add(atom)
     }
 
 
-    markChanged (atom : ChronoAtom) {
-        this.changedAtoms.add(atom)
+    markProcessed (atom : ChronoAtom) {
+        this.dirtyAtoms.delete(atom)
     }
 
 
@@ -182,6 +187,8 @@ class ChronoGraph extends base implements IChronoGraph {
         const res   = super.addNode(node)
 
         this.nodesMap.set(node.id, node)
+
+        // if (/endDate/.test(node.id)) debugger
 
         if (!node.hasValue()) this.markDirty(node)
 

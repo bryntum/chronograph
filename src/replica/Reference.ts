@@ -74,7 +74,7 @@ class ReferenceAtom extends base {
 
 
     getStorage (entity : EntityAny) : ReferenceStorageAtom {
-        const id        = `${entity.internalId}/${this.field.storageKey}`
+        const id        = `${entity.$internalId}/${this.field.storageKey}`
 
         return (this.graph as ChronoGraph).getOrCreateAtom(id, MinimalReferenceStorageAccumulator) as ReferenceStorageAtom
     }

@@ -1,3 +1,4 @@
+import {ChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
 import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
@@ -18,26 +19,31 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
         selfAtom        : MinimalEntityAtom
 
-        internalId      : ChronoId      = chronoId()
+        $internalId     : ChronoId
 
 
-        initAtoms () {
+        initAtoms (config) {
+            // TODO move to property initializers
+            this.$internalId        = chronoId()
+
             const entity    = this.$entity
 
-            this.selfAtom   = MinimalEntityAtom.new({ entity : entity, value : this, self : this })
+            this.selfAtom   = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
 
             const fields    = {}
 
             entity.fields.forEach((field : Field, name : Name) => {
 
+                // TODO create atoms lazily, on 1st read? or at 1st write (skip creation for atoms with `null/undefined` value)
+                // how to deal with the need to recalculate all atoms on entry
                 const fieldAtom = fields[ name ] = field.atomCls.new({
-                    id          : `${this.internalId}/${name}`,
+                    id          : `${this.$internalId}/${name}`,
 
                     field       : field,
 
                     self        : this,
 
-                    value       : this[ name ],
+                    value       : config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
                     calculationContext  : this,
                     calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined
@@ -83,6 +89,17 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
                 graph.removeNode(this.selfAtom)
             }
+        }
+
+
+        propagate () {
+            this.getGraph().propagate()
+        }
+
+
+        processNext (atom : ChronoAtom) {
+            // mark dirty add atom to the `dirtyAtoms` set, and sets preserve the order of addition
+            this.getGraph().markDirty(atom)
         }
 
 

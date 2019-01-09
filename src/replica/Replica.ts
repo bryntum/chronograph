@@ -23,4 +23,5 @@ class Replica extends base {
 
 export type Replica = Mixin<typeof Replica>
 
-export class MinimalReplica extends Replica(MinimalChronoGraph) {}
+export const MinimalReplica = Replica(MinimalChronoGraph)
+export type MinimalReplica = InstanceType<typeof MinimalReplica>
