@@ -1,20 +1,18 @@
 import {ChronoGraph, MinimalChronoGraph} from "../chrono/Graph.js";
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
 import {Schema} from "../schema/Schema.js";
 import {Entity} from "./Entity.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Replica = <T extends Constructable<Base>>(base : T) =>
+export const Replica = <T extends Constructable<ChronoGraph>>(base : T) =>
 
 class Replica extends base {
-    graph               : ChronoGraph   = MinimalChronoGraph.new()
-
     schema              : Schema
 
 
     addEntity (entity : Entity) {
-        entity.enterGraph(this.graph)
+        entity.enterGraph(this)
     }
 
 
@@ -24,11 +22,11 @@ class Replica extends base {
 
 
     propagate () {
-        this.graph.propagate()
+        this.propagate()
     }
 
 }
 
 export type Replica = Mixin<typeof Replica>
 
-export class MinimalReplica extends Replica(Base) {}
+export class MinimalReplica extends Replica(MinimalChronoGraph) {}

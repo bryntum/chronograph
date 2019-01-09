@@ -35,6 +35,7 @@ export class Base {
 
 export type BaseConstructor         = typeof Base
 
+
 //---------------------------------------------------------------------------------------------------------------------
 
 export type AnyConstructor          = new (...input: any[]) => any
@@ -46,16 +47,14 @@ export type AnyFunction1<A>         = (...input: any[]) => A
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type Constructable<T extends any> = new (...args : any[]) => T
-
-// export type Constructable1<T extends InstanceType<AnyConstructor>, Z> = new (...args : any[]) => T
+export type Constructable<T>        = new (...args : any[]) => T
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
 
 export type MixinConstructor<T extends AnyFunction> =
-    T extends AnyFunction1<Base> ? ReturnType<T> & typeof Base : ReturnType<T>
+    T extends AnyFunction1<typeof Base> ? ReturnType<T> & typeof Base : ReturnType<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -4,7 +4,6 @@ import {chronoId, ChronoId} from "../chrono/Id.js";
 import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
 import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
-import {MinimalReferenceStorageAccumulator} from "./Reference.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -16,7 +15,7 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
         $calculations   : { [s in keyof this] : SyncChronoCalculation | AsyncChronoCalculation }
 
         // TODO figure out how to filter fields only (see OnlyPropertiesOfType)
-        fields          : { [s in keyof this] : MinimalFieldAtom }
+        $fields         : { [s in keyof this] : MinimalFieldAtom }
 
         selfAtom        : MinimalEntityAtom
 
@@ -51,7 +50,7 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
                 })
             })
 
-            this.fields     = <any>fields
+            this.$fields     = <any>fields
 
             super.initialize(...args)
         }
@@ -63,7 +62,7 @@ export const Entity = <T extends Constructable<Base>>(base : T) => {
 
 
         forEachField (func : (field : MinimalFieldAtom, name : Name) => any) {
-            const fields        = this.fields
+            const fields        = this.$fields
 
             for (let name in fields) {
                 func.call(this, fields[ name ], name)
