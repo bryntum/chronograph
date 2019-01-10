@@ -103,14 +103,14 @@ class ReferenceAtom extends base {
 
 
     addToStorage (storage : ReferenceStorageAtom) {
-        storage.newRefs.add(this.self.selfAtom)
+        storage.newRefs.add(this.self.$$)
 
         this.graph.markDirty(storage)
     }
 
 
     removeFromStorage (storage : ReferenceStorageAtom) {
-        storage.oldRefs.add(this.self.selfAtom)
+        storage.oldRefs.add(this.self.$$)
 
         this.graph.markDirty(storage)
     }

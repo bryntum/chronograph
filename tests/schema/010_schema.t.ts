@@ -44,8 +44,8 @@ StartTest(t => {
         t.ok(ent.hasField('someField3'), 'Field has been created in the entity')
 
 
-        t.isInstanceOf(entity1.$fields.someField1, MinimalFieldAtom)
-        t.is(entity1.$fields.someField1.field, ent.getField('someField1'))
+        t.isInstanceOf(entity1.$.someField1, MinimalFieldAtom)
+        t.is(entity1.$.someField1.field, ent.getField('someField1'))
     })
 
 

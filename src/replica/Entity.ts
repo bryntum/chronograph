@@ -15,9 +15,9 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         $calculations   : { [s in keyof this] : string }
 
         // TODO figure out how to filter fields only (see OnlyPropertiesOfType)
-        $fields         : { [s in keyof this] : MinimalFieldAtom }
+        $               : { [s in keyof this] : MinimalFieldAtom }
 
-        selfAtom        : MinimalEntityAtom
+        $$              : MinimalEntityAtom
 
         $internalId     : ChronoId
 
@@ -28,7 +28,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
             const entity    = this.$entity
 
-            this.selfAtom   = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
+            this.$$   = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
 
             const fields    = {}
 
@@ -43,7 +43,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
                     self        : this,
 
-                    value       : config.hasOwnProperty(name) ? config[ name ] : this[ name ],
+                    value       : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
                     calculationContext  : this,
                     calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined
@@ -56,17 +56,17 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                 })
             })
 
-            this.$fields     = <any>fields
+            this.$     = <any>fields
         }
 
 
         getGraph () : ChronoGraph {
-            return this.selfAtom.graph as ChronoGraph
+            return this.$$.graph as ChronoGraph
         }
 
 
         forEachField (func : (field : MinimalFieldAtom, name : Name) => any) {
-            const fields        = this.$fields
+            const fields        = this.$
 
             for (let name in fields) {
                 func.call(this, fields[ name ], name)
@@ -77,17 +77,17 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         enterGraph (graph : ChronoGraph) {
             this.forEachField(field => graph.addNode(field))
 
-            graph.addNode(this.selfAtom)
+            graph.addNode(this.$$)
         }
 
 
         leaveGraph () {
-            const graph     = this.selfAtom.graph as ChronoGraph
+            const graph     = this.$$.graph as ChronoGraph
 
             if (graph) {
                 this.forEachField(field => graph.removeNode(field))
 
-                graph.removeNode(this.selfAtom)
+                graph.removeNode(this.$$)
             }
         }
 
@@ -135,10 +135,10 @@ export const EntityBase = <T extends Constructable<EntityAny & Base>>(base : T) 
 
 class EntityBase extends base {
 
-    initialize (...args) {
-        this.initAtoms()
+    initialize (config) {
+        this.initAtoms(config)
 
-        super.initialize(...args)
+        super.initialize(config)
     }
 }
 
