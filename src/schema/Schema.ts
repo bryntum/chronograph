@@ -1,4 +1,4 @@
-import {Base} from "../class/Mixin.js";
+import {AnyFunction, Base} from "../class/Mixin.js";
 import {MinimalFieldAtom} from "../replica/Atom.js";
 import {MinimalReferenceAtom, MinimalReferenceStorageAccumulator} from "../replica/Reference.js";
 
@@ -16,7 +16,8 @@ export class Field extends Base {
 
     persistent          : boolean   = true
 
-    atomCls             : typeof MinimalFieldAtom   = MinimalFieldAtom
+    atomCls                 : typeof MinimalFieldAtom   = MinimalFieldAtom
+    atomSetterPropagation   : AnyFunction
 }
 
 

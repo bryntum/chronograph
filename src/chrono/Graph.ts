@@ -48,9 +48,12 @@ class ChronoGraph extends base implements IChronoGraph {
 
     nodesMap            : Map<ChronoId, ChronoAtom> = new Map()
 
-    changedAtoms        : Set<ChronoAtom>       = new Set()
     dirtyAtoms          : Set<ChronoAtom>       = new Set()
 
+    stableAtoms         : Set<ChronoAtom>       = new Set()
+
+
+    processingQueue     : ChronoAtom[]          = []
 
 
     startReadObservation () {
@@ -83,18 +86,12 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    isDirty () : boolean {
-        return this.changedAtoms.size > 0
-    }
-
-
     isAtomDirty (atom : ChronoAtom) : boolean {
         return this.dirtyAtoms.has(atom)
     }
 
 
     markDirty (atom : ChronoAtom) {
-        this.changedAtoms.add(atom)
         this.dirtyAtoms.add(atom)
     }
 
@@ -104,19 +101,36 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    commit () {
-        this.changedAtoms.forEach(atom => atom.commit())
+    markStable (atom : ChronoAtom) {
+        this.stableAtoms.add(atom)
+    }
 
-        this.changedAtoms.clear()
+
+    isAtomStable (atom : ChronoAtom) : boolean {
+        return this.stableAtoms.has(atom)
+    }
+
+
+    processNext (atom : ChronoAtom) {
+        this.processingQueue.push(atom)
+    }
+
+
+    commit () {
+        this.dirtyAtoms.forEach(atom => atom.commit())
+
         this.dirtyAtoms.clear()
+
+        this.stableAtoms.clear()
     }
 
 
     reject () {
-        this.changedAtoms.forEach(atom => atom.reject())
+        this.dirtyAtoms.forEach(atom => atom.reject())
 
-        this.changedAtoms.clear()
         this.dirtyAtoms.clear()
+
+        this.stableAtoms.clear()
     }
 
 
@@ -145,6 +159,68 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
+    isPropagatingQueue          : number        = 0
+
+    // seems to be equivalent of regular `propagate`?
+    propagateQueue () {
+        if (this.isPropagatingQueue > 0) return
+
+        this.isPropagatingQueue++
+
+        this.dirtyAtoms.forEach((atom : ChronoAtom) => {
+            if (!this.isAtomStable(atom)) this.processNext(atom)
+        })
+
+        while (this.processingQueue.length) {
+            const atom      = this.processingQueue.pop()
+
+            if (this.isAtomStable(atom)) continue
+
+            // const topoOrder = this.getTopoOrderOfAtomDepents(atom)
+            //
+            // if (topoOrder.length) {
+            //
+            // } else {
+            //
+            // }
+
+            if (atom.isDirty()) {
+                atom.setter(atom.nextValue)
+            } else
+                atom.recalculate()
+
+            // for stack not growing - should process in the topo-order (!)
+            atom.outgoing.forEach((atom : ChronoAtom) => {
+                this.processNext(atom)
+            })
+        }
+
+        this.commit()
+
+        this.isPropagatingQueue--
+    }
+
+
+    getTopoOrderOfAtomDepents (atom : ChronoAtom) : ChronoAtom[] {
+        const me                        = this
+        const topoOrder : ChronoAtom[]  = []
+
+        atom.walkDepth(WalkForwardContext.new({
+            forEachNext             : function (atom : ChronoAtom, func) {
+                atom.forEachOutgoing(this, (outgoing : ChronoAtom) => {
+                    if (!me.isAtomStable(outgoing)) func(outgoing)
+                })
+            },
+
+            onCycle                 : () => { throw new Error("Cycle in graph") },
+
+            onTopologicalNode       : (atom : ChronoAtom) => topoOrder.push(atom)
+        }))
+
+        return topoOrder
+    }
+
+
     propagate () {
         const me        = this
 
@@ -153,7 +229,9 @@ class ChronoGraph extends base implements IChronoGraph {
         this.walkDepth(WalkForwardContext.new({
             forEachNext             : function (atom : ChronoAtom, func) {
                 if (atom === <any>me) {
-                    me.dirtyAtoms.forEach((atom : ChronoAtom) => func(atom))
+                    me.dirtyAtoms.forEach((atom : ChronoAtom) => {
+                        if (!me.isAtomStable(atom)) func(atom)
+                    })
                 } else {
                     WalkForwardContext.prototype.forEachNext.call(this, atom, func)
                 }

@@ -1,4 +1,4 @@
-import {ChronoAtom} from "../chrono/Atom.js";
+import {ChronoAtom, ChronoValue} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
 import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
@@ -24,18 +24,19 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
         initAtoms (config) {
             // TODO move to property initializers
-            this.$internalId        = chronoId()
+            this.$internalId    = chronoId()
 
-            const entity    = this.$entity
+            const entity        = this.$entity
 
-            this.$$   = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
+            this.$$             = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
 
-            const fields    = {}
+            if (!this.$) this.$ = <any>{}
+
+            const fields        = this.$
 
             entity.fields.forEach((field : Field, name : Name) => {
+                if (fields[ name ]) return
 
-                // TODO create atoms lazily, on 1st read? or at 1st write (skip creation for atoms with `null/undefined` value)
-                // how to deal with the need to recalculate all atoms on entry
                 const fieldAtom = fields[ name ] = field.atomCls.new({
                     id          : `${this.$internalId}/${name}`,
 
@@ -46,17 +47,30 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                     value       : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
                     calculationContext  : this,
-                    calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined
-                })
+                    calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined,
 
-                // TODO move getters/setters to the prototype, inside the decorator
-                Object.defineProperty(this, name, {
-                    get     : ()        => fieldAtom.get(),
-                    set     : (value)   => fieldAtom.set(value)
+                    setterPropagation   : field.atomSetterPropagation
                 })
             })
+        }
 
-            this.$     = <any>fields
+
+        // the actually returned type is `FieldAtom`, but this does not typecheck - circularity
+        createFieldAtom (name : Name) : ChronoAtom {
+            const field     = this.$entity.getField(name)
+
+            return field.atomCls.new({
+                id          : `${this.$internalId}/${name}`,
+
+                field       : field,
+
+                self        : this,
+
+                calculationContext  : this,
+                calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined,
+
+                setterPropagation   : field.atomSetterPropagation
+            })
         }
 
 
@@ -96,11 +110,30 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             this.getGraph().propagate()
         }
 
+        propagateQueue () {
+            this.getGraph().propagateQueue()
+        }
 
-        processNext (atom : ChronoAtom) {
-            // mark dirty add atom to the `dirtyAtoms` set, and sets preserve the order of addition
+
+        markDirty (atom : ChronoAtom) {
             this.getGraph().markDirty(atom)
         }
+
+
+        markStable (atom : ChronoAtom) {
+            this.getGraph().markStable(atom)
+        }
+
+
+        isStable (atom : ChronoAtom) : boolean {
+            return this.getGraph().isAtomStable(atom)
+        }
+
+
+        processNext (atom : ChronoAtom) {
+            this.getGraph().processNext(atom)
+        }
+
 
 
         // static addPrimaryKey (key : PrimaryKey) {
@@ -153,6 +186,28 @@ export const field : PropertyDecorator = function (target : EntityAny, propertyK
     if (!entity) entity = target.$entity = EntityData.new()
 
     entity.createField(propertyKey)
+
+    Object.defineProperty(target, propertyKey, {
+        get     : function () {
+            if (!this.$) this.$ = {}
+
+            let field       = this.$[ propertyKey ]
+
+            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+            return this.$[ propertyKey ].get(...arguments)
+        },
+
+        set     : function () {
+            if (!this.$) this.$ = {}
+
+            let field       = this.$[ propertyKey ]
+
+            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+            return this.$[ propertyKey ].set(...arguments)
+        }
+    })
 }
 
 
@@ -169,6 +224,66 @@ export const storage : PropertyDecorator = function (target : EntityAny, propert
     entity.addField(ReferenceStorageField.new({
         name            : propertyKey
     }))
+
+    Object.defineProperty(target, propertyKey, {
+        get     : function () {
+            if (!this.$) this.$ = {}
+
+            let field       = this.$[ propertyKey ]
+
+            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+            return this.$[ propertyKey ].get(...arguments)
+        },
+
+        set     : function () {
+            if (!this.$) this.$ = {}
+
+            let field       = this.$[ propertyKey ]
+
+            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+            return this.$[ propertyKey ].set(...arguments)
+        }
+    })
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const reference = function (entity : AnyConstructor1<EntityAny>, storageKey : string) : PropertyDecorator {
+
+    return function (target : EntityAny, propertyKey : string) : void {
+        let entity      = target.$entity
+
+        if (!entity) entity = target.$entity = EntityData.new()
+
+        entity.addField(ReferenceField.new({
+            name            : propertyKey,
+            storageKey      : storageKey
+        }))
+
+        Object.defineProperty(target, propertyKey, {
+            get     : function () {
+                if (!this.$) this.$ = {}
+
+                let field       = this.$[ propertyKey ]
+
+                if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+                return this.$[ propertyKey ].get(...arguments)
+            },
+
+            set     : function () {
+                if (!this.$) this.$ = {}
+
+                let field       = this.$[ propertyKey ]
+
+                if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+                return this.$[ propertyKey ].set(...arguments)
+            }
+        })
+    }
 }
 
 
@@ -187,16 +302,20 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const reference = function (entity : AnyConstructor1<EntityAny>, storageKey : string) : PropertyDecorator {
+export const setterPropagation = function (fieldName : Name) : MethodDecorator {
 
-    return function (target : EntityAny, propertyKey : string) : void {
+    // `target` will be a prototype of the class with Entity mixin
+    return function (target : EntityAny, propertyKey : string, descriptor : TypedPropertyDescriptor<any>) : void {
         let entity      = target.$entity
 
-        if (!entity) entity = target.$entity = EntityData.new()
+        let field       = entity.getField(fieldName)
 
-        entity.addField(ReferenceField.new({
-            name            : propertyKey,
-            storageKey      : storageKey
-        }))
+        field.atomSetterPropagation     = descriptor.value
+
+        descriptor.value    = function () {
+            const entity : EntityAny       = this
+
+            entity.$[ fieldName ].setter(...arguments)
+        }
     }
 }
