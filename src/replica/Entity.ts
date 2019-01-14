@@ -115,6 +115,15 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         }
 
 
+        async propagateAsync () {
+            await this.getGraph().propagate()
+        }
+
+        async propagateQueueAsync () {
+            await this.getGraph().propagateQueueAsync()
+        }
+
+
         markDirty (atom : ChronoAtom) {
             this.getGraph().markDirty(atom)
         }

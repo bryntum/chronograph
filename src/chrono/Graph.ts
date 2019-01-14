@@ -201,6 +201,45 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
+    async propagateQueueAsync () {
+        if (this.isPropagatingQueue > 0) return
+
+        this.isPropagatingQueue++
+
+        this.dirtyAtoms.forEach((atom : ChronoAtom) => {
+            if (!this.isAtomStable(atom)) this.processNext(atom)
+        })
+
+        while (this.processingQueue.length) {
+            const atom      = this.processingQueue.pop()
+
+            if (this.isAtomStable(atom)) continue
+
+            // const topoOrder = this.getTopoOrderOfAtomDepents(atom)
+            //
+            // if (topoOrder.length) {
+            //
+            // } else {
+            //
+            // }
+
+            if (atom.isDirty()) {
+                await atom.setterAsync(atom.nextValue)
+            } else
+                await atom.setterAsync()
+
+            // for stack not growing - should process in the topo-order (!)
+            atom.outgoing.forEach((atom : ChronoAtom) => {
+                this.processNext(atom)
+            })
+        }
+
+        this.commit()
+
+        this.isPropagatingQueue--
+    }
+
+
     getTopoOrderOfAtomDepents (atom : ChronoAtom) : ChronoAtom[] {
         const me                        = this
         const topoOrder : ChronoAtom[]  = []
@@ -254,6 +293,49 @@ class ChronoGraph extends base implements IChronoGraph {
 
             if (this.needRecalculation(atom)) {
                 atom.set(atom.calculate(atom.nextValue))
+            }
+        }
+
+        this.commit()
+    }
+
+
+    async propagateAsync () : Promise<any> {
+        const me        = this
+
+        const topoOrder : ChronoAtom[] = []
+
+        this.walkDepth(WalkForwardContext.new({
+            forEachNext             : function (atom : ChronoAtom, func) {
+                if (atom === <any>me) {
+                    me.dirtyAtoms.forEach((atom : ChronoAtom) => {
+                        if (!me.isAtomStable(atom)) func(atom)
+                    })
+                } else {
+                    WalkForwardContext.prototype.forEachNext.call(this, atom, func)
+                }
+            },
+
+            onNode                  : (atom : ChronoAtom) => {
+                // console.log(`Visiting ${node}`)
+            },
+            onCycle                 : () => { throw new Error("Cycle in graph") },
+
+            onTopologicalNode       : (atom : ChronoAtom) => {
+                if (<any>atom === <any>this) return
+
+                topoOrder.push(atom)
+            }
+        }))
+
+        for (let i = topoOrder.length - 1; i >= 0; i--) {
+            const atom          = topoOrder[ i ]
+
+            if (this.needRecalculation(atom)) {
+                if (atom.isDirty())
+                    await atom.setterAsync(atom.nextValue)
+                else
+                    await atom.setterAsync()
             }
         }
 

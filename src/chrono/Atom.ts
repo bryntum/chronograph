@@ -30,16 +30,16 @@ export const identity           = v => v
 export const identityAsync      = v => Promise.resolve(v)
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculationWalkContext extends WalkContext {
-
-    getNext (node : WalkableBackward) : WalkableBackward[] {
-        return node.getIncoming(this)
-    }
-
-    forEachNext (node : WalkableBackward, func : (node : WalkableBackward) => any) {
-        node.forEachIncoming(this, func)
-    }
-}
+// export class CalculationWalkContext extends WalkContext {
+//
+//     getNext (node : WalkableBackward) : WalkableBackward[] {
+//         return node.getIncoming(this)
+//     }
+//
+//     forEachNext (node : WalkableBackward, func : (node : WalkableBackward) => any) {
+//         node.forEachIncoming(this, func)
+//     }
+// }
 
 
 
@@ -53,9 +53,6 @@ class ChronoAtom extends base {
     graph               : IChronoGraph
 
     equality            : (v1, v2) => boolean       = strictWithDatesEquality
-
-
-    // sync                : boolean       = true
 
     calculationContext  : any
     calculation         : SyncChronoCalculation     = identity
@@ -141,13 +138,6 @@ class ChronoAtom extends base {
     }
 
 
-    setValue (value : ChronoValue) {
-        this.set(value)
-
-        this.graph && this.graph.propagate()
-    }
-
-
     calculate (proposedValue : ChronoValue, ...args) : ChronoValue {
         this.graph && this.graph.startReadObservation()
 
@@ -159,18 +149,14 @@ class ChronoAtom extends base {
     }
 
 
-    calculateAsync (proposedValue : ChronoValue) : Promise<ChronoValue> {
-        return
-        // this.graph && this.graph.startReadObservation()
-        //
-        // const res       = this.calculation(proposedValue)
-        //
-        // const observed  = this.graph ? this.graph.stopReadObservation() : []
-        //
-        // this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
-        // observed.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
-        //
-        // return res
+    async calculateAsync (proposedValue : ChronoValue, ...args) : Promise<ChronoValue> {
+        this.graph && this.graph.startReadObservation()
+
+        const res       = this.calculationAsync ? await this.calculationAsync.call(this.calculationContext || this, proposedValue, ...args) : proposedValue
+
+        this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
+
+        return res
     }
 
 
@@ -196,10 +182,37 @@ class ChronoAtom extends base {
     }
 
 
+    async setterAsync (value? : ChronoValue, ...args) : Promise<void> {
+        const graph         = this.graph as ChronoGraph
+        const oldValue      = this.get()
+        const newValue      = await this.calculate(value, ...args)
+
+        if (!this.equality(newValue, oldValue)) {
+            // includes "markDirty"
+            this.update(newValue)
+
+            graph.markStable(this)
+
+            if (this.setterPropagation) {
+                this.setterPropagation.call(this.calculationContext || this, value, ...args)
+            }
+
+            await graph.propagateQueue()
+        }
+    }
+
+
     recalculate () {
         const graph         = this.graph as ChronoGraph
 
         if (!graph.isAtomStable(this)) this.setter()
+    }
+
+
+    async recalculateAsync () : Promise<void> {
+        const graph         = this.graph as ChronoGraph
+
+        if (!graph.isAtomStable(this)) await this.setterAsync()
     }
 
 
