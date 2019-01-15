@@ -92,6 +92,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             this.forEachField(field => graph.addNode(field))
 
             graph.addNode(this.$$)
+
+
         }
 
 
@@ -322,9 +324,7 @@ export const setterPropagation = function (fieldName : Name) : MethodDecorator {
         field.atomSetterPropagation     = descriptor.value
 
         descriptor.value    = function () {
-            const entity : EntityAny       = this
-
-            entity.$[ fieldName ].setter(...arguments)
+            (this as EntityAny).$[ fieldName ].setter(...arguments)
         }
     }
 }

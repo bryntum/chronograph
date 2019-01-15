@@ -197,7 +197,7 @@ class ChronoAtom extends base {
                 this.setterPropagation.call(this.calculationContext || this, value, ...args)
             }
 
-            await graph.propagateQueue()
+            await graph.propagateQueueAsync()
         }
     }
 
