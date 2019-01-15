@@ -1,4 +1,4 @@
-import {ChronoAtom, ChronoValue} from "../chrono/Atom.js";
+import {ChronoAtom, ChronoValue, identity} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
 import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
@@ -47,7 +47,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                     value       : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
                     calculationContext  : this,
-                    calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined,
+                    calculation         : this.$calculations && this[ this.$calculations[ name ] ] || identity,
 
                     setterPropagation   : field.atomSetterPropagation
                 })
@@ -67,7 +67,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                 self        : this,
 
                 calculationContext  : this,
-                calculation         : this.$calculations ? this[ this.$calculations[ name ] ] : undefined,
+                calculation         : this.$calculations && this[ this.$calculations[ name ] ] || identity,
 
                 setterPropagation   : field.atomSetterPropagation
             })
@@ -92,8 +92,6 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             this.forEachField(field => graph.addNode(field))
 
             graph.addNode(this.$$)
-
-
         }
 
 

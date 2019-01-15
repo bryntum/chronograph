@@ -28,8 +28,8 @@ StartTest(t => {
 
 
             @calculate('fullName')
-            calculateFullName (proposed : string) {
-                return this.firstName + ' ' + this.lastName
+            * calculateFullName (proposed : string) {
+                return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
             }
         }
 
@@ -62,13 +62,13 @@ StartTest(t => {
         replica1.addEntity(markTwain)
         replica1.addEntity(tomSoyer)
 
-        replica1.propagate()
+        replica1.propagateWalkDepth()
 
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 
         markTwain.firstName     = 'MARK'
 
-        replica1.propagate()
+        replica1.propagateWalkDepth()
 
         t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
     })

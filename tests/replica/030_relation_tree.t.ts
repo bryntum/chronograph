@@ -30,7 +30,7 @@ StartTest(t => {
 
         replica1.addEntities([ node1, node2, node3, node4 ])
 
-        replica1.propagate()
+        replica1.propagateWalkDepth()
 
         t.isDeeply(node1.children, new Set([ node2, node3 ]), 'Correctly resolved `children` reference')
         t.isDeeply(node2.children, new Set([ node4 ]), 'Correctly resolved `children` reference')

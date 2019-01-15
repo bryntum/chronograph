@@ -23,22 +23,24 @@ class ReferenceStorageAtom extends base {
     }
 
 
-    doCalculation () : Set<EntityAny> {
+    * doCalculation () : IterableIterator<ChronoAtom | Set<EntityAny>> {
         const result        = new Set()
 
-        this.incoming.forEach((atom : ChronoAtom) => {
+        let atom : ChronoAtom
+
+        for (atom of (this.incoming as Set<ChronoAtom>)) {
             if (!this.oldRefs.has(atom)) {
-                const referencee    = atom.get()
+                const referencee    = yield atom
 
                 if (referencee != null) result.add(referencee)
             }
-        })
+        }
 
-        this.newRefs.forEach((atom : ChronoAtom) => {
-            const referencee    = atom.get()
+        for (atom of this.newRefs) {
+            const referencee    = yield atom
 
             if (referencee != null) result.add(referencee)
-        })
+        }
 
         return result
     }
