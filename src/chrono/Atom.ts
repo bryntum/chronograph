@@ -7,10 +7,11 @@ import {HasId} from "./HasId.js";
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoValue         = any
 
+export type ChronoIterator      = Iterator<ChronoAtom | ChronoValue>
 
 //---------------------------------------------------------------------------------------------------------------------
-export type SyncChronoCalculation   = (proposedValue : ChronoValue) => ChronoValue
-export type AsyncChronoCalculation  = (proposedValue : ChronoValue) => Promise<ChronoValue>
+export type SyncChronoCalculation   = (...args) => ChronoIterator
+export type AsyncChronoCalculation  = (...args) => ChronoIterator
 
 //---------------------------------------------------------------------------------------------------------------------
 export const strictEquality     = (v1, v2) => v1 === v2
@@ -25,9 +26,9 @@ export const strictWithDatesEquality = (v1, v2) => {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const identity           = v => v
+export const identity           = function *(v) { return v }
 
-export const identityAsync      = v => Promise.resolve(v)
+export const identityAsync      = function *(v) { return v }
 
 //---------------------------------------------------------------------------------------------------------------------
 // export class CalculationWalkContext extends WalkContext {
@@ -86,17 +87,7 @@ class ChronoAtom extends base {
 
                 return this.nextValue !== undefined ? this.nextValue : this.value
             } else {
-                const value     = this.calculate(undefined)
-
-                // this is "cached" behavior
-                // one more possibility would be to just return the calculated value and not cache it
-                // feels strange to use regular `set` inside of `get` - needs to be refactored probably
-                // may be `propagate` should be always required to get the value of the computed property
-                this.set(value)
-
-                if (graph.isObservingRead) graph.onReadObserved(this)
-
-                return value
+                return undefined
             }
         } else {
             return this.value
@@ -135,6 +126,11 @@ class ChronoAtom extends base {
         this.nextValue  = value
 
         this.graph.markDirty(this)
+    }
+
+
+    getCalculationGenerator () : Iterator<any> {
+        return this.calculation(this.nextValue)
     }
 
 

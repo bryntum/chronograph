@@ -2,7 +2,7 @@ import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
-import {ChronoAtom, MinimalChronoAtom} from "./Atom.js";
+import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
 import {ChronoId} from "./Id.js";
 
 
@@ -31,6 +31,9 @@ export interface IChronoGraph {
     reject ()
     propagate ()
 }
+
+
+export type ChronoContinuation = { atom : ChronoAtom, iterator : ChronoIterator }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -368,6 +371,86 @@ class ChronoGraph extends base implements IChronoGraph {
         return res
     }
 
+
+    propagateWalkDepth () {
+        const me        = this
+
+        const edges     = new Map<ChronoAtom, ChronoContinuation[]>()
+
+        this.walkDepth(WalkForwardContext.new({
+            forEachNext             : function (atom : ChronoAtom, func) {
+                if (atom === <any>me) {
+                    me.dirtyAtoms.forEach((atom : ChronoAtom) => {
+                        if (!me.isAtomStable(atom)) func(atom)
+                    })
+                } else {
+                    // WalkForwardContext.prototype.forEachNext.call(this, atom, func)
+                }
+            },
+
+            onNode                  : (sourceAtom : ChronoAtom) => {
+                const res           = this.calculateAtom(sourceAtom)
+            },
+            onCycle                 : () => { throw new Error("Cycle in graph") },
+
+            onTopologicalNode       : (atom : ChronoAtom) => {
+            }
+        }))
+    }
+
+
+    propagateGen () {
+        const calcIterators     = new Map<ChronoAtom, ChronoContinuation[]>()
+
+        this.dirtyAtoms.forEach((atom : ChronoAtom) => {
+            if (!this.isAtomStable(atom)) this.processNext(atom)
+        })
+
+        while (this.processingQueue.length) {
+            const sourceAtom    = this.processingQueue[ this.processingQueue.length - 1 ]
+
+            const res           = this.calculateAtom(sourceAtom)
+
+            if (res.hasOwnProperty('value')) {
+                this.processingQueue.pop()
+
+                sourceAtom.set(res.value)
+                this.markStable(sourceAtom)
+
+                if (calcIterators.has(sourceAtom)) {
+                    const continuations     = calcIterators.get(sourceAtom)
+
+                    continuations.forEach((cont : ChronoContinuation) => {
+                        sourceAtom.addEdgeTo(cont.atom)
+
+                        this.calculateAtom()
+                    })
+                }
+            } else {
+                const { atom, iterator } = res.continuation
+
+                this.processingQueue.push(atom)
+
+                calcIterators.set(sourceAtom, iterator)
+            }
+        }
+    }
+
+
+    calculateAtom (sourceAtom : ChronoAtom, prevAtomValue? : ChronoValue, iterator? : ChronoIterator) :
+        { value? : ChronoValue, continuation? : ChronoContinuation }
+    {
+        iterator            = iterator || sourceAtom.getCalculationGenerator()
+        let value           = iterator.next(prevAtomValue)
+
+        if (value.done) {
+            return { value : value.value }
+        } else {
+            const atom : ChronoAtom     = value.value
+
+            return { continuation : { atom, iterator } }
+        }
+    }
 
 }
 
