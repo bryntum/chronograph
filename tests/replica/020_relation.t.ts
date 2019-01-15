@@ -32,21 +32,23 @@ StartTest(t => {
         replica1.addEntity(markTwain)
         replica1.addEntity(tomSoyer)
 
-        replica1.propagate()
+        replica1.propagateWalkDepth()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
+
+        t.isDeeply(markTwain.$.books.incoming, new Set([ tomSoyer.$$ ]), 'Correctly build incoming edges')
 
         const tomSoyer2         = Book.new({ writtenBy : markTwain })
 
         replica1.addEntity(tomSoyer2)
 
-        replica1.propagate()
+        replica1.propagateWalkDepth()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
 
         tomSoyer2.writtenBy     = null
 
-        replica1.propagate()
+        replica1.propagateWalkDepth()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
     })

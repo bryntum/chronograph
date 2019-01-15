@@ -21,24 +21,24 @@ StartTest(t => {
             if (i > 3) {
                 if (i % 2 == 0) {
 
-                    atomConfig.calculation = function () {
+                    atomConfig.calculation = function * () {
                         const input = [
-                            boxes[ this.id - 1 ].get(),
-                            boxes[ this.id - 2 ].get(),
-                            boxes[ this.id - 3 ].get(),
-                            boxes[ this.id - 4 ].get()
+                            yield boxes[ this.id - 1 ],
+                            yield boxes[ this.id - 2 ],
+                            yield boxes[ this.id - 3 ],
+                            yield boxes[ this.id - 4 ]
                         ]
 
                         return input.reduce((sum, op) => (sum + op) % 10000, 0)
                     }
                 }
                 else {
-                    atomConfig.calculation = function () {
+                    atomConfig.calculation = function * () {
                         const input = [
-                            boxes[ this.id - 1 ].get(),
-                            boxes[ this.id - 2 ].get(),
-                            boxes[ this.id - 3 ].get(),
-                            boxes[ this.id - 4 ].get()
+                            yield boxes[ this.id - 1 ],
+                            yield boxes[ this.id - 2 ],
+                            yield boxes[ this.id - 3 ],
+                            yield boxes[ this.id - 4 ]
                         ]
 
                         return input.reduce((sum, op) => (sum - op) % 10000, 0)
@@ -53,7 +53,7 @@ StartTest(t => {
             graph.addNode(box)
         }
 
-        graph.propagate()
+        graph.propagateWalkDepth()
 
         // console.profileEnd()
         console.timeEnd("Build graph")
@@ -65,7 +65,7 @@ StartTest(t => {
                 console.time("Calc #1")
                 // console.profile('Propagate')
 
-                graph.propagate()
+                graph.propagateWalkDepth()
 
                 // console.profileEnd()
                 console.timeEnd("Calc #1");

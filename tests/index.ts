@@ -15,6 +15,7 @@ project.start(
         items       : [
             'chrono/010_graph.t.js',
             'chrono/011_graph.t.js',
+            'chrono/012_graph.t.js',
             'chrono/020_performance.t.js',
             'chrono/030_behavior.t.js'
         ]
