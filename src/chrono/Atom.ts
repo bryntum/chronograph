@@ -158,22 +158,22 @@ class ChronoAtom extends base {
 
     setterPropagation       : AnyFunction
 
-    setter (value? : ChronoValue, ...args) {
-        const graph         = this.graph as ChronoGraph
-        const oldValue      = this.get()
-        const newValue      = this.calculate(value, ...args)
+    setter (proposedValue? : ChronoValue, ...args) {
+        const graph             = this.graph as ChronoGraph
+        const prevValue         = this.get()
+        const consistentValue   = this.calculate(proposedValue, ...args)
 
-        if (!this.equality(newValue, oldValue)) {
+        if (!this.equality(consistentValue, prevValue)) {
             // includes "markDirty"
-            this.update(newValue)
+            this.update(consistentValue)
 
             graph.markStable(this)
 
             if (this.setterPropagation) {
-                this.setterPropagation.call(this.calculationContext || this, value, ...args)
+                this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
             }
 
-            graph.propagateQueue()
+            graph.propagate()
         }
     }
 
