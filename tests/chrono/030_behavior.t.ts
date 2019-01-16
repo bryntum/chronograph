@@ -26,26 +26,26 @@ StartTest(t => {
         box1.set(0)
         box2.set(1)
 
-        graph.propagateWalkDepth()
+        graph.propagate()
 
         t.is(box3.get(), 1, "Correct result calculated")
 
         box1.set(1)
 
-        graph.propagateWalkDepth()
+        graph.propagate()
 
         t.is(box3.get(), 2, "Correct result calculated")
 
         box0.set('mul')
 
-        graph.propagateWalkDepth()
+        graph.propagate()
 
         t.is(box3.get(), 1, "Correct result calculated after behavior change")
 
         box1.set(2)
         box2.set(2)
 
-        graph.propagateWalkDepth()
+        graph.propagate()
 
         t.is(box3.get(), 4, "Correct result calculated after behavior change")
     })

@@ -12,46 +12,22 @@ StartTest(t => {
         const atom2 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({ value : 1 }))
 
         const atom3 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({
-            // lazy            : true,
-
-            calculation     : (proposedValue : number) => {
-                return atom1.get() + atom2.get()
+            calculation     : function * (proposedValue : number) {
+                return (yield atom1) + (yield atom2)
             }
         }))
 
         t.is(atom1.isDirty(), false, 'Atom considered not dirty')
         t.is(atom2.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom3.isDirty(), false, 'Atom considered not dirty - it lazy and has no value')
+        t.is(atom3.isDirty(), false, 'Atom considered not dirty has no `nextValue`')
+
+        t.is(graph.isAtomDirty(atom3), true, 'Atom considered dirty in graph - has no value')
 
         t.is(atom3.hasValue(), false, 'Atom has no value')
 
         graph.propagate()
 
-        t.is(atom3.get(), 1, "Correct result calculated")
-    })
-
-
-    t.it('Eager calculated atom, values pre-defined', t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
-
-        const atom1 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({ value : 0 }))
-        const atom2 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({ value : 1 }))
-
-        const atom3 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({
-            // lazy            : false,
-
-            calculation     : (proposedValue : number) => {
-                return atom1.get() + atom2.get()
-            }
-        }))
-
-        graph.propagate()
-
-        t.is(atom1.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom2.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom3.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom3.hasValue(), true, 'Atom has value - eager calculation')
-
+        t.is(atom3.hasValue(), true, "Correct result calculated")
         t.is(atom3.get(), 1, "Correct result calculated")
     })
 
@@ -63,16 +39,14 @@ StartTest(t => {
         const atom2 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new())
 
         const atom3 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({
-            calculation     : (proposedValue : number) => {
-                return atom1.get() + atom2.get()
+            calculation     : function * (proposedValue : number) {
+                return (yield atom1) + (yield atom2)
             }
         }))
 
         t.is(atom1.isDirty(), false, 'Atom considered not dirty')
         t.is(atom2.isDirty(), false, 'Atom considered not dirty')
         t.is(atom3.isDirty(), false, 'Atom dirty - calculated on graph entry')
-
-        graph.propagate()
 
         atom1.set(0)
         atom2.set(1)
@@ -84,7 +58,6 @@ StartTest(t => {
         graph.propagate()
 
         t.is(atom3.get(), 1, "Correct result calculated")
-
     })
 
 
@@ -97,8 +70,8 @@ StartTest(t => {
         const box1p2 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
             id      : '1p2',
 
-            calculation : () => {
-                return box1.get() + box2.get()
+            calculation     : function * () {
+                return (yield box1) + (yield box2)
             }
         }))
 
@@ -107,8 +80,13 @@ StartTest(t => {
         const res : ChronoAtom          = graph.addNode(MinimalChronoAtom.new({
             id      : 'res',
 
-            calculation : () => {
-                return box1p2.get() + box3.get()
+            calculation : function * () {
+                const v1p2      = yield box1p2
+                const v3        = yield box3
+
+                // debugger
+
+                return v1p2 + v3
             }
         }))
 
@@ -118,6 +96,11 @@ StartTest(t => {
 
         graph.propagate()
 
+        t.isDeeply(box1p2.incoming, new Set([ box1, box2 ]), 'Correct incoming edges for box1ps')
+        t.isDeeply(res.incoming, new Set([ box1p2, box3 ]), 'Correct incoming edges for res')
+
+        t.isDeeply(box1.outgoing, new Set([ box1p2 ]), 'Correct outgoing edges for box1')
+
         t.is(box1p2.get(), 0, "Correct result calculated")
         t.is(res.get(), 1, "Correct result calculated")
 
@@ -125,12 +108,18 @@ StartTest(t => {
 
         graph.propagate()
 
+        t.isDeeply(res.incoming, new Set([ box1p2, box3 ]), 'Correct incoming edges for res')
+
+        t.is(box1p2.get(), 1, "Correct result calculated")
         t.is(res.get(), 2, "Correct result calculated")
 
         box2.set(1)
 
         graph.propagate()
 
+        t.isDeeply(res.incoming, new Set([ box1p2, box3 ]), 'Correct incoming edges for res')
+
+        t.is(box1p2.get(), 2, "Correct result calculated")
         t.is(res.get(), 3, "Correct result calculated")
     })
 
@@ -144,8 +133,8 @@ StartTest(t => {
         const box1p2 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
             id      : '1p2',
 
-            calculation : () => {
-                return box1.get() + box2.get()
+            calculation : function * () {
+                return (yield box1) + (yield box2)
             }
         }))
 
@@ -154,8 +143,8 @@ StartTest(t => {
         const res : ChronoAtom          = graph.addNode(MinimalChronoAtom.new({
             id      : 'res',
 
-            calculation : () => {
-                return box1p2.get() + box3.get()
+            calculation : function * () {
+                return (yield box1p2) + (yield box3)
             }
         }))
 
@@ -163,11 +152,10 @@ StartTest(t => {
         box2.set(0)
         box3.set(1)
 
+        graph.propagate()
+
         t.is(box1p2.get(), 0, "Correct result calculated")
         t.is(res.get(), 1, "Correct result calculated")
-
-        // initial state
-        graph.commit()
 
         const calculation1Spy   = t.spyOn(box1p2, 'calculation')
         const calculation2Spy   = t.spyOn(res, 'calculation')

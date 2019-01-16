@@ -33,7 +33,7 @@ export interface IChronoGraph {
 }
 
 
-export type ChronoContinuation = { atom : ChronoAtom, iterator : ChronoIterator }
+export type ChronoContinuation = { atom : ChronoAtom, iterator? : ChronoIterator }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -263,44 +263,44 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    propagate () {
-        const me        = this
-
-        const topoOrder : ChronoAtom[] = []
-
-        this.walkDepth(WalkForwardContext.new({
-            forEachNext             : function (atom : ChronoAtom, func) {
-                if (atom === <any>me) {
-                    me.dirtyAtoms.forEach((atom : ChronoAtom) => {
-                        if (!me.isAtomStable(atom)) func(atom)
-                    })
-                } else {
-                    WalkForwardContext.prototype.forEachNext.call(this, atom, func)
-                }
-            },
-
-            onNode                  : (atom : ChronoAtom) => {
-                // console.log(`Visiting ${node}`)
-            },
-            onCycle                 : () => { throw new Error("Cycle in graph") },
-
-            onTopologicalNode       : (atom : ChronoAtom) => {
-                if (<any>atom === <any>this) return
-
-                topoOrder.push(atom)
-            }
-        }))
-
-        for (let i = topoOrder.length - 1; i >= 0; i--) {
-            const atom          = topoOrder[ i ]
-
-            if (this.needRecalculation(atom)) {
-                atom.set(atom.calculate(atom.nextValue))
-            }
-        }
-
-        this.commit()
-    }
+    // propagate () {
+    //     const me        = this
+    //
+    //     const topoOrder : ChronoAtom[] = []
+    //
+    //     this.walkDepth(WalkForwardContext.new({
+    //         forEachNext             : function (atom : ChronoAtom, func) {
+    //             if (atom === <any>me) {
+    //                 me.dirtyAtoms.forEach((atom : ChronoAtom) => {
+    //                     if (!me.isAtomStable(atom)) func(atom)
+    //                 })
+    //             } else {
+    //                 WalkForwardContext.prototype.forEachNext.call(this, atom, func)
+    //             }
+    //         },
+    //
+    //         onNode                  : (atom : ChronoAtom) => {
+    //             // console.log(`Visiting ${node}`)
+    //         },
+    //         onCycle                 : () => { throw new Error("Cycle in graph") },
+    //
+    //         onTopologicalNode       : (atom : ChronoAtom) => {
+    //             if (<any>atom === <any>this) return
+    //
+    //             topoOrder.push(atom)
+    //         }
+    //     }))
+    //
+    //     for (let i = topoOrder.length - 1; i >= 0; i--) {
+    //         const atom          = topoOrder[ i ]
+    //
+    //         if (this.needRecalculation(atom)) {
+    //             atom.set(atom.calculate(atom.nextValue))
+    //         }
+    //     }
+    //
+    //     this.commit()
+    // }
 
 
     async propagateAsync () : Promise<any> {
@@ -372,85 +372,97 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    propagateWalkDepth () {
-        const me        = this
+    startAtomCalculation (sourceAtom : ChronoAtom) : { value? : ChronoValue, continuation? : ChronoContinuation }
+    {
+        const iterator      = sourceAtom.calculation.call(sourceAtom.calculationContext || sourceAtom, sourceAtom.get())
 
-        const edges     = new Map<ChronoAtom, ChronoContinuation[]>()
+        let iterValue       = iterator.next()
 
-        this.walkDepth(WalkForwardContext.new({
-            forEachNext             : function (atom : ChronoAtom, func) {
-                if (atom === <any>me) {
-                    me.dirtyAtoms.forEach((atom : ChronoAtom) => {
-                        if (!me.isAtomStable(atom)) func(atom)
-                    })
-                } else {
-                    // WalkForwardContext.prototype.forEachNext.call(this, atom, func)
-                }
-            },
-
-            onNode                  : (sourceAtom : ChronoAtom) => {
-                const res           = this.calculateAtom(sourceAtom)
-            },
-            onCycle                 : () => { throw new Error("Cycle in graph") },
-
-            onTopologicalNode       : (atom : ChronoAtom) => {
-            }
-        }))
-    }
-
-
-    propagateGen () {
-        const calcIterators     = new Map<ChronoAtom, ChronoContinuation[]>()
-
-        this.dirtyAtoms.forEach((atom : ChronoAtom) => {
-            if (!this.isAtomStable(atom)) this.processNext(atom)
-        })
-
-        while (this.processingQueue.length) {
-            const sourceAtom    = this.processingQueue[ this.processingQueue.length - 1 ]
-
-            const res           = this.calculateAtom(sourceAtom)
-
-            if (res.hasOwnProperty('value')) {
-                this.processingQueue.pop()
-
-                sourceAtom.set(res.value)
-                this.markStable(sourceAtom)
-
-                if (calcIterators.has(sourceAtom)) {
-                    const continuations     = calcIterators.get(sourceAtom)
-
-                    continuations.forEach((cont : ChronoContinuation) => {
-                        sourceAtom.addEdgeTo(cont.atom)
-
-                        this.calculateAtom()
-                    })
-                }
-            } else {
-                const { atom, iterator } = res.continuation
-
-                this.processingQueue.push(atom)
-
-                calcIterators.set(sourceAtom, iterator)
-            }
+        if (iterValue.done) {
+            return { value : iterValue.value }
+        } else {
+            return { continuation : { atom : iterValue.value, iterator : iterator } }
         }
     }
 
 
-    calculateAtom (sourceAtom : ChronoAtom, prevAtomValue? : ChronoValue, iterator? : ChronoIterator) :
+    continueAtomCalculation (sourceAtom : ChronoAtom, continuation : ChronoContinuation) :
         { value? : ChronoValue, continuation? : ChronoContinuation }
     {
-        iterator            = iterator || sourceAtom.getCalculationGenerator()
-        let value           = iterator.next(prevAtomValue)
+        const iterator      = continuation.iterator
 
-        if (value.done) {
-            return { value : value.value }
-        } else {
-            const atom : ChronoAtom     = value.value
+        let incomingAtom    = continuation.atom
 
-            return { continuation : { atom, iterator } }
-        }
+        do {
+            sourceAtom.observedDuringCalculation.push(incomingAtom)
+
+            // ideally should be removed (same as while condition)
+            if (this.isAtomDirty(incomingAtom) && !this.isAtomStable(incomingAtom)) throw "inconsistency"
+
+            let iterValue   = iterator.next(incomingAtom.get())
+
+            if (iterValue.done) {
+                return { value : iterValue.value }
+            }
+
+            incomingAtom    = iterValue.value
+
+        } while (!this.isAtomDirty(incomingAtom) || this.isAtomStable(incomingAtom))
+
+        return { continuation : { iterator, atom : incomingAtom } }
     }
+
+
+    propagate () {
+        const toCalculate       = Array.from(this.dirtyAtoms)
+        const maybeDirty        = new Set()
+        const conts             = new Map<ChronoAtom, ChronoContinuation>()
+        const visitedAt         = new Map<ChronoAtom, number>()
+
+        let depth
+
+        while (depth = toCalculate.length) {
+            const sourceAtom : ChronoAtom   = toCalculate[ depth - 1 ]
+
+            if (this.isAtomStable(sourceAtom) || !this.isAtomDirty(sourceAtom) && !maybeDirty.has(sourceAtom)) {
+                toCalculate.pop()
+                continue
+            }
+
+            const visitedAtDepth    = visitedAt.get(sourceAtom)
+
+            let calcRes
+
+            // node has been already visited
+            if (visitedAtDepth != null) {
+                const cont          = conts.get(sourceAtom)
+
+                calcRes             = this.continueAtomCalculation(sourceAtom, cont)
+            } else {
+                visitedAt.set(sourceAtom, depth)
+
+                // XXX should happen only if calculated value is different (after atom.set())
+                toCalculate.unshift.apply(toCalculate, Array.from(sourceAtom.outgoing))
+
+                sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
+
+                calcRes             = this.startAtomCalculation(sourceAtom)
+            }
+
+            if (calcRes.continuation) {
+                conts.set(sourceAtom, calcRes.continuation)
+                toCalculate.push(calcRes.continuation.atom)
+            } else {
+                sourceAtom.set(calcRes.value)
+                this.markStable(sourceAtom)
+
+                toCalculate.pop()
+            }
+        }
+
+        this.commit()
+    }
+
 
 }
 

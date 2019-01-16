@@ -32,7 +32,7 @@ StartTest(t => {
         replica1.addEntity(markTwain)
         replica1.addEntity(tomSoyer)
 
-        replica1.propagateWalkDepth()
+        replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
 
@@ -42,13 +42,13 @@ StartTest(t => {
 
         replica1.addEntity(tomSoyer2)
 
-        replica1.propagateWalkDepth()
+        replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
 
         tomSoyer2.writtenBy     = null
 
-        replica1.propagateWalkDepth()
+        replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
     })

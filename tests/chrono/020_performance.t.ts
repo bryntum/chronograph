@@ -22,6 +22,8 @@ StartTest(t => {
                 if (i % 2 == 0) {
 
                     atomConfig.calculation = function * () {
+                        // console.log(`Calculating ${this.id}`)
+
                         const input = [
                             yield boxes[ this.id - 1 ],
                             yield boxes[ this.id - 2 ],
@@ -34,6 +36,8 @@ StartTest(t => {
                 }
                 else {
                     atomConfig.calculation = function * () {
+                        // console.log(`Calculating ${this.id}`)
+
                         const input = [
                             yield boxes[ this.id - 1 ],
                             yield boxes[ this.id - 2 ],
@@ -53,7 +57,7 @@ StartTest(t => {
             graph.addNode(box)
         }
 
-        graph.propagateWalkDepth()
+        graph.propagate()
 
         // console.profileEnd()
         console.timeEnd("Build graph")
@@ -65,7 +69,7 @@ StartTest(t => {
                 console.time("Calc #1")
                 // console.profile('Propagate')
 
-                graph.propagateWalkDepth()
+                graph.propagate()
 
                 // console.profileEnd()
                 console.timeEnd("Calc #1");
