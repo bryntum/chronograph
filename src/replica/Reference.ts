@@ -107,27 +107,29 @@ class ReferenceAtom extends base {
     addToStorage (storage : ReferenceStorageAtom) {
         storage.newRefs.add(this.self.$$)
 
-        this.graph.markDirty(storage)
+        this.graph.markAsNeedRecalculation(storage)
     }
 
 
     removeFromStorage (storage : ReferenceStorageAtom) {
         storage.oldRefs.add(this.self.$$)
 
-        this.graph.markDirty(storage)
+        this.graph.markAsNeedRecalculation(storage)
     }
 
 
-    update (value : ChronoValue) {
-        if (this.value != null) {
-            this.removeFromStorage(this.getStorage(this.value))
+    set (value : ChronoValue) {
+        if (this.graph) {
+            if (this.value != null) {
+                this.removeFromStorage(this.getStorage(this.value))
+            }
+
+            if (value != null) {
+                this.addToStorage(this.getStorage(value))
+            }
         }
 
-        super.update(value)
-
-        if (value != null) {
-            this.addToStorage(this.getStorage(value))
-        }
+        super.set(value)
     }
 }
 

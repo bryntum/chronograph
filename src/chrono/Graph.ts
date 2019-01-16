@@ -25,7 +25,7 @@ export interface IChronoGraph {
 
     // calculateAtom (atom : ChronoAtom, proposedValue : ChronoValue)
 
-    markDirty (atom : ChronoAtom)
+    markAsNeedRecalculation (atom : ChronoAtom)
 
     commit ()
     reject ()
@@ -51,7 +51,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
     nodesMap            : Map<ChronoId, ChronoAtom> = new Map()
 
-    dirtyAtoms          : Set<ChronoAtom>       = new Set()
+    needRecalculationAtoms : Set<ChronoAtom>       = new Set()
 
     stableAtoms         : Set<ChronoAtom>       = new Set()
 
@@ -89,18 +89,18 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    isAtomDirty (atom : ChronoAtom) : boolean {
-        return this.dirtyAtoms.has(atom)
+    isAtomNeedRecalculation (atom : ChronoAtom) : boolean {
+        return this.needRecalculationAtoms.has(atom)
     }
 
 
-    markDirty (atom : ChronoAtom) {
-        this.dirtyAtoms.add(atom)
+    markAsNeedRecalculation (atom : ChronoAtom) {
+        this.needRecalculationAtoms.add(atom)
     }
 
 
     markProcessed (atom : ChronoAtom) {
-        this.dirtyAtoms.delete(atom)
+        this.needRecalculationAtoms.delete(atom)
     }
 
 
@@ -120,18 +120,20 @@ class ChronoGraph extends base implements IChronoGraph {
 
 
     commit () {
-        this.dirtyAtoms.forEach(atom => atom.commit())
+        this.stableAtoms.forEach(atom => {
+            if (atom.nextStableValue !== undefined) atom.commit()
+        })
 
-        this.dirtyAtoms.clear()
+        this.needRecalculationAtoms.clear()
 
         this.stableAtoms.clear()
     }
 
 
     reject () {
-        this.dirtyAtoms.forEach(atom => atom.reject())
+        this.stableAtoms.forEach(atom => atom.reject())
 
-        this.dirtyAtoms.clear()
+        this.needRecalculationAtoms.clear()
 
         this.stableAtoms.clear()
     }
@@ -151,96 +153,96 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    needRecalculation (atom : ChronoAtom) : boolean {
-        if (this.dirtyAtoms.has(atom)) return true
+    // needRecalculation (atom : ChronoAtom) : boolean {
+    //     if (this.dirtyAtoms.has(atom)) return true
+    //
+    //     for (let inputAtom of atom.incoming as Set<ChronoAtom>) {
+    //         if (inputAtom.isDirty()) return true
+    //     }
+    //
+    //     return false
+    // }
+    //
+    //
+    // isPropagatingQueue          : number        = 0
 
-        for (let inputAtom of atom.incoming as Set<ChronoAtom>) {
-            if (inputAtom.isDirty()) return true
-        }
-
-        return false
-    }
-
-
-    isPropagatingQueue          : number        = 0
-
-    // seems to be equivalent of regular `propagate`?
-    propagateQueue () {
-        if (this.isPropagatingQueue > 0) return
-
-        this.isPropagatingQueue++
-
-        this.dirtyAtoms.forEach((atom : ChronoAtom) => {
-            if (!this.isAtomStable(atom)) this.processNext(atom)
-        })
-
-        while (this.processingQueue.length) {
-            const atom      = this.processingQueue.pop()
-
-            if (this.isAtomStable(atom)) continue
-
-            // const topoOrder = this.getTopoOrderOfAtomDepents(atom)
-            //
-            // if (topoOrder.length) {
-            //
-            // } else {
-            //
-            // }
-
-            if (atom.isDirty()) {
-                atom.setter(atom.nextValue)
-            } else
-                atom.recalculate()
-
-            // for stack not growing - should process in the topo-order (!)
-            atom.outgoing.forEach((atom : ChronoAtom) => {
-                this.processNext(atom)
-            })
-        }
-
-        this.commit()
-
-        this.isPropagatingQueue--
-    }
+    // // seems to be equivalent of regular `propagate`?
+    // propagateQueue () {
+    //     if (this.isPropagatingQueue > 0) return
+    //
+    //     this.isPropagatingQueue++
+    //
+    //     this.dirtyAtoms.forEach((atom : ChronoAtom) => {
+    //         if (!this.isAtomStable(atom)) this.processNext(atom)
+    //     })
+    //
+    //     while (this.processingQueue.length) {
+    //         const atom      = this.processingQueue.pop()
+    //
+    //         if (this.isAtomStable(atom)) continue
+    //
+    //         // const topoOrder = this.getTopoOrderOfAtomDepents(atom)
+    //         //
+    //         // if (topoOrder.length) {
+    //         //
+    //         // } else {
+    //         //
+    //         // }
+    //
+    //         if (atom.isDirty()) {
+    //             atom.setter(atom.nextValue)
+    //         } else
+    //             atom.recalculate()
+    //
+    //         // for stack not growing - should process in the topo-order (!)
+    //         atom.outgoing.forEach((atom : ChronoAtom) => {
+    //             this.processNext(atom)
+    //         })
+    //     }
+    //
+    //     this.commit()
+    //
+    //     this.isPropagatingQueue--
+    // }
 
 
-    async propagateQueueAsync () {
-        if (this.isPropagatingQueue > 0) return
-
-        this.isPropagatingQueue++
-
-        this.dirtyAtoms.forEach((atom : ChronoAtom) => {
-            if (!this.isAtomStable(atom)) this.processNext(atom)
-        })
-
-        while (this.processingQueue.length) {
-            const atom      = this.processingQueue.pop()
-
-            if (this.isAtomStable(atom)) continue
-
-            // const topoOrder = this.getTopoOrderOfAtomDepents(atom)
-            //
-            // if (topoOrder.length) {
-            //
-            // } else {
-            //
-            // }
-
-            if (atom.isDirty()) {
-                await atom.setterAsync(atom.nextValue)
-            } else
-                await atom.setterAsync()
-
-            // for stack not growing - should process in the topo-order (!)
-            atom.outgoing.forEach((atom : ChronoAtom) => {
-                this.processNext(atom)
-            })
-        }
-
-        this.commit()
-
-        this.isPropagatingQueue--
-    }
+    // async propagateQueueAsync () {
+    //     if (this.isPropagatingQueue > 0) return
+    //
+    //     this.isPropagatingQueue++
+    //
+    //     this.dirtyAtoms.forEach((atom : ChronoAtom) => {
+    //         if (!this.isAtomStable(atom)) this.processNext(atom)
+    //     })
+    //
+    //     while (this.processingQueue.length) {
+    //         const atom      = this.processingQueue.pop()
+    //
+    //         if (this.isAtomStable(atom)) continue
+    //
+    //         // const topoOrder = this.getTopoOrderOfAtomDepents(atom)
+    //         //
+    //         // if (topoOrder.length) {
+    //         //
+    //         // } else {
+    //         //
+    //         // }
+    //
+    //         if (atom.isDirty()) {
+    //             await atom.setterAsync(atom.nextValue)
+    //         } else
+    //             await atom.setterAsync()
+    //
+    //         // for stack not growing - should process in the topo-order (!)
+    //         atom.outgoing.forEach((atom : ChronoAtom) => {
+    //             this.processNext(atom)
+    //         })
+    //     }
+    //
+    //     this.commit()
+    //
+    //     this.isPropagatingQueue--
+    // }
 
 
     getTopoOrderOfAtomDepents (atom : ChronoAtom) : ChronoAtom[] {
@@ -303,47 +305,47 @@ class ChronoGraph extends base implements IChronoGraph {
     // }
 
 
-    async propagateAsync () : Promise<any> {
-        const me        = this
-
-        const topoOrder : ChronoAtom[] = []
-
-        this.walkDepth(WalkForwardContext.new({
-            forEachNext             : function (atom : ChronoAtom, func) {
-                if (atom === <any>me) {
-                    me.dirtyAtoms.forEach((atom : ChronoAtom) => {
-                        if (!me.isAtomStable(atom)) func(atom)
-                    })
-                } else {
-                    WalkForwardContext.prototype.forEachNext.call(this, atom, func)
-                }
-            },
-
-            onNode                  : (atom : ChronoAtom) => {
-                // console.log(`Visiting ${node}`)
-            },
-            onCycle                 : () => { throw new Error("Cycle in graph") },
-
-            onTopologicalNode       : (atom : ChronoAtom) => {
-                if (<any>atom === <any>this) return
-
-                topoOrder.push(atom)
-            }
-        }))
-
-        for (let i = topoOrder.length - 1; i >= 0; i--) {
-            const atom          = topoOrder[ i ]
-
-            if (this.needRecalculation(atom)) {
-                if (atom.isDirty())
-                    await atom.setterAsync(atom.nextValue)
-                else
-                    await atom.setterAsync()
-            }
-        }
-
-        this.commit()
-    }
+    // async propagateAsync () : Promise<any> {
+    //     const me        = this
+    //
+    //     const topoOrder : ChronoAtom[] = []
+    //
+    //     this.walkDepth(WalkForwardContext.new({
+    //         forEachNext             : function (atom : ChronoAtom, func) {
+    //             if (atom === <any>me) {
+    //                 me.dirtyAtoms.forEach((atom : ChronoAtom) => {
+    //                     if (!me.isAtomStable(atom)) func(atom)
+    //                 })
+    //             } else {
+    //                 WalkForwardContext.prototype.forEachNext.call(this, atom, func)
+    //             }
+    //         },
+    //
+    //         onNode                  : (atom : ChronoAtom) => {
+    //             // console.log(`Visiting ${node}`)
+    //         },
+    //         onCycle                 : () => { throw new Error("Cycle in graph") },
+    //
+    //         onTopologicalNode       : (atom : ChronoAtom) => {
+    //             if (<any>atom === <any>this) return
+    //
+    //             topoOrder.push(atom)
+    //         }
+    //     }))
+    //
+    //     for (let i = topoOrder.length - 1; i >= 0; i--) {
+    //         const atom          = topoOrder[ i ]
+    //
+    //         if (this.needRecalculation(atom)) {
+    //             if (atom.isDirty())
+    //                 await atom.setterAsync(atom.nextValue)
+    //             else
+    //                 await atom.setterAsync()
+    //         }
+    //     }
+    //
+    //     this.commit()
+    // }
 
 
     addNode (node : this[ 'nodeT' ]) : this[ 'nodeT' ] {
@@ -353,7 +355,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
         // if (/endDate/.test(node.id)) debugger
 
-        if (!node.hasValue()) this.markDirty(node)
+        if (!node.hasValue()) this.markAsNeedRecalculation(node)
 
         node.onEnterGraph(this)
 
@@ -374,7 +376,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
     startAtomCalculation (sourceAtom : ChronoAtom) : { value? : ChronoValue, continuation? : ChronoContinuation }
     {
-        const iterator      = sourceAtom.calculation.call(sourceAtom.calculationContext || sourceAtom, sourceAtom.get())
+        const iterator      = sourceAtom.calculation.call(sourceAtom.calculationContext || sourceAtom, sourceAtom.proposedValue)
 
         let iterValue       = iterator.next()
 
@@ -397,7 +399,7 @@ class ChronoGraph extends base implements IChronoGraph {
             sourceAtom.observedDuringCalculation.push(incomingAtom)
 
             // ideally should be removed (same as while condition)
-            if (this.isAtomDirty(incomingAtom) && !this.isAtomStable(incomingAtom)) throw "inconsistency"
+            if (this.isAtomNeedRecalculation(incomingAtom) && !this.isAtomStable(incomingAtom)) throw "inconsistency"
 
             let iterValue   = iterator.next(incomingAtom.get())
 
@@ -407,14 +409,14 @@ class ChronoGraph extends base implements IChronoGraph {
 
             incomingAtom    = iterValue.value
 
-        } while (!this.isAtomDirty(incomingAtom) || this.isAtomStable(incomingAtom))
+        } while (!this.isAtomNeedRecalculation(incomingAtom) || this.isAtomStable(incomingAtom))
 
         return { continuation : { iterator, atom : incomingAtom } }
     }
 
 
     propagate () {
-        const toCalculate       = Array.from(this.dirtyAtoms)
+        const toCalculate       = Array.from(this.needRecalculationAtoms)
         const maybeDirty        = new Set()
         const conts             = new Map<ChronoAtom, ChronoContinuation>()
         const visitedAt         = new Map<ChronoAtom, number>()
@@ -424,7 +426,7 @@ class ChronoGraph extends base implements IChronoGraph {
         while (depth = toCalculate.length) {
             const sourceAtom : ChronoAtom   = toCalculate[ depth - 1 ]
 
-            if (this.isAtomStable(sourceAtom) || !this.isAtomDirty(sourceAtom) && !maybeDirty.has(sourceAtom)) {
+            if (this.isAtomStable(sourceAtom) || !this.isAtomNeedRecalculation(sourceAtom) && !maybeDirty.has(sourceAtom)) {
                 toCalculate.pop()
                 continue
             }
@@ -441,20 +443,28 @@ class ChronoGraph extends base implements IChronoGraph {
             } else {
                 visitedAt.set(sourceAtom, depth)
 
-                // XXX should happen only if calculated value is different (after atom.set())
-                toCalculate.unshift.apply(toCalculate, Array.from(sourceAtom.outgoing))
-
-                sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
-
                 calcRes             = this.startAtomCalculation(sourceAtom)
             }
 
             if (calcRes.continuation) {
                 conts.set(sourceAtom, calcRes.continuation)
+
                 toCalculate.push(calcRes.continuation.atom)
             } else {
-                sourceAtom.set(calcRes.value)
+                const consistentValue   = calcRes.value
+
+                if (!sourceAtom.equality(consistentValue, sourceAtom.get())) {
+                    sourceAtom.update(consistentValue)
+
+                    toCalculate.unshift.apply(toCalculate, Array.from(sourceAtom.outgoing))
+                    sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
+                }
+
                 this.markStable(sourceAtom)
+
+                if (sourceAtom.setterPropagation && !sourceAtom.proposedValue) {
+                    sourceAtom.setterPropagation.call(sourceAtom.calculationContext || sourceAtom, consistentValue)
+                }
 
                 toCalculate.pop()
             }

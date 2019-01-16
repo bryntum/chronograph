@@ -17,11 +17,7 @@ StartTest(t => {
             }
         }))
 
-        t.is(atom1.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom2.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom3.isDirty(), false, 'Atom considered not dirty has no `nextValue`')
-
-        t.is(graph.isAtomDirty(atom3), true, 'Atom considered dirty in graph - has no value')
+        t.is(graph.isAtomNeedRecalculation(atom3), true, 'Atom considered dirty in graph - has no value')
 
         t.is(atom3.hasValue(), false, 'Atom has no value')
 
@@ -44,19 +40,12 @@ StartTest(t => {
             }
         }))
 
-        t.is(atom1.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom2.isDirty(), false, 'Atom considered not dirty')
-        t.is(atom3.isDirty(), false, 'Atom dirty - calculated on graph entry')
-
         atom1.set(0)
         atom2.set(1)
 
-        t.is(atom1.isDirty(), true, 'Atom considered not dirty')
-        t.is(atom2.isDirty(), true, 'Atom considered not dirty')
-        t.is(atom3.isDirty(), false, 'Atom considered not dirty - not propagated yet')
-
         graph.propagate()
 
+        t.is(atom3.hasValue(), true, "Correct result calculated")
         t.is(atom3.get(), 1, "Correct result calculated")
     })
 

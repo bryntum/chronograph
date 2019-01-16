@@ -1,5 +1,6 @@
 import {AnyFunction, Base} from "../class/Mixin.js";
 import {MinimalFieldAtom} from "../replica/Atom.js";
+import {MinimalFlagAtom} from "../replica/Flag.js";
 import {MinimalReferenceAtom, MinimalReferenceStorageAccumulator} from "../replica/Reference.js";
 
 export type Name    = string
@@ -26,6 +27,12 @@ export class ReferenceField extends Field {
     atomCls             : typeof MinimalFieldAtom   = MinimalReferenceAtom
 
     storageKey          : Name
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class FlagField extends Field {
+    atomCls             : typeof MinimalFlagAtom    = MinimalFlagAtom
 }
 
 

@@ -48,7 +48,8 @@ export const identityAsync      = function *(v) { return v }
 export const ChronoAtom = <T extends Constructable<HasId & Node>>(base : T) =>
 
 class ChronoAtom extends base {
-    nextValue           : ChronoValue
+    proposedValue       : ChronoValue
+    nextStableValue     : ChronoValue
     value               : ChronoValue
 
     graph               : IChronoGraph
@@ -63,9 +64,9 @@ class ChronoAtom extends base {
 
 
     commit () {
-        this.value      = this.nextValue
-
-        this.nextValue  = undefined
+        this.value              = this.nextStableValue
+        this.nextStableValue    = undefined
+        this.proposedValue      = undefined
 
         this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
         this.observedDuringCalculation.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
@@ -73,7 +74,7 @@ class ChronoAtom extends base {
 
 
     reject () {
-        this.nextValue                  = undefined
+        this.nextStableValue            = undefined
         this.observedDuringCalculation  = []
     }
 
@@ -83,9 +84,9 @@ class ChronoAtom extends base {
 
         if (graph) {
             if (this.hasValue()) {
-                if (graph.isObservingRead) graph.onReadObserved(this)
+                // if (graph.isObservingRead) graph.onReadObserved(this)
 
-                return this.nextValue !== undefined ? this.nextValue : this.value
+                return this.nextStableValue !== undefined ? this.nextStableValue : this.value
             } else {
                 return undefined
             }
@@ -95,135 +96,177 @@ class ChronoAtom extends base {
     }
 
 
-    set (value : ChronoValue) : this {
-        const graph     = this.graph
+    // put (value : ChronoValue) : this {
+    //     const graph     = this.graph
+    //
+    //     if (graph) {
+    //         if (this.nextStableValue !== undefined) {
+    //             if (!this.equality(value, this.nextStableValue)) {
+    //                 throw new Error("Cyclic write")
+    //             } else {
+    //                 return this
+    //             }
+    //         } else {
+    //             if (this.hasConsistedValue()) {
+    //                 if (!this.equality(value, this.value)) {
+    //                     this.update(value)
+    //                 }
+    //             } else {
+    //                 this.update(value)
+    //             }
+    //         }
+    //     } else {
+    //         this.value  = value
+    //     }
+    //
+    //     return this
+    // }
+
+
+    put (proposedValue : ChronoValue) {
+        const graph             = this.graph as ChronoGraph
 
         if (graph) {
-            if (this.nextValue !== undefined) {
-                if (!this.equality(value, this.nextValue)) {
-                    throw new Error("Cyclic write")
-                } else {
-                    return this
-                }
-            } else {
-                if (this.hasStableValue()) {
-                    if (!this.equality(value, this.value)) {
-                        this.update(value)
-                    }
-                } else {
-                    this.update(value)
-                }
-            }
-        } else {
-            this.value  = value
-        }
+            this.proposedValue      = proposedValue
 
-        return this
+            graph.markAsNeedRecalculation(this)
+        } else {
+            this.value              = proposedValue
+        }
     }
 
 
     update (value : ChronoValue) {
-        this.nextValue  = value
+        this.nextStableValue  = value
 
-        this.graph.markDirty(this)
+        this.graph.markAsNeedRecalculation(this)
     }
 
 
-    getCalculationGenerator () : Iterator<any> {
-        return this.calculation(this.nextValue)
-    }
+    // getCalculationGenerator () : Iterator<any> {
+    //     return this.calculation(this.nextStableValue)
+    // }
 
 
-    calculate (proposedValue : ChronoValue, ...args) : ChronoValue {
-        this.graph && this.graph.startReadObservation()
-
-        const res       = this.calculation ? this.calculation.call(this.calculationContext || this, proposedValue, ...args) : proposedValue
-
-        this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
-
-        return res
-    }
-
-
-    async calculateAsync (proposedValue : ChronoValue, ...args) : Promise<ChronoValue> {
-        this.graph && this.graph.startReadObservation()
-
-        const res       = this.calculationAsync ? await this.calculationAsync.call(this.calculationContext || this, proposedValue, ...args) : proposedValue
-
-        this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
-
-        return res
-    }
+    // calculate (proposedValue : ChronoValue, ...args) : ChronoValue {
+    //     this.graph && this.graph.startReadObservation()
+    //
+    //     const res       = this.calculation ? this.calculation.call(this.calculationContext || this, proposedValue, ...args) : proposedValue
+    //
+    //     this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
+    //
+    //     return res
+    // }
+    //
+    //
+    // async calculateAsync (proposedValue : ChronoValue, ...args) : Promise<ChronoValue> {
+    //     this.graph && this.graph.startReadObservation()
+    //
+    //     const res       = this.calculationAsync ? await this.calculationAsync.call(this.calculationContext || this, proposedValue, ...args) : proposedValue
+    //
+    //     this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
+    //
+    //     return res
+    // }
 
 
     setterPropagation       : AnyFunction
 
-    setter (proposedValue? : ChronoValue, ...args) {
+    // setter (proposedValue? : ChronoValue, ...args) {
+    //     const graph             = this.graph as ChronoGraph
+    //     const prevValue         = this.get()
+    //     const consistentValue   = this.calculate(proposedValue, ...args)
+    //
+    //     if (!this.equality(consistentValue, prevValue)) {
+    //         // includes "markDirty"
+    //         this.update(consistentValue)
+    //
+    //         graph.markStable(this)
+    //
+    //         if (this.setterPropagation) {
+    //             this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
+    //         }
+    //
+    //         graph.propagate()
+    //     }
+    // }
+
+    set (proposedValue? : ChronoValue, ...args) {
         const graph             = this.graph as ChronoGraph
-        const prevValue         = this.get()
-        const consistentValue   = this.calculate(proposedValue, ...args)
 
-        if (!this.equality(consistentValue, prevValue)) {
-            // includes "markDirty"
-            this.update(consistentValue)
-
-            graph.markStable(this)
+        if (graph) {
+            this.proposedValue      = proposedValue
 
             if (this.setterPropagation) {
                 this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
             }
 
+            graph.markAsNeedRecalculation(this)
+
             graph.propagate()
+        } else {
+            this.value              = proposedValue
         }
+
+        // const prevValue         = this.get()
+        // const consistentValue   = this.calculate(proposedValue, ...args)
+        //
+        // if (!this.equality(consistentValue, prevValue)) {
+        //     // includes "markDirty"
+        //     this.update(consistentValue)
+        //
+        //     graph.markStable(this)
+        //
+        //     if (this.setterPropagation) {
+        //         this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
+        //     }
+        //
+        //     graph.propagate()
+        // }
     }
 
 
-    async setterAsync (value? : ChronoValue, ...args) : Promise<void> {
-        const graph         = this.graph as ChronoGraph
-        const oldValue      = this.get()
-        const newValue      = await this.calculate(value, ...args)
-
-        if (!this.equality(newValue, oldValue)) {
-            // includes "markDirty"
-            this.update(newValue)
-
-            graph.markStable(this)
-
-            if (this.setterPropagation) {
-                this.setterPropagation.call(this.calculationContext || this, value, ...args)
-            }
-
-            await graph.propagateQueueAsync()
-        }
-    }
-
-
-    recalculate () {
-        const graph         = this.graph as ChronoGraph
-
-        if (!graph.isAtomStable(this)) this.setter()
-    }
+    // async setterAsync (value? : ChronoValue, ...args) : Promise<void> {
+    //     const graph         = this.graph as ChronoGraph
+    //     const oldValue      = this.get()
+    //     const newValue      = await this.calculate(value, ...args)
+    //
+    //     if (!this.equality(newValue, oldValue)) {
+    //         // includes "markDirty"
+    //         this.update(newValue)
+    //
+    //         graph.markStable(this)
+    //
+    //         if (this.setterPropagation) {
+    //             this.setterPropagation.call(this.calculationContext || this, value, ...args)
+    //         }
+    //
+    //         await graph.propagateQueueAsync()
+    //     }
+    // }
 
 
-    async recalculateAsync () : Promise<void> {
-        const graph         = this.graph as ChronoGraph
-
-        if (!graph.isAtomStable(this)) await this.setterAsync()
-    }
+    // recalculate () {
+    //     const graph         = this.graph as ChronoGraph
+    //
+    //     if (!graph.isAtomStable(this)) this.setter()
+    // }
+    //
+    //
+    // async recalculateAsync () : Promise<void> {
+    //     const graph         = this.graph as ChronoGraph
+    //
+    //     if (!graph.isAtomStable(this)) await this.setterAsync()
+    // }
 
 
     hasValue () : boolean {
-        return this.nextValue !== undefined || this.value !== undefined
+        return this.nextStableValue !== undefined || this.value !== undefined
     }
 
 
-    hasStableValue () : boolean {
+    hasConsistedValue () : boolean {
         return this.value !== undefined
-    }
-
-
-    isDirty () : boolean {
-        return this.nextValue !== undefined
     }
 
 
