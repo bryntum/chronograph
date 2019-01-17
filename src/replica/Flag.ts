@@ -20,7 +20,7 @@ class FlagAtom extends base {
     commit () {
         super.commit()
 
-        this.put(this.defaultValue)
+        this.value              = this.defaultValue
     }
 
     reject () {

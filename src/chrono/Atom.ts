@@ -7,7 +7,7 @@ import {HasId} from "./HasId.js";
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoValue         = any
 
-export type ChronoIterator      = Iterator<ChronoAtom | ChronoValue>
+export type ChronoIterator<T = ChronoValue>  = IterableIterator<ChronoAtom | T>
 
 //---------------------------------------------------------------------------------------------------------------------
 export type SyncChronoCalculation   = (...args) => ChronoIterator

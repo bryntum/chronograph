@@ -76,9 +76,11 @@ class ReferenceAtom extends base {
 
 
     getStorage (entity : EntityAny) : ReferenceStorageAtom {
-        const id        = `${entity.$internalId}/${this.field.storageKey}`
+        return entity.$[ this.field.storageKey ]
 
-        return (this.graph as ChronoGraph).getOrCreateAtom(id, MinimalReferenceStorageAccumulator) as ReferenceStorageAtom
+        // const id        = `${entity.$internalId}/${this.field.storageKey}`
+        //
+        // return (this.graph as ChronoGraph).getOrCreateAtom(id, MinimalReferenceStorageAccumulator) as ReferenceStorageAtom
     }
 
 
@@ -107,29 +109,27 @@ class ReferenceAtom extends base {
     addToStorage (storage : ReferenceStorageAtom) {
         storage.newRefs.add(this.self.$$)
 
-        this.graph.markAsNeedRecalculation(storage)
+        this.graph && this.graph.markAsNeedRecalculation(storage)
     }
 
 
     removeFromStorage (storage : ReferenceStorageAtom) {
         storage.oldRefs.add(this.self.$$)
 
-        this.graph.markAsNeedRecalculation(storage)
+        this.graph && this.graph.markAsNeedRecalculation(storage)
     }
 
 
     set (value : ChronoValue) {
-        if (this.graph) {
-            if (this.value != null) {
-                this.removeFromStorage(this.getStorage(this.value))
-            }
-
-            if (value != null) {
-                this.addToStorage(this.getStorage(value))
-            }
+        if (this.value != null) {
+            this.removeFromStorage(this.getStorage(this.value))
         }
 
         super.set(value)
+
+        if (value != null) {
+            this.addToStorage(this.getStorage(value))
+        }
     }
 }
 

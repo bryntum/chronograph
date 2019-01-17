@@ -354,8 +354,8 @@ class ChronoGraph extends base implements IChronoGraph {
         this.nodesMap.set(node.id, node)
 
         // if (/endDate/.test(node.id)) debugger
-
-        if (!node.hasValue()) this.markAsNeedRecalculation(node)
+        // if (!node.hasValue())
+        this.markAsNeedRecalculation(node)
 
         node.onEnterGraph(this)
 
@@ -406,6 +406,7 @@ class ChronoGraph extends base implements IChronoGraph {
             if (iterValue.done) {
                 return { value : iterValue.value }
             }
+            // TODO should ignore non-final non-atom values
 
             incomingAtom    = iterValue.value
 

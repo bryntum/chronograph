@@ -35,7 +35,13 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             const fields        = this.$
 
             entity.fields.forEach((field : Field, name : Name) => {
-                if (fields[ name ]) return
+                if (fields[ name ]) {
+                    // DIRTY HACK
+                    if (config && config.hasOwnProperty(name)) {
+                        fields[ name ].value = config[ name ]
+                    }
+                    return
+                }
 
                 const fieldAtom = fields[ name ] = field.atomCls.new({
                     id          : `${this.$internalId}/${name}`,
