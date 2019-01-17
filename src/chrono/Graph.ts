@@ -96,6 +96,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
     markAsNeedRecalculation (atom : ChronoAtom) {
         this.needRecalculationAtoms.add(atom)
+        atom.intermediateAtoms.forEach(a => this.markAsNeedRecalculation(a))
     }
 
 

@@ -62,6 +62,7 @@ class ChronoAtom extends base {
 
     observedDuringCalculation   :  ChronoAtom[]     = []
 
+    intermediateAtoms : Map<string, ChronoAtom> = new Map()
 
     commit () {
         this.value              = this.nextStableValue
@@ -286,3 +287,68 @@ export type ChronoAtom = Mixin<typeof ChronoAtom>
 
 //---------------------------------------------------------------------------------------------------------------------
 export class MinimalChronoAtom extends ChronoAtom(HasId(MinimalNode)) {}
+
+// Intermediate values support
+//---------------------------------------------------------------------------------------------------------------------
+const intermediateAtoms : WeakMap<ChronoAtom, Map<string, any>> = new WeakMap()
+
+export const provide = (atom : ChronoAtom, tag : string, value : any) : ChronoAtom => {
+
+    const graph = atom.graph as ChronoGraph
+
+    const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
+
+    let result : ChronoAtom = intermeds.get(tag)
+
+    if (result) {
+        result.put(value);
+        //if (!result.equality(value, result.get())) {
+        //    result.update(value)
+        //}
+    }
+    else {
+        result = MinimalChronoAtom.new({
+            value : value,
+            * calculation(proposedValue : any) {
+                if (proposedValue === undefined) {
+                    yield atom
+                }
+
+                return this.value
+            }
+        })
+        // addNode() will mark atom added as need recalculation
+        graph.addNode(result)
+        intermeds.set(tag, result)
+    }
+
+    graph.markStable(result)
+
+    return result
+}
+
+export const consume = (atom : ChronoAtom, tag : string) : ChronoAtom => {
+
+    const graph = atom.graph as ChronoGraph
+
+    const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
+
+    let result : ChronoAtom = intermeds.get(tag);
+
+    if (!result) {
+        result = MinimalChronoAtom.new({
+            * calculation(proposedValue : any) {
+                if (proposedValue === undefined) {
+                    yield atom
+                }
+
+                return this.value
+            }
+        })
+        // addNode() will mark atom added as need recalculation
+        graph.addNode(result)
+        intermeds.set(tag, result)
+    }
+
+    return result;
+}
