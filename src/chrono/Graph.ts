@@ -4,6 +4,9 @@ import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
 import {ChronoId} from "./Id.js";
+import { ReferenceStorageAtom } from "../replica/Reference.js";
+import { FieldAtom } from "../replica/Atom.js";
+import { ReferenceStorageField } from "../schema/Schema.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -475,7 +478,105 @@ class ChronoGraph extends base implements IChronoGraph {
         this.commit()
     }
 
+    toDot() {
+        let dot = [
+            'digraph ChronoGraph {',
+            'splines=splines'
+        ]
 
+        const arrAtoms : [ChronoId, ChronoAtom][] = Array.from(this.nodesMap.entries())
+
+        // Group atoms into subgraphs by label
+
+        const namedAtomsByGroup : Map<string, Set<[string, ChronoAtom]>> = arrAtoms.reduce(
+            (map, [id, atom]) => {
+                let [group, label] = String(id).split('/')
+
+                if ((atom as any).field) {
+                    group = (atom as FieldAtom).field.entity.name || (atom as FieldAtom).field.entity.constructor.name
+                    label = (atom as FieldAtom).field.name
+                }
+
+                if (!map.has(group)) {
+                    map.set(group, new Set([[label || '?', atom]]))
+                }
+                else {
+                    map.get(group).add([label, atom])
+                }
+
+                return map
+            },
+            new Map()
+        )
+
+        // Generate subgraphs
+        dot = Array.from(namedAtomsByGroup.entries()).reduce(
+            (dot, [group, namedAtoms], index) => {
+                dot.push(`subgraph cluster_${index} {`)
+
+                dot.push(`label="${group}"`)
+
+                dot = Array.from(namedAtoms.values()).reduce(
+                    (dot, [name, atom]) => {
+                        let value : any
+
+                        if ((atom as any).newRefs && (atom as any).oldRefs) {
+                            value = `Set(${atom.get().size})`;
+                        }
+                        else {
+                            value = atom.get()
+                        }
+
+                        if (value instanceof Date) {
+                            value = [value.getFullYear(), '.', value.getMonth() + 1, '.', value.getDate(), ' ', value.getHours() + ':' + value.getMinutes()].join('')
+                        }
+
+                        let color = this.isAtomStable(atom) ? 'darkgreen' : 'red'
+
+                        dot.push(`"${atom.id}" [label="${name}=${value}\", fontcolor="${color}"]`)
+
+                        return dot
+                    },
+                    dot
+                )
+
+                dot.push('}')
+
+                return dot
+            },
+            dot
+        )
+
+        // Generate edges
+        dot = arrAtoms.reduce(
+            (dot, [fromId, fromAtom] : [ChronoId, ChronoAtom]) => {
+
+                const outgoingEdges = fromAtom.outgoing
+
+                Array.from(outgoingEdges).reduce(
+                    (dot, toAtom : ChronoAtom) => {
+
+                        //let edgeLabel = this.getEdgeLabel(fromId, atom.id)
+                        const edgeLabel = ''
+
+                        let color = this.isAtomStable(fromAtom) ? 'darkgreen' : 'red'
+
+                        dot.push(`"${fromId}" -> "${toAtom.id}" [label="${edgeLabel}", color="${color}"]`)
+
+                        return dot
+                    },
+                    dot
+                )
+
+                return dot
+            },
+            dot
+        )
+
+        dot.push('}')
+
+        return dot.join('\n')
+    }
 }
 
 export type ChronoGraph = Mixin<typeof ChronoGraph>
