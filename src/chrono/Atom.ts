@@ -52,6 +52,8 @@ class ChronoAtom extends base {
     nextStableValue     : ChronoValue
     value               : ChronoValue
 
+    shouldCommitValue   : boolean   = true
+
     graph               : IChronoGraph
 
     equality            : (v1, v2) => boolean       = strictWithDatesEquality
@@ -64,13 +66,24 @@ class ChronoAtom extends base {
 
     intermediateAtoms : Map<string, ChronoAtom> = new Map()
 
-    commit () {
-        this.value              = this.nextStableValue
+
+    commitValue () {
+        // debugger
+        // console.log(`Atom commit ${this.id}, commit value: ${this.commitValue}`)
+
+        if (this.shouldCommitValue)
+            this.value              = this.nextStableValue
+
         this.nextStableValue    = undefined
         this.proposedValue      = undefined
+    }
 
+
+    commitEdges () {
         this.incoming.forEach((from : ChronoAtom) => this.removeEdgeFrom(from))
         this.observedDuringCalculation.forEach((from : ChronoAtom) => this.addEdgeFrom(from))
+
+        this.observedDuringCalculation  = []
     }
 
 

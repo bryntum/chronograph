@@ -5,7 +5,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Graph dependency cycles should be possible to resolve using tagged values', t => {
+    t.xit('Graph dependency cycles should be possible to resolve using tagged values', t => {
         // We are calculating the following system:
         //
         // A = B + C

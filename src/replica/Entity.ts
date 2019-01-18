@@ -50,7 +50,9 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
                     self        : this,
 
-                    value       : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
+                    shouldCommitValue   : !field.continued,
+
+                    value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
                     calculationContext  : this,
                     calculation         : this.$calculations && this[ this.$calculations[ name ] ] || identity,
@@ -71,6 +73,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                 field       : field,
 
                 self        : this,
+
+                shouldCommitValue   : !field.continued,
 
                 calculationContext  : this,
                 calculation         : this.$calculations && this[ this.$calculations[ name ] ] || identity,
@@ -330,6 +334,20 @@ export const reference = function (entity : AnyConstructor1<EntityAny>, storageK
                 return this.$[ propertyKey ].set(...arguments)
             }
         })
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const continuationOf = function (continuationOfAtomName : string) : PropertyDecorator {
+
+    return function (target : EntityAny, propertyKey : string) : void {
+        const entity            = target.$entity
+        const field             = entity.getField(propertyKey)
+        const precedingField    = entity.getField(continuationOfAtomName)
+
+        field.continuationOf        = precedingField
+        precedingField.continued    = true
     }
 }
 

@@ -17,6 +17,11 @@ export class Field extends Base {
 
     persistent          : boolean   = true
 
+    // support for setting the same final value for initial atoms
+    // this flag indicates that atom should ignore its value during commit - it will come from the final atom instead
+    continued           : boolean   = false
+    continuationOf      : Field
+
     atomCls                 : typeof MinimalFieldAtom   = MinimalFieldAtom
     atomSetterPropagation   : AnyFunction
 }

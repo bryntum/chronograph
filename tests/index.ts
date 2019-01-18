@@ -16,7 +16,7 @@ project.start(
             'chrono/010_graph.t.js',
             'chrono/020_performance.t.js',
             'chrono/030_behavior.t.js',
-            'chrono/040_tagged_calc.t.js'
+            //'chrono/040_tagged_calc.t.js'
         ]
     },
     {

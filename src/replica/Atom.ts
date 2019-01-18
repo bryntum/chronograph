@@ -11,6 +11,17 @@ class FieldAtom extends base {
     field       : FieldData
 
     self        : EntityAny
+
+    commitValue () {
+        super.commitValue()
+
+        const continuationOfField = this.field.continuationOf
+
+        if (continuationOfField) {
+            // console.log(`Commit continued value to ${this.self.$[ continuationOfField.name ].id}, value: ${this.value}`)
+            this.self.$[ continuationOfField.name ].value = this.value
+        }
+    }
 }
 
 export type FieldAtom = Mixin<typeof FieldAtom>

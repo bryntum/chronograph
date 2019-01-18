@@ -46,14 +46,15 @@ class ReferenceStorageAtom extends base {
     }
 
 
-    commit () {
-        super.commit()
+    commitValue () {
+        super.commitValue()
 
         this.oldRefs.clear()
         this.newRefs.clear()
     }
 
     reject () {
+        throw "not yet"
         super.reject()
 
         this.oldRefs.clear()
@@ -125,11 +126,11 @@ class ReferenceAtom extends base {
             this.removeFromStorage(this.getStorage(this.value))
         }
 
-        super.set(value)
-
         if (value != null) {
             this.addToStorage(this.getStorage(value))
         }
+
+        super.set(value)
     }
 }
 
