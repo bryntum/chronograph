@@ -17,8 +17,8 @@ class FlagAtom extends base {
         this.defaultValue       = this.value
     }
 
-    commit () {
-        super.commit()
+    commitValue () {
+        super.commitValue()
 
         this.value              = this.defaultValue
     }
