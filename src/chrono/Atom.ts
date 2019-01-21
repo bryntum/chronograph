@@ -27,13 +27,14 @@ export const strictWithDatesEquality = (v1, v2) => {
 //---------------------------------------------------------------------------------------------------------------------
 export const identity           = function *(v) { return v !== undefined ? v : this.value }
 
-export const identityAsync      = function *(v) { return v !== undefined ? v : this.value }
+// export const identityAsync      = function *(v) { return v !== undefined ? v : this.value }
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const ChronoAtom = <T extends Constructable<HasId & Node>>(base : T) =>
 
 class ChronoAtom extends base {
+    proposedArgs        : ChronoValue[]
     proposedValue       : ChronoValue
     nextStableValue     : ChronoValue
     value               : ChronoValue
@@ -46,11 +47,11 @@ class ChronoAtom extends base {
 
     calculationContext  : any
     calculation         : SyncChronoCalculation     = identity
-    calculationAsync    : AsyncChronoCalculation    = identityAsync
+    // calculationAsync    : AsyncChronoCalculation    = identityAsync
 
     observedDuringCalculation   :  ChronoAtom[]     = []
 
-    intermediateAtoms : Map<string, ChronoAtom> = new Map()
+    // intermediateAtoms : Map<string, ChronoAtom> = new Map()
 
 
     commitValue () {
@@ -59,6 +60,7 @@ class ChronoAtom extends base {
 
         this.nextStableValue    = undefined
         this.proposedValue      = undefined
+        this.proposedArgs       = undefined
     }
 
 
@@ -120,11 +122,12 @@ class ChronoAtom extends base {
     // }
 
 
-    put (proposedValue : ChronoValue) {
-        const graph             = this.graph as ChronoGraph
+    put (proposedValue : ChronoValue, ...args) {
+        const graph                 = this.graph as ChronoGraph
 
         if (graph) {
             this.proposedValue      = proposedValue
+            this.proposedArgs       = Array.prototype.slice.call(arguments)
 
             graph.markAsNeedRecalculation(this)
         } else {
