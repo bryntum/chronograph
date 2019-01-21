@@ -26,9 +26,9 @@ export const strictWithDatesEquality = (v1, v2) => {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const identity           = function *(v) { return v }
+export const identity           = function *(v) { return v !== undefined ? v : this.value }
 
-export const identityAsync      = function *(v) { return v }
+export const identityAsync      = function *(v) { return v !== undefined ? v : this.value }
 
 //---------------------------------------------------------------------------------------------------------------------
 // export class CalculationWalkContext extends WalkContext {

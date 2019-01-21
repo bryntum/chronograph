@@ -43,6 +43,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                     return
                 }
 
+                const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
+
                 const fieldAtom = fields[ name ] = field.atomCls.new({
                     id          : `${this.$internalId}/${name}`,
 
@@ -54,8 +56,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
                     value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
-                    calculationContext  : this,
-                    calculation         : this.$calculations && this[ this.$calculations[ name ] ] || identity,
+                    calculationContext  : calculationFunction ? this : undefined,
+                    calculation         : calculationFunction || identity,
 
                     setterPropagation   : field.atomSetterPropagation
                 })
@@ -67,6 +69,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         createFieldAtom (name : Name) : ChronoAtom {
             const field     = this.$entity.getField(name)
 
+            const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
+
             return field.atomCls.new({
                 id          : `${this.$internalId}/${name}`,
 
@@ -76,8 +80,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
                 shouldCommitValue   : !field.continued,
 
-                calculationContext  : this,
-                calculation         : this.$calculations && this[ this.$calculations[ name ] ] || identity,
+                calculationContext  : calculationFunction ? this : undefined,
+                calculation         : calculationFunction || identity,
 
                 setterPropagation   : field.atomSetterPropagation
             })

@@ -191,7 +191,7 @@ class ChronoGraph extends base implements IChronoGraph {
     {
         const iterator      = sourceAtom.calculation.call(
             sourceAtom.calculationContext || sourceAtom,
-            sourceAtom.proposedValue !== undefined ? sourceAtom.proposedValue : sourceAtom.get()
+            sourceAtom.proposedValue
         )
 
         let iterValue       = iterator.next()
