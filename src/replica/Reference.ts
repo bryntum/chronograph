@@ -97,13 +97,13 @@ class ReferenceAtom extends base {
 
 
     onLeaveGraph (graph : IChronoGraph) {
-        super.onLeaveGraph(graph)
-
         if (this.hasValue()) {
             const referenceStorage  = this.getStorage(this.value)
 
             this.removeFromStorage(referenceStorage)
         }
+
+        super.onLeaveGraph(graph)
     }
 
 
