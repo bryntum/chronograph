@@ -19,6 +19,16 @@ class Replica extends base {
     addEntities (entities : EntityAny[]) {
         entities.forEach(entity => this.addEntity(entity))
     }
+
+
+    removeEntity (entity : EntityAny) {
+        entity.leaveGraph()
+    }
+
+
+    removeEntities (entities : EntityAny[]) {
+        entities.forEach(entity => this.removeEntity(entity))
+    }
 }
 
 export type Replica = Mixin<typeof Replica>
