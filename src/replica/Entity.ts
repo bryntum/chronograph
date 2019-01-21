@@ -24,7 +24,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
         initAtoms (config) {
             // TODO move to property initializers
-            this.$internalId    = chronoId()
+            if (this.$internalId == null) this.$internalId = chronoId()
 
             const entity        = this.$entity
 
@@ -67,6 +67,9 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
         // the actually returned type is `FieldAtom`, but this does not typecheck - circularity
         createFieldAtom (name : Name) : ChronoAtom {
+            // TODO move to property initializers
+            if (this.$internalId == null) this.$internalId = chronoId()
+
             const field     = this.$entity.getField(name)
 
             const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
@@ -123,19 +126,6 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         propagate () {
             this.getGraph().propagate()
         }
-
-        // propagateQueue () {
-        //     this.getGraph().propagateQueue()
-        // }
-        //
-        //
-        // async propagateAsync () {
-        //     await this.getGraph().propagate()
-        // }
-        //
-        // async propagateQueueAsync () {
-        //     await this.getGraph().propagateQueueAsync()
-        // }
 
 
         markAsNeedRecalculation (atom : ChronoAtom) {
