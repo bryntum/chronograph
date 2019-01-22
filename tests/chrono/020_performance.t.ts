@@ -60,7 +60,11 @@ StartTest(t => {
         // console.profileEnd()
         console.timeEnd("Build graph")
 
+        console.time("Calc #0")
+
         graph.propagate()
+
+        console.timeEnd("Calc #0");
 
         t.chain(
             next => {
@@ -79,15 +83,15 @@ StartTest(t => {
                 next()
             },
             next => {
-                // boxes[ 49500 ].set(0)
-                //
-                // console.time("Calc #2");
-                //
-                // graph.propagate()
-                //
-                // console.timeEnd("Calc #2");
-                //
-                // console.log("Result: ", boxes[ boxes.length - 1 ].get())
+                boxes[ 49500 ].put(0)
+
+                console.time("Calc #2");
+
+                graph.propagate()
+
+                console.timeEnd("Calc #2");
+
+                console.log("Result: ", boxes[ boxes.length - 1 ].get())
             }
         )
     });
