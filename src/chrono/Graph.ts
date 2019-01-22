@@ -2,7 +2,7 @@ import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward} from "../graph/Walkable.js";
-import {FieldAtom} from "../replica/Atom.js";
+import {FieldAtom, MinimalFieldAtom} from "../replica/Atom.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
 import {ChronoId} from "./Id.js";
 
@@ -28,7 +28,7 @@ export interface IChronoGraph {
 
     markAsNeedRecalculation (atom : ChronoAtom)
 
-    commit (changedAtoms : ChronoAtom[])
+    commit ()
     reject ()
     propagate ()
 }
@@ -55,6 +55,8 @@ class ChronoGraph extends base implements IChronoGraph {
     needRecalculationAtoms : Set<ChronoAtom>       = new Set()
 
     stableAtoms         : Set<ChronoAtom>       = new Set()
+
+    changedAtoms        : ChronoAtom[]          = []
 
 
     processingQueue     : ChronoAtom[]          = []
@@ -121,7 +123,15 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    commit (changedAtoms : ChronoAtom[]) {
+    // used for debugging
+    commitAllEdges () {
+        this.nodes.forEach(atom => atom.commitEdges())
+    }
+
+
+    commit () {
+        const changedAtoms      = this.changedAtoms
+
         changedAtoms.forEach(atom => atom.commitValue())
 
         this.stableAtoms.forEach(atom => atom.commitEdges())
@@ -131,6 +141,8 @@ class ChronoGraph extends base implements IChronoGraph {
         this.needRecalculationAtoms.clear()
 
         this.stableAtoms.clear()
+
+        this.changedAtoms   = []
     }
 
 
@@ -185,6 +197,8 @@ class ChronoGraph extends base implements IChronoGraph {
 
     startAtomCalculation (sourceAtom : ChronoAtom) : { value? : ChronoValue, continuation? : ChronoContinuation }
     {
+        // console.log(`START ${sourceAtom}`)
+
         const iterator      = sourceAtom.calculation.call(
             sourceAtom.calculationContext || sourceAtom,
             sourceAtom.proposedValue
@@ -208,10 +222,17 @@ class ChronoGraph extends base implements IChronoGraph {
         let incomingAtom    = continuation.atom
 
         do {
+            // this.LOG.push( [ sourceAtom, incomingAtom ] )
+            //
+            // console.log(`CONTINUE ${sourceAtom}, DEP ${incomingAtom}`)
+
+            // const field     = (incomingAtom as MinimalFieldAtom).field
+            // console.log(`Observed: ${incomingAtom.calculationContext && incomingAtom.calculationContext.id}, field: ${field && field.name}`)
+
             sourceAtom.observedDuringCalculation.push(incomingAtom)
 
             // ideally should be removed (same as while condition)
-            if (this.isAtomNeedRecalculation(incomingAtom) && !this.isAtomStable(incomingAtom)) throw "inconsistency"
+            if (this.isAtomNeedRecalculation(incomingAtom) && !this.isAtomStable(incomingAtom)) throw "Cycle"
 
             let iterValue   = iterator.next(incomingAtom.get())
 
@@ -228,15 +249,33 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
+    logToDot () {
+        // let dot = [
+        //     'digraph ChronoGraph {',
+        //     'splines=splines'
+        // ]
+        //
+        // this.LOG.forEach(( [ sourceAtom, incomingAtom ] ) => {
+        //     dot.push(`"${sourceAtom.toString()}" -> "${incomingAtom}"`)
+        // })
+        //
+        // dot.push('}')
+        //
+        // return dot.join('\n')
+    }
+
+
     propagate () {
         const toCalculate       = Array.from(this.needRecalculationAtoms)
-        // const maybeDirty        = new Set()
+        const maybeDirty        = new Set()
         const conts             = new Map<ChronoAtom, ChronoContinuation>()
         const visitedAt         = new Map<ChronoAtom, number>()
 
+        // this.LOG                = []
+
         let depth
 
-        const changedAtoms      = []
+        const changedAtoms      = this.changedAtoms
 
         while (depth = toCalculate.length) {
             const sourceAtom : ChronoAtom   = toCalculate[ depth - 1 ]
@@ -264,9 +303,15 @@ class ChronoGraph extends base implements IChronoGraph {
             if (calcRes.continuation) {
                 conts.set(sourceAtom, calcRes.continuation)
 
+                // console.log(`REQUEST from ${sourceAtom}, FOR ${calcRes.continuation.atom}`)
+
+                sourceAtom.observedDuringCalculation.push(calcRes.continuation.atom)
+
                 toCalculate.push(calcRes.continuation.atom)
             } else {
                 const consistentValue   = calcRes.value
+
+                // console.log(`DONE ${sourceAtom}`)
 
                 if (!sourceAtom.equality(consistentValue, sourceAtom.get())) {
                     changedAtoms.push(sourceAtom)
@@ -274,7 +319,7 @@ class ChronoGraph extends base implements IChronoGraph {
                     sourceAtom.update(consistentValue)
 
                     toCalculate.unshift.apply(toCalculate, Array.from(sourceAtom.outgoing))
-                    // sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
+                    sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
                 }
 
                 this.markStable(sourceAtom)
@@ -287,11 +332,13 @@ class ChronoGraph extends base implements IChronoGraph {
             }
         }
 
-        this.commit(changedAtoms)
+        this.commit()
     }
 
 
     toDot() {
+        this.commitAllEdges()
+
         let dot = [
             'digraph ChronoGraph {',
             'splines=splines'
@@ -339,7 +386,9 @@ class ChronoGraph extends base implements IChronoGraph {
                         let value : any
 
                         if ((atom as any).newRefs && (atom as any).oldRefs) {
-                            value = `Set(${atom.get().size})`;
+                            const collection    = atom.get()
+
+                            value = `Set(${collection && collection.size || 0})`;
                         }
                         else {
                             value = atom.get()

@@ -22,6 +22,11 @@ class FieldAtom extends base {
             this.self.$[ continuationOfField.name ].value = this.value
         }
     }
+
+
+    toString () : string {
+        return `Field atom [${this.field.name}] of entity [${(this.self as any).id}]`
+    }
 }
 
 export type FieldAtom = Mixin<typeof FieldAtom>
@@ -38,6 +43,11 @@ class EntityAtom extends base {
     entity      : EntityData
 
     self        : EntityAny
+
+
+    toString () : string {
+        return `Entity atom [${(this.self as any).id}]`
+    }
 }
 
 export type EntityAtom = Mixin<typeof EntityAtom>
