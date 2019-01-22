@@ -300,18 +300,23 @@ class ChronoGraph extends base implements IChronoGraph {
         const arrAtoms : [ChronoId, ChronoAtom][] = Array.from(this.nodesMap.entries())
 
         // Group atoms into subgraphs by label
+        //
+        // atom.self.id    - entity
+        // atom.field.name -
 
         const namedAtomsByGroup : Map<string, Set<[string, ChronoAtom]>> = arrAtoms.reduce(
-            (map, [id, atom]) => {
-                let [group, label] = String(id).split('/')
+            (map, [atomId, atom]) => {
+                let [group, label] = String(atomId).split('/')
 
-                if ((atom as any).field) {
-                    group = (atom as FieldAtom).field.entity.name || (atom as FieldAtom).field.entity.constructor.name
-                    label = (atom as FieldAtom).field.name
-                }
+                // @ts-ignore
+                const { id, name } = (atom as FieldAtom).self || {},
+                      { field } = (atom as FieldAtom)
+
+                group = name || id || group
+                label = field && field.name || label
 
                 if (!map.has(group)) {
-                    map.set(group, new Set([[label || '?', atom]]))
+                    map.set(group, new Set([[label || '', atom]]))
                 }
                 else {
                     map.get(group).add([label, atom])
@@ -344,7 +349,7 @@ class ChronoGraph extends base implements IChronoGraph {
                             value = [value.getFullYear(), '.', value.getMonth() + 1, '.', value.getDate(), ' ', value.getHours() + ':' + value.getMinutes()].join('')
                         }
 
-                        let color = this.isAtomStable(atom) ? 'darkgreen' : 'red'
+                        let color = (!this.isAtomNeedRecalculation(atom) || this.isAtomStable(atom)) ? 'darkgreen' : 'red'
 
                         dot.push(`"${atom.id}" [label="${name}=${value}\", fontcolor="${color}"]`)
 
@@ -372,7 +377,7 @@ class ChronoGraph extends base implements IChronoGraph {
                         //let edgeLabel = this.getEdgeLabel(fromId, atom.id)
                         const edgeLabel = ''
 
-                        let color = this.isAtomStable(fromAtom) ? 'darkgreen' : 'red'
+                        let color = (!this.isAtomNeedRecalculation(fromAtom) || this.isAtomStable(fromAtom)) ? 'darkgreen' : 'red'
 
                         dot.push(`"${fromId}" -> "${toAtom.id}" [label="${edgeLabel}", color="${color}"]`)
 
