@@ -174,6 +174,11 @@ class ChronoAtom extends base {
     }
 
 
+    hasUserValue () : boolean {
+        return this.proposedArgs !== undefined
+    }
+
+
     onEnterGraph (graph : IChronoGraph) {
         this.graph      = graph
     }

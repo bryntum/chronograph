@@ -14,6 +14,8 @@ class ReferenceStorageAtom extends base {
     oldRefs         : Set<ChronoAtom>       = new Set()
     newRefs         : Set<ChronoAtom>       = new Set()
 
+    value           : Set<EntityAny>        = new Set()
+
 
     initialize () {
         super.initialize(...arguments)
