@@ -1,13 +1,12 @@
 import {AnyFunction, Constructable, Mixin} from "../class/Mixin.js";
 import {MinimalNode, Node} from "../graph/Node.js";
-import {WalkableBackward, WalkContext} from "../graph/Walkable.js";
 import {ChronoGraph, IChronoGraph} from "./Graph.js";
 import {HasId} from "./HasId.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoValue         = any
 
-export type ChronoIterator<T = ChronoValue>  = IterableIterator<ChronoAtom | T>
+export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | T>
 
 //---------------------------------------------------------------------------------------------------------------------
 export type SyncChronoCalculation   = (...args) => ChronoIterator
@@ -28,26 +27,14 @@ export const strictWithDatesEquality = (v1, v2) => {
 //---------------------------------------------------------------------------------------------------------------------
 export const identity           = function *(v) { return v !== undefined ? v : this.value }
 
-export const identityAsync      = function *(v) { return v !== undefined ? v : this.value }
-
-//---------------------------------------------------------------------------------------------------------------------
-// export class CalculationWalkContext extends WalkContext {
-//
-//     getNext (node : WalkableBackward) : WalkableBackward[] {
-//         return node.getIncoming(this)
-//     }
-//
-//     forEachNext (node : WalkableBackward, func : (node : WalkableBackward) => any) {
-//         node.forEachIncoming(this, func)
-//     }
-// }
-
+// export const identityAsync      = function *(v) { return v !== undefined ? v : this.value }
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const ChronoAtom = <T extends Constructable<HasId & Node>>(base : T) =>
 
 class ChronoAtom extends base {
+    proposedArgs        : ChronoValue[]
     proposedValue       : ChronoValue
     nextStableValue     : ChronoValue
     value               : ChronoValue
@@ -60,22 +47,20 @@ class ChronoAtom extends base {
 
     calculationContext  : any
     calculation         : SyncChronoCalculation     = identity
-    calculationAsync    : AsyncChronoCalculation    = identityAsync
+    // calculationAsync    : AsyncChronoCalculation    = identityAsync
 
     observedDuringCalculation   :  ChronoAtom[]     = []
 
-    intermediateAtoms : Map<string, ChronoAtom> = new Map()
+    // intermediateAtoms : Map<string, ChronoAtom> = new Map()
 
 
     commitValue () {
-        // debugger
-        // console.log(`Atom commit ${this.id}, commit value: ${this.commitValue}`)
-
         if (this.shouldCommitValue)
             this.value              = this.nextStableValue
 
         this.nextStableValue    = undefined
         this.proposedValue      = undefined
+        this.proposedArgs       = undefined
     }
 
 
@@ -137,11 +122,12 @@ class ChronoAtom extends base {
     // }
 
 
-    put (proposedValue : ChronoValue) {
-        const graph             = this.graph as ChronoGraph
+    put (proposedValue : ChronoValue, ...args) {
+        const graph                 = this.graph as ChronoGraph
 
         if (graph) {
             this.proposedValue      = proposedValue
+            this.proposedArgs       = Array.prototype.slice.call(arguments)
 
             graph.markAsNeedRecalculation(this)
         } else {
@@ -157,53 +143,7 @@ class ChronoAtom extends base {
     }
 
 
-    // getCalculationGenerator () : Iterator<any> {
-    //     return this.calculation(this.nextStableValue)
-    // }
-
-
-    // calculate (proposedValue : ChronoValue, ...args) : ChronoValue {
-    //     this.graph && this.graph.startReadObservation()
-    //
-    //     const res       = this.calculation ? this.calculation.call(this.calculationContext || this, proposedValue, ...args) : proposedValue
-    //
-    //     this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
-    //
-    //     return res
-    // }
-    //
-    //
-    // async calculateAsync (proposedValue : ChronoValue, ...args) : Promise<ChronoValue> {
-    //     this.graph && this.graph.startReadObservation()
-    //
-    //     const res       = this.calculationAsync ? await this.calculationAsync.call(this.calculationContext || this, proposedValue, ...args) : proposedValue
-    //
-    //     this.observedDuringCalculation = this.graph ? this.graph.stopReadObservation() : []
-    //
-    //     return res
-    // }
-
-
     setterPropagation       : AnyFunction
-
-    // setter (proposedValue? : ChronoValue, ...args) {
-    //     const graph             = this.graph as ChronoGraph
-    //     const prevValue         = this.get()
-    //     const consistentValue   = this.calculate(proposedValue, ...args)
-    //
-    //     if (!this.equality(consistentValue, prevValue)) {
-    //         // includes "markDirty"
-    //         this.update(consistentValue)
-    //
-    //         graph.markStable(this)
-    //
-    //         if (this.setterPropagation) {
-    //             this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
-    //         }
-    //
-    //         graph.propagate()
-    //     }
-    // }
 
     set (proposedValue? : ChronoValue, ...args) {
         const graph             = this.graph as ChronoGraph
@@ -221,57 +161,7 @@ class ChronoAtom extends base {
         } else {
             this.value              = proposedValue
         }
-
-        // const prevValue         = this.get()
-        // const consistentValue   = this.calculate(proposedValue, ...args)
-        //
-        // if (!this.equality(consistentValue, prevValue)) {
-        //     // includes "markDirty"
-        //     this.update(consistentValue)
-        //
-        //     graph.markStable(this)
-        //
-        //     if (this.setterPropagation) {
-        //         this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
-        //     }
-        //
-        //     graph.propagate()
-        // }
     }
-
-
-    // async setterAsync (value? : ChronoValue, ...args) : Promise<void> {
-    //     const graph         = this.graph as ChronoGraph
-    //     const oldValue      = this.get()
-    //     const newValue      = await this.calculate(value, ...args)
-    //
-    //     if (!this.equality(newValue, oldValue)) {
-    //         // includes "markDirty"
-    //         this.update(newValue)
-    //
-    //         graph.markStable(this)
-    //
-    //         if (this.setterPropagation) {
-    //             this.setterPropagation.call(this.calculationContext || this, value, ...args)
-    //         }
-    //
-    //         await graph.propagateQueueAsync()
-    //     }
-    // }
-
-
-    // recalculate () {
-    //     const graph         = this.graph as ChronoGraph
-    //
-    //     if (!graph.isAtomStable(this)) this.setter()
-    // }
-    //
-    //
-    // async recalculateAsync () : Promise<void> {
-    //     const graph         = this.graph as ChronoGraph
-    //
-    //     if (!graph.isAtomStable(this)) await this.setterAsync()
-    // }
 
 
     hasValue () : boolean {
@@ -298,70 +188,72 @@ class ChronoAtom extends base {
 export type ChronoAtom = Mixin<typeof ChronoAtom>
 
 
+
 //---------------------------------------------------------------------------------------------------------------------
 export class MinimalChronoAtom extends ChronoAtom(HasId(MinimalNode)) {}
 
-// Intermediate values support
-//---------------------------------------------------------------------------------------------------------------------
-const intermediateAtoms : WeakMap<ChronoAtom, Map<string, any>> = new WeakMap()
 
-export const provide = (atom : ChronoAtom, tag : string, value : any) : ChronoAtom => {
-
-    const graph = atom.graph as ChronoGraph
-
-    const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
-
-    let result : ChronoAtom = intermeds.get(tag)
-
-    if (result) {
-        result.put(value);
-        //if (!result.equality(value, result.get())) {
-        //    result.update(value)
-        //}
-    }
-    else {
-        result = MinimalChronoAtom.new({
-            value : value,
-            * calculation(proposedValue : any) {
-                if (proposedValue === undefined) {
-                    yield atom
-                }
-
-                return this.value
-            }
-        })
-        // addNode() will mark atom added as need recalculation
-        graph.addNode(result)
-        intermeds.set(tag, result)
-    }
-
-    graph.markStable(result)
-
-    return result
-}
-
-export const consume = (atom : ChronoAtom, tag : string) : ChronoAtom => {
-
-    const graph = atom.graph as ChronoGraph
-
-    const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
-
-    let result : ChronoAtom = intermeds.get(tag);
-
-    if (!result) {
-        result = MinimalChronoAtom.new({
-            * calculation(proposedValue : any) {
-                if (proposedValue === undefined) {
-                    yield atom
-                }
-
-                return this.value
-            }
-        })
-        // addNode() will mark atom added as need recalculation
-        graph.addNode(result)
-        intermeds.set(tag, result)
-    }
-
-    return result;
-}
+// // Intermediate values support
+// //---------------------------------------------------------------------------------------------------------------------
+// const intermediateAtoms : WeakMap<ChronoAtom, Map<string, any>> = new WeakMap()
+//
+// export const provide = (atom : ChronoAtom, tag : string, value : any) : ChronoAtom => {
+//
+//     const graph = atom.graph as ChronoGraph
+//
+//     const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
+//
+//     let result : ChronoAtom = intermeds.get(tag)
+//
+//     if (result) {
+//         result.put(value);
+//         //if (!result.equality(value, result.get())) {
+//         //    result.update(value)
+//         //}
+//     }
+//     else {
+//         result = MinimalChronoAtom.new({
+//             value : value,
+//             * calculation(proposedValue : any) {
+//                 if (proposedValue === undefined) {
+//                     yield atom
+//                 }
+//
+//                 return this.value
+//             }
+//         })
+//         // addNode() will mark atom added as need recalculation
+//         graph.addNode(result)
+//         intermeds.set(tag, result)
+//     }
+//
+//     graph.markStable(result)
+//
+//     return result
+// }
+//
+// export const consume = (atom : ChronoAtom, tag : string) : ChronoAtom => {
+//
+//     const graph = atom.graph as ChronoGraph
+//
+//     const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
+//
+//     let result : ChronoAtom = intermeds.get(tag);
+//
+//     if (!result) {
+//         result = MinimalChronoAtom.new({
+//             * calculation(proposedValue : any) {
+//                 if (proposedValue === undefined) {
+//                     yield atom
+//                 }
+//
+//                 return this.value
+//             }
+//         })
+//         // addNode() will mark atom added as need recalculation
+//         graph.addNode(result)
+//         intermeds.set(tag, result)
+//     }
+//
+//     return result;
+// }

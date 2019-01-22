@@ -1,12 +1,10 @@
 import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
-import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
+import {Walkable, WalkableBackward, WalkableForward} from "../graph/Walkable.js";
+import {FieldAtom} from "../replica/Atom.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
 import {ChronoId} from "./Id.js";
-import { ReferenceStorageAtom } from "../replica/Reference.js";
-import { FieldAtom } from "../replica/Atom.js";
-import { ReferenceStorageField } from "../schema/Schema.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -17,14 +15,14 @@ export type ChronoRevision      = number
 export interface IChronoGraph {
     // revision            : ChronoRevision
 
-    isObservingRead     : number
-    isObservingWrite    : number
-
-    onReadObserved (atom : ChronoAtom)
-    onWriteObserved (atom : ChronoAtom)
-
-    startReadObservation ()
-    stopReadObservation () : ChronoAtom[]
+    // isObservingRead     : number
+    // isObservingWrite    : number
+    //
+    // onReadObserved (atom : ChronoAtom)
+    // onWriteObserved (atom : ChronoAtom)
+    //
+    // startReadObservation ()
+    // stopReadObservation () : ChronoAtom[]
 
     // calculateAtom (atom : ChronoAtom, proposedValue : ChronoValue)
 
@@ -45,10 +43,10 @@ export const ChronoGraph = <T extends Constructable<Graph>>(base : T) =>
 class ChronoGraph extends base implements IChronoGraph {
     // revision            : ChronoRevision
 
-    isObservingRead     : number        = 0
-    isObservingWrite    : number        = 0
+    // isObservingRead     : number        = 0
+    // isObservingWrite    : number        = 0
 
-    readObservationState : ChronoAtom[]         = []
+    // readObservationState : ChronoAtom[]         = []
 
     nodeT               : ChronoAtom
 
@@ -62,20 +60,20 @@ class ChronoGraph extends base implements IChronoGraph {
     processingQueue     : ChronoAtom[]          = []
 
 
-    startReadObservation () {
-        this.isObservingRead++
-    }
-
-
-    stopReadObservation () : ChronoAtom[] {
-        this.isObservingRead--
-
-        const res       = this.readObservationState
-
-        this.readObservationState   = []
-
-        return res
-    }
+    // startReadObservation () {
+    //     this.isObservingRead++
+    // }
+    //
+    //
+    // stopReadObservation () : ChronoAtom[] {
+    //     this.isObservingRead--
+    //
+    //     const res       = this.readObservationState
+    //
+    //     this.readObservationState   = []
+    //
+    //     return res
+    // }
 
 
     // nextRevision () {
@@ -83,13 +81,13 @@ class ChronoGraph extends base implements IChronoGraph {
     // }
 
 
-    onReadObserved (atom : ChronoAtom) {
-        this.readObservationState.push(atom)
-    }
-
-
-    onWriteObserved (atom : ChronoAtom) {
-    }
+    // onReadObserved (atom : ChronoAtom) {
+    //     this.readObservationState.push(atom)
+    // }
+    //
+    //
+    // onWriteObserved (atom : ChronoAtom) {
+    // }
 
 
     isAtomNeedRecalculation (atom : ChronoAtom) : boolean {
@@ -99,7 +97,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
     markAsNeedRecalculation (atom : ChronoAtom) {
         this.needRecalculationAtoms.add(atom)
-        atom.intermediateAtoms.forEach(a => this.markAsNeedRecalculation(a))
+        // atom.intermediateAtoms.forEach(a => this.markAsNeedRecalculation(a))
     }
 
 
@@ -166,8 +164,6 @@ class ChronoGraph extends base implements IChronoGraph {
 
         this.nodesMap.set(node.id, node)
 
-        // if (/endDate/.test(node.id)) debugger
-        // if (!node.hasValue())
         this.markAsNeedRecalculation(node)
 
         node.onEnterGraph(this)
@@ -226,7 +222,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
             incomingAtom    = iterValue.value
 
-        } while (!this.isAtomNeedRecalculation(incomingAtom) || this.isAtomStable(incomingAtom))
+        } while (/*!this.isAtomNeedRecalculation(incomingAtom) || */this.isAtomStable(incomingAtom))
 
         return { continuation : { iterator, atom : incomingAtom } }
     }
@@ -234,7 +230,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
     propagate () {
         const toCalculate       = Array.from(this.needRecalculationAtoms)
-        const maybeDirty        = new Set()
+        // const maybeDirty        = new Set()
         const conts             = new Map<ChronoAtom, ChronoContinuation>()
         const visitedAt         = new Map<ChronoAtom, number>()
 
@@ -245,7 +241,7 @@ class ChronoGraph extends base implements IChronoGraph {
         while (depth = toCalculate.length) {
             const sourceAtom : ChronoAtom   = toCalculate[ depth - 1 ]
 
-            if (this.isAtomStable(sourceAtom) || !this.isAtomNeedRecalculation(sourceAtom) && !maybeDirty.has(sourceAtom)) {
+            if (this.isAtomStable(sourceAtom) /*|| !this.isAtomNeedRecalculation(sourceAtom) && !maybeDirty.has(sourceAtom)*/) {
                 toCalculate.pop()
                 continue
             }
@@ -278,7 +274,7 @@ class ChronoGraph extends base implements IChronoGraph {
                     sourceAtom.update(consistentValue)
 
                     toCalculate.unshift.apply(toCalculate, Array.from(sourceAtom.outgoing))
-                    sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
+                    // sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
                 }
 
                 this.markStable(sourceAtom)
@@ -293,6 +289,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
         this.commit(changedAtoms)
     }
+
 
     toDot() {
         let dot = [

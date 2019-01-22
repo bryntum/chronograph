@@ -57,14 +57,14 @@ StartTest(t => {
             graph.addNode(box)
         }
 
-        graph.propagate()
-
         // console.profileEnd()
         console.timeEnd("Build graph")
 
+        graph.propagate()
+
         t.chain(
             next => {
-                boxes[ 0 ].set(0)
+                boxes[ 0 ].put(0)
 
                 console.time("Calc #1")
                 // console.profile('Propagate')
