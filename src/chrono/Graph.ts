@@ -349,7 +349,7 @@ class ChronoGraph extends base implements IChronoGraph {
                             value = [value.getFullYear(), '.', value.getMonth() + 1, '.', value.getDate(), ' ', value.getHours() + ':' + value.getMinutes()].join('')
                         }
 
-                        let color = this.isAtomStable(atom) ? 'darkgreen' : 'red'
+                        let color = (!this.isAtomNeedRecalculation(atom) || this.isAtomStable(atom)) ? 'darkgreen' : 'red'
 
                         dot.push(`"${atom.id}" [label="${name}=${value}\", fontcolor="${color}"]`)
 
@@ -377,7 +377,7 @@ class ChronoGraph extends base implements IChronoGraph {
                         //let edgeLabel = this.getEdgeLabel(fromId, atom.id)
                         const edgeLabel = ''
 
-                        let color = this.isAtomStable(fromAtom) ? 'darkgreen' : 'red'
+                        let color = (!this.isAtomNeedRecalculation(fromAtom) || this.isAtomStable(fromAtom)) ? 'darkgreen' : 'red'
 
                         dot.push(`"${fromId}" -> "${toAtom.id}" [label="${edgeLabel}", color="${color}"]`)
 
