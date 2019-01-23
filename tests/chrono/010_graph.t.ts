@@ -179,4 +179,46 @@ StartTest(t => {
         t.is(res.get(), 12, "Correct result calculated")
     })
 
+
+    t.it('Deep mark as need recalculations', t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const atom0 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
+            id      : 'atom0'
+        }))
+
+        const atom1 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
+            id      : 'atom1',
+
+            calculation : function * () {
+                return (yield atom0) + 1
+            }
+        }))
+
+        const atom2 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
+            id      : 'atom2',
+
+            calculation : function * () {
+                return (yield atom1) + 1
+            }
+        }))
+
+        const atom3 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
+            id      : 'atom2',
+
+            calculation : function * () {
+                return (yield atom0) + (yield atom2)
+            }
+        }))
+
+        atom0.set(0)
+
+        t.is(atom2.get(), 2, "Correct result calculated for atom2")
+        t.is(atom3.get(), 2, "Correct result calculated for atom3")
+
+        atom0.set(1)
+
+        t.is(atom2.get(), 3, "Correct result calculated for atom2")
+        t.is(atom3.get(), 4, "Correct result calculated for atom3")
+    })
 })
