@@ -337,8 +337,6 @@ class ChronoGraph extends base implements IChronoGraph {
 
 
     toDot() {
-        this.commitAllEdges()
-
         let dot = [
             'digraph ChronoGraph {',
             'splines=splines'
