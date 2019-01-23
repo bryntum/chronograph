@@ -136,7 +136,10 @@ class ChronoGraph extends base implements IChronoGraph {
 
         this.stableAtoms.forEach(atom => atom.commitEdges())
 
-        this.needRecalculationAtoms.forEach(atom => atom.proposedValue = undefined)
+        this.needRecalculationAtoms.forEach(atom => {
+            atom.proposedValue  = undefined
+            atom.proposedArgs   = undefined
+        })
 
         this.needRecalculationAtoms.clear()
 
