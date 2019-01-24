@@ -62,7 +62,12 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                     // setterPropagation   : field.atomSetterPropagation
                 })
 
-                fieldAtom.writeValue(config && config.hasOwnProperty(name) ? config[ name ] : this[ name ])
+                if (config.hasOwnProperty(name)) {
+                    fieldAtom.writeValue(config[name])
+                }
+                else if (this[ name ] !== undefined) {
+                    fieldAtom.writeValue(this[ name ])
+                }
             })
         }
 
@@ -201,11 +206,11 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
 
         if (!entity) entity = target.$entity = EntityData.new()
 
-        entity.addField(fieldCls.new(Object.assign(fieldConfig || {}, {
+        const field = entity.addField(fieldCls.new(Object.assign(fieldConfig || {}, {
             name            : propertyKey
-        })))
+        })));
 
-        Object.defineProperty(target, propertyKey, {
+        field.createAccessors && Object.defineProperty(target, propertyKey, {
             get     : function () {
                 if (!this.$) this.$ = {}
 

@@ -341,7 +341,6 @@ class ChronoGraph extends base implements IChronoGraph {
                 const consistentValue   = calcRes.value
 
                 // console.log(`DONE ${sourceAtom}`)
-
                 if (!sourceAtom.equality(consistentValue, sourceAtom.get())) {
                     changedAtoms.push(sourceAtom)
 
