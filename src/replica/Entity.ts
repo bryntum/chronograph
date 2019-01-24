@@ -38,7 +38,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                 if (fields[ name ]) {
                     // DIRTY HACK
                     if (config && config.hasOwnProperty(name)) {
-                        fields[ name ].value = config[ name ]
+                        fields[ name ].writeValue(config[ name ])
                     }
                     return
                 }
@@ -54,13 +54,15 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
                     shouldCommitValue   : !field.continued,
 
-                    value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
+                    // value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
                     calculationContext  : calculationFunction ? this : undefined,
                     calculation         : calculationFunction || identity,
 
                     // setterPropagation   : field.atomSetterPropagation
                 })
+
+                fieldAtom.writeValue(config && config.hasOwnProperty(name) ? config[ name ] : this[ name ])
             })
         }
 

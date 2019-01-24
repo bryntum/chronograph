@@ -175,12 +175,12 @@ class ChronoAtom extends base {
 
 
     hasValue () : boolean {
-        return this.nextStableValue !== undefined || this.value !== undefined
+        return this.nextStableValue !== undefined || this.readValue() !== undefined
     }
 
 
     hasConsistedValue () : boolean {
-        return this.value !== undefined
+        return this.readValue() !== undefined
     }
 
 
