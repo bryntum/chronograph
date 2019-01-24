@@ -35,10 +35,10 @@ export class ReferenceField extends Field {
 }
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export class FlagField extends Field {
-    atomCls             : typeof MinimalFlagAtom    = MinimalFlagAtom
-}
+// //---------------------------------------------------------------------------------------------------------------------
+// export class FlagField extends Field {
+//     atomCls             : typeof MinimalFlagAtom    = MinimalFlagAtom
+// }
 
 
 //---------------------------------------------------------------------------------------------------------------------

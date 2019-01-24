@@ -2,8 +2,8 @@ import {ChronoAtom, ChronoValue, identity} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
 import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Entity as EntityData, Field, FlagField, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
-import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
+import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
+import {FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                     calculationContext  : calculationFunction ? this : undefined,
                     calculation         : calculationFunction || identity,
 
-                    setterPropagation   : field.atomSetterPropagation
+                    // setterPropagation   : field.atomSetterPropagation
                 })
             })
         }
@@ -86,7 +86,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                 calculationContext  : calculationFunction ? this : undefined,
                 calculation         : calculationFunction || identity,
 
-                setterPropagation   : field.atomSetterPropagation
+                // setterPropagation   : field.atomSetterPropagation
             })
         }
 
@@ -192,120 +192,16 @@ export type EntityBase = Mixin<typeof EntityBase>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// `target` will be a prototype of the class with Entity mixin
-export const field : PropertyDecorator = function (target : EntityAny, propertyKey : string) : void {
-    let entity      = target.$entity
-
-    if (!entity) entity = target.$entity = EntityData.new()
-
-    entity.createField(propertyKey)
-
-    Object.defineProperty(target, propertyKey, {
-        get     : function () {
-            if (!this.$) this.$ = {}
-
-            let field       = this.$[ propertyKey ]
-
-            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
-            return this.$[ propertyKey ].get(...arguments)
-        },
-
-        set     : function () {
-            if (!this.$) this.$ = {}
-
-            let field       = this.$[ propertyKey ]
-
-            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
-            return this.$[ propertyKey ].set(...arguments)
-        }
-    })
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-// `target` will be a prototype of the class with Entity mixin
-export const flag : PropertyDecorator = function (target : EntityAny, propertyKey : string) : void {
-    let entity      = target.$entity
-
-    if (!entity) entity = target.$entity = EntityData.new()
-
-    entity.addField(FlagField.new({
-        name            : propertyKey
-    }))
-
-    Object.defineProperty(target, propertyKey, {
-        get     : function () {
-            if (!this.$) this.$ = {}
-
-            let field       = this.$[ propertyKey ]
-
-            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
-            return this.$[ propertyKey ].get(...arguments)
-        },
-
-        set     : function () {
-            if (!this.$) this.$ = {}
-
-            let field       = this.$[ propertyKey ]
-
-            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
-            return this.$[ propertyKey ].set(...arguments)
-        }
-    })
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-// `target` will be a prototype of the class with Entity mixin
-export const storage : PropertyDecorator = function (target : EntityAny, propertyKey : string) : void {
-    let entity      = target.$entity
-
-    if (!entity) entity = target.$entity = EntityData.new()
-
-    entity.addField(ReferenceStorageField.new({
-        name            : propertyKey
-    }))
-
-    Object.defineProperty(target, propertyKey, {
-        get     : function () {
-            if (!this.$) this.$ = {}
-
-            let field       = this.$[ propertyKey ]
-
-            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
-            return this.$[ propertyKey ].get(...arguments)
-        },
-
-        set     : function () {
-            if (!this.$) this.$ = {}
-
-            let field       = this.$[ propertyKey ]
-
-            if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
-            return this.$[ propertyKey ].set(...arguments)
-        }
-    })
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const reference = function (entity : AnyConstructor1<EntityAny>, storageKey : string) : PropertyDecorator {
+export const generalField = function (fieldCls : typeof Field, fieldConfig? : unknown) : PropertyDecorator {
 
     return function (target : EntityAny, propertyKey : string) : void {
         let entity      = target.$entity
 
         if (!entity) entity = target.$entity = EntityData.new()
 
-        entity.addField(ReferenceField.new({
-            name            : propertyKey,
-            storageKey      : storageKey
-        }))
+        entity.addField(fieldCls.new(Object.assign(fieldConfig || {}, {
+            name            : propertyKey
+        })))
 
         Object.defineProperty(target, propertyKey, {
             get     : function () {
@@ -329,6 +225,57 @@ export const reference = function (entity : AnyConstructor1<EntityAny>, storageK
             }
         })
     }
+}
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// `target` will be a prototype of the class with Entity mixin
+export const field : PropertyDecorator = generalField(Field)
+
+// //---------------------------------------------------------------------------------------------------------------------
+// // `target` will be a prototype of the class with Entity mixin
+// export const flag : PropertyDecorator = function (target : EntityAny, propertyKey : string) : void {
+//     let entity      = target.$entity
+//
+//     if (!entity) entity = target.$entity = EntityData.new()
+//
+//     entity.addField(FlagField.new({
+//         name            : propertyKey
+//     }))
+//
+//     Object.defineProperty(target, propertyKey, {
+//         get     : function () {
+//             if (!this.$) this.$ = {}
+//
+//             let field       = this.$[ propertyKey ]
+//
+//             if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+//
+//             return this.$[ propertyKey ].get(...arguments)
+//         },
+//
+//         set     : function () {
+//             if (!this.$) this.$ = {}
+//
+//             let field       = this.$[ propertyKey ]
+//
+//             if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+//
+//             return this.$[ propertyKey ].set(...arguments)
+//         }
+//     })
+// }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// `target` will be a prototype of the class with Entity mixin
+export const storage : PropertyDecorator = generalField(ReferenceStorageField)
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const reference = function (entity : AnyConstructor1<EntityAny>, storageKey : string) : PropertyDecorator {
+    return generalField(ReferenceField, { storageKey })
 }
 
 
@@ -360,19 +307,19 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
 }
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export const setterPropagation = function (fieldName : Name) : MethodDecorator {
-
-    // `target` will be a prototype of the class with Entity mixin
-    return function (target : EntityAny, propertyKey : string, descriptor : TypedPropertyDescriptor<any>) : void {
-        let entity      = target.$entity
-
-        let field       = entity.getField(fieldName)
-
-        field.atomSetterPropagation     = descriptor.value
-
-        descriptor.value    = function () {
-            (this as EntityAny).$[ fieldName ].put(...arguments)
-        }
-    }
-}
+// //---------------------------------------------------------------------------------------------------------------------
+// export const setterPropagation = function (fieldName : Name) : MethodDecorator {
+//
+//     // `target` will be a prototype of the class with Entity mixin
+//     return function (target : EntityAny, propertyKey : string, descriptor : TypedPropertyDescriptor<any>) : void {
+//         let entity      = target.$entity
+//
+//         let field       = entity.getField(fieldName)
+//
+//         field.atomSetterPropagation     = descriptor.value
+//
+//         descriptor.value    = function () {
+//             (this as EntityAny).$[ fieldName ].put(...arguments)
+//         }
+//     }
+// }

@@ -353,9 +353,9 @@ class ChronoGraph extends base implements IChronoGraph {
 
                 this.markStable(sourceAtom)
 
-                if (sourceAtom.setterPropagation && !sourceAtom.proposedValue) {
-                    sourceAtom.setterPropagation.call(sourceAtom.calculationContext || sourceAtom, consistentValue)
-                }
+                // if (sourceAtom.setterPropagation && !sourceAtom.proposedValue) {
+                //     sourceAtom.setterPropagation.call(sourceAtom.calculationContext || sourceAtom, consistentValue)
+                // }
 
                 toCalculate.pop()
             }

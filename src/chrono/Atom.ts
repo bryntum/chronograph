@@ -54,9 +54,19 @@ class ChronoAtom extends base {
     // intermediateAtoms : Map<string, ChronoAtom> = new Map()
 
 
+    readValue () : ChronoValue {
+        return this.value
+    }
+
+
+    writeValue (value : ChronoValue) {
+        this.value  = value
+    }
+
+
     commitValue () {
         if (this.shouldCommitValue)
-            this.value              = this.nextStableValue
+            this.writeValue(this.nextStableValue)
 
         this.nextStableValue    = undefined
         this.proposedValue      = undefined
@@ -85,12 +95,12 @@ class ChronoAtom extends base {
             if (this.hasValue()) {
                 // if (graph.isObservingRead) graph.onReadObserved(this)
 
-                return this.nextStableValue !== undefined ? this.nextStableValue : this.value
+                return this.nextStableValue !== undefined ? this.nextStableValue : this.readValue()
             } else {
                 return undefined
             }
         } else {
-            return this.value
+            return this.readValue()
         }
     }
 
@@ -131,7 +141,7 @@ class ChronoAtom extends base {
 
             graph.markAsNeedRecalculation(this)
         } else {
-            this.value              = proposedValue
+            this.writeValue(proposedValue)
         }
     }
 
@@ -143,7 +153,7 @@ class ChronoAtom extends base {
     }
 
 
-    setterPropagation       : AnyFunction
+    // setterPropagation       : AnyFunction
 
     set (proposedValue? : ChronoValue, ...args) {
         const graph             = this.graph as ChronoGraph
@@ -151,15 +161,15 @@ class ChronoAtom extends base {
         if (graph) {
             this.proposedValue      = proposedValue
 
-            if (this.setterPropagation) {
-                this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
-            }
+            // if (this.setterPropagation) {
+            //     this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
+            // }
 
             graph.markAsNeedRecalculation(this)
 
             graph.propagate()
         } else {
-            this.value              = proposedValue
+            this.writeValue(proposedValue)
         }
     }
 
