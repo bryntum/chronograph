@@ -1,9 +1,10 @@
-import {ChronoAtom, identity} from "../chrono/Atom.js";
+import {ChronoAtom, ChronoValue} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
 import { Base, Constructable, Mixin, AnyConstructor} from "../class/Mixin.js";
 import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
 import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
+import {ResolverFunc} from "./Reference.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -28,7 +29,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
             const entity        = this.$entity
 
-            this.$$             = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
+            if (!this.$$) this.$$ = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
 
             if (!this.$) this.$ = <any>{}
 
@@ -57,7 +58,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                     // value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
 
                     calculationContext  : calculationFunction ? this : undefined,
-                    calculation         : calculationFunction || identity,
+                    calculation         : calculationFunction,
 
                     // setterPropagation   : field.atomSetterPropagation
                 })
@@ -91,7 +92,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                 shouldCommitValue   : !field.continued,
 
                 calculationContext  : calculationFunction ? this : undefined,
-                calculation         : calculationFunction || identity,
+                calculation         : calculationFunction,
 
                 // setterPropagation   : field.atomSetterPropagation
             })
@@ -189,7 +190,7 @@ export const EntityBase = <T extends Constructable<EntityAny & Base>>(base : T) 
 class EntityBase extends base {
 
     initialize (config : object) {
-        this.initAtoms(config)
+        this.initAtoms(config || {})
 
         super.initialize(config)
     }
@@ -281,7 +282,7 @@ export const storage : PropertyDecorator = generalField(ReferenceStorageField)
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const reference = function (/*entity*/_ : AnyConstructor<EntityAny>, storageKey : string) : PropertyDecorator {
+export const reference = function (storageKey : string) : PropertyDecorator {
     return generalField(ReferenceField, { storageKey })
 }
 
@@ -298,6 +299,19 @@ export const continuationOf = function (continuationOfAtomName : string) : Prope
         precedingField.continued    = true
     }
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorator {
+
+    return function (target : EntityAny, propertyKey : string) : void {
+        const entity            = target.$entity
+        const field             = entity.getField(propertyKey) as ReferenceField
+
+        field.resolver          = resolverFunc
+    }
+}
+
 
 
 //---------------------------------------------------------------------------------------------------------------------

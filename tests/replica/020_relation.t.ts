@@ -20,7 +20,7 @@ StartTest(t => {
 
         @entity
         class Book extends EntityBase(EntityAny(Base)) {
-            @reference(Author, 'books')
+            @reference('books')
             writtenBy       : Author
         }
 
@@ -52,59 +52,4 @@ StartTest(t => {
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
     })
-
-
-    // t.it('Replica', t => {
-    //     const SomeSchema        = Schema.new({ name : 'Cool data schema' })
-    //
-    //     const entity            = SomeSchema.getEntityDecorator()
-    //
-    //     type Id = string
-    //
-    //     @entity
-    //     class Author extends Entity(Base) {
-    //         @field
-    //         id              : Id
-    //     }
-    //
-    //     @entity
-    //     class Book extends Entity(Base) {
-    //         @field
-    //         name            : string
-    //
-    //         @field
-    //         writtenBy       : Id
-    //     }
-    //
-    //     // // Author.addPrimaryKey(PrimaryKey.new({
-    //     // //     fieldSet        : [ Author.getField('id') ]
-    //     // // }))
-    //     // //
-    //     // //
-    //     // // Book.addForeignKey(ForeignKey.new({
-    //     // //     fieldSet                : [ Book.getField('writtenBy') ],
-    //     // //     referencedFieldSet      : [ Author.getField('id') ],
-    //     // //
-    //     // //     referencedEntity        : Author.getEntity()
-    //     // // }))
-    //     //
-    //     // const replica1          = MinimalReplica.new({ schema : SomeSchema })
-    //     //
-    //     // const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
-    //     // const tomSoyer          = Book.new({ name : 'Tom Soyer', writtenBy : markTwain })
-    //     //
-    //     // replica1.addEntity(markTwain)
-    //     // replica1.addEntity(tomSoyer)
-    //     //
-    //     // replica1.propagate()
-    //     //
-    //     // t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
-    //     //
-    //     // markTwain.firstName     = 'MARK'
-    //     //
-    //     // replica1.propagate()
-    //     //
-    //     // t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
-    // })
-
 })
