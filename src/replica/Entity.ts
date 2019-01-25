@@ -1,9 +1,9 @@
-import {ChronoAtom, ChronoValue, identity} from "../chrono/Atom.js";
+import {ChronoAtom, identity} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {chronoId, ChronoId} from "../chrono/Id.js";
-import {AnyConstructor1, Base, Constructable, Mixin} from "../class/Mixin.js";
+import { Base, Constructable, Mixin, AnyConstructor} from "../class/Mixin.js";
 import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
-import {FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
+import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         $internalId     : ChronoId
 
 
-        initAtoms (config) {
+        initAtoms (config : object) {
             // TODO move to property initializers
             if (this.$internalId == null) this.$internalId = chronoId()
 
@@ -188,7 +188,7 @@ export const EntityBase = <T extends Constructable<EntityAny & Base>>(base : T) 
 
 class EntityBase extends base {
 
-    initialize (config) {
+    initialize (config : object) {
         this.initAtoms(config)
 
         super.initialize(config)
@@ -281,7 +281,7 @@ export const storage : PropertyDecorator = generalField(ReferenceStorageField)
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const reference = function (entity : AnyConstructor1<EntityAny>, storageKey : string) : PropertyDecorator {
+export const reference = function (/*entity*/_ : AnyConstructor<EntityAny>, storageKey : string) : PropertyDecorator {
     return generalField(ReferenceField, { storageKey })
 }
 
@@ -304,7 +304,7 @@ export const continuationOf = function (continuationOfAtomName : string) : Prope
 export const calculate = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
-    return function (target : EntityAny, propertyKey : string, descriptor : TypedPropertyDescriptor<any>) : void {
+    return function (target : EntityAny, propertyKey : string, /*descriptor*/_ : TypedPropertyDescriptor<any>) : void {
         let calculations        = target.$calculations
 
         if (!calculations) calculations = target.$calculations = <any>{}

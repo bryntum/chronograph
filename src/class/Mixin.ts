@@ -33,28 +33,25 @@ export class Base {
     }
 }
 
-export type BaseConstructor         = typeof Base
+export type BaseConstructor           = typeof Base
 
 
 //---------------------------------------------------------------------------------------------------------------------
 
-export type AnyConstructor          = new (...input: any[]) => any
-export type AnyConstructor1<A>      = new (...input: any[]) => A
+export type AnyConstructor<A = any>   = new (...input: any[]) => A
 
 
-export type AnyFunction             = (...input: any[]) => any
-export type AnyFunction1<A>         = (...input: any[]) => A
-
+export type AnyFunction<A = any>      = (...input: any[]) => A
 
 //---------------------------------------------------------------------------------------------------------------------
-export type Constructable<T>        = new (...args : any[]) => T
+export type Constructable<T>          = AnyConstructor<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
 
 export type MixinConstructor<T extends AnyFunction> =
-    T extends AnyFunction1<typeof Base> ? ReturnType<T> & typeof Base : ReturnType<T>
+    T extends AnyFunction<typeof Base> ? ReturnType<T> & typeof Base : ReturnType<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -65,7 +62,6 @@ type FilterFlags<Base, Condition> = {
 type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[ keyof Base ]
 
 export type OnlyPropertiesOfType<Base, Type> = Pick<Base, AllowedNames<Base, Type>>
-
 
 /*
 
