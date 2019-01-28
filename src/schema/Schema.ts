@@ -1,7 +1,7 @@
 import {AnyFunction, Base} from "../class/Mixin.js";
 import {MinimalFieldAtom} from "../replica/Atom.js";
 import {MinimalFlagAtom} from "../replica/Flag.js";
-import {MinimalReferenceAtom, MinimalReferenceStorageAccumulator} from "../replica/Reference.js";
+import {MinimalReferenceAtom, MinimalReferenceStorageAccumulator, ResolverFunc} from "../replica/Reference.js";
 
 export type Name    = string
 export type Type    = string
@@ -25,13 +25,15 @@ export class Field extends Base {
     continuationOf      : Field
 
     atomCls                 : typeof MinimalFieldAtom   = MinimalFieldAtom
-    atomSetterPropagation   : AnyFunction
+    // atomSetterPropagation   : AnyFunction
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceField extends Field {
     atomCls             : typeof MinimalFieldAtom   = MinimalReferenceAtom
+
+    resolver            : ResolverFunc
 
     storageKey          : Name
 }
@@ -47,6 +49,8 @@ export class ReferenceField extends Field {
 export class ReferenceStorageField extends Field {
     persistent          : boolean   = false
 
+    // resolver            : ResolverFunc
+
     atomCls             : typeof MinimalReferenceStorageAccumulator = MinimalReferenceStorageAccumulator
 }
 
@@ -58,9 +62,6 @@ export class Entity extends Base {
     fields              : Map<Name, Field>      = new Map()
 
     schema              : Schema
-
-    // primaryKeys         : PrimaryKey[]          = []
-    // foreignKeys         : ForeignKey[]          = []
 
 
     hasField (name : Name) : boolean {
@@ -77,7 +78,9 @@ export class Entity extends Base {
         const name      = field.name
 
         if (!name) throw new Error(`Field must have a name`)
-        if (this.hasField(name)) throw new Error(`Field with name [${String(name)}] already exists`)
+
+        // TODO uncomment this! (commented because of the mess in SchEng)
+        // if (this.hasField(name)) throw new Error(`Field with name [${String(name)}] already exists`)
 
         field.entity    = this
 
@@ -90,21 +93,6 @@ export class Entity extends Base {
     createField (name : Name) : Field {
         return this.addField(Field.new({ name }))
     }
-
-
-    // addPrimaryKey (key : PrimaryKey) {
-    //     key.entity      = this
-    //
-    //     this.primaryKeys.push(key)
-    // }
-    //
-    //
-    // addForeignKey (key : ForeignKey) {
-    //     key.entity      = this
-    //
-    //     this.foreignKeys.push(key)
-    // }
-
 }
 
 
@@ -160,35 +148,3 @@ export class Schema extends Base {
         }
     }
 }
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export class Reference extends Base {
-//     entity                  : Entity
-//
-//     fieldSet                : Field[]   = []
-// }
-//
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export class FieldSet extends Base {
-//     entity                  : Entity
-//
-//     fieldSet                : Field[]   = []
-// }
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export class PrimaryKey extends FieldSet {
-// }
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export class ForeignKey extends FieldSet {
-//     referenceName           : string
-//
-//     referencedFieldSet      : Field[]   = []
-//
-//     referencedEntity        : Entity
-// }

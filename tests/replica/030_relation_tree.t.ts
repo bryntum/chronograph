@@ -17,7 +17,7 @@ StartTest(t => {
             @storage
             children            : Set<TreeNode>
 
-            @reference(TreeNode, 'children')
+            @reference('children')
             parent              : TreeNode
         }
 

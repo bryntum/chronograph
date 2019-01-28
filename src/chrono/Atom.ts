@@ -10,24 +10,15 @@ export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | T>
 
 //---------------------------------------------------------------------------------------------------------------------
 export type SyncChronoCalculation   = (...args) => ChronoIterator
-export type AsyncChronoCalculation  = (...args) => ChronoIterator
 
 //---------------------------------------------------------------------------------------------------------------------
 export const strictEquality     = (v1, v2) => v1 === v2
 
-
-//---------------------------------------------------------------------------------------------------------------------
-export const strictWithDatesEquality = (v1, v2) => {
+export const strictEqualityWithDates = (v1, v2) => {
     if ((v1 instanceof Date) && (v2 instanceof Date)) return <any>v1 - <any>v2 === 0
 
     return v1 === v2
 }
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const identity           = function *(v) { return v !== undefined ? v : this.value }
-
-// export const identityAsync      = function *(v) { return v !== undefined ? v : this.value }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -43,11 +34,10 @@ class ChronoAtom extends base {
 
     graph               : IChronoGraph
 
-    equality            : (v1, v2) => boolean       = strictWithDatesEquality
+    equality            : (v1, v2) => boolean       = strictEqualityWithDates
 
     calculationContext  : any
-    calculation         : SyncChronoCalculation     = identity
-    // calculationAsync    : AsyncChronoCalculation    = identityAsync
+    calculation         : SyncChronoCalculation
 
     observedDuringCalculation   :  ChronoAtom[]     = []
 
@@ -64,9 +54,17 @@ class ChronoAtom extends base {
     }
 
 
+    * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
+        if (this.calculation) {
+            return yield* this.calculation.call(this.calculationContext || this, proposedValue)
+        } else
+            // identity case
+            return proposedValue !== undefined ? proposedValue : this.readValue()
+    }
+
+
     commitValue () {
-        if (this.shouldCommitValue)
-            this.writeValue(this.nextStableValue)
+        if (this.shouldCommitValue) this.writeValue(this.nextStableValue)
 
         this.nextStableValue    = undefined
         this.proposedValue      = undefined
@@ -158,18 +156,10 @@ class ChronoAtom extends base {
     set (proposedValue? : ChronoValue, ...args) {
         const graph             = this.graph as ChronoGraph
 
+        this.put(proposedValue, ...args)
+
         if (graph) {
-            this.proposedValue      = proposedValue
-
-            // if (this.setterPropagation) {
-            //     this.setterPropagation.call(this.calculationContext || this, proposedValue, ...args)
-            // }
-
-            graph.markAsNeedRecalculation(this)
-
             graph.propagate()
-        } else {
-            this.writeValue(proposedValue)
         }
     }
 
