@@ -7,6 +7,24 @@ import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 import {ResolverFunc} from "./Reference.js";
 
 
+// LAZY ATOMS CREATION - investigate if it improves performance
+// current issues
+// 1) when entity enters a graph, the yet unreferenced atoms are not created yet (naturally)
+// so they are not calculated
+// need to create AND calculate them immediately later, on-demand
+// 2) the hack of creating the entity in the upper-most prototype conflicts with this
+
+// const atomsCollectionMixin = (base : typeof Base, name) =>
+//
+// class AtomsCollection extends base {
+// POSSIBLE OPTIMIZATION - use more than 1 getter, like: const atomsCollectionMixin = (base : typeof Base, name1, name2, name3)
+//     get [name] () {
+//         return super[ name ] = (this as any).host.createFieldAtom(name)
+//     }
+// }
+//
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
@@ -14,6 +32,32 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         $entity         : EntityData
 
         $calculations   : { [s in keyof this] : string }
+
+// LAZY ATOMS CREATION - investigate if it improves performance
+//         static atomsCollectionCls : AnyConstructor
+//
+//         static getAtomsCollectionCls () : AnyConstructor {
+//             if (this.atomsCollectionCls) return this.atomsCollectionCls
+//
+//             let cls         = Base
+//
+//             this.prototype.$entity.fields.forEach((field : Field, name : Name) => {
+//                 cls         = atomsCollectionMixin(cls, name)
+//             })
+//
+//             return this.atomsCollectionCls = cls
+//         }
+//
+//
+//         get $ () : { [s in keyof this] : MinimalFieldAtom } {
+//             // @ts-ignore
+//             const atomsCollection   = this.constructor.getAtomsCollectionCls().new()
+//
+//             Object.defineProperty(atomsCollection, 'host', { enumerable : false, value : this })
+//
+//             // @ts-ignore
+//             return super.$          = atomsCollection
+//         }
 
 
         get $() : { [s in keyof this] : MinimalFieldAtom } {
@@ -246,7 +290,7 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
                 }
             })
 
-            const setterFnName = `set${propertyKey.slice(0, 1).toUpperCase()}${propertyKey.slice(1)}`
+            const setterFnName = `set${ propertyKey.slice(0, 1).toUpperCase() }${ propertyKey.slice(1) }`
 
             if (!(setterFnName in target)) {
                 target[ setterFnName ] = function (value : any) : Promise<any> {
