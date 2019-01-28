@@ -41,12 +41,12 @@ class WalkableForwardNode extends base {
     }
 
 
-    getOutgoing (context : WalkContext) : WalkableForwardNode[] {
+    getOutgoing (_/*context*/ : WalkContext) : WalkableForwardNode[] {
         return Array.from(this.outgoing)
     }
 
 
-    forEachOutgoing (context : WalkForwardContext, func : (WalkableForward) => any) {
+    forEachOutgoing (_/*context*/ : WalkForwardContext, func : (_ : WalkableForward) => any) {
         this.outgoing.forEach(func)
     }
 }
@@ -95,11 +95,11 @@ class WalkableBackwardNode extends base {
     }
 
 
-    getIncoming (context : WalkContext) : WalkableBackwardNode[] {
+    getIncoming (_/*context*/ : WalkContext) : WalkableBackwardNode[] {
         return Array.from(this.incoming)
     }
 
-    forEachIncoming(context : WalkBackwardContext, func : (WalkableBackward) => any) {
+    forEachIncoming(_/*context*/ : WalkBackwardContext, func : (_ : WalkableBackward) => any) {
         this.incoming.forEach(func)
     }
 }
