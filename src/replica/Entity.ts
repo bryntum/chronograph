@@ -15,75 +15,83 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
         $calculations   : { [s in keyof this] : string }
 
-        // TODO figure out how to filter fields only (see OnlyPropertiesOfType)
-        $               : { [s in keyof this] : MinimalFieldAtom }
 
-        $$              : MinimalEntityAtom
+        get $() : { [s in keyof this] : MinimalFieldAtom } {
+            const atomsCollection   = {}
 
-        $internalId     : ChronoId
-
-
-        initAtoms (config : object) {
-            // TODO move to property initializers
-            if (this.$internalId == null) this.$internalId = chronoId()
-
-            const entity        = this.$entity
-
-            if (!this.$$) this.$$ = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
-
-            if (!this.$) this.$ = <any>{}
-
-            const fields        = this.$
-
-            entity.fields.forEach((field : Field, name : Name) => {
-                if (fields[ name ]) {
-                    // DIRTY HACK
-                    if (config && config.hasOwnProperty(name)) {
-                        fields[ name ].writeValue(config[ name ])
-                    }
-                    return
-                }
-
-                const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
-
-                const fieldAtom = fields[ name ] = field.atomCls.new({
-                    id          : `${this.$internalId}/${name}`,
-
-                    field       : field,
-
-                    self        : this,
-
-                    shouldCommitValue   : !field.continued,
-
-                    // value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
-
-                    calculationContext  : calculationFunction ? this : undefined,
-                    calculation         : calculationFunction,
-
-                    // setterPropagation   : field.atomSetterPropagation
-                })
-
-                if (config.hasOwnProperty(name)) {
-                    fieldAtom.writeValue(config[name])
-                }
-                else if (this[ name ] !== undefined) {
-                    fieldAtom.writeValue(this[ name ])
-                }
+            this.$entity.fields.forEach((field : Field, name : Name) => {
+                atomsCollection[ name ] = this.createFieldAtom(name)
             })
+
+            // @ts-ignore
+            return super.$          = atomsCollection
         }
+
+
+        get $$() : MinimalEntityAtom {
+            // @ts-ignore
+            return super.$$ = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
+        }
+
+
+        // initAtoms (config : object) {
+        //     // TODO move to property initializers
+        //     if (this.$internalId == null) this.$internalId = chronoId()
+        //
+        //     const entity        = this.$entity
+        //
+        //     // if (!this.$$) this.$$ = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
+        //
+        //     // if (!this.$) this.$ = <any>{}
+        //
+        //     const fields        = this.$
+        //
+        //     entity.fields.forEach((field : Field, name : Name) => {
+        //         if (fields[ name ]) {
+        //             // DIRTY HACK
+        //             if (config && config.hasOwnProperty(name)) {
+        //                 fields[ name ].writeValue(config[ name ])
+        //             }
+        //             return
+        //         }
+        //
+        //         const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
+        //
+        //         const fieldAtom = fields[ name ] = field.atomCls.new({
+        //             id          : `${this.$$.id}/${name}`,
+        //
+        //             field       : field,
+        //
+        //             self        : this,
+        //
+        //             shouldCommitValue   : !field.continued,
+        //
+        //             // value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
+        //
+        //             calculationContext  : calculationFunction ? this : undefined,
+        //             calculation         : calculationFunction,
+        //
+        //             // setterPropagation   : field.atomSetterPropagation
+        //         })
+        //
+        //         if (config.hasOwnProperty(name)) {
+        //             fieldAtom.writeValue(config[name])
+        //         }
+        //         else if (this[ name ] !== undefined) {
+        //             fieldAtom.writeValue(this[ name ])
+        //         }
+        //     })
+        // }
 
 
         // the actually returned type is `FieldAtom`, but this does not typecheck - circularity
         createFieldAtom (name : Name) : ChronoAtom {
-            // TODO move to property initializers
-            if (this.$internalId == null) this.$internalId = chronoId()
-
             const field     = this.$entity.getField(name)
 
             const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
 
             return field.atomCls.new({
-                id          : `${this.$internalId}/${name}`,
+                id          : `${this.$$.id}/${name}`,
 
                 field       : field,
 
@@ -93,8 +101,6 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
                 calculationContext  : calculationFunction ? this : undefined,
                 calculation         : calculationFunction,
-
-                // setterPropagation   : field.atomSetterPropagation
             })
         }
 
@@ -189,11 +195,11 @@ export const EntityBase = <T extends Constructable<EntityAny & Base>>(base : T) 
 
 class EntityBase extends base {
 
-    initialize (config : object) {
-        this.initAtoms(config || {})
-
-        super.initialize(config)
-    }
+    // initialize (config : object) {
+    //     this.initAtoms(config || {})
+    //
+    //     super.initialize(config)
+    // }
 }
 
 export type EntityBase = Mixin<typeof EntityBase>
@@ -207,45 +213,35 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
 
         if (!entity) {
             // NOTE: entity should be created at the topmost non native prototype
-            //       such it will be accessable from any topmost mixin static methods or accessors
-            //       it might not be obvious why it's usefull here, but further experience has shown
+            //       such it will be accessible from any topmost mixin static methods or accessors
+            //       it might not be obvious why it's useful here, but further experience has shown
             //       that it is.
             // TODO: review
-            let entityTarget = target,
-                nextPrototype = Object.getPrototypeOf(entityTarget)
+            let entityTarget    = target,
+                nextPrototype   = Object.getPrototypeOf(entityTarget)
 
             while (nextPrototype !== Object.prototype) {
-                entityTarget = nextPrototype
-                nextPrototype = Object.getPrototypeOf(nextPrototype)
+                entityTarget    = nextPrototype
+                nextPrototype   = Object.getPrototypeOf(nextPrototype)
             }
 
-            entity = entityTarget.$entity = EntityData.new()
+            entity              = entityTarget.$entity = EntityData.new()
         }
 
-        const field = entity.addField(fieldCls.new(Object.assign(fieldConfig || {}, {
-            name            : propertyKey
-        })));
+        const field             = entity.addField(
+            fieldCls.new(Object.assign(fieldConfig || {}, {
+                name            : propertyKey
+            }))
+        );
 
         if (field.createAccessors) {
 
             Object.defineProperty(target, propertyKey, {
                 get     : function () {
-                    if (!this.$) this.$ = {}
-
-                    let field       = this.$[ propertyKey ]
-
-                    if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
                     return this.$[ propertyKey ].get()
                 },
 
                 set     : function (value : any) {
-                    if (!this.$) this.$ = {}
-
-                    let field       = this.$[ propertyKey ]
-
-                    if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
                     return this.$[ propertyKey ].put(value)
                 }
             })
@@ -253,13 +249,7 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
             const setterFnName = `set${propertyKey.slice(0, 1).toUpperCase()}${propertyKey.slice(1)}`
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function(value : any) : Promise<any> {
-                    if (!this.$) this.$ = {}
-
-                    let field       = this.$[ propertyKey ]
-
-                    if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-
+                target[ setterFnName ] = function (value : any) : Promise<any> {
                     return this.$[ propertyKey ].set(value)
                 }
             }
@@ -272,40 +262,6 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
 //---------------------------------------------------------------------------------------------------------------------
 // `target` will be a prototype of the class with Entity mixin
 export const field : PropertyDecorator = generalField(Field)
-
-// //---------------------------------------------------------------------------------------------------------------------
-// // `target` will be a prototype of the class with Entity mixin
-// export const flag : PropertyDecorator = function (target : EntityAny, propertyKey : string) : void {
-//     let entity      = target.$entity
-//
-//     if (!entity) entity = target.$entity = EntityData.new()
-//
-//     entity.addField(FlagField.new({
-//         name            : propertyKey
-//     }))
-//
-//     Object.defineProperty(target, propertyKey, {
-//         get     : function () {
-//             if (!this.$) this.$ = {}
-//
-//             let field       = this.$[ propertyKey ]
-//
-//             if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-//
-//             return this.$[ propertyKey ].get(...arguments)
-//         },
-//
-//         set     : function () {
-//             if (!this.$) this.$ = {}
-//
-//             let field       = this.$[ propertyKey ]
-//
-//             if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
-//
-//             return this.$[ propertyKey ].set(...arguments)
-//         }
-//     })
-// }
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -104,8 +104,6 @@ class ReferenceAtom extends base {
 
 
     getStorage (entity : EntityAny) : ReferenceStorageAtom {
-        if (!entity.$) entity.initAtoms({})
-
         return entity.$[ this.field.storageKey ]
     }
 
