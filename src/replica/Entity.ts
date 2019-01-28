@@ -205,7 +205,22 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
     return function (target : EntityAny, propertyKey : string) : void {
         let entity      = target.$entity
 
-        if (!entity) entity = target.$entity = EntityData.new()
+        if (!entity) {
+            // NOTE: entity should be created at the topmost non native prototype
+            //       such it will be accessable from any topmost mixin static methods or accessors
+            //       it might not be obvious why it's usefull here, but further experience has shown
+            //       that it is.
+            // TODO: review
+            let entityTarget = target,
+                nextPrototype = Object.getPrototypeOf(entityTarget)
+
+            while (nextPrototype !== Object.prototype) {
+                entityTarget = nextPrototype
+                nextPrototype = Object.getPrototypeOf(nextPrototype)
+            }
+
+            entity = entityTarget.$entity = EntityData.new()
+        }
 
         const field = entity.addField(fieldCls.new(Object.assign(fieldConfig || {}, {
             name            : propertyKey
