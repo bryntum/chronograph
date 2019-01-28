@@ -7,7 +7,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Replica', t => {
+    t.it('Replica', async t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
@@ -30,7 +30,7 @@ StartTest(t => {
 
         replica1.addEntities([ node1, node2, node3, node4 ])
 
-        replica1.propagate()
+        await replica1.propagate()
 
         t.isDeeply(node1.children, new Set([ node2, node3 ]), 'Correctly resolved `children` reference')
         t.isDeeply(node2.children, new Set([ node4 ]), 'Correctly resolved `children` reference')

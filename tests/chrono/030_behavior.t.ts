@@ -5,7 +5,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Behavior depending from data', t => {
+    t.it('Behavior depending from data', async t => {
         const graph : ChronoGraph  = MinimalChronoGraph.new()
 
         const box0 : ChronoAtom        = graph.createAtom()
@@ -22,30 +22,26 @@ StartTest(t => {
             }
         }))
 
-        box0.set('sum')
-        box1.set(0)
-        box2.set(1)
+        box0.put('sum')
+        box1.put(0)
+        box2.put(1)
 
-        graph.propagate()
+        await graph.propagate()
 
         t.is(box3.get(), 1, "Correct result calculated")
 
-        box1.set(1)
-
-        graph.propagate()
+        await box1.set(1)
 
         t.is(box3.get(), 2, "Correct result calculated")
 
-        box0.set('mul')
-
-        graph.propagate()
+        await box0.set('mul')
 
         t.is(box3.get(), 1, "Correct result calculated after behavior change")
 
-        box1.set(2)
-        box2.set(2)
+        box1.put(2)
+        box2.put(2)
 
-        graph.propagate()
+        await graph.propagate()
 
         t.is(box3.get(), 4, "Correct result calculated after behavior change")
     })

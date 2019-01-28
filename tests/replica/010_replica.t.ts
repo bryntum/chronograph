@@ -7,7 +7,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Replica', t => {
+    t.it('Replica', async t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
@@ -62,13 +62,13 @@ StartTest(t => {
         replica1.addEntity(markTwain)
         replica1.addEntity(tomSoyer)
 
-        replica1.propagate()
+        await replica1.propagate()
 
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 
         markTwain.firstName     = 'MARK'
 
-        replica1.propagate()
+        await replica1.propagate()
 
         t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
     })

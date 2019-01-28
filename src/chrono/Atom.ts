@@ -153,14 +153,21 @@ class ChronoAtom extends base {
 
     // setterPropagation       : AnyFunction
 
-    set (proposedValue? : ChronoValue, ...args) {
+    set (proposedValue? : ChronoValue, ...args) : Promise<any> {
         const graph             = this.graph as ChronoGraph
 
         this.put(proposedValue, ...args)
 
+        let result : Promise<any>;
+
         if (graph) {
-            graph.propagate()
+            result = graph.propagate()
         }
+        else {
+            result = Promise.resolve()
+        }
+
+        return result
     }
 
 

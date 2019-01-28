@@ -30,7 +30,7 @@ export interface IChronoGraph {
 
     commit ()
     reject ()
-    propagate ()
+    propagate () : Promise<any>
 }
 
 
@@ -265,7 +265,7 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    propagate () {
+    propagate () : Promise<any> {
         const toCalculate       = []
         const maybeDirty        = new Set()
         const conts             = new Map<ChronoAtom, ChronoContinuation>()
@@ -358,6 +358,8 @@ class ChronoGraph extends base implements IChronoGraph {
         }
 
         this.commit()
+
+        return Promise.resolve()
     }
 
 

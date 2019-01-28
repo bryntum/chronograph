@@ -5,7 +5,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it("Should be performant", t => {
+    t.it("Should be performant", async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         let atomNum     = 50000
@@ -62,32 +62,30 @@ StartTest(t => {
 
         console.time("Calc #0")
 
-        graph.propagate()
+        await graph.propagate()
 
         console.timeEnd("Calc #0");
 
         t.chain(
-            next => {
+            async next => {
                 boxes[ 0 ].put(0)
 
                 console.time("Calc #1")
                 // console.profile('Propagate')
 
-                graph.propagate()
+                await graph.propagate()
 
                 // console.profileEnd()
                 console.timeEnd("Calc #1");
 
                 console.log("Result: ", boxes[ boxes.length - 1 ].get())
-
-                next()
             },
-            next => {
+            async next => {
                 boxes[ 49500 ].put(0)
 
                 console.time("Calc #2");
 
-                graph.propagate()
+                await graph.propagate()
 
                 console.timeEnd("Calc #2");
 

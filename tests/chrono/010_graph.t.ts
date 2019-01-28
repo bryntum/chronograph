@@ -5,7 +5,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Lazy calculated atom, values pre-defined', t => {
+    t.it('Lazy calculated atom, values pre-defined', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const atom1 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new({ value : 0 }))
@@ -21,14 +21,14 @@ StartTest(t => {
 
         t.is(atom3.hasValue(), false, 'Atom has no value')
 
-        graph.propagate()
+        await graph.propagate()
 
         t.is(atom3.hasValue(), true, "Correct result calculated")
         t.is(atom3.get(), 1, "Correct result calculated")
     })
 
 
-    t.it('Calculated atom, values set dynamically', t => {
+    t.it('Calculated atom, values set dynamically', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const atom1 : ChronoAtom    = graph.addNode(MinimalChronoAtom.new())
@@ -40,17 +40,17 @@ StartTest(t => {
             }
         }))
 
-        atom1.set(0)
-        atom2.set(1)
+        atom1.put(0)
+        atom2.put(1)
 
-        graph.propagate()
+        await graph.propagate()
 
         t.is(atom3.hasValue(), true, "Correct result calculated")
         t.is(atom3.get(), 1, "Correct result calculated")
     })
 
 
-    t.it('2 mutations in graph context', t => {
+    t.it('2 mutations in graph context', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const box1 : ChronoAtom         = graph.getOrCreateAtom('inp1')
@@ -79,11 +79,11 @@ StartTest(t => {
             }
         }))
 
-        box1.set(0)
-        box2.set(0)
-        box3.set(1)
+        box1.put(0)
+        box2.put(0)
+        box3.put(1)
 
-        graph.propagate()
+        await graph.propagate()
 
         t.isDeeply(box1p2.incoming, new Set([ box1, box2 ]), 'Correct incoming edges for box1ps')
         t.isDeeply(res.incoming, new Set([ box1p2, box3 ]), 'Correct incoming edges for res')
@@ -93,18 +93,14 @@ StartTest(t => {
         t.is(box1p2.get(), 0, "Correct result calculated")
         t.is(res.get(), 1, "Correct result calculated")
 
-        box1.set(1)
-
-        graph.propagate()
+        await box1.set(1)
 
         t.isDeeply(res.incoming, new Set([ box1p2, box3 ]), 'Correct incoming edges for res')
 
         t.is(box1p2.get(), 1, "Correct result calculated")
         t.is(res.get(), 2, "Correct result calculated")
 
-        box2.set(1)
-
-        graph.propagate()
+        await box2.set(1)
 
         t.isDeeply(res.incoming, new Set([ box1p2, box3 ]), 'Correct incoming edges for res')
 
@@ -113,7 +109,7 @@ StartTest(t => {
     })
 
 
-    t.it('2 mutations in graph context', t => {
+    t.it('2 mutations in graph context', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const box1 : ChronoAtom         = graph.getOrCreateAtom('inp1')
@@ -137,11 +133,11 @@ StartTest(t => {
             }
         }))
 
-        box1.set(0)
-        box2.set(0)
-        box3.set(1)
+        box1.put(0)
+        box2.put(0)
+        box3.put(1)
 
-        graph.propagate()
+        await graph.propagate()
 
         t.is(box1p2.get(), 0, "Correct result calculated")
         t.is(res.get(), 1, "Correct result calculated")
@@ -149,9 +145,7 @@ StartTest(t => {
         const calculation1Spy   = t.spyOn(box1p2, 'calculation')
         const calculation2Spy   = t.spyOn(res, 'calculation')
 
-        box1.set(10)
-
-        graph.propagate()
+        await box1.set(10)
 
         t.expect(calculation1Spy).toHaveBeenCalled(1)
         t.expect(calculation2Spy).toHaveBeenCalled(1)
@@ -166,9 +160,7 @@ StartTest(t => {
         const spy1              = t.spyOn(box1, 'forEachIncoming')
         const spy2              = t.spyOn(box1, 'forEachOutgoing')
 
-        box3.set(2)
-
-        graph.propagate()
+        await box3.set(2)
 
         t.expect(calculation1Spy$).toHaveBeenCalled(0)
         t.expect(calculation2Spy$).toHaveBeenCalled(1)
@@ -180,7 +172,7 @@ StartTest(t => {
     })
 
 
-    t.it('Deep mark as need recalculations', t => {
+    t.it('Deep mark as need recalculations', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const atom0 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
@@ -211,12 +203,12 @@ StartTest(t => {
             }
         }))
 
-        atom0.set(0)
+        await atom0.set(0)
 
         t.is(atom2.get(), 2, "Correct result calculated for atom2")
         t.is(atom3.get(), 2, "Correct result calculated for atom3")
 
-        atom0.set(1)
+        await atom0.set(1)
 
         t.is(atom2.get(), 3, "Correct result calculated for atom2")
         t.is(atom3.get(), 4, "Correct result calculated for atom3")

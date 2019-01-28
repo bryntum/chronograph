@@ -211,27 +211,44 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
             name            : propertyKey
         })));
 
-        field.createAccessors && Object.defineProperty(target, propertyKey, {
-            get     : function () {
-                if (!this.$) this.$ = {}
+        if (field.createAccessors) {
 
-                let field       = this.$[ propertyKey ]
+            Object.defineProperty(target, propertyKey, {
+                get     : function () {
+                    if (!this.$) this.$ = {}
 
-                if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+                    let field       = this.$[ propertyKey ]
 
-                return this.$[ propertyKey ].get(...arguments)
-            },
+                    if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
 
-            set     : function () {
-                if (!this.$) this.$ = {}
+                    return this.$[ propertyKey ].get()
+                },
 
-                let field       = this.$[ propertyKey ]
+                set     : function (value : any) {
+                    if (!this.$) this.$ = {}
 
-                if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+                    let field       = this.$[ propertyKey ]
 
-                return this.$[ propertyKey ].set(...arguments)
+                    if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+                    return this.$[ propertyKey ].put(value)
+                }
+            })
+
+            const setterFnName = `set${propertyKey.slice(0, 1).toUpperCase()}${propertyKey.slice(1)}`
+
+            if (!(setterFnName in target)) {
+                target[ setterFnName ] = function(value : any) : Promise<any> {
+                    if (!this.$) this.$ = {}
+
+                    let field       = this.$[ propertyKey ]
+
+                    if (!field) field   = this.$[ propertyKey ] = this.createFieldAtom(propertyKey)
+
+                    return this.$[ propertyKey ].set(value)
+                }
             }
-        })
+        }
     }
 }
 
