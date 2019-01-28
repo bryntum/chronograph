@@ -55,11 +55,11 @@ export type MixinConstructor<T extends AnyFunction> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-type FilterFlags<Base, Condition> = {
+export type FilterFlags<Base, Condition> = {
     [Key in keyof Base] : Base[Key] extends Condition ? Key : never
 }
 
-type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[ keyof Base ]
+export type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[ keyof Base ]
 
 export type OnlyPropertiesOfType<Base, Type> = Pick<Base, AllowedNames<Base, Type>>
 
