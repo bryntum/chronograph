@@ -64,11 +64,13 @@ class ChronoAtom extends base {
 
 
     commitValue () {
-        if (this.shouldCommitValue) this.writeValue(this.nextStableValue)
+        const nextStableValue   = this.nextStableValue
 
         this.nextStableValue    = undefined
         this.proposedValue      = undefined
         this.proposedArgs       = undefined
+
+        if (this.shouldCommitValue) this.writeValue(nextStableValue)
     }
 
 
@@ -85,49 +87,37 @@ class ChronoAtom extends base {
         this.observedDuringCalculation  = []
     }
 
-
-    get () : ChronoValue {
-        const graph     = this.graph
-
-        if (graph) {
-            if (this.hasValue()) {
-                // if (graph.isObservingRead) graph.onReadObserved(this)
-
-                return this.nextStableValue !== undefined ? this.nextStableValue : this.readValue()
-            } else {
-                return undefined
-            }
-        } else {
-            return this.readValue()
-        }
+    hasValue () : boolean {
+        return this.hasNextStableValue() || this.hasProposedValue() || this.hasConsistentValue()
     }
 
 
-    // put (value : ChronoValue) : this {
-    //     const graph     = this.graph
-    //
-    //     if (graph) {
-    //         if (this.nextStableValue !== undefined) {
-    //             if (!this.equality(value, this.nextStableValue)) {
-    //                 throw new Error("Cyclic write")
-    //             } else {
-    //                 return this
-    //             }
-    //         } else {
-    //             if (this.hasConsistedValue()) {
-    //                 if (!this.equality(value, this.value)) {
-    //                     this.update(value)
-    //                 }
-    //             } else {
-    //                 this.update(value)
-    //             }
-    //         }
-    //     } else {
-    //         this.value  = value
-    //     }
-    //
-    //     return this
-    // }
+    hasNextStableValue () : boolean {
+        return this.nextStableValue !== undefined
+    }
+
+
+    hasConsistentValue () : boolean {
+        return this.readValue() !== undefined
+    }
+
+
+    hasProposedValue () : boolean {
+        return this.proposedArgs !== undefined
+    }
+
+
+    get () : ChronoValue {
+        if (this.hasNextStableValue()) {
+            return this.getNextStableValue()
+        }
+        else if (this.hasProposedValue()) {
+            return this.getProposedValue()
+        }
+        else {
+            return this.getConsistentValue()
+        }
+    }
 
 
     put (proposedValue : ChronoValue, ...args) {
@@ -143,13 +133,17 @@ class ChronoAtom extends base {
         }
     }
 
-
-    update (value : ChronoValue) {
-        this.nextStableValue  = value
-
-        this.graph.markAsNeedRecalculation(this)
+    getNextStableValue () : ChronoValue {
+        return this.nextStableValue
     }
 
+    getConsistentValue () : ChronoValue {
+        return this.readValue()
+    }
+
+    getProposedValue () : ChronoValue {
+        return this.proposedValue
+    }
 
     // setterPropagation       : AnyFunction
 
@@ -168,21 +162,6 @@ class ChronoAtom extends base {
         }
 
         return result
-    }
-
-
-    hasValue () : boolean {
-        return this.nextStableValue !== undefined || this.readValue() !== undefined
-    }
-
-
-    hasConsistedValue () : boolean {
-        return this.readValue() !== undefined
-    }
-
-
-    hasUserValue () : boolean {
-        return this.proposedArgs !== undefined
     }
 
 

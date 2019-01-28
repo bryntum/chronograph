@@ -234,7 +234,7 @@ class ChronoGraph extends base implements IChronoGraph {
             // ideally should be removed (same as while condition)
             if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) throw "Cycle"
 
-            let iterValue   = iterator.next(incomingAtom.get())
+            let iterValue   = iterator.next(incomingAtom.hasNextStableValue() ? incomingAtom.getNextStableValue() : incomingAtom.getConsistentValue())
 
             if (iterValue.done) {
                 return { value : iterValue.value }
@@ -338,10 +338,10 @@ class ChronoGraph extends base implements IChronoGraph {
                 const consistentValue   = calcRes.value
 
                 // console.log(`DONE ${sourceAtom}`)
-                if (!sourceAtom.equality(consistentValue, sourceAtom.get())) {
+                if (!sourceAtom.equality(consistentValue, sourceAtom.getConsistentValue())) {
                     changedAtoms.push(sourceAtom)
 
-                    sourceAtom.update(consistentValue)
+                    sourceAtom.nextStableValue = consistentValue
 
                     // toCalculate.unshift.apply(toCalculate, Array.from(sourceAtom.outgoing))
                     // sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
