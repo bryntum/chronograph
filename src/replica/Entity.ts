@@ -256,20 +256,6 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
         let entity      = target.$entity
 
         if (!target.hasOwnProperty('$entity')) {
-            // NOTE: entity should be created at the topmost non native prototype
-            //       such it will be accessible from any topmost mixin static methods or accessors
-            //       it might not be obvious why it's useful here, but further experience has shown
-            //       that it is.
-            // TODO: review
-            //let entityTarget    = target,
-            //    nextPrototype   = Object.getPrototypeOf(entityTarget)
-
-            //while (nextPrototype !== Object.prototype) {
-            //    entityTarget    = nextPrototype
-            //    nextPrototype   = Object.getPrototypeOf(nextPrototype)
-            //}
-
-            //entity              = entityTarget.$entity = EntityData.new()
             entity              = target.$entity = EntityData.new({ parentEntity : Object.getPrototypeOf(target).$entity })
         }
 
