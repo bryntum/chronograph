@@ -2,6 +2,7 @@ import {AnyFunction, Base} from "../class/Mixin.js";
 import {MinimalFieldAtom} from "../replica/Atom.js";
 import {MinimalFlagAtom} from "../replica/Flag.js";
 import {MinimalReferenceAtom, MinimalReferenceStorageAccumulator, ResolverFunc} from "../replica/Reference.js";
+import { EntityAny, field } from "../replica/Entity.js";
 
 export type Name    = string
 export type Type    = string
@@ -63,6 +64,8 @@ export class Entity extends Base {
 
     schema              : Schema
 
+    parentEntity        : Entity
+
 
     hasField (name : Name) : boolean {
         return this.fields.has(name)
@@ -92,6 +95,24 @@ export class Entity extends Base {
 
     createField (name : Name) : Field {
         return this.addField(Field.new({ name }))
+    }
+
+
+    forEachField (func : (field : Field, name : Name) => void) {
+        const visited : Set<Name> = new Set()
+
+        let target : Entity = this
+
+        while (target) {
+            target.fields.forEach((field : Field, name : Name) => {
+                if (!visited.has(name)) {
+                    visited.add(name)
+                    func(field, name)
+                }
+            })
+
+            target = target.parentEntity
+        }
     }
 }
 

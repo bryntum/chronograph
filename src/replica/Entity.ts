@@ -63,8 +63,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         get $() : { [s in keyof this] : MinimalFieldAtom } {
             const atomsCollection   = {}
 
-            this.$entity.fields.forEach((field : Field, name : Name) => {
-                atomsCollection[ name ] = this.createFieldAtom(name)
+            this.$entity.forEachField((field : Field, name : Name) => {
+                atomsCollection[ name ] = this.createFieldAtom(field)
             })
 
             // @ts-ignore
@@ -129,8 +129,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
 
         // the actually returned type is `FieldAtom`, but this does not typecheck - circularity
-        createFieldAtom (name : Name) : ChronoAtom {
-            const field     = this.$entity.getField(name)
+        createFieldAtom (field : Field) : ChronoAtom {
+            const name                  = field.name
 
             const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
 
@@ -154,7 +154,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         }
 
 
-        forEachField (func : (field : MinimalFieldAtom, name : Name) => any) {
+        forEachFieldAtom (func : (field : MinimalFieldAtom, name : Name) => any) {
             const fields        = this.$
 
             for (let name in fields) {
@@ -164,7 +164,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
 
         enterGraph (graph : ChronoGraph) {
-            this.forEachField(field => graph.addNode(field))
+            this.forEachFieldAtom(field => graph.addNode(field))
 
             graph.addNode(this.$$)
         }
@@ -174,7 +174,7 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             const graph     = this.$$.graph as ChronoGraph
 
             if (graph) {
-                this.forEachField(field => graph.removeNode(field))
+                this.forEachFieldAtom(field => graph.removeNode(field))
 
                 graph.removeNode(this.$$)
             }
@@ -255,21 +255,22 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
     return function (target : EntityAny, propertyKey : string) : void {
         let entity      = target.$entity
 
-        if (!entity) {
+        if (!target.hasOwnProperty('$entity')) {
             // NOTE: entity should be created at the topmost non native prototype
             //       such it will be accessible from any topmost mixin static methods or accessors
             //       it might not be obvious why it's useful here, but further experience has shown
             //       that it is.
             // TODO: review
-            let entityTarget    = target,
-                nextPrototype   = Object.getPrototypeOf(entityTarget)
+            //let entityTarget    = target,
+            //    nextPrototype   = Object.getPrototypeOf(entityTarget)
 
-            while (nextPrototype !== Object.prototype) {
-                entityTarget    = nextPrototype
-                nextPrototype   = Object.getPrototypeOf(nextPrototype)
-            }
+            //while (nextPrototype !== Object.prototype) {
+            //    entityTarget    = nextPrototype
+            //    nextPrototype   = Object.getPrototypeOf(nextPrototype)
+            //}
 
-            entity              = entityTarget.$entity = EntityData.new()
+            //entity              = entityTarget.$entity = EntityData.new()
+            entity              = target.$entity = EntityData.new({ parentEntity : Object.getPrototypeOf(target).$entity })
         }
 
         const field             = entity.addField(
