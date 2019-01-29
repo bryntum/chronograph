@@ -42,17 +42,6 @@ StartTest(t => {
             writtenBy       : Author
         }
 
-        // Author.addPrimaryKey(PrimaryKey.new({
-        //     fieldSet        : [ Author.getField('id') ]
-        // }))
-        //
-        //
-        // Book.addForeignKey(ForeignKey.new({
-        //     fieldSet                : [ Book.getField('writtenBy') ],
-        //     referencedFieldSet      : [ Author.getField('id') ],
-        //
-        //     referencedEntity        : Author.getEntity()
-        // }))
 
         const replica1          = MinimalReplica.new({ schema : SomeSchema })
 
