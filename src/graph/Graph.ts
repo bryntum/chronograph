@@ -27,10 +27,6 @@ class Graph extends base {
 
 
     addNode (node : this[ 'nodeT' ]) : this[ 'nodeT' ] {
-        // <debug>
-        if (this.hasDirectNode(node)) throw new Error(`This [${node}] already exists in the graph`)
-        // </debug>
-
         this.nodes.add(node)
 
         return node

@@ -87,8 +87,14 @@ class ChronoAtom extends base {
         this.observedDuringCalculation  = []
     }
 
+
     hasValue () : boolean {
         return this.hasNextStableValue() || this.hasProposedValue() || this.hasConsistentValue()
+    }
+
+
+    hasStableValue () : boolean {
+        return this.hasNextStableValue() || this.hasConsistentValue()
     }
 
 
