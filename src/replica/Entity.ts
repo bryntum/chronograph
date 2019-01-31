@@ -67,14 +67,29 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
                 atomsCollection[ name ] = this.createFieldAtom(field)
             })
 
-            // @ts-ignore
-            return super.$          = atomsCollection
+            Object.defineProperty(this, '$', {
+                value       : atomsCollection
+            })
+
+            return atomsCollection as any
+
+            // // @ts-ignore
+            // return super.$          = atomsCollection
         }
 
 
         get $$() : MinimalEntityAtom {
-            // @ts-ignore
-            return super.$$ = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
+            const value     = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
+
+            Object.defineProperty(this, '$$', {
+                value       : value
+            })
+
+            return value
+
+
+            // // @ts-ignore
+            // return super.$$ = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
         }
 
 

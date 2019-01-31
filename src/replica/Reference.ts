@@ -156,7 +156,7 @@ class ReferenceAtom extends base {
             this.removeFromStorage(this.getStorage(value))
         }
 
-        if (nextValue != null) {
+        if (nextValue != null && Object(nextValue) === nextValue) {
             this.addToStorage(this.getStorage(nextValue))
         }
 
