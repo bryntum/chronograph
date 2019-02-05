@@ -1,12 +1,13 @@
 import {AnyFunction, Constructable, Mixin} from "../class/Mixin.js";
 import {MinimalNode, Node} from "../graph/Node.js";
+import {Conflict} from "./Conflict.js";
 import {ChronoGraph, IChronoGraph} from "./Graph.js";
 import {HasId} from "./HasId.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoValue         = any
 
-export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | T>
+export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | Conflict | T>
 
 //---------------------------------------------------------------------------------------------------------------------
 export type SyncChronoCalculation   = (...args) => ChronoIterator
@@ -27,6 +28,7 @@ export const ChronoAtom = <T extends Constructable<HasId & Node>>(base : T) =>
 class ChronoAtom extends base {
     proposedArgs        : ChronoValue[]
     proposedValue       : ChronoValue
+
     nextStableValue     : ChronoValue
     value               : ChronoValue
 
@@ -39,27 +41,23 @@ class ChronoAtom extends base {
     calculationContext  : any
     calculation         : SyncChronoCalculation
 
-    observedDuringCalculation   :  ChronoAtom[]     = []
+    observedDuringCalculation   :  ChronoAtom[]     = [];
 
     // intermediateAtoms : Map<string, ChronoAtom> = new Map()
-
-
-    readValue () : ChronoValue {
-        return this.value
-    }
-
-
-    writeValue (value : ChronoValue) {
-        this.value  = value
-    }
 
 
     * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
         if (this.calculation) {
             return yield* this.calculation.call(this.calculationContext || this, proposedValue)
         } else
-            // identity case
-            return proposedValue !== undefined ? proposedValue : this.readValue()
+            // identity-like case, translates to user-provided or current value
+            return proposedValue !== undefined ? proposedValue : this.value
+    }
+
+
+    clearUserInput () {
+        this.proposedValue      = undefined
+        this.proposedArgs       = undefined
     }
 
 
@@ -67,10 +65,8 @@ class ChronoAtom extends base {
         const nextStableValue   = this.nextStableValue
 
         this.nextStableValue    = undefined
-        this.proposedValue      = undefined
-        this.proposedArgs       = undefined
 
-        if (this.shouldCommitValue) this.writeValue(nextStableValue)
+        if (this.shouldCommitValue) this.value = nextStableValue
     }
 
 
@@ -104,7 +100,7 @@ class ChronoAtom extends base {
 
 
     hasConsistentValue () : boolean {
-        return this.readValue() !== undefined
+        return this.value !== undefined
     }
 
 
@@ -135,7 +131,7 @@ class ChronoAtom extends base {
 
             graph.markAsNeedRecalculation(this)
         } else {
-            this.writeValue(proposedValue)
+            this.value              = proposedValue
         }
     }
 
@@ -144,7 +140,7 @@ class ChronoAtom extends base {
     }
 
     getConsistentValue () : ChronoValue {
-        return this.readValue()
+        return this.value
     }
 
     getProposedValue () : ChronoValue {
@@ -153,7 +149,7 @@ class ChronoAtom extends base {
 
     // setterPropagation       : AnyFunction
 
-    set (proposedValue? : ChronoValue, ...args) : Promise<any> {
+    set (proposedValue : ChronoValue, ...args) : Promise<any> {
         const graph             = this.graph as ChronoGraph
 
         this.put(proposedValue, ...args)

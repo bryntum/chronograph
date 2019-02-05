@@ -88,7 +88,7 @@ class ReferenceAtom extends base {
 
 
     * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
-        return this.resolve(proposedValue !== undefined ? proposedValue : this.readValue())
+        return this.resolve(proposedValue !== undefined ? proposedValue : this.value)
     }
 
 
@@ -109,7 +109,7 @@ class ReferenceAtom extends base {
 
 
     onEnterGraph (graph : IChronoGraph) {
-        const value     = this.readValue()
+        const value     = this.value
 
         let resolves    = true
 
@@ -121,7 +121,7 @@ class ReferenceAtom extends base {
             // last point where it is safe to just rewrite own value
             // after `super.onEnterGraph` that will be causing effects outside of atom
             if (Object(resolved) === resolved) {
-                this.writeValue(resolved)
+                this.value  = resolved
 
                 resolves    = true
             }
@@ -139,7 +139,7 @@ class ReferenceAtom extends base {
 
     onLeaveGraph (graph : IChronoGraph) {
         if (this.hasStableValue()) {
-            const referenceStorage  = this.getStorage(this.readValue())
+            const referenceStorage  = this.getStorage(this.value)
 
             this.removeFromStorage(referenceStorage)
         }
@@ -149,7 +149,7 @@ class ReferenceAtom extends base {
 
 
     put (nextValue : this[ 'value']) {
-        const value     = this.readValue()
+        const value     = this.value
 
         // value is not empty and resolved to entity
         if (value != null && Object(value) === value) {

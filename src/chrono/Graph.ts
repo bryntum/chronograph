@@ -2,8 +2,9 @@ import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
-import {FieldAtom, MinimalFieldAtom} from "../replica/Atom.js";
+import {FieldAtom} from "../replica/Atom.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
+import {Conflict, ConflictResolutionResult} from "./Conflict.js";
 import {ChronoId} from "./Id.js";
 
 
@@ -28,13 +29,22 @@ export interface IChronoGraph {
 
     markAsNeedRecalculation (atom : ChronoAtom)
 
-    commit ()
-    reject ()
-    propagate () : Promise<any>
+    // commit ()
+    // reject ()
+    // propagate () : Promise<any>
 }
 
 
-export type ChronoContinuation = { atom : ChronoAtom, iterator? : ChronoIterator }
+export type ChronoContinuation      = { atom : ChronoAtom, iterator : ChronoIterator }
+export type ChronoIterationResult   = { value? : ChronoValue, continuation? : ChronoContinuation, conflict? : Conflict }
+export type PropagateSingleResult   = { success? : true, conflict? : Conflict }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export enum PropagateResult {
+    Cancel,
+    Success
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -52,14 +62,13 @@ class ChronoGraph extends base implements IChronoGraph {
 
     nodesMap            : Map<ChronoId, ChronoAtom> = new Map()
 
-    needRecalculationAtoms : Set<ChronoAtom>       = new Set()
+    needRecalculationAtoms  : Set<ChronoAtom>       = new Set()
+    stableAtoms             : Set<ChronoAtom>       = new Set()
 
-    stableAtoms         : Set<ChronoAtom>       = new Set()
-
-    changedAtoms        : ChronoAtom[]          = []
+    changedAtoms            : ChronoAtom[]          = []
 
 
-    processingQueue     : ChronoAtom[]          = []
+    // processingQueue         : ChronoAtom[]          = []
 
 
     // startReadObservation () {
@@ -118,45 +127,45 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    processNext (atom : ChronoAtom) {
-        this.processingQueue.push(atom)
-    }
+    // processNext (atom : ChronoAtom) {
+    //     this.processingQueue.push(atom)
+    // }
 
 
-    // used for debugging
+    // used for debugging, when exception is thrown in the middle of the propagate and edges are not yet committed
     commitAllEdges () {
         this.nodes.forEach(atom => atom.commitEdges())
     }
 
 
     commit () {
-        const changedAtoms      = this.changedAtoms
+        this.changedAtoms.forEach(atom => atom.commitValue())
+        this.changedAtoms   = []
 
-        changedAtoms.forEach(atom => atom.commitValue())
-
+        // the edges might have changed, even the atom value itself did not
+        // because of that, we commit the edges for all recalculated atoms (stable atoms)
         this.stableAtoms.forEach(atom => atom.commitEdges())
-
-        this.needRecalculationAtoms.forEach(atom => {
-            atom.proposedValue  = undefined
-            atom.proposedArgs   = undefined
-        })
-
-        this.needRecalculationAtoms.clear()
-
         this.stableAtoms.clear()
 
-        this.changedAtoms   = []
+        this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
+        this.needRecalculationAtoms.clear()
     }
 
 
     reject () {
-        throw "notyet"
+        this.rejectPartialProgress()
 
-        this.stableAtoms.forEach(atom => atom.reject())
-
+        this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
+    }
 
+
+    rejectPartialProgress () {
+        // stable atoms will include
+        this.stableAtoms.forEach(atom => atom.reject())
         this.stableAtoms.clear()
+
+        this.changedAtoms   = []
     }
 
 
@@ -198,25 +207,28 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    startAtomCalculation (sourceAtom : ChronoAtom) : { value? : ChronoValue, continuation? : ChronoContinuation }
-    {
+    startAtomCalculation (sourceAtom : ChronoAtom) : ChronoIterationResult {
         // console.log(`START ${sourceAtom}`)
 
         const iterator : ChronoIterator<ChronoValue> = sourceAtom.calculate(sourceAtom.proposedValue)
 
         let iterValue       = iterator.next()
 
-        if (iterValue.done) {
-            return { value : iterValue.value }
-        } else {
-            return { continuation : { atom : iterValue.value, iterator : iterator } }
+        const value         = iterValue.value
+
+        if (value instanceof Conflict) {
+            return { conflict : value }
+        }
+        else if (iterValue.done) {
+            return { value }
+        }
+        else {
+            return { continuation : { atom : value, iterator : iterator } }
         }
     }
 
 
-    continueAtomCalculation (sourceAtom : ChronoAtom, continuation : ChronoContinuation, maybeDirtyAtoms : Set<ChronoAtom>) :
-        { value? : ChronoValue, continuation? : ChronoContinuation }
-    {
+    continueAtomCalculation (sourceAtom : ChronoAtom, continuation : ChronoContinuation, maybeDirtyAtoms : Set<ChronoAtom>) : ChronoIterationResult {
         const iterator      = continuation.iterator
 
         let incomingAtom    = continuation.atom
@@ -232,16 +244,22 @@ class ChronoGraph extends base implements IChronoGraph {
             sourceAtom.observedDuringCalculation.push(incomingAtom)
 
             // ideally should be removed (same as while condition)
-            if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) throw "Cycle"
+            if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) throw new Error("Cycle")
 
             let iterValue   = iterator.next(incomingAtom.hasNextStableValue() ? incomingAtom.getNextStableValue() : incomingAtom.getConsistentValue())
 
-            if (iterValue.done) {
-                return { value : iterValue.value }
-            }
-            // TODO should ignore non-final non-atom values
+            const value     = iterValue.value
 
-            incomingAtom    = iterValue.value
+            if (value instanceof Conflict) {
+                return { conflict : value }
+            }
+
+            if (iterValue.done) {
+                return { value }
+            }
+
+            // TODO should ignore non-final non-atom values
+            incomingAtom    = value
 
         } while (!maybeDirtyAtoms.has(incomingAtom) || this.isAtomStable(incomingAtom))
 
@@ -249,23 +267,7 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    logToDot () {
-        // let dot = [
-        //     'digraph ChronoGraph {',
-        //     'splines=splines'
-        // ]
-        //
-        // this.LOG.forEach(( [ sourceAtom, incomingAtom ] ) => {
-        //     dot.push(`"${sourceAtom.toString()}" -> "${incomingAtom}"`)
-        // })
-        //
-        // dot.push('}')
-        //
-        // return dot.join('\n')
-    }
-
-
-    propagate () : Promise<any> {
+    propagateSingle () : PropagateSingleResult {
         const toCalculate       = []
         const maybeDirty        = new Set()
         const conts             = new Map<ChronoAtom, ChronoContinuation>()
@@ -313,7 +315,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
             const visitedAtDepth    = visitedAt.get(sourceAtom)
 
-            let calcRes
+            let calcRes : ChronoIterationResult
 
             // node has been already visited
             if (visitedAtDepth != null) {
@@ -326,11 +328,16 @@ class ChronoGraph extends base implements IChronoGraph {
                 calcRes             = this.startAtomCalculation(sourceAtom)
             }
 
-            if (calcRes.continuation) {
+            if (calcRes.conflict) {
+                return { conflict : calcRes.conflict }
+            }
+            else if (calcRes.continuation) {
                 conts.set(sourceAtom, calcRes.continuation)
 
                 // console.log(`REQUEST from ${sourceAtom}, FOR ${calcRes.continuation.atom}`)
 
+                // this line is necessary for cycles visualization to work correctly, strictly it is not needed,
+                // because in non-cycle scenario "observedDuringCalculation" is filled in the `continueAtomCalculation`
                 sourceAtom.observedDuringCalculation.push(calcRes.continuation.atom)
 
                 toCalculate.push(calcRes.continuation.atom)
@@ -359,7 +366,45 @@ class ChronoGraph extends base implements IChronoGraph {
 
         this.commit()
 
-        return Promise.resolve()
+        return { success : true }
+    }
+
+
+    async onConflict (conflict : Conflict) : Promise<ConflictResolutionResult> {
+        return ConflictResolutionResult.Cancel
+    }
+
+
+    async propagate (onConflict? : (conflict : Conflict) => Promise<ConflictResolutionResult>) : Promise<PropagateResult> {
+        let propagationResult : PropagateSingleResult
+
+        do {
+            propagationResult   = this.propagateSingle()
+
+            const conflict      = propagationResult.conflict
+
+            if (conflict) {
+                let resolutionResult : ConflictResolutionResult
+
+                if (onConflict) {
+                    resolutionResult    = await onConflict(conflict)
+                } else {
+                    resolutionResult    = await this.onConflict(conflict)
+                }
+
+                if (resolutionResult === ConflictResolutionResult.Cancel) {
+                    this.reject()
+
+                    return PropagateResult.Cancel
+                }
+                else if (resolutionResult === ConflictResolutionResult.Restart) {
+                    this.rejectPartialProgress()
+                }
+            }
+
+        } while (!propagationResult.success)
+
+        return PropagateResult.Success
     }
 
 

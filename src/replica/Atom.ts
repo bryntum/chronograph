@@ -18,8 +18,7 @@ class FieldAtom extends base {
         const continuationOfField = this.field.continuationOf
 
         if (continuationOfField) {
-            // console.log(`Commit continued value to ${this.self.$[ continuationOfField.name ].id}, value: ${this.value}`)
-            this.self.$[ continuationOfField.name ].writeValue(this.readValue())
+            this.self.$[ continuationOfField.name ].value = this.value
         }
     }
 

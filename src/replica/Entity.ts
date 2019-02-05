@@ -216,9 +216,9 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         }
 
 
-        processNext (atom : ChronoAtom) {
-            this.getGraph().processNext(atom)
-        }
+        // processNext (atom : ChronoAtom) {
+        //     this.getGraph().processNext(atom)
+        // }
 
 
 
