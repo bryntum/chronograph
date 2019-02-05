@@ -1,7 +1,6 @@
-import {ChronoAtom, ChronoValue} from "../chrono/Atom.js";
+import {ChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
-import {chronoId, ChronoId} from "../chrono/Id.js";
-import { Base, Constructable, Mixin, AnyConstructor} from "../class/Mixin.js";
+import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
 import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 import {ResolverFunc} from "./Reference.js";
@@ -72,9 +71,6 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             })
 
             return atomsCollection as any
-
-            // // @ts-ignore
-            // return super.$          = atomsCollection
         }
 
 
@@ -86,10 +82,6 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             })
 
             return value
-
-
-            // // @ts-ignore
-            // return super.$$ = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
         }
 
 
@@ -150,16 +142,16 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
             const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
 
             return field.atomCls.new({
-                id          : `${this.$$.id}/${name}`,
+                id                  : `${this.$$.id}/${name}`,
 
-                field       : field,
+                field               : field,
 
-                self        : this,
+                self                : this,
 
                 shouldCommitValue   : !field.continued,
 
                 calculationContext  : calculationFunction ? this : undefined,
-                calculation         : calculationFunction,
+                calculation         : calculationFunction
             })
         }
 
@@ -211,9 +203,9 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         }
 
 
-        isStable (atom : ChronoAtom) : boolean {
-            return this.getGraph().isAtomStable(atom)
-        }
+        // isStable (atom : ChronoAtom) : boolean {
+        //     return this.getGraph().isAtomStable(atom)
+        // }
 
 
         // processNext (atom : ChronoAtom) {
@@ -221,15 +213,6 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         // }
 
 
-
-        // static addPrimaryKey (key : PrimaryKey) {
-        //     return this.getEntity().addPrimaryKey(key)
-        // }
-        //
-        //
-        // static addForeignKey (key : ForeignKey) {
-        //     return this.getEntity().addForeignKey(key)
-        // }
 
 
         static getField (name : Name) : Field {

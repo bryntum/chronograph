@@ -1,13 +1,13 @@
-import {AnyFunction, Constructable, Mixin} from "../class/Mixin.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
 import {MinimalNode, Node} from "../graph/Node.js";
-import {Conflict} from "./Conflict.js";
+import {Effect} from "./Effect.js";
 import {ChronoGraph, IChronoGraph} from "./Graph.js";
 import {HasId} from "./HasId.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoValue         = any
 
-export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | Conflict | T>
+export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | Effect | T>
 
 //---------------------------------------------------------------------------------------------------------------------
 export type SyncChronoCalculation   = (...args) => ChronoIterator

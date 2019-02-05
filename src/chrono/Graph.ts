@@ -4,7 +4,7 @@ import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
 import {FieldAtom} from "../replica/Atom.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
-import {Conflict, ConflictResolutionResult} from "./Conflict.js";
+import {Effect, EffectResolutionResult, EffectResolverFunction} from "./Effect.js";
 import {ChronoId} from "./Id.js";
 
 
@@ -35,15 +35,15 @@ export interface IChronoGraph {
 }
 
 
-export type ChronoContinuation      = { atom : ChronoAtom, iterator : ChronoIterator }
-export type ChronoIterationResult   = { value? : ChronoValue, continuation? : ChronoContinuation, conflict? : Conflict }
-export type PropagateSingleResult   = { success? : true, conflict? : Conflict }
+export type ChronoContinuation      = { iterator : ChronoIterator, atom? : ChronoAtom }
+export type ChronoIterationResult   = { value? : ChronoValue, continuation? : ChronoContinuation, effect? : Effect }
+export type PropagateSingleResult   = { success : true }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export enum PropagateResult {
-    Cancel,
-    Success
+export enum PropagationResult {
+    Canceled,
+    Completed
 }
 
 
@@ -138,7 +138,7 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    commit () {
+    async commit () {
         this.changedAtoms.forEach(atom => atom.commitValue())
         this.changedAtoms   = []
 
@@ -152,15 +152,15 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    reject () {
-        this.rejectPartialProgress()
+    async reject () {
+        await this.rejectPartialProgress()
 
         this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
     }
 
 
-    rejectPartialProgress () {
+    async rejectPartialProgress () {
         // stable atoms will include
         this.stableAtoms.forEach(atom => atom.reject())
         this.stableAtoms.clear()
@@ -212,14 +212,14 @@ class ChronoGraph extends base implements IChronoGraph {
 
         const iterator : ChronoIterator<ChronoValue> = sourceAtom.calculate(sourceAtom.proposedValue)
 
-        let iterValue       = iterator.next()
+        let iteratorValue   = iterator.next()
 
-        const value         = iterValue.value
+        const value         = iteratorValue.value
 
-        if (value instanceof Conflict) {
-            return { conflict : value }
+        if (value instanceof Effect) {
+            return { effect : value, continuation : { iterator : iterator } }
         }
-        else if (iterValue.done) {
+        else if (iteratorValue.done) {
             return { value }
         }
         else {
@@ -241,20 +241,28 @@ class ChronoGraph extends base implements IChronoGraph {
             // const field     = (incomingAtom as MinimalFieldAtom).field
             // console.log(`Observed: ${incomingAtom.calculationContext && incomingAtom.calculationContext.id}, field: ${field && field.name}`)
 
-            sourceAtom.observedDuringCalculation.push(incomingAtom)
+            let iteratorValue
 
-            // ideally should be removed (same as while condition)
-            if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) throw new Error("Cycle")
+            if (incomingAtom) {
+                sourceAtom.observedDuringCalculation.push(incomingAtom)
 
-            let iterValue   = iterator.next(incomingAtom.hasNextStableValue() ? incomingAtom.getNextStableValue() : incomingAtom.getConsistentValue())
+                // ideally should be removed (same as while condition)
+                if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) throw new Error("Cycle")
 
-            const value     = iterValue.value
-
-            if (value instanceof Conflict) {
-                return { conflict : value }
+                iteratorValue   = iterator.next(
+                    incomingAtom.hasNextStableValue() ? incomingAtom.getNextStableValue() : incomingAtom.getConsistentValue()
+                )
+            } else {
+                iteratorValue   = iterator.next()
             }
 
-            if (iterValue.done) {
+            const value         = iteratorValue.value
+
+            if (value instanceof Effect) {
+                return { effect : value, continuation : { iterator : iterator } }
+            }
+
+            if (iteratorValue.done) {
                 return { value }
             }
 
@@ -267,7 +275,7 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 
 
-    propagateSingle () : PropagateSingleResult {
+    * propagateSingle () : IterableIterator<Effect | PropagateSingleResult> {
         const toCalculate       = []
         const maybeDirty        = new Set()
         const conts             = new Map<ChronoAtom, ChronoContinuation>()
@@ -328,19 +336,22 @@ class ChronoGraph extends base implements IChronoGraph {
                 calcRes             = this.startAtomCalculation(sourceAtom)
             }
 
-            if (calcRes.conflict) {
-                return { conflict : calcRes.conflict }
+            if (calcRes.effect) {
+                yield calcRes.effect
             }
-            else if (calcRes.continuation) {
+
+            if (calcRes.continuation) {
                 conts.set(sourceAtom, calcRes.continuation)
 
-                // console.log(`REQUEST from ${sourceAtom}, FOR ${calcRes.continuation.atom}`)
+                const atom  = calcRes.continuation.atom
 
-                // this line is necessary for cycles visualization to work correctly, strictly it is not needed,
-                // because in non-cycle scenario "observedDuringCalculation" is filled in the `continueAtomCalculation`
-                sourceAtom.observedDuringCalculation.push(calcRes.continuation.atom)
+                if (atom) {
+                    // this line is necessary for cycles visualization to work correctly, strictly it is not needed,
+                    // because in non-cycle scenario "observedDuringCalculation" is filled in the `continueAtomCalculation`
+                    sourceAtom.observedDuringCalculation.push(atom)
 
-                toCalculate.push(calcRes.continuation.atom)
+                    toCalculate.push(atom)
+                }
             } else {
                 const consistentValue   = calcRes.value
 
@@ -364,47 +375,59 @@ class ChronoGraph extends base implements IChronoGraph {
             }
         }
 
-        this.commit()
-
         return { success : true }
     }
 
 
-    async onConflict (conflict : Conflict) : Promise<ConflictResolutionResult> {
-        return ConflictResolutionResult.Cancel
+    async onEffect (effect : Effect) : Promise<EffectResolutionResult> {
+        return EffectResolutionResult.Resume
     }
 
 
-    async propagate (onConflict? : (conflict : Conflict) => Promise<ConflictResolutionResult>) : Promise<PropagateResult> {
-        let propagationResult : PropagateSingleResult
+    async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
+        let needToRestart : boolean
 
         do {
-            propagationResult   = this.propagateSingle()
+            needToRestart           = false
 
-            const conflict      = propagationResult.conflict
+            const propagationIterator = this.propagateSingle()
 
-            if (conflict) {
-                let resolutionResult : ConflictResolutionResult
+            let iteratorValue
 
-                if (onConflict) {
-                    resolutionResult    = await onConflict(conflict)
-                } else {
-                    resolutionResult    = await this.onConflict(conflict)
+            do {
+                iteratorValue       = propagationIterator.next()
+
+                const value         = iteratorValue.value
+
+                if (value instanceof Effect) {
+                    let resolutionResult : EffectResolutionResult
+
+                    if (onEffect) {
+                        resolutionResult    = await onEffect(value)
+                    } else {
+                        resolutionResult    = await this.onEffect(value)
+                    }
+
+                    if (resolutionResult === EffectResolutionResult.Cancel) {
+                        await this.reject()
+
+                        return PropagationResult.Canceled
+                    }
+                    else if (resolutionResult === EffectResolutionResult.Restart) {
+                        await this.rejectPartialProgress()
+
+                        needToRestart       = true
+
+                        break
+                    }
                 }
+            } while (!iteratorValue.done)
 
-                if (resolutionResult === ConflictResolutionResult.Cancel) {
-                    this.reject()
+        } while (needToRestart)
 
-                    return PropagateResult.Cancel
-                }
-                else if (resolutionResult === ConflictResolutionResult.Restart) {
-                    this.rejectPartialProgress()
-                }
-            }
+        await this.commit()
 
-        } while (!propagationResult.success)
-
-        return PropagateResult.Success
+        return PropagationResult.Completed
     }
 
 

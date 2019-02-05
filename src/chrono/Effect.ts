@@ -1,12 +1,23 @@
 import {Base} from "../class/Mixin.js";
 
 
+export type EffectResolverFunction  = (effect : Effect) => Promise<EffectResolutionResult>
+
+
 //---------------------------------------------------------------------------------------------------------------------
-export enum ConflictResolutionResult {
+export enum EffectResolutionResult {
     Cancel,
     Restart,
     Resume
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class Effect extends Base {
+}
+
+
+
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -23,7 +34,7 @@ export class ConflictResolution extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Conflict extends Base {
+export class Conflict extends Effect {
     description         : string
 
     resolutions         : ConflictResolution[]
