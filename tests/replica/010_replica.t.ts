@@ -1,5 +1,5 @@
 import {Base} from "../../src/class/Mixin.js";
-import {calculate, EntityAny, EntityBase, field} from "../../src/replica/Entity.js";
+import {calculate, EntityAny, field} from "../../src/replica/Entity.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
 
@@ -13,7 +13,7 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class Author extends EntityBase(EntityAny(Base)) {
+        class Author extends EntityAny(Base) {
             @field
             id              : string
 
@@ -34,7 +34,7 @@ StartTest(t => {
         }
 
         @entity
-        class Book extends EntityBase(EntityAny(Base)) {
+        class Book extends EntityAny(Base) {
             @field
             name            : string
 

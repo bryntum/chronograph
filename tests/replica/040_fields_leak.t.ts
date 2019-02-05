@@ -1,5 +1,5 @@
-import { EntityAny, field } from "../../src/replica/Entity.js";
-import { Base } from "../../src/class/Mixin.js";
+import {Base} from "../../src/class/Mixin.js";
+import {EntityAny, field} from "../../src/replica/Entity.js";
 
 declare const StartTest : any
 

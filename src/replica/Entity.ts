@@ -233,21 +233,6 @@ export type EntityAny = Mixin<typeof EntityAny>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityBase = <T extends Constructable<EntityAny & Base>>(base : T) =>
-
-class EntityBase extends base {
-
-    // initialize (config : object) {
-    //     this.initAtoms(config || {})
-    //
-    //     super.initialize(config)
-    // }
-}
-
-export type EntityBase = Mixin<typeof EntityBase>
-
-
-//---------------------------------------------------------------------------------------------------------------------
 export const generalField = function (fieldCls : typeof Field, fieldConfig? : unknown) : PropertyDecorator {
 
     return function (target : EntityAny, propertyKey : string) : void {
