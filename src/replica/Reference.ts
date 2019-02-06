@@ -3,7 +3,11 @@ import {IChronoGraph} from "../chrono/Graph.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
 import {Field, Name} from "../schema/Field.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
-import {EntityAny, generalField} from "./Entity.js";
+import {Entity, generalField} from "./Entity.js";
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export type ResolverFunc    = (locator : any) => Entity
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -34,17 +38,13 @@ export const reference = function (storageKey : string) : PropertyDecorator {
 
 export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorator {
 
-    return function (target : EntityAny, propertyKey : string) : void {
+    return function (target : Entity, propertyKey : string) : void {
         const entity            = target.$entity
         const field             = entity.getField(propertyKey) as ReferenceField
 
         field.resolver          = resolverFunc
     }
 }
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export type ResolverFunc    = (locator : any) => EntityAny
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ class ReferenceStorageAtom extends base {
     oldRefs         : Set<ChronoAtom>       = new Set()
     newRefs         : Set<ChronoAtom>       = new Set()
 
-    value           : Set<EntityAny>        = new Set();
+    value           : Set<Entity>        = new Set();
 
 
     * calculate (proposedValue : ChronoValue) : IterableIterator<ChronoAtom | this[ 'value' ]> {
@@ -109,7 +109,7 @@ export const ReferenceAtom = <T extends Constructable<FieldAtom>>(base : T) =>
 class ReferenceAtom extends base {
     field           : ReferenceField
 
-    value           : EntityAny
+    value           : Entity
 
 
     addToStorage (storage : ReferenceStorageAtom) {
@@ -131,7 +131,7 @@ class ReferenceAtom extends base {
     }
 
 
-    resolve (referencee : any) : EntityAny {
+    resolve (referencee : any) : Entity {
         const resolver  = this.field.resolver
 
         if (resolver && referencee !== undefined && Object(referencee) !== referencee) {
@@ -142,7 +142,7 @@ class ReferenceAtom extends base {
     }
 
 
-    getStorage (entity : EntityAny) : ReferenceStorageAtom {
+    getStorage (entity : Entity) : ReferenceStorageAtom {
         return entity.$[ this.field.storageKey ]
     }
 

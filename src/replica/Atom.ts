@@ -2,7 +2,7 @@ import {ChronoAtom, MinimalChronoAtom} from "../chrono/Atom.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field as FieldData} from "../schema/Field.js";
-import {EntityAny} from "./Entity.js";
+import {Entity} from "./Entity.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ export const FieldAtom = <T extends Constructable<ChronoAtom>>(base : T) =>
 class FieldAtom extends base {
     field       : FieldData
 
-    self        : EntityAny
+    self        : Entity
 
     commitValue () {
         super.commitValue()
@@ -42,7 +42,7 @@ export const EntityAtom = <T extends Constructable<ChronoAtom>>(base : T) =>
 class EntityAtom extends base {
     entity      : EntityData
 
-    self        : EntityAny
+    self        : Entity
 
 
     toString () : string {

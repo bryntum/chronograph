@@ -1,5 +1,5 @@
 import {Base} from "../../src/class/Mixin.js";
-import {EntityAny} from "../../src/replica/Entity.js";
+import {Entity} from "../../src/replica/Entity.js";
 import {reference, storage} from "../../src/replica/Reference.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
@@ -14,13 +14,13 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class Author extends EntityAny(Base) {
+        class Author extends Entity(Base) {
             @storage
             books           : Set<Book>
         }
 
         @entity
-        class Book extends EntityAny(Base) {
+        class Book extends Entity(Base) {
             @reference('books')
             writtenBy       : Author
         }

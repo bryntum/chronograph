@@ -1,5 +1,5 @@
 import {Base} from "../../src/class/Mixin.js";
-import {EntityAny, field} from "../../src/replica/Entity.js";
+import {Entity, field} from "../../src/replica/Entity.js";
 import {Name} from "../../src/schema/Field.js";
 
 declare const StartTest : any
@@ -8,7 +8,7 @@ StartTest(t => {
 
     t.it('Child class fields should stay at child level', async t => {
 
-        class Vehicle extends EntityAny(Base) {
+        class Vehicle extends Entity(Base) {
             @field
             name : string
         }

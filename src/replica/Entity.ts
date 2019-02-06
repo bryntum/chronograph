@@ -4,7 +4,6 @@ import {Constructable, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
 import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
-import {ReferenceField, ReferenceStorageField, ResolverFunc} from "./Reference.js";
 
 
 // LAZY ATOMS CREATION - investigate if it improves performance
@@ -25,9 +24,9 @@ import {ReferenceField, ReferenceStorageField, ResolverFunc} from "./Reference.j
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityAny = <T extends Constructable<object>>(base : T) => {
+export const Entity = <T extends Constructable<object>>(base : T) => {
 
-    class EntityAny extends base {
+    class Entity extends base {
         $entity         : EntityData
 
         $calculations   : { [s in keyof this] : string }
@@ -226,10 +225,10 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
 
     }
 
-    return EntityAny
+    return Entity
 }
 
-export type EntityAny = Mixin<typeof EntityAny>
+export type Entity = Mixin<typeof Entity>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -256,7 +255,7 @@ export const createEntityOnPrototype = (proto : any) : EntityData => {
 //---------------------------------------------------------------------------------------------------------------------
 export const generalField = function (fieldCls : typeof Field, fieldConfig? : object) : PropertyDecorator {
 
-    return function (target : EntityAny, propertyKey : string) : void {
+    return function (target : Entity, propertyKey : string) : void {
         let entity      = target.$entity
 
         if (!target.hasOwnProperty('$entity')) {
@@ -302,7 +301,7 @@ export const field : PropertyDecorator = generalField(Field)
 //---------------------------------------------------------------------------------------------------------------------
 export const continuationOf = function (continuationOfAtomName : string) : PropertyDecorator {
 
-    return function (target : EntityAny, propertyKey : string) : void {
+    return function (target : Entity, propertyKey : string) : void {
         const entity            = target.$entity
         const field             = entity.getField(propertyKey)
         const precedingField    = entity.getField(continuationOfAtomName)
@@ -317,7 +316,7 @@ export const continuationOf = function (continuationOfAtomName : string) : Prope
 export const calculate = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
-    return function (target : EntityAny, propertyKey : string, /*descriptor*/_ : TypedPropertyDescriptor<any>) : void {
+    return function (target : Entity, propertyKey : string, /*descriptor*/_ : TypedPropertyDescriptor<any>) : void {
         let calculations        = target.$calculations
 
         if (!calculations) calculations = target.$calculations = <any>{}
