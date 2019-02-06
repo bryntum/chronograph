@@ -1,5 +1,6 @@
 import {Base} from "../../src/class/Mixin.js";
-import {EntityAny, reference, storage} from "../../src/replica/Entity.js";
+import {EntityAny} from "../../src/replica/Entity.js";
+import {reference, storage} from "../../src/replica/Reference.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
 

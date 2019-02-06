@@ -1,9 +1,10 @@
 import {ChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
-import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
+import {Constructable, Mixin} from "../class/Mixin.js";
+import {Entity as EntityData} from "../schema/Entity.js";
+import {Field, Name} from "../schema/Field.js";
 import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
-import {ResolverFunc} from "./Reference.js";
+import {ReferenceField, ReferenceStorageField, ResolverFunc} from "./Reference.js";
 
 
 // LAZY ATOMS CREATION - investigate if it improves performance
@@ -11,7 +12,6 @@ import {ResolverFunc} from "./Reference.js";
 // 1) when entity enters a graph, the yet unreferenced atoms are not created yet (naturally)
 // so they are not calculated
 // need to create AND calculate them immediately later, on-demand
-// 2) the hack of creating the entity in the upper-most prototype conflicts with this
 
 // const atomsCollectionMixin = (base : typeof Base, name) =>
 //
@@ -233,18 +233,39 @@ export type EntityAny = Mixin<typeof EntityAny>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const generalField = function (fieldCls : typeof Field, fieldConfig? : unknown) : PropertyDecorator {
+export const createEntityOnPrototype = (proto : any) : EntityData => {
+    let parent      = Object.getPrototypeOf(proto)
+
+    let parentEntity : EntityData
+
+    while (parent && parent !== Object.prototype) {
+        if (parent.$entity) {
+            parentEntity    = parent.$entity
+            break
+        }
+
+        parent              = Object.getPrototypeOf(parent)
+    }
+
+    const entity            = EntityData.new({ parentEntity })
+
+    return proto.$entity    = entity
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const generalField = function (fieldCls : typeof Field, fieldConfig? : object) : PropertyDecorator {
 
     return function (target : EntityAny, propertyKey : string) : void {
         let entity      = target.$entity
 
         if (!target.hasOwnProperty('$entity')) {
-            entity              = target.$entity = EntityData.new({ parentEntity : Object.getPrototypeOf(target).$entity })
+            entity      = createEntityOnPrototype(target)
         }
 
-        const field             = entity.addField(
+        const field     = entity.addField(
             fieldCls.new(Object.assign(fieldConfig || {}, {
-                name            : propertyKey
+                name    : propertyKey
             }))
         );
 
@@ -263,8 +284,8 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
             const setterFnName = `set${ propertyKey.slice(0, 1).toUpperCase() }${ propertyKey.slice(1) }`
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (value : any) : Promise<any> {
-                    return this.$[ propertyKey ].set(value)
+                target[ setterFnName ] = function (...args) : Promise<any> {
+                    return this.$[ propertyKey ].set(...args)
                 }
             }
         }
@@ -276,17 +297,6 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : un
 //---------------------------------------------------------------------------------------------------------------------
 // `target` will be a prototype of the class with Entity mixin
 export const field : PropertyDecorator = generalField(Field)
-
-
-//---------------------------------------------------------------------------------------------------------------------
-// `target` will be a prototype of the class with Entity mixin
-export const storage : PropertyDecorator = generalField(ReferenceStorageField)
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const reference = function (storageKey : string) : PropertyDecorator {
-    return generalField(ReferenceField, { storageKey })
-}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -304,19 +314,6 @@ export const continuationOf = function (continuationOfAtomName : string) : Prope
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorator {
-
-    return function (target : EntityAny, propertyKey : string) : void {
-        const entity            = target.$entity
-        const field             = entity.getField(propertyKey) as ReferenceField
-
-        field.resolver          = resolverFunc
-    }
-}
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
 export const calculate = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
@@ -328,21 +325,3 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
         calculations[ fieldName ]       = propertyKey
     }
 }
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export const setterPropagation = function (fieldName : Name) : MethodDecorator {
-//
-//     // `target` will be a prototype of the class with Entity mixin
-//     return function (target : EntityAny, propertyKey : string, descriptor : TypedPropertyDescriptor<any>) : void {
-//         let entity      = target.$entity
-//
-//         let field       = entity.getField(fieldName)
-//
-//         field.atomSetterPropagation     = descriptor.value
-//
-//         descriptor.value    = function () {
-//             (this as EntityAny).$[ fieldName ].put(...arguments)
-//         }
-//     }
-// }

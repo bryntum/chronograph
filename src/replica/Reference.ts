@@ -1,12 +1,51 @@
 import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
-import {ChronoGraph, IChronoGraph} from "../chrono/Graph.js";
+import {IChronoGraph} from "../chrono/Graph.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
-import {ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
+import {Field, Name} from "../schema/Field.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
-import {EntityAny} from "./Entity.js";
+import {EntityAny, generalField} from "./Entity.js";
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceField extends Field {
+    atomCls             : typeof MinimalFieldAtom   = MinimalReferenceAtom
+
+    resolver            : ResolverFunc
+
+    storageKey          : Name
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceStorageField extends Field {
+    persistent          : boolean   = false
+
+    atomCls             : typeof MinimalReferenceStorageAccumulator = MinimalReferenceStorageAccumulator
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const storage : PropertyDecorator = generalField(ReferenceStorageField)
+
+
+export const reference = function (storageKey : string) : PropertyDecorator {
+    return generalField(ReferenceField, { storageKey })
+}
+
+export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorator {
+
+    return function (target : EntityAny, propertyKey : string) : void {
+        const entity            = target.$entity
+        const field             = entity.getField(propertyKey) as ReferenceField
+
+        field.resolver          = resolverFunc
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export type ResolverFunc    = (locator : any) => EntityAny
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const ReferenceStorageAtom = <T extends Constructable<FieldAtom>>(base : T) =>

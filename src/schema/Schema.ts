@@ -1,120 +1,7 @@
-import {AnyFunction, Base} from "../class/Mixin.js";
-import {MinimalFieldAtom} from "../replica/Atom.js";
-import {MinimalFlagAtom} from "../replica/Flag.js";
-import {MinimalReferenceAtom, MinimalReferenceStorageAccumulator, ResolverFunc} from "../replica/Reference.js";
-import { EntityAny, field } from "../replica/Entity.js";
-
-export type Name    = string
-export type Type    = string
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class Field extends Base {
-    name                : Name
-
-    type                : Type
-
-    entity              : Entity
-
-    persistent          : boolean   = true
-
-    createAccessors     : boolean   = true
-
-    // support for setting the same final value for initial atoms
-    // this flag indicates that atom should ignore its value during commit - it will come from the final atom instead
-    continued           : boolean   = false
-    continuationOf      : Field
-
-    atomCls                 : typeof MinimalFieldAtom   = MinimalFieldAtom
-    // atomSetterPropagation   : AnyFunction
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class ReferenceField extends Field {
-    atomCls             : typeof MinimalFieldAtom   = MinimalReferenceAtom
-
-    resolver            : ResolverFunc
-
-    storageKey          : Name
-}
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export class FlagField extends Field {
-//     atomCls             : typeof MinimalFlagAtom    = MinimalFlagAtom
-// }
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class ReferenceStorageField extends Field {
-    persistent          : boolean   = false
-
-    // resolver            : ResolverFunc
-
-    atomCls             : typeof MinimalReferenceStorageAccumulator = MinimalReferenceStorageAccumulator
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class Entity extends Base {
-    name                : Name
-
-    fields              : Map<Name, Field>      = new Map()
-
-    schema              : Schema
-
-    parentEntity        : Entity
-
-
-    hasField (name : Name) : boolean {
-        return this.fields.has(name)
-    }
-
-
-    getField (name : Name) : Field {
-        return this.fields.get(name)
-    }
-
-
-    addField <T extends Field>(field : T) : T {
-        const name      = field.name
-
-        if (!name) throw new Error(`Field must have a name`)
-
-        // TODO uncomment this! (commented because of the mess in SchEng)
-        // if (this.hasField(name)) throw new Error(`Field with name [${String(name)}] already exists`)
-
-        field.entity    = this
-
-        this.fields.set(name, field)
-
-        return field
-    }
-
-
-    createField (name : Name) : Field {
-        return this.addField(Field.new({ name }))
-    }
-
-
-    forEachField (func : (field : Field, name : Name) => void) {
-        const visited : Set<Name> = new Set()
-
-        let target : Entity = this
-
-        while (target) {
-            target.fields.forEach((field : Field, name : Name) => {
-                if (!visited.has(name)) {
-                    visited.add(name)
-                    func(field, name)
-                }
-            })
-
-            target = target.parentEntity
-        }
-    }
-}
+import {Base} from "../class/Mixin.js";
+import {createEntityOnPrototype} from "../replica/Entity.js";
+import {Entity} from "./Entity.js";
+import {Name} from "./Field.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -148,20 +35,23 @@ export class Schema extends Base {
     }
 
 
-    createEntity (name : Name) : Entity {
-        return this.addEntity(Entity.new({ name }))
-    }
-
-
     getEntityDecorator () : ClassDecorator {
         return (target : any) => {
-            if (!target.name) throw new Error(`Can't add entity - the target class has no name`)
+            const name      = target.name
+            if (!name) throw new Error(`Can't add entity - the target class has no name`)
 
-            let entity      = target.prototype.$entity
+            const proto     = target.prototype
 
-            if (!entity) entity = target.prototype.$entity = Entity.new()
+            let entity      = proto.$entity
 
-            entity.name     = target.name
+            if (!proto.hasOwnProperty('$entity')) {
+                entity      = createEntityOnPrototype(proto)
+            }
+
+            // entity possibly is already created by the field decorators, but in such case it should not have name
+            if (entity.name && entity.name != name) throw new Error(`Invalid state`)
+
+            entity.name     = name
 
             this.addEntity(entity)
 

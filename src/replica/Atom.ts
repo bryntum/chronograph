@@ -1,6 +1,7 @@
 import {ChronoAtom, MinimalChronoAtom} from "../chrono/Atom.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
-import {Entity as EntityData, Field as FieldData} from "../schema/Schema.js";
+import {Entity as EntityData} from "../schema/Entity.js";
+import {Field as FieldData} from "../schema/Field.js";
 import {EntityAny} from "./Entity.js";
 
 
