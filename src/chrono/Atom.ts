@@ -10,7 +10,7 @@ export type ChronoValue         = any
 export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | Effect | T>
 
 //---------------------------------------------------------------------------------------------------------------------
-export type SyncChronoCalculation   = (...args) => ChronoIterator
+export type ChronoCalculation   = (...args) => ChronoIterator
 
 //---------------------------------------------------------------------------------------------------------------------
 export const strictEquality     = (v1, v2) => v1 === v2
@@ -39,11 +39,10 @@ class ChronoAtom extends base {
     equality            : (v1, v2) => boolean       = strictEqualityWithDates
 
     calculationContext  : any
-    calculation         : SyncChronoCalculation
+    calculation         : ChronoCalculation
 
     observedDuringCalculation   :  ChronoAtom[]     = [];
 
-    // intermediateAtoms : Map<string, ChronoAtom> = new Map()
 
 
     * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
@@ -66,6 +65,8 @@ class ChronoAtom extends base {
 
         this.nextStableValue    = undefined
 
+        // this assignment may cause side effects (when using delegated storage)
+        // so we do it after the `this.nextStableValue` is cleared
         if (this.shouldCommitValue) this.value = nextStableValue
     }
 
@@ -150,7 +151,6 @@ class ChronoAtom extends base {
         return this.proposedValue
     }
 
-    // setterPropagation       : AnyFunction
 
     async set (proposedValue : ChronoValue, ...args) : Promise<PropagationResult> {
         const graph             = this.graph as ChronoGraph
@@ -178,69 +178,3 @@ export type ChronoAtom = Mixin<typeof ChronoAtom>
 
 //---------------------------------------------------------------------------------------------------------------------
 export class MinimalChronoAtom extends ChronoAtom(HasId(MinimalNode)) {}
-
-
-// // Intermediate values support
-// //---------------------------------------------------------------------------------------------------------------------
-// const intermediateAtoms : WeakMap<ChronoAtom, Map<string, any>> = new WeakMap()
-//
-// export const provide = (atom : ChronoAtom, tag : string, value : any) : ChronoAtom => {
-//
-//     const graph = atom.graph as ChronoGraph
-//
-//     const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
-//
-//     let result : ChronoAtom = intermeds.get(tag)
-//
-//     if (result) {
-//         result.put(value);
-//         //if (!result.equality(value, result.get())) {
-//         //    result.update(value)
-//         //}
-//     }
-//     else {
-//         result = MinimalChronoAtom.new({
-//             value : value,
-//             * calculation(proposedValue : any) {
-//                 if (proposedValue === undefined) {
-//                     yield atom
-//                 }
-//
-//                 return this.value
-//             }
-//         })
-//         // addNode() will mark atom added as need recalculation
-//         graph.addNode(result)
-//         intermeds.set(tag, result)
-//     }
-//
-//     graph.markStable(result)
-//
-//     return result
-// }
-//
-// export const consume = (atom : ChronoAtom, tag : string) : ChronoAtom => {
-//
-//     const graph = atom.graph as ChronoGraph
-//
-//     const intermeds : Map<string, ChronoAtom> = atom.intermediateAtoms
-//
-//     let result : ChronoAtom = intermeds.get(tag);
-//
-//     if (!result) {
-//         result = MinimalChronoAtom.new({
-//             * calculation(proposedValue : any) {
-//                 if (proposedValue === undefined) {
-//                     yield atom
-//                 }
-//
-//                 return this.value
-//             }
-//         })
-//         // addNode() will mark atom added as need recalculation
-//         graph.addNode(result)
-//         intermeds.set(tag, result)
-//     }
-//
-//     return result;
-// }
