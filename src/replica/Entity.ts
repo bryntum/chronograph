@@ -253,7 +253,7 @@ export const createEntityOnPrototype = (proto : any) : EntityData => {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const generalField = function (fieldCls : typeof Field, fieldConfig? : object) : PropertyDecorator {
+export const generic_field = function (fieldCls : typeof Field, fieldConfig? : object) : PropertyDecorator {
 
     return function (target : Entity, propertyKey : string) : void {
         let entity      = target.$entity
@@ -295,7 +295,7 @@ export const generalField = function (fieldCls : typeof Field, fieldConfig? : ob
 
 //---------------------------------------------------------------------------------------------------------------------
 // `target` will be a prototype of the class with Entity mixin
-export const field : PropertyDecorator = generalField(Field)
+export const field : PropertyDecorator = generic_field(Field)
 
 
 //---------------------------------------------------------------------------------------------------------------------

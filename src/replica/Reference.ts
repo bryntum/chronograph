@@ -3,7 +3,7 @@ import {IChronoGraph} from "../chrono/Graph.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
 import {Field, Name} from "../schema/Field.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
-import {Entity, generalField} from "./Entity.js";
+import {Entity, generic_field} from "./Entity.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -24,25 +24,36 @@ export class ReferenceField extends Field {
 export class ReferenceStorageField extends Field {
     persistent          : boolean   = false
 
-    atomCls             : typeof MinimalReferenceStorageAccumulator = MinimalReferenceStorageAccumulator
+    atomCls             : typeof MinimalFieldAtom   = MinimalReferenceStorageAccumulator
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const storage : PropertyDecorator = generalField(ReferenceStorageField)
+export const storage : PropertyDecorator = generic_field(ReferenceStorageField)
 
 
 export const reference = function (storageKey : string) : PropertyDecorator {
-    return generalField(ReferenceField, { storageKey })
+    return generic_field(ReferenceField, { storageKey })
 }
 
 export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorator {
 
     return function (target : Entity, propertyKey : string) : void {
-        const entity            = target.$entity
-        const field             = entity.getField(propertyKey) as ReferenceField
+        if (!target.hasOwnProperty('$entity'))
+            throw new Error("No entity on the target class - check the order of decorators. " +
+                "The `resolver` decorator should be above of one of the fields decorators")
 
-        field.resolver          = resolverFunc
+        const entity            = target.$entity
+        const field             = entity.getField(propertyKey)
+
+        if (!field)
+            throw new Error(`No field [${propertyKey}] on the target class - check the order of decorators.` +
+                "The `resolver` decorator should be above of one of the fields decorators")
+
+        if (!(field instanceof ReferenceField))
+            throw new Error(`The field [${propertyKey}] on the target class is not a reference field`)
+        else
+            field.resolver      = resolverFunc
     }
 }
 
@@ -51,11 +62,13 @@ export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorat
 export const ReferenceStorageAtom = <T extends Constructable<FieldAtom>>(base : T) =>
 
 class ReferenceStorageAtom extends base {
+    // upgrade the type of the `incoming` property
+    incoming        : Set<MinimalReferenceAtom>
 
     oldRefs         : Set<ChronoAtom>       = new Set()
     newRefs         : Set<ChronoAtom>       = new Set()
 
-    value           : Set<Entity>        = new Set();
+    value           : Set<Entity>           = new Set();
 
 
     * calculate (proposedValue : ChronoValue) : IterableIterator<ChronoAtom | this[ 'value' ]> {
@@ -63,7 +76,7 @@ class ReferenceStorageAtom extends base {
 
         let atom : ChronoAtom
 
-        for (atom of (this.incoming as Set<ChronoAtom>)) {
+        for (atom of this.incoming) {
             if (!this.oldRefs.has(atom)) {
                 const referencee    = yield atom
 
@@ -90,7 +103,6 @@ class ReferenceStorageAtom extends base {
 
 
     reject () {
-        throw "not yet"
         super.reject()
 
         this.oldRefs.clear()
