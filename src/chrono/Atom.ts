@@ -1,7 +1,7 @@
 import {Constructable, Mixin} from "../class/Mixin.js";
 import {MinimalNode, Node} from "../graph/Node.js";
 import {Effect} from "./Effect.js";
-import {ChronoGraph, IChronoGraph} from "./Graph.js";
+import {ChronoGraph, IChronoGraph, PropagationResult} from "./Graph.js";
 import {HasId} from "./HasId.js";
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -135,13 +135,16 @@ class ChronoAtom extends base {
         }
     }
 
+
     getNextStableValue () : ChronoValue {
         return this.nextStableValue
     }
 
+
     getConsistentValue () : ChronoValue {
         return this.value
     }
+
 
     getProposedValue () : ChronoValue {
         return this.proposedValue
@@ -149,21 +152,12 @@ class ChronoAtom extends base {
 
     // setterPropagation       : AnyFunction
 
-    set (proposedValue : ChronoValue, ...args) : Promise<any> {
+    async set (proposedValue : ChronoValue, ...args) : Promise<PropagationResult> {
         const graph             = this.graph as ChronoGraph
 
         this.put(proposedValue, ...args)
 
-        let result : Promise<any>;
-
-        if (graph) {
-            result = graph.propagate()
-        }
-        else {
-            result = Promise.resolve()
-        }
-
-        return result
+        return graph ? graph.propagate() : Promise.resolve(PropagationResult.Completed)
     }
 
 
