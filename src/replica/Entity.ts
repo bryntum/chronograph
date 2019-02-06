@@ -1,5 +1,5 @@
 import {ChronoAtom} from "../chrono/Atom.js";
-import {ChronoGraph} from "../chrono/Graph.js";
+import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
 import {Base, Constructable, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData, Field, Name, ReferenceField, ReferenceStorageField} from "../schema/Schema.js";
 import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
@@ -188,8 +188,8 @@ export const EntityAny = <T extends Constructable<object>>(base : T) => {
         }
 
 
-        propagate () {
-            this.getGraph().propagate()
+        async propagate () : Promise<PropagationResult> {
+            return this.getGraph().propagate()
         }
 
 
