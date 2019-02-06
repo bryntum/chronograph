@@ -58,9 +58,9 @@ class ChronoGraph extends base implements IChronoGraph {
 
     // readObservationState : ChronoAtom[]         = []
 
-    nodeT               : ChronoAtom
+    nodeT                   : ChronoAtom
 
-    nodesMap            : Map<ChronoId, ChronoAtom> = new Map()
+    nodesMap                : Map<ChronoId, ChronoAtom> = new Map()
 
     needRecalculationAtoms  : Set<ChronoAtom>       = new Set()
     stableAtoms             : Set<ChronoAtom>       = new Set()
@@ -108,7 +108,6 @@ class ChronoGraph extends base implements IChronoGraph {
 
     markAsNeedRecalculation (atom : ChronoAtom) {
         this.needRecalculationAtoms.add(atom)
-        // atom.intermediateAtoms.forEach(a => this.markAsNeedRecalculation(a))
     }
 
 
@@ -161,7 +160,7 @@ class ChronoGraph extends base implements IChronoGraph {
 
 
     async rejectPartialProgress () {
-        // stable atoms will include
+        // stable atoms includes changed ones
         this.stableAtoms.forEach(atom => atom.reject())
         this.stableAtoms.clear()
 
@@ -344,21 +343,13 @@ class ChronoGraph extends base implements IChronoGraph {
             } else {
                 const consistentValue   = calcRes.value
 
-                // console.log(`DONE ${sourceAtom}`)
                 if (!sourceAtom.equality(consistentValue, sourceAtom.getConsistentValue())) {
                     changedAtoms.push(sourceAtom)
 
                     sourceAtom.nextStableValue = consistentValue
-
-                    // toCalculate.unshift.apply(toCalculate, Array.from(sourceAtom.outgoing))
-                    // sourceAtom.outgoing.forEach(el => maybeDirty.add(el))
                 }
 
                 this.markStable(sourceAtom)
-
-                // if (sourceAtom.setterPropagation && !sourceAtom.proposedValue) {
-                //     sourceAtom.setterPropagation.call(sourceAtom.calculationContext || sourceAtom, consistentValue)
-                // }
 
                 toCalculate.pop()
             }
