@@ -4,7 +4,7 @@ import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
 import {FieldAtom} from "../replica/Atom.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
-import {Effect, EffectResolutionResult, EffectResolverFunction} from "./Effect.js";
+import {CancelPropagationEffect, Effect, EffectResolutionResult, EffectResolverFunction, RestartPropagationEffect} from "./Effect.js";
 import {ChronoId} from "./Id.js";
 
 
@@ -208,8 +208,6 @@ class ChronoGraph extends base implements IChronoGraph {
 
 
     startAtomCalculation (sourceAtom : ChronoAtom) : ChronoIterationResult {
-        // console.log(`START ${sourceAtom}`)
-
         const iterator : ChronoIterator<ChronoValue> = sourceAtom.calculate(sourceAtom.proposedValue)
 
         let iteratorValue   = iterator.next()
@@ -234,13 +232,6 @@ class ChronoGraph extends base implements IChronoGraph {
         let incomingAtom    = continuation.atom
 
         do {
-            // this.LOG.push( [ sourceAtom, incomingAtom ] )
-            //
-            // console.log(`CONTINUE ${sourceAtom}, DEP ${incomingAtom}`)
-
-            // const field     = (incomingAtom as MinimalFieldAtom).field
-            // console.log(`Observed: ${incomingAtom.calculationContext && incomingAtom.calculationContext.id}, field: ${field && field.name}`)
-
             let iteratorValue
 
             if (incomingAtom) {
@@ -280,8 +271,6 @@ class ChronoGraph extends base implements IChronoGraph {
         const maybeDirty        = new Set()
         const conts             = new Map<ChronoAtom, ChronoContinuation>()
         const visitedAt         = new Map<ChronoAtom, number>()
-
-        // this.LOG                = []
 
         const me                = this
 
@@ -380,6 +369,14 @@ class ChronoGraph extends base implements IChronoGraph {
 
 
     async onEffect (effect : Effect) : Promise<EffectResolutionResult> {
+        if (effect instanceof CancelPropagationEffect) {
+            return EffectResolutionResult.Cancel
+        }
+
+        if (effect instanceof RestartPropagationEffect) {
+            return EffectResolutionResult.Restart
+        }
+
         return EffectResolutionResult.Resume
     }
 

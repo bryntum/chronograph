@@ -17,6 +17,16 @@ export class Effect extends Base {
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export class CancelPropagationEffect extends Effect {
+    description         : string
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class RestartPropagationEffect extends Effect {
+    description         : string
+}
 
 
 

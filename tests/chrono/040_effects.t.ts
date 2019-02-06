@@ -1,5 +1,5 @@
 import {ChronoAtom, MinimalChronoAtom} from "../../src/chrono/Atom.js";
-import {Effect, EffectResolutionResult} from "../../src/chrono/Effect.js";
+import {CancelPropagationEffect, Effect, EffectResolutionResult, RestartPropagationEffect} from "../../src/chrono/Effect.js";
 import {ChronoGraph, MinimalChronoGraph} from "../../src/chrono/Graph.js";
 import {Constructable, Mixin} from "../../src/class/Mixin.js";
 
@@ -51,8 +51,8 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Should allow various things with effects', async t => {
-        const graph : ChronoGraph       = WithEffect(MinimalChronoGraph).new()
+    t.it('Should allow to resume the propagation (default behaviour) with effects', async t => {
+        const graph : WithEffect        = WithEffect(MinimalChronoGraph).new()
 
         let resolved1       = false
         let resolved2       = false
@@ -70,7 +70,7 @@ StartTest(t => {
                     })
                 })
 
-                return proposedValue + 1
+                return (proposedValue !== undefined ? proposedValue : this.value) + 1
             }
         }))
 
@@ -87,7 +87,7 @@ StartTest(t => {
                     })
                 })
 
-                return proposedValue + (yield box1)
+                return (proposedValue !== undefined ? proposedValue : this.value) + (yield box1)
             }
         }))
 
@@ -102,5 +102,85 @@ StartTest(t => {
         t.is(box1.get(), 2, "Correct result calculated")
         t.is(box2.get(), 3, "Correct result calculated")
     })
+
+
+    t.it('Should allow to cancel the propagation', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const box1 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({
+            calculation : function * (proposedValue : number) {
+                if (proposedValue === 0) yield CancelPropagationEffect.new()
+
+                return (proposedValue !== undefined ? proposedValue : this.value)
+            }
+        }))
+
+        const box2 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({
+
+            calculation : function * (proposedValue : number) {
+                return (proposedValue !== undefined ? proposedValue : this.value) / (yield box1)
+            }
+        }))
+
+        box1.put(2)
+        box2.put(4)
+
+        await graph.propagate()
+
+        t.is(box1.get(), 2, "Correct result calculated")
+        t.is(box2.get(), 2, "Correct result calculated")
+
+        // this propagation should be canceled
+        box1.put(0)
+        box2.put(3)
+
+        await graph.propagate()
+
+        t.is(box1.get(), 2, "Correct result calculated")
+        t.is(box2.get(), 2, "Correct result calculated")
+    })
+
+
+    t.it('Should allow to restart the propagation', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const box1 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({
+            calculation : function * (proposedValue : number) {
+                if (proposedValue === 0) {
+                    this.put(1)
+
+                    yield RestartPropagationEffect.new()
+                }
+
+                return (proposedValue !== undefined ? proposedValue : this.value)
+            }
+        }))
+
+        const box2 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({
+
+            calculation : function * (proposedValue : number) {
+                return (proposedValue !== undefined ? proposedValue : this.value) / (yield box1)
+            }
+        }))
+
+        box1.put(2)
+        box2.put(4)
+
+        await graph.propagate()
+
+        t.is(box1.get(), 2, "Correct result calculated")
+        t.is(box2.get(), 2, "Correct result calculated")
+
+        // this propagation should be restarted with box1.put(1)
+        box1.put(0)
+        box2.put(3)
+
+        await graph.propagate()
+
+        t.is(box1.get(), 1, "Correct result calculated")
+        t.is(box2.get(), 3, "Correct result calculated")
+    })
+
+
 
 })

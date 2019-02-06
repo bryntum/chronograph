@@ -6,6 +6,8 @@
 //        "noStrictGenericChecks"     : true,
 
         "target"                : "es6",
+        // GOOD: does not transpile async/await to generators, BAD : does not stop on exception in async function
+//        "target"                : "ES2017",
 
 //        "sourceMap"             : true,
         "lib"                   : [
