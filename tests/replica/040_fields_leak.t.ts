@@ -1,5 +1,6 @@
 import {Base} from "../../src/class/Mixin.js";
 import {EntityAny, field} from "../../src/replica/Entity.js";
+import {Name} from "../../src/schema/Field.js";
 
 declare const StartTest : any
 
@@ -22,32 +23,16 @@ StartTest(t => {
             helm : boolean = true
         }
 
-        const VehicleProto = Vehicle.prototype
-        const CarProto = Car.prototype
-        const BoatProto = Boat.prototype
+        const vehicleFields         = new Set<Name>()
+        const carFields             = new Set<Name>()
+        const boatFields            = new Set<Name>()
 
-        const VehicleFields = []
+        Vehicle.getEntity().forEachField(field => vehicleFields.add(field.name))
+        Car.getEntity().forEachField(field => carFields.add(field.name))
+        Boat.getEntity().forEachField(field => boatFields.add(field.name))
 
-        VehicleProto.$entity.forEachField((_, name) => {
-            VehicleFields.push(name)
-        })
-
-
-        const CarFields = []
-
-        CarProto.$entity.forEachField((_, name) => {
-            CarFields.push(name)
-        })
-
-
-        const BoatFields = []
-
-        BoatProto.$entity.forEachField((_, name) => {
-            BoatFields.push(name)
-        })
-
-        t.ok(VehicleFields.includes('name') && !VehicleFields.includes('drivingWheel') && !VehicleFields.includes('helm'), "Vehicle fields are ok")
-        t.ok(CarFields.includes('name') && CarFields.includes('drivingWheel') && !CarFields.includes('helm'), "Car fields are ok")
-        t.ok(BoatFields.includes('name') && BoatFields.includes('helm') && !BoatFields.includes('drivingWheel'), "Boat fields are ok")
+        t.isDeeply(vehicleFields, new Set([ 'name' ]), "Vehicle fields are ok")
+        t.isDeeply(carFields, new Set([ 'name', 'drivingWheel' ]), "Car fields are ok")
+        t.isDeeply(boatFields, new Set([ 'name', 'helm' ]), "Boat fields are ok")
     })
 })
