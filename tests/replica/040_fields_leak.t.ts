@@ -34,5 +34,12 @@ StartTest(t => {
         t.isDeeply(vehicleFields, new Set([ 'name' ]), "Vehicle fields are ok")
         t.isDeeply(carFields, new Set([ 'name', 'drivingWheel' ]), "Car fields are ok")
         t.isDeeply(boatFields, new Set([ 'name', 'helm' ]), "Boat fields are ok")
+
+        t.ok(Boat.getEntity().hasField('name'), "Boat has inherited field")
+        t.ok(Boat.getEntity().hasField('helm'), "Boat has own field")
+
+        t.ok(Car.getEntity().hasField('name'), "Car has inherited field")
+        t.ok(Car.getEntity().hasField('drivingWheel'), "Car has own field")
+
     })
 })
