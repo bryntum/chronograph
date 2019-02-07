@@ -24,7 +24,7 @@ export class ReferenceField extends Field {
 export class ReferenceStorageField extends Field {
     persistent          : boolean   = false
 
-    atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceStorageAccumulator
+    atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceStorageAtom
 }
 
 
@@ -112,7 +112,7 @@ class ReferenceStorageAtom extends base {
 
 export type ReferenceStorageAtom = Mixin<typeof ReferenceStorageAtom>
 
-export class MinimalReferenceStorageAccumulator extends ReferenceStorageAtom(MinimalFieldAtom) {}
+export class MinimalReferenceStorageAtom extends ReferenceStorageAtom(MinimalFieldAtom) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
