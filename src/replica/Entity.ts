@@ -3,7 +3,7 @@ import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
-import {MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
+import {EntityAtom, FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 
 
 // LAZY ATOMS CREATION - investigate if it improves performance
@@ -58,7 +58,7 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
 //         }
 
 
-        get $() : { [s in keyof this] : MinimalFieldAtom } {
+        get $() : { [s in keyof this] : FieldAtom } {
             const atomsCollection   = {}
 
             this.$entity.forEachField((field : Field, name : Name) => {
@@ -73,7 +73,7 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
         }
 
 
-        get $$() : MinimalEntityAtom {
+        get $$() : EntityAtom {
             const value     = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
 
             Object.defineProperty(this, '$$', {
@@ -156,7 +156,7 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
 
 
         getGraph () : ChronoGraph {
-            return this.$$.graph as ChronoGraph
+            return this.$$.graph
         }
 
 
@@ -177,7 +177,7 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
 
 
         leaveGraph () {
-            const graph     = this.$$.graph as ChronoGraph
+            const graph     = this.$$.graph
 
             if (graph) {
                 this.forEachFieldAtom(field => graph.removeNode(field))

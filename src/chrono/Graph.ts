@@ -9,32 +9,9 @@ import {ChronoId} from "./Id.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type ChronoRevision      = number
+export type ChronoRevision          = number
 
 //---------------------------------------------------------------------------------------------------------------------
-// this interface exists only to break the cyclic dependency between Atom / Graph
-export interface IChronoGraph {
-    // revision            : ChronoRevision
-
-    // isObservingRead     : number
-    // isObservingWrite    : number
-    //
-    // onReadObserved (atom : ChronoAtom)
-    // onWriteObserved (atom : ChronoAtom)
-    //
-    // startReadObservation ()
-    // stopReadObservation () : ChronoAtom[]
-
-    // calculateAtom (atom : ChronoAtom, proposedValue : ChronoValue)
-
-    markAsNeedRecalculation (atom : ChronoAtom)
-
-    // commit ()
-    // reject ()
-    // propagate () : Promise<any>
-}
-
-
 export type ChronoContinuation      = { iterator : ChronoIterator, atom? : ChronoAtom }
 export type ChronoIterationResult   = { value? : ChronoValue, continuation? : ChronoContinuation, effect? : Effect }
 export type PropagateSingleResult   = { success : true }
@@ -50,7 +27,7 @@ export enum PropagationResult {
 //---------------------------------------------------------------------------------------------------------------------
 export const ChronoGraph = <T extends Constructable<Graph>>(base : T) =>
 
-class ChronoGraph extends base implements IChronoGraph {
+class ChronoGraph extends base {
     // revision            : ChronoRevision
 
     // isObservingRead     : number        = 0
@@ -534,7 +511,7 @@ class ChronoGraph extends base implements IChronoGraph {
     }
 }
 
-export type ChronoGraph = Mixin<typeof ChronoGraph>
+export interface ChronoGraph extends Mixin<typeof ChronoGraph> {}
 
 export const MinimalChronoGraph = ChronoGraph(Graph(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(Base)))))))
 export type MinimalChronoGraph  = InstanceType<typeof MinimalChronoGraph>

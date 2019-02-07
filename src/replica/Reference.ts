@@ -1,6 +1,6 @@
 import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
-import {IChronoGraph} from "../chrono/Graph.js";
-import {Constructable, Mixin} from "../class/Mixin.js";
+import {ChronoGraph} from "../chrono/Graph.js";
+import {Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Field, Name} from "../schema/Field.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
 import {Entity, generic_field} from "./Entity.js";
@@ -12,7 +12,7 @@ export type ResolverFunc    = (locator : any) => Entity
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceField extends Field {
-    atomCls             : typeof MinimalFieldAtom   = MinimalReferenceAtom
+    atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceAtom
 
     resolver            : ResolverFunc
 
@@ -24,7 +24,7 @@ export class ReferenceField extends Field {
 export class ReferenceStorageField extends Field {
     persistent          : boolean   = false
 
-    atomCls             : typeof MinimalFieldAtom   = MinimalReferenceStorageAccumulator
+    atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceStorageAccumulator
 }
 
 
@@ -159,7 +159,7 @@ class ReferenceAtom extends base {
     }
 
 
-    onEnterGraph (graph : IChronoGraph) {
+    onEnterGraph (graph : ChronoGraph) {
         const value     = this.value
 
         let resolves    = true
@@ -188,7 +188,7 @@ class ReferenceAtom extends base {
     }
 
 
-    onLeaveGraph (graph : IChronoGraph) {
+    onLeaveGraph (graph : ChronoGraph) {
         if (this.hasStableValue()) {
             const referenceStorage  = this.getStorage(this.value)
 

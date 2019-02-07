@@ -1,5 +1,5 @@
-import {Base} from "../class/Mixin.js";
-import {MinimalFieldAtom} from "../replica/Atom.js";
+import {Base, MixinConstructor} from "../class/Mixin.js";
+import {FieldAtom, MinimalFieldAtom} from "../replica/Atom.js";
 import {Entity} from "./Entity.js";
 
 export type Name    = string
@@ -23,6 +23,6 @@ export class Field extends Base {
     continued           : boolean   = false
     continuationOf      : Field
 
-    atomCls             : typeof MinimalFieldAtom   = MinimalFieldAtom
+    atomCls             : MixinConstructor<typeof FieldAtom>   = MinimalFieldAtom
 }
 
