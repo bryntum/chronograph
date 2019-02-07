@@ -2,6 +2,9 @@ import {Base} from "../class/Mixin.js";
 import {Field, Name} from "./Field.js";
 import {Schema} from "./Schema.js";
 
+export const IteratorReturnedEarly  = Symbol("IteratorReturnedEarly")
+export type IteratorExit            = typeof IteratorReturnedEarly | void
+
 //---------------------------------------------------------------------------------------------------------------------
 export class Entity extends Base {
     name                : Name
@@ -14,21 +17,32 @@ export class Entity extends Base {
 
 
     hasField (name : Name) : boolean {
-        return this.fields.has(name)
+        return this.getField(name) !== undefined
     }
 
 
     getField (name : Name) : Field {
-        return this.fields.get(name)
+        let result : Field  = undefined
+
+        this.forEachParent(entity => {
+            const field     = entity.fields.get(name)
+
+            if (field) {
+                result      = field
+
+                return IteratorReturnedEarly
+            }
+        })
+
+        return result
     }
 
 
     addField <T extends Field>(field : T) : T {
         const name      = field.name
-
         if (!name) throw new Error(`Field must have a name`)
 
-        if (this.hasField(name)) throw new Error(`Field with name [${String(name)}] already exists`)
+        if (this.fields.has(name)) throw new Error(`Field with name [${String(name)}] already exists`)
 
         field.entity    = this
 
@@ -38,21 +52,28 @@ export class Entity extends Base {
     }
 
 
+    forEachParent (func : (Entity) => IteratorExit) : IteratorExit {
+        let entity : Entity         = this
+
+        while (entity) {
+            if (func(entity) === IteratorReturnedEarly) return IteratorReturnedEarly
+
+            entity                  = entity.parentEntity
+        }
+    }
+
+
     forEachField (func : (field : Field, name : Name) => void) {
         const visited : Set<Name>   = new Set()
 
-        let target : Entity         = this
-
-        while (target) {
-            target.fields.forEach((field : Field, name : Name) => {
+        this.forEachParent(entity => {
+            entity.fields.forEach((field : Field, name : Name) => {
                 if (!visited.has(name)) {
                     visited.add(name)
 
                     func(field, name)
                 }
             })
-
-            target                  = target.parentEntity
-        }
+        })
     }
 }
