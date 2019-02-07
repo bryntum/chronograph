@@ -253,14 +253,21 @@ export const createEntityOnPrototype = (proto : any) : EntityData => {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const ensureEntityOnPrototype = (proto : any) : EntityData => {
+    let entity      = proto.$entity
+
+    if (!proto.hasOwnProperty('$entity')) entity = createEntityOnPrototype(proto)
+
+    return entity
+}
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export const generic_field = function (fieldCls : typeof Field, fieldConfig? : object) : PropertyDecorator {
 
     return function (target : Entity, propertyKey : string) : void {
-        let entity      = target.$entity
-
-        if (!target.hasOwnProperty('$entity')) {
-            entity      = createEntityOnPrototype(target)
-        }
+        let entity      = ensureEntityOnPrototype(target)
 
         const field     = entity.addField(
             fieldCls.new(Object.assign(fieldConfig || {}, {
@@ -294,7 +301,6 @@ export const generic_field = function (fieldCls : typeof Field, fieldConfig? : o
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// `target` will be a prototype of the class with Entity mixin
 export const field : PropertyDecorator = generic_field(Field)
 
 
