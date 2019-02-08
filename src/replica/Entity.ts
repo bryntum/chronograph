@@ -3,6 +3,7 @@ import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
 import {Constructable, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
+import {uppercaseFirst} from "../util/Helper.js";
 import {EntityAtom, FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 
 
@@ -287,10 +288,17 @@ export const generic_field = function (fieldCls : typeof Field, fieldConfig? : o
                 }
             })
 
-            const setterFnName = `set${ propertyKey.slice(0, 1).toUpperCase() }${ propertyKey.slice(1) }`
+            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
+            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
+
+            if (!(getterFnName in target)) {
+                target[ getterFnName ] = function (...args) : unknown {
+                    return this.$[ propertyKey ].get(...args)
+                }
+            }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (...args) : Promise<any> {
+                target[ setterFnName ] = function (...args) : Promise<PropagationResult> {
                     return this.$[ propertyKey ].set(...args)
                 }
             }
