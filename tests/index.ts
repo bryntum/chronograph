@@ -31,6 +31,7 @@ project.start(
         group       : 'replica',
 
         items       : [
+            'replica/001_entity.t.js',
             'replica/010_replica.t.js',
             'replica/020_relation.t.js',
             'replica/030_reference_resolver.t.js',

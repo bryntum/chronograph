@@ -11,7 +11,7 @@ import {EntityAtom, FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom
 // current issues
 // 1) when entity enters a graph, the yet unreferenced atoms are not created yet (naturally)
 // so they are not calculated
-// need to create AND calculate them immediately later, on-demand
+// need to create AND calculate them **synchronously** later, on-demand - how to deal with effects?
 
 // const atomsCollectionMixin = (base : typeof Base, name) =>
 //
@@ -23,12 +23,14 @@ import {EntityAtom, FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom
 // }
 //
 
+const isEntity      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Entity = <T extends Constructable<object>>(base : T) => {
 
     class Entity extends base {
-        $entity         : EntityData
+        // marker in the prototype
+        [isEntity] () {}
 
         $calculations   : { [s in keyof this] : string }
 
@@ -59,6 +61,13 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
 //         }
 
 
+        // lazy meta instance creation - will work even w/o any @field or @entity decorator
+        get $entity() : EntityData {
+            // this will lazily create an EntityData instance in the prototype
+            return createEntityOnPrototype(this.constructor.prototype)
+        }
+
+
         get $() : { [s in keyof this] : FieldAtom } {
             const atomsCollection   = {}
 
@@ -66,9 +75,7 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
                 atomsCollection[ name ] = this.createFieldAtom(field)
             })
 
-            Object.defineProperty(this, '$', {
-                value       : atomsCollection
-            })
+            Object.defineProperty(this, '$', { value : atomsCollection })
 
             return atomsCollection as any
         }
@@ -77,62 +84,10 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
         get $$() : EntityAtom {
             const value     = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
 
-            Object.defineProperty(this, '$$', {
-                value       : value
-            })
+            Object.defineProperty(this, '$$', { value : value })
 
             return value
         }
-
-
-        // initAtoms (config : object) {
-        //     // TODO move to property initializers
-        //     if (this.$internalId == null) this.$internalId = chronoId()
-        //
-        //     const entity        = this.$entity
-        //
-        //     // if (!this.$$) this.$$ = MinimalEntityAtom.new({ id : this.$internalId, entity : entity, value : this, self : this })
-        //
-        //     // if (!this.$) this.$ = <any>{}
-        //
-        //     const fields        = this.$
-        //
-        //     entity.fields.forEach((field : Field, name : Name) => {
-        //         if (fields[ name ]) {
-        //             // DIRTY HACK
-        //             if (config && config.hasOwnProperty(name)) {
-        //                 fields[ name ].writeValue(config[ name ])
-        //             }
-        //             return
-        //         }
-        //
-        //         const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
-        //
-        //         const fieldAtom = fields[ name ] = field.atomCls.new({
-        //             id          : `${this.$$.id}/${name}`,
-        //
-        //             field       : field,
-        //
-        //             self        : this,
-        //
-        //             shouldCommitValue   : !field.continued,
-        //
-        //             // value               : config && config.hasOwnProperty(name) ? config[ name ] : this[ name ],
-        //
-        //             calculationContext  : calculationFunction ? this : undefined,
-        //             calculation         : calculationFunction,
-        //
-        //             // setterPropagation   : field.atomSetterPropagation
-        //         })
-        //
-        //         if (config.hasOwnProperty(name)) {
-        //             fieldAtom.writeValue(config[name])
-        //         }
-        //         else if (this[ name ] !== undefined) {
-        //             fieldAtom.writeValue(this[ name ])
-        //         }
-        //     })
-        // }
 
 
         // the actually returned type is `FieldAtom`, but this does not typecheck - circularity
@@ -221,7 +176,7 @@ export const Entity = <T extends Constructable<object>>(base : T) => {
 
 
         static getEntity () : EntityData {
-            return this.prototype.$entity
+            return ensureEntityOnPrototype(this.prototype)
         }
 
     }
@@ -236,20 +191,11 @@ export type Entity = Mixin<typeof Entity>
 export const createEntityOnPrototype = (proto : any) : EntityData => {
     let parent      = Object.getPrototypeOf(proto)
 
-    let parentEntity : EntityData
+    const entity    = EntityData.new({ parentEntity : parent.hasOwnProperty(isEntity) ? null : parent.$entity })
 
-    while (parent && parent !== Object.prototype) {
-        if (parent.$entity) {
-            parentEntity    = parent.$entity
-            break
-        }
+    Object.defineProperty(proto, '$entity', { value : entity })
 
-        parent              = Object.getPrototypeOf(parent)
-    }
-
-    const entity            = EntityData.new({ parentEntity })
-
-    return proto.$entity    = entity
+    return entity
 }
 
 

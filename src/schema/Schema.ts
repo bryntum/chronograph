@@ -1,4 +1,4 @@
-import {Base} from "../class/Mixin.js";
+import {Base, MixinConstructor} from "../class/Mixin.js";
 import {ensureEntityOnPrototype} from "../replica/Entity.js";
 import {Entity} from "./Entity.js";
 import {Name} from "./Field.js";
@@ -36,7 +36,8 @@ export class Schema extends Base {
 
 
     getEntityDecorator () : ClassDecorator {
-        return (target : any) => {
+        // @ts-ignore : https://github.com/Microsoft/TypeScript/issues/29828
+        return (target : MixinConstructor<typeof Entity>) => {
             const name      = target.name
             if (!name) throw new Error(`Can't add entity - the target class has no name`)
 

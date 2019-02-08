@@ -32,7 +32,8 @@ export class ReferenceStorageField extends Field {
 export const storage : PropertyDecorator = generic_field(ReferenceStorageField)
 
 
-export const reference = function (storageKey : string) : PropertyDecorator {
+// we allow references w/o storage
+export const reference = function (storageKey? : string) : PropertyDecorator {
     return generic_field(ReferenceField, { storageKey })
 }
 
@@ -124,6 +125,11 @@ class ReferenceAtom extends base {
     value           : Entity
 
 
+    hasStorage () : boolean {
+        return Boolean(this.field.storageKey)
+    }
+
+
     addToStorage (storage : ReferenceStorageAtom) {
         storage.newRefs.add(this.self.$$)
 
@@ -180,7 +186,7 @@ class ReferenceAtom extends base {
 
         super.onEnterGraph(graph)
 
-        if (this.hasStableValue() && resolves) {
+        if (this.hasStableValue() && resolves && this.hasStorage()) {
             const referenceStorage  = this.getStorage(this.value)
 
             this.addToStorage(referenceStorage)
@@ -189,7 +195,7 @@ class ReferenceAtom extends base {
 
 
     onLeaveGraph (graph : ChronoGraph) {
-        if (this.hasStableValue()) {
+        if (this.hasStableValue() && this.hasStorage()) {
             const referenceStorage  = this.getStorage(this.value)
 
             this.removeFromStorage(referenceStorage)
@@ -203,11 +209,11 @@ class ReferenceAtom extends base {
         const value     = this.value
 
         // value is not empty and resolved to entity
-        if (value != null && Object(value) === value) {
+        if (value != null && Object(value) === value && this.hasStorage()) {
             this.removeFromStorage(this.getStorage(value))
         }
 
-        if (nextValue != null && Object(nextValue) === nextValue) {
+        if (nextValue != null && Object(nextValue) === nextValue && this.hasStorage()) {
             this.addToStorage(this.getStorage(nextValue))
         }
 
