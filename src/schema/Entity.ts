@@ -3,7 +3,7 @@ import {Field, Name} from "./Field.js";
 import {Schema} from "./Schema.js";
 
 export const IteratorReturnedEarly  = Symbol("IteratorReturnedEarly")
-export type IteratorExit            = typeof IteratorReturnedEarly | void
+export type IteratorResult          = typeof IteratorReturnedEarly | void
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Entity extends Base {
@@ -52,7 +52,7 @@ export class Entity extends Base {
     }
 
 
-    forEachParent (func : (Entity) => IteratorExit) : IteratorExit {
+    forEachParent (func : (Entity) => IteratorResult) : IteratorResult {
         let entity : Entity         = this
 
         while (entity) {
