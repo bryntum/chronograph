@@ -37,14 +37,8 @@ export type BaseConstructor           = typeof Base
 
 
 //---------------------------------------------------------------------------------------------------------------------
-
-export type AnyConstructor<A = any>   = new (...input: any[]) => A
-
-
 export type AnyFunction<A = any>      = (...input: any[]) => A
-
-//---------------------------------------------------------------------------------------------------------------------
-export type Constructable<T>          = AnyConstructor<T>
+export type AnyConstructor<A = any>   = new (...input: any[]) => A
 
 
 //---------------------------------------------------------------------------------------------------------------------

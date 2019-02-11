@@ -1,7 +1,7 @@
 import {ChronoAtom, MinimalChronoAtom} from "../../src/chrono/Atom.js";
 import {CancelPropagationEffect, Effect, EffectResolutionResult, RestartPropagationEffect} from "../../src/chrono/Effect.js";
 import {ChronoGraph, MinimalChronoGraph} from "../../src/chrono/Graph.js";
-import {Constructable, Mixin} from "../../src/class/Mixin.js";
+import {AnyConstructor, Mixin} from "../../src/class/Mixin.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -11,7 +11,7 @@ class WaitUntilResolvedEffect extends Effect {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WithEffect = <T extends Constructable<ChronoGraph>>(base : T) =>
+export const WithEffect = <T extends AnyConstructor<ChronoGraph>>(base : T) =>
 
 class WithEffect extends base {
 

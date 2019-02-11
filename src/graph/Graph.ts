@@ -1,9 +1,9 @@
-import {Constructable, Mixin} from "../class/Mixin.js";
+import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {Node} from "./Node.js";
 import {WalkableBackward, WalkableForward} from "./Walkable.js";
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Graph = <T extends Constructable<WalkableForward & WalkableBackward>>(base : T) =>
+export const Graph = <T extends AnyConstructor<WalkableForward & WalkableBackward>>(base : T) =>
 
 class Graph extends base {
     nodeT           : Node

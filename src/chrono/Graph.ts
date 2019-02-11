@@ -1,4 +1,4 @@
-import {Base, Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {Base, AnyConstructor, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
@@ -25,7 +25,7 @@ export enum PropagationResult {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoGraph = <T extends Constructable<Graph>>(base : T) =>
+export const ChronoGraph = <T extends AnyConstructor<Graph>>(base : T) =>
 
 class ChronoGraph extends base {
     // revision            : ChronoRevision

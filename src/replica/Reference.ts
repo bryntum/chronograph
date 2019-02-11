@@ -1,6 +1,6 @@
 import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
-import {Constructable, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {AnyConstructor, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Field, Name} from "../schema/Field.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
 import {Entity, generic_field} from "./Entity.js";
@@ -60,7 +60,7 @@ export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorat
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceStorageAtom = <T extends Constructable<FieldAtom>>(base : T) =>
+export const ReferenceStorageAtom = <T extends AnyConstructor<FieldAtom>>(base : T) =>
 
 class ReferenceStorageAtom extends base {
     // upgrade the type of the `incoming` property
@@ -117,7 +117,7 @@ export class MinimalReferenceStorageAtom extends ReferenceStorageAtom(MinimalFie
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceAtom = <T extends Constructable<FieldAtom>>(base : T) =>
+export const ReferenceAtom = <T extends AnyConstructor<FieldAtom>>(base : T) =>
 
 class ReferenceAtom extends base {
     field           : ReferenceField

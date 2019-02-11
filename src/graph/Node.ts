@@ -1,8 +1,8 @@
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Base, AnyConstructor, Mixin} from "../class/Mixin.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext} from "./Walkable.js";
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableForwardNode = <T extends Constructable<WalkableForward>>(base : T) =>
+export const WalkableForwardNode = <T extends AnyConstructor<WalkableForward>>(base : T) =>
 
 class WalkableForwardNode extends base {
     outgoing        : Set<WalkableForwardNode>         = new Set()
@@ -43,7 +43,7 @@ export type WalkableForwardNode = Mixin<typeof WalkableForwardNode>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableBackwardNode = <T extends Constructable<WalkableBackward>>(base : T) =>
+export const WalkableBackwardNode = <T extends AnyConstructor<WalkableBackward>>(base : T) =>
 
 class WalkableBackwardNode extends base {
     incoming        : Set<WalkableBackwardNode>         = new Set()
@@ -83,7 +83,7 @@ export type WalkableBackwardNode = Mixin<typeof WalkableBackwardNode>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Node = <T extends Constructable<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
+export const Node = <T extends AnyConstructor<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
 
 class Node extends base {
 

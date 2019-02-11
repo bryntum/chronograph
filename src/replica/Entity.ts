@@ -1,6 +1,6 @@
 import {ChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
-import {Constructable, Mixin} from "../class/Mixin.js";
+import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
 import {uppercaseFirst} from "../util/Helper.js";
@@ -26,7 +26,7 @@ import {EntityAtom, FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom
 const isEntity      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Entity = <T extends Constructable<object>>(base : T) => {
+export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
     class Entity extends base {
         // marker in the prototype

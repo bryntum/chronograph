@@ -1,4 +1,4 @@
-import {Base, Constructable, Mixin} from "../class/Mixin.js";
+import {Base, AnyConstructor, Mixin} from "../class/Mixin.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ export abstract class WalkContext extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Walkable = <T extends Constructable<Base>>(base : T) =>
+export const Walkable = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Walkable extends base {
 
@@ -132,7 +132,7 @@ export class WalkBackwardContext extends WalkContext {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableForward = <T extends Constructable<Walkable>>(base : T) => {
+export const WalkableForward = <T extends AnyConstructor<Walkable>>(base : T) => {
 
     abstract class WalkableForward extends base {
         abstract getOutgoing (context : WalkForwardContext) : WalkableForward[]
@@ -150,7 +150,7 @@ export type WalkableForward = Mixin<typeof WalkableForward>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableBackward = <T extends Constructable<Walkable>>(base : T) => {
+export const WalkableBackward = <T extends AnyConstructor<Walkable>>(base : T) => {
 
     abstract class WalkableBackward extends base {
         abstract getIncoming (context : WalkBackwardContext) : WalkableBackward[]

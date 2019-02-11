@@ -1,4 +1,4 @@
-import {Constructable, Mixin} from "../class/Mixin.js";
+import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {MinimalNode, Node} from "../graph/Node.js";
 import {Effect} from "./Effect.js";
 import {ChronoGraph, PropagationResult} from "./Graph.js";
@@ -23,7 +23,7 @@ export const strictEqualityWithDates = (v1, v2) => {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoAtom = <T extends Constructable<HasId & Node>>(base : T) =>
+export const ChronoAtom = <T extends AnyConstructor<HasId & Node>>(base : T) =>
 
 class ChronoAtom extends base {
     proposedArgs        : ChronoValue[]
