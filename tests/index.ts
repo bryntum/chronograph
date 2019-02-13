@@ -24,7 +24,8 @@ project.start(
 
         items       : [
             'graph/010_walkable.t.js',
-            'graph/020_node.t.js'
+            'graph/020_node.t.js',
+            'graph/030_cycle.t.js'
         ]
     },
     {

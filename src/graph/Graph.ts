@@ -1,6 +1,6 @@
-import {AnyConstructor, Mixin} from "../class/Mixin.js";
-import {Node} from "./Node.js";
-import {WalkableBackward, WalkableForward} from "./Walkable.js";
+import {AnyConstructor, Base, Mixin} from "../class/Mixin.js";
+import {Node, WalkableBackwardNode, WalkableForwardNode} from "./Node.js";
+import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "./Walkable.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Graph = <T extends AnyConstructor<WalkableForward & WalkableBackward>>(base : T) =>
@@ -55,6 +55,26 @@ class Graph extends base {
     getOutgoing () : this[ 'nodeT' ][] {
         return Array.from(this.nodes)
     }
+
+
+    forEachIncoming(context : WalkBackwardContext, func : (node : this[ 'nodeT' ]) => any) {
+        this.nodes.forEach(func)
+    }
+
+
+    forEachOutgoing (context : WalkForwardContext, func : (node : this[ 'nodeT' ]) => any) {
+        this.nodes.forEach(func)
+    }
 }
 
 export type Graph = Mixin<typeof Graph>
+
+export class MinimalGraph extends
+    Graph(
+    WalkableForwardNode(
+    WalkableBackwardNode(
+    WalkableForward(
+    WalkableBackward(
+    Walkable(
+        Base
+    )))))) {}

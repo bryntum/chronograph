@@ -1,5 +1,10 @@
 import {AnyConstructor, Base, Mixin} from "../class/Mixin.js";
 
+export enum OnCycleAction {
+    Cancel,
+    Resume
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export abstract class WalkContext extends Base {
@@ -16,16 +21,17 @@ export abstract class WalkContext extends Base {
     }
 
 
-    onCycle (node : Walkable) {
+    onCycle (node : Walkable, stack : WalkStep[]) : OnCycleAction {
+        return OnCycleAction.Cancel
     }
-
-
-    abstract getNext (node : Walkable) : Walkable[]
 
 
     abstract forEachNext (node : Walkable, func : (node : Walkable) => any)
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export type WalkStep    = { node : Walkable, from : Walkable }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -47,12 +53,12 @@ class Walkable extends base {
         const visitedAt             = new Map<Walkable, number>()
         const visitedTopologically  = new Set<Walkable>()
 
-        let toVisit : Walkable[]    = [ this ]
+        const toVisit : WalkStep[]  = [ { node : this, from : this } ]
 
         let depth
 
         while (depth = toVisit.length) {
-            let node                = toVisit[ depth - 1 ]
+            const node              = toVisit[ depth - 1 ].node
 
             if (visitedTopologically.has(node)) {
                 toVisit.pop()
@@ -67,9 +73,9 @@ class Walkable extends base {
                 // it is valid to find itself in the visited map, but only if visited at the current depth
                 // (which indicates stack unwinding)
                 // if the node has been visited at earlier depth - its a cycle
-                if (visitedAtDepth < depth)
-                    context.onCycle(node)
-                else {
+                if (visitedAtDepth < depth) {
+                    if (context.onCycle(node, toVisit) !== OnCycleAction.Resume) break
+                } else {
                     visitedTopologically.add(node)
 
                     // we've processed all outgoing edges from this node,
@@ -86,7 +92,7 @@ class Walkable extends base {
 
                 const lengthBefore  = toVisit.length
 
-                context.forEachNext(node, node => toVisit.push(node))
+                context.forEachNext(node, nextNode => toVisit.push({ node : nextNode, from : node }))
 
                 // no new nodes added
                 if (toVisit.length === lengthBefore) {
@@ -105,12 +111,35 @@ class Walkable extends base {
 export type Walkable = Mixin<typeof Walkable>
 
 
+export const cycleInfo = (stack : WalkStep[]) : Walkable[] => {
+    const cycleSource           = stack[ stack.length - 1 ].node
+
+    const cycle : Walkable[]    = [ cycleSource ]
+
+    let pos                     = stack.length - 1
+    let anotherNodePos          = stack.length - 1
+
+    do {
+        // going backward in steps, skipping the nodes with identical `from`
+        for (; pos >= 0 && stack[ pos ].from === stack[ anotherNodePos ].from; pos--) ;
+
+        // the first node with different `from` will be part of the cycle path
+        cycle.push(stack[ pos ].node)
+
+        anotherNodePos          = pos
+
+        pos--
+
+    } while (pos >= 0 && stack[ pos ].node !== cycleSource)
+
+    cycle.push(cycleSource)
+
+    return cycle.reverse()
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardContext extends WalkContext {
-
-    getNext (node : WalkableForward) : WalkableForward[] {
-        return node.getOutgoing(this)
-    }
 
     forEachNext (node : WalkableForward, func : (node : WalkableForward) => any) {
         node.forEachOutgoing(this, func)
@@ -120,10 +149,6 @@ export class WalkForwardContext extends WalkContext {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkBackwardContext extends WalkContext {
-
-    getNext (node : WalkableBackward) : WalkableBackward[] {
-        return node.getIncoming(this)
-    }
 
     forEachNext (node : WalkableBackward, func : (node : WalkableBackward) => any) {
         node.forEachIncoming(this, func)
@@ -166,7 +191,3 @@ export const WalkableBackward = <T extends AnyConstructor<Walkable>>(base : T) =
 export type WalkableBackward = Mixin<typeof WalkableBackward>
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export const MinimalWalkableForward     = WalkableForward(Walkable(Base))
-
-export const MinimalWalkableBackward    = WalkableBackward(Walkable(Base))

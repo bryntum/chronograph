@@ -71,7 +71,7 @@ StartTest(t => {
                 walkPath.push(node.id)
             },
 
-            onCycle : (node : WalkerForward) => {
+            onCycle : (node : WalkerForward) : any => {
                 cycleFound  = true
 
                 t.isDeeply(walkPath, [ 1, 2, 3 ], 'Correct walk path')
@@ -136,7 +136,7 @@ StartTest(t => {
                 walkPath.push(node.id)
             },
 
-            onCycle : (node : WalkerBackward) => {
+            onCycle : (node : WalkerBackward) : any => {
                 cycleFound  = true
 
                 t.isDeeply(walkPath, [ 1, 2, 3 ], 'Correct walk path')
