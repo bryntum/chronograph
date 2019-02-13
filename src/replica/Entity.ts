@@ -4,7 +4,7 @@ import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
 import {uppercaseFirst} from "../util/Helper.js";
-import {EntityAtom, FieldAtom, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
+import {EntityAtomI, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 
 
 // LAZY ATOMS CREATION - investigate if it improves performance
@@ -68,7 +68,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        get $() : { [s in keyof this] : FieldAtom } {
+        get $() : { [s in keyof this] : FieldAtomI } {
             const atomsCollection   = {}
 
             this.$entity.forEachField((field : Field, name : Name) => {
@@ -81,7 +81,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        get $$() : EntityAtom {
+        get $$() : EntityAtomI {
             const value     = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
 
             Object.defineProperty(this, '$$', { value : value })

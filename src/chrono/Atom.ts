@@ -1,7 +1,7 @@
 import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {MinimalNode, Node} from "../graph/Node.js";
 import {Effect} from "./Effect.js";
-import {ChronoGraph, PropagationResult} from "./Graph.js";
+import {ChronoGraphI, PropagationResult} from "./Graph.js";
 import {HasId} from "./HasId.js";
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -34,7 +34,7 @@ class ChronoAtom extends base {
 
     shouldCommitValue   : boolean   = true
 
-    graph               : ChronoGraph
+    graph               : ChronoGraphI
 
     equality            : (v1, v2) => boolean       = strictEqualityWithDates
 
@@ -161,19 +161,19 @@ class ChronoAtom extends base {
     }
 
 
-    onEnterGraph (graph : ChronoGraph) {
+    onEnterGraph (graph : ChronoGraphI) {
         this.graph      = graph
     }
 
 
-    onLeaveGraph (graph : ChronoGraph) {
+    onLeaveGraph (graph : ChronoGraphI) {
         this.graph      = undefined
     }
 
 }
 
-export interface ChronoAtom extends Mixin<typeof ChronoAtom> {}
-
+export type ChronoAtom = Mixin<typeof ChronoAtom>
+export interface ChronoAtomI extends Mixin<typeof ChronoAtom> {}
 
 
 //---------------------------------------------------------------------------------------------------------------------

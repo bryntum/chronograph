@@ -29,7 +29,8 @@ class FieldAtom extends base {
     }
 }
 
-export interface FieldAtom extends Mixin<typeof FieldAtom> {}
+export type FieldAtom = Mixin<typeof FieldAtom>
+export interface FieldAtomI extends Mixin<typeof FieldAtom> {}
 
 
 export class MinimalFieldAtom extends FieldAtom(MinimalChronoAtom) {}
@@ -50,7 +51,8 @@ class EntityAtom extends base {
     }
 }
 
-export interface EntityAtom extends Mixin<typeof EntityAtom> {}
+export type EntityAtom = Mixin<typeof EntityAtom>
+export interface EntityAtomI extends Mixin<typeof EntityAtom> {}
 
 
 export class MinimalEntityAtom extends EntityAtom(MinimalChronoAtom) {}

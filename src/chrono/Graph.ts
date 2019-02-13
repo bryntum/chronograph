@@ -1,4 +1,4 @@
-import {Base, AnyConstructor, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {AnyConstructor, Base, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
@@ -511,7 +511,8 @@ class ChronoGraph extends base {
     }
 }
 
-export interface ChronoGraph extends Mixin<typeof ChronoGraph> {}
+export type ChronoGraph = Mixin<typeof ChronoGraph>
+export interface ChronoGraphI extends Mixin<typeof ChronoGraph> {}
 
 export const MinimalChronoGraph = ChronoGraph(Graph(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(Base)))))))
 export type MinimalChronoGraph  = InstanceType<typeof MinimalChronoGraph>

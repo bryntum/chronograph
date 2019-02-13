@@ -1,4 +1,4 @@
-import {Base, AnyConstructor, Mixin} from "../class/Mixin.js";
+import {AnyConstructor, Base, Mixin} from "../class/Mixin.js";
 import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext} from "./Walkable.js";
 
 //---------------------------------------------------------------------------------------------------------------------
