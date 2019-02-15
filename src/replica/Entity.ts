@@ -236,7 +236,7 @@ export const generic_field = <T extends typeof Field> (fieldCls : T, fieldConfig
         const field     = entity.addField(
             fieldCls.new(Object.assign(fieldConfig || {}, {
                 name    : propertyKey
-            }))
+            } as Partial<InstanceType<T>>))
         );
 
         if (field.createAccessors) {
