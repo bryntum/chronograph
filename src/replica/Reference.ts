@@ -2,6 +2,7 @@ import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
 import {ChronoGraph} from "../chrono/Graph.js";
 import {AnyConstructor, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Field, Name} from "../schema/Field.js";
+import {isAtomicValue} from "../util/Helper.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
 import {Entity, generic_field} from "./Entity.js";
 
@@ -145,14 +146,19 @@ class ReferenceAtom extends base {
 
 
     * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
-        return this.resolve(proposedValue !== undefined ? proposedValue : this.value)
+        const value     = this.resolve(proposedValue !== undefined ? proposedValue : this.value)
+
+        // add an incoming edge from referencee's self-atom
+        if (!isAtomicValue(value)) yield value.$$
+
+        return value
     }
 
 
     resolve (referencee : any) : Entity {
         const resolver  = this.field.resolver
 
-        if (resolver && referencee !== undefined && Object(referencee) !== referencee) {
+        if (resolver && referencee !== undefined && isAtomicValue(referencee)) {
             return resolver.call(this.self, referencee)
         } else {
             return referencee
@@ -170,14 +176,14 @@ class ReferenceAtom extends base {
 
         let resolves    = true
 
-        if (value !== undefined && Object(value) !== value) {
+        if (value !== undefined && isAtomicValue(value)) {
             resolves        = false
 
             const resolved  = this.resolve(value)
 
             // last point where it is safe to just rewrite own value
             // after `super.onEnterGraph` that will be causing effects outside of atom
-            if (Object(resolved) === resolved) {
+            if (!isAtomicValue(resolved)) {
                 this.value  = resolved
 
                 resolves    = true
@@ -209,11 +215,11 @@ class ReferenceAtom extends base {
         const value     = this.value
 
         // value is not empty and resolved to entity
-        if (value != null && Object(value) === value && this.hasStorage()) {
+        if (value != null && !isAtomicValue(value) && this.hasStorage()) {
             this.removeFromStorage(this.getStorage(value))
         }
 
-        if (nextValue != null && Object(nextValue) === nextValue && this.hasStorage()) {
+        if (nextValue != null && !isAtomicValue(nextValue) && this.hasStorage()) {
             this.addToStorage(this.getStorage(nextValue))
         }
 
