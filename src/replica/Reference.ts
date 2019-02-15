@@ -148,7 +148,7 @@ class ReferenceAtom extends base {
     * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
         const value     = this.resolve(proposedValue !== undefined ? proposedValue : this.value)
 
-        // add an incoming edge from referencee's self-atom
+        // add an incoming edge from the referencee's self-atom
         if (!isAtomicValue(value)) yield value.$$
 
         return value
