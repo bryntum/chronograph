@@ -3,7 +3,7 @@ import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
 import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
-import {uppercaseFirst} from "../util/Helper.js";
+import {lazyBuild, uppercaseFirst} from "../util/Helper.js";
 import {EntityAtomI, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
 
 
@@ -23,14 +23,14 @@ import {EntityAtomI, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom} from "./At
 // }
 //
 
-const isEntity      = Symbol('isEntity')
+const isEntityMarker      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
     class Entity extends base {
         // marker in the prototype
-        [isEntity] () {}
+        [isEntityMarker] () {}
 
         $calculations   : { [s in keyof this] : string }
 
@@ -68,21 +68,20 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        get $() : { [s in keyof this] : FieldAtomI } {
-            const atomsCollection   = {}
+        $T : { [s in keyof this] : FieldAtomI }
+        get $() : this[ '$T' ] {
+            const atomsCollection : this[ '$T' ]  = {} as any
 
             this.$entity.forEachField((field : Field, name : Name) => {
                 atomsCollection[ name ] = this.createFieldAtom(field)
             })
 
-            Object.defineProperty(this, '$', { value : atomsCollection })
-
-            return atomsCollection as any
+            return lazyBuild(this, '$', atomsCollection)
         }
 
 
         get $$() : EntityAtomI {
-            const value     = MinimalEntityAtom.new({
+            return lazyBuild(this, '$$', MinimalEntityAtom.new({
                 entity              : this.$entity,
 
                 self                : this,
@@ -94,11 +93,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
                 calculation         : this.calculateSelf,
                 calculationContext  : this
-            })
-
-            Object.defineProperty(this, '$$', { value : value })
-
-            return value
+            }))
         }
 
 
@@ -208,11 +203,7 @@ export type Entity = Mixin<typeof Entity>
 export const createEntityOnPrototype = (proto : any) : EntityData => {
     let parent      = Object.getPrototypeOf(proto)
 
-    const entity    = EntityData.new({ parentEntity : parent.hasOwnProperty(isEntity) ? null : parent.$entity })
-
-    Object.defineProperty(proto, '$entity', { value : entity })
-
-    return entity
+    return lazyBuild(proto, '$entity', EntityData.new({ parentEntity : parent.hasOwnProperty(isEntityMarker) ? null : parent.$entity }))
 }
 
 
