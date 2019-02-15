@@ -1,6 +1,9 @@
 import {HasId} from "../../src/chrono/HasId.js";
 import {MinimalNode} from "../../src/graph/Node.js";
 import {cycleInfo, OnCycleAction, Walkable, WalkForwardContext, WalkStep} from "../../src/graph/Walkable.js";
+import { Entity, field, calculate } from "../../src/replica/Entity.js";
+import { Base } from "../../src/class/Mixin.js";
+import { MinimalReplica } from "../../src/replica/Replica.js";
 
 declare const StartTest : any
 
@@ -98,6 +101,49 @@ StartTest(t => {
         }))
 
         t.isDeeply(cycle, [ node2, node3, node4, node2 ], 'Correct cycle path')
+    })
+
+    t.it('Cycle vizualization', async t => {
+
+        class CircSum extends Entity(Base) {
+            @field
+            pointA : number
+
+            @field
+            pointB : number
+
+            @field
+            pointC : number
+
+            @calculate('pointA')
+            * calcPointA(proposedValue? : number) {
+                return (yield this.$.pointB) + (yield this.$.pointC)
+            }
+
+            @calculate('pointB')
+            * calcPointB(proposedValue? : number) {
+                return (yield this.$.pointA) + (yield this.$.pointC)
+            }
+
+            @calculate('pointC')
+            * calcPointC(proposedValue? : number) {
+                return (yield this.$.pointA) + (yield this.$.pointB)
+            }
+        }
+
+        const replica = MinimalReplica.new()
+
+        const sum = CircSum.new({ pointA : 1, pointB : 2, pointC : 3})
+
+        replica.addEntity(sum)
+
+        try {
+            const result = await replica.propagate()
+        }
+        catch (e) {
+            t.like(e.message.toLowerCase(), 'cycle', 'Got cycle exception')
+            t.like(replica.toDotOnCycleException(), 'penwidth=5', 'Cycle seems to be drawn')
+        }
     })
 
 })

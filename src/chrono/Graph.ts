@@ -1,7 +1,7 @@
 import {AnyConstructor, Base, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
-import {WalkableBackwardNode, WalkableForwardNode} from "../graph/Node.js";
-import {Walkable, WalkableBackward, WalkableForward, WalkForwardContext} from "../graph/Walkable.js";
+import { WalkableBackwardNode, WalkableForwardNode, Node} from "../graph/Node.js";
+import { Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep, OnCycleAction, cycleInfo} from "../graph/Walkable.js";
 import {FieldAtom} from "../replica/Atom.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
 import {CancelPropagationEffect, Effect, EffectResolutionResult, EffectResolverFunction, RestartPropagationEffect} from "./Effect.js";
@@ -406,7 +406,7 @@ class ChronoGraph extends base {
     toDot () : string {
         let dot = [
             'digraph ChronoGraph {',
-            'splines=splines'
+            'splines=spline'
         ]
 
         const arrAtoms : [ChronoId, ChronoAtom][] = Array.from(this.nodesMap.entries())
@@ -479,6 +479,28 @@ class ChronoGraph extends base {
             dot
         )
 
+        let cycle : object = {}
+
+        // Cycle detection
+        this.walkDepth(WalkForwardContext.new({
+            onCycle : (_node : Node, stack : WalkStep[]) : OnCycleAction => {
+                cycle   = cycleInfo(stack) as Node[]
+
+                cycle = cycleInfo(stack).reduce(
+                    ([cycle, prevNode], curNode) => {
+                        if (prevNode) {
+                            cycle[(prevNode as ChronoAtom).id] = (curNode as ChronoAtom).id
+                        }
+                        return [cycle, curNode]
+                    },
+                    [cycle, null]
+                )[0]
+
+                return OnCycleAction.Cancel
+            }
+        }))
+
+
         // Generate edges
         dot = arrAtoms.reduce(
             (dot, [fromId, fromAtom] : [ChronoId, ChronoAtom]) => {
@@ -492,8 +514,9 @@ class ChronoGraph extends base {
                         const edgeLabel = ''
 
                         let color = (!this.isAtomNeedRecalculation(fromAtom) || this.isAtomStable(fromAtom)) ? 'darkgreen' : 'red'
+                        let penwidth = (cycle[fromId] == toAtom.id) ? 5 : 1
 
-                        dot.push(`"${fromId}" -> "${toAtom.id}" [label="${edgeLabel}", color="${color}"]`)
+                        dot.push(`"${fromId}" -> "${toAtom.id}" [label="${edgeLabel}", color="${color}", penwidth=${penwidth}]`)
 
                         return dot
                     },
