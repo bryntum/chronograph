@@ -12,9 +12,6 @@ StartTest(t => {
 
         class Some extends Entity(Base) {
             @field
-            version         : number    = 1
-
-            @field
             value           : string
 
 
