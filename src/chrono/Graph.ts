@@ -462,6 +462,9 @@ class ChronoGraph extends base {
                         if (value instanceof Date) {
                             value = [value.getFullYear(), '.', value.getMonth() + 1, '.', value.getDate(), ' ', value.getHours() + ':' + value.getMinutes()].join('')
                         }
+                        else if (Array.isArray(value)) {
+                            value = `Array(${value.length})`
+                        }
 
                         let color = (!this.isAtomNeedRecalculation(atom) || this.isAtomStable(atom)) ? 'darkgreen' : 'red'
 
