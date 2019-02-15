@@ -1,4 +1,4 @@
-import {ChronoAtom} from "../chrono/Atom.js";
+import {ChronoAtom, ChronoIterator} from "../chrono/Atom.js";
 import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
 import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
@@ -82,11 +82,28 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
 
         get $$() : EntityAtomI {
-            const value     = MinimalEntityAtom.new({ entity : this.$entity, value : this, self : this })
+            const value     = MinimalEntityAtom.new({
+                entity              : this.$entity,
+
+                self                : this,
+
+                // entity atom is considered changed if any of its incoming atoms has changed
+                // this just means if it's calculation method has been called, it should always
+                // assign a new value
+                equality            : () => false,
+
+                calculation         : this.calculateSelf,
+                calculationContext  : this
+            })
 
             Object.defineProperty(this, '$$', { value : value })
 
             return value
+        }
+
+
+        * calculateSelf () : ChronoIterator<this> {
+            return this
         }
 
 
