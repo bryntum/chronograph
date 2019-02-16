@@ -133,7 +133,7 @@ StartTest(t => {
 
         const replica = MinimalReplica.new()
 
-        const sum = CircSum.new({ pointA : 1, pointB : 2, pointC : 3})
+        const sum = CircSum.new({ pointA : 1, pointB : 2, pointC : 3 })
 
         replica.addEntity(sum)
 
