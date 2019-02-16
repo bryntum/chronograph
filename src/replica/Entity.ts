@@ -68,15 +68,14 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        $T : { [s in keyof this] : FieldAtomI }
-        get $() : this[ '$T' ] {
-            const atomsCollection : this[ '$T' ]  = {} as any
+        get $() : { [s in keyof this] : FieldAtomI } {
+            const atomsCollection   = {}
 
             this.$entity.forEachField((field : Field, name : Name) => {
                 atomsCollection[ name ] = this.createFieldAtom(field)
             })
 
-            return lazyBuild(this, '$', atomsCollection)
+            return lazyBuild(this as any, '$', atomsCollection)
         }
 
 
