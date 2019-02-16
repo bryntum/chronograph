@@ -130,7 +130,21 @@ class ChronoGraph extends base {
         this.needRecalculationAtoms.clear()
 
         // temp workaround
-        this.initialAtoms.forEach(atom => this.markAsNeedRecalculation(atom))
+        this.initialAtoms.forEach((initialAtom : FieldAtom) => {
+            initialAtom.outgoing.forEach((atom : FieldAtom) => {
+                // same entity
+                if (initialAtom.self === atom.self) {
+                    const field         = atom.field
+
+                    if (field && field.continuationOf && field.continuationOf === initialAtom.field) {
+                        // do nothing for the "final" atom
+                        return
+                    }
+                }
+
+                this.markAsNeedRecalculation(atom)
+            })
+        })
         this.initialAtoms   = []
     }
 

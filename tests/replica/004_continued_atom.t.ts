@@ -61,8 +61,8 @@ StartTest(t => {
         await replica1.propagate()
 
         t.is(some.another, 2, 'Another value has been updated to the final value')
-        t.is(some.valueInitial, 3, "Initial value didn't change")
-        t.is(some.valueFinal, 3, "Final value didn't change")
+        t.is(some.valueInitial, 2, "Initial value didn't change")
+        t.is(some.valueFinal, 2, "Final value didn't change")
 
     })
 })
