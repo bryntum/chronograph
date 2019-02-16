@@ -64,5 +64,10 @@ StartTest(t => {
         t.is(some.valueInitial, 2, "Initial value didn't change")
         t.is(some.valueFinal, 2, "Final value didn't change")
 
+        await replica1.propagate()
+
+        t.is(some.another, 2, 'Another value has stabilized')
+        t.is(some.valueInitial, 2, "Initial value has stabilized")
+        t.is(some.valueFinal, 2, "Final value has stabilized")
     })
 })
