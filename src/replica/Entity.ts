@@ -102,8 +102,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        // the actually returned type is `FieldAtom`, but this does not typecheck - circularity
-        createFieldAtom (field : Field) : ChronoAtom {
+        createFieldAtom (field : Field) : FieldAtomI {
             const name                  = field.name
 
             const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
