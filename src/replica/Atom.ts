@@ -16,10 +16,16 @@ class FieldAtom extends base {
     commitValue () {
         super.commitValue()
 
-        const continuationOfField = this.field.continuationOf
+        const continuationOfField           = this.field.continuationOf
 
         if (continuationOfField) {
-            this.self.$[ continuationOfField.name ].value = this.value
+            const continuationOfAtom : ChronoAtom = this.self.$[ continuationOfField.name ]
+
+            if (!continuationOfAtom.equality(continuationOfAtom.value, this.value)) {
+                continuationOfAtom.value    = this.value
+
+                this.graph.initialAtoms.push(continuationOfAtom)
+            }
         }
     }
 

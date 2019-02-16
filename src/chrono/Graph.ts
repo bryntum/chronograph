@@ -44,6 +44,9 @@ class ChronoGraph extends base {
 
     changedAtoms            : ChronoAtom[]          = []
 
+    // temp workaround to mark changed initial atoms as "need recalculation"
+    initialAtoms            : ChronoAtom[]          = []
+
 
     // processingQueue         : ChronoAtom[]          = []
 
@@ -125,6 +128,10 @@ class ChronoGraph extends base {
 
         this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
+
+        // temp workaround
+        this.initialAtoms.forEach(atom => this.markAsNeedRecalculation(atom))
+        this.initialAtoms   = []
     }
 
 
