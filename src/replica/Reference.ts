@@ -172,7 +172,7 @@ class ReferenceAtom extends base {
 
 
     onEnterGraph (graph : ChronoGraph) {
-        const value     = this.value
+        const value     = this.get()
 
         let resolves    = true
 
@@ -184,7 +184,7 @@ class ReferenceAtom extends base {
             // last point where it is safe to just rewrite own value
             // after `super.onEnterGraph` that will be causing effects outside of atom
             if (!isAtomicValue(resolved)) {
-                this.value  = resolved
+                this.put(resolved)
 
                 resolves    = true
             }
@@ -192,8 +192,8 @@ class ReferenceAtom extends base {
 
         super.onEnterGraph(graph)
 
-        if (this.hasStableValue() && resolves && this.hasStorage()) {
-            const referenceStorage  = this.getStorage(this.value)
+        if (this.get() !== undefined && resolves && this.hasStorage()) {
+            const referenceStorage  = this.getStorage(this.get())
 
             this.addToStorage(referenceStorage)
         }
