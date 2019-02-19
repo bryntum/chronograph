@@ -1,3 +1,4 @@
+import {ChronoIterator} from "../../src/chrono/Atom.js";
 import {Base} from "../../src/class/Mixin.js";
 import {calculate, Entity, field} from "../../src/replica/Entity.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
@@ -28,7 +29,7 @@ StartTest(t => {
 
 
             @calculate('fullName')
-            * calculateFullName (proposed : string) {
+            * calculateFullName (proposed : string) : ChronoIterator<string> {
                 return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
             }
         }
@@ -61,4 +62,57 @@ StartTest(t => {
 
         t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
     })
+
+
+    t.it('Helper methods', async t => {
+
+        class Author extends Entity(Base) {
+            @field
+            firstName       : string
+
+            @field
+            lastName        : string
+
+            @field
+            fullName        : string
+
+
+            @calculate('fullName')
+            * calculateFullName (proposed : string) : ChronoIterator<string> {
+                return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
+            }
+
+
+            * helperMethod (prefix : string) : ChronoIterator<string> {
+                return prefix + (yield this.$.fullName)
+            }
+        }
+
+        const replica1          = MinimalReplica.new()
+
+        const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
+
+        replica1.addEntity(markTwain)
+
+        await replica1.propagate()
+
+        t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
+
+        const result            = markTwain.run('helperMethod', 'Mr. ')
+
+        t.is(result, 'Mr. Mark Twain', 'Correct result from helper method')
+
+
+        // TODO should walk depth on every "markAsNeedRecalculation" ?
+
+        // markTwain.firstName     = 'MARK'
+        //
+        // t.throwsOk(
+        //     () => {
+        //         markTwain.run('helperMethod', 'Mr. ')
+        //     },
+        //     'stale'
+        // )
+    })
+
 })

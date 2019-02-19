@@ -229,7 +229,7 @@ class ChronoGraph extends base {
         let incomingAtom    = continuation.atom
 
         do {
-            let iteratorValue
+            let iteratorValue : IteratorResult<Effect | ChronoAtom | ChronoValue>
 
             if (incomingAtom) {
                 sourceAtom.observedDuringCalculation.push(incomingAtom)

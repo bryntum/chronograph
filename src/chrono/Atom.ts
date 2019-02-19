@@ -10,7 +10,7 @@ export type ChronoValue         = any
 export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | Effect | T>
 
 //---------------------------------------------------------------------------------------------------------------------
-export type ChronoCalculation   = (...args) => ChronoIterator
+export type ChronoCalculation   = (...args : any[]) => ChronoIterator
 
 //---------------------------------------------------------------------------------------------------------------------
 export const strictEquality     = (v1, v2) => v1 === v2

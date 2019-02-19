@@ -1,6 +1,7 @@
 import {ChronoAtom, ChronoIterator} from "../chrono/Atom.js";
+import {Effect} from "../chrono/Effect.js";
 import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
-import {AnyConstructor, Mixin} from "../class/Mixin.js";
+import {AnyConstructor, AnyFunction, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
 import {lazyBuild, uppercaseFirst} from "../util/Helper.js";
@@ -189,6 +190,33 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             return ensureEntityOnPrototype(this.prototype)
         }
 
+
+        run <Name extends keyof this, S extends AnyFunction & this[ Name ]>(methodName : Name, ...args : Parameters<S>)
+            : ReturnType<S> extends ChronoIterator<infer Res1> ? Res1 : ReturnType<S> extends IterableIterator<infer Res2> ? Res2 : ReturnType<S>
+        {
+            const iterator      = (this[ methodName ] as S)(...args)
+
+            let iteratorValue : IteratorResult<any>
+
+            let nextArgs : any
+
+            do {
+                iteratorValue   = iterator.next(nextArgs)
+
+                const value     = iteratorValue.value
+
+                if (value instanceof Effect) throw new Error("Helper methods can not yield effects during computation")
+
+                if (iteratorValue.done) return value
+
+                // TODO check for `value` to actually be ChronoAtom
+                const atom : ChronoAtom = value
+
+                if (this.getGraph().isAtomNeedRecalculation(atom)) throw new Error("Can not use stale atom for calculations")
+
+                nextArgs        = atom.get()
+            } while (true)
+        }
     }
 
     return Entity
