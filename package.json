@@ -19,7 +19,6 @@
   },
   "devDependencies": {
     "@types/node": "^10.12.10",
-    "siesta-lite": "file:../siesta",
     "typescript": "^3.2.2",
     "regenerator-runtime": "^0.13.1",
     "core-js": "^2.6.5"
