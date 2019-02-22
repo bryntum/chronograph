@@ -8,8 +8,10 @@
     "test": "npx siesta ./tests"
   },
   "keywords": [
+    "reactive",
     "graph",
-    "computation"
+    "computation",
+    "engine"
   ],
   "author": "Nickolay Platonov, Bryntum",
   "license": "MIT",
