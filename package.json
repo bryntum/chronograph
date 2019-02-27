@@ -5,7 +5,8 @@
   "main": "index.js",
   "module": "main.js",
   "scripts": {
-    "test": "npx siesta ./tests"
+    "test": "npx siesta ./tests",
+    "docs": "npx typedoc --mode file --out docs"
   },
   "keywords": [
     "reactive",
@@ -20,6 +21,7 @@
     "tslib": "^1.9.3"
   },
   "devDependencies": {
+    "typedoc": "^0.14.2",
     "@types/node": "^10.12.10",
     "typescript": "^3.2.2",
     "siesta-lite": "^5.2.2",
