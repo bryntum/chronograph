@@ -23,7 +23,7 @@
   "devDependencies": {
     "typedoc": "^0.14.2",
     "@types/node": "^10.12.10",
-    "typescript": "^3.2.2",
+    "typescript": "^3.3.3333",
     "siesta-lite": "^5.2.2",
     "regenerator-runtime": "^0.13.1",
     "core-js": "^2.6.5"

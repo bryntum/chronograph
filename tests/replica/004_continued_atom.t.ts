@@ -10,14 +10,14 @@ StartTest(t => {
     t.it('Self-atom calculation with additional dependency', async t => {
 
         class Some extends Entity(Base) {
-            @field
+            @field()
             valueInitial    : number
 
             @continuationOf('valueInitial')
-            @field
+            @field()
             valueFinal      : number
 
-            @field
+            @field()
             another         : number
 
 

@@ -106,13 +106,13 @@ StartTest(t => {
     t.it('Cycle vizualization', async t => {
 
         class CircSum extends Entity(Base) {
-            @field
+            @field()
             pointA : number
 
-            @field
+            @field()
             pointB : number
 
-            @field
+            @field()
             pointC : number
 
             @calculate('pointA')

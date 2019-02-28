@@ -11,7 +11,7 @@ StartTest(t => {
     t.it('Self-atom calculation with additional dependency', async t => {
 
         class Some extends Entity(Base) {
-            @field
+            @field()
             value           : string
 
 
@@ -26,7 +26,7 @@ StartTest(t => {
             @reference()
             some            : Some
 
-            @field
+            @field()
             result          : string
 
 

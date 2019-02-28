@@ -15,16 +15,16 @@ StartTest(t => {
 
         @entity
         class Author extends Entity(Base) {
-            @field
+            @field()
             id              : string
 
-            @field
+            @field()
             firstName       : string
 
-            @field
+            @field()
             lastName        : string
 
-            @field
+            @field()
             fullName        : string
 
 
@@ -36,10 +36,10 @@ StartTest(t => {
 
         @entity
         class Book extends Entity(Base) {
-            @field
+            @field()
             name            : string
 
-            @field
+            @field()
             writtenBy       : Author
         }
 
@@ -68,16 +68,16 @@ StartTest(t => {
     t.xit('Alternative atom yielding', async t => {
 
         class Author extends Entity(Base) {
-            @field
+            @field()
             id              : string
 
-            @field
+            @field()
             firstName       : string
 
-            @field
+            @field()
             lastName        : string
 
-            @field
+            @field()
             fullName        : string
 
 
@@ -88,10 +88,10 @@ StartTest(t => {
         }
 
         class Book extends Entity(Base) {
-            @field
+            @field()
             namez            : string
 
-            @field
+            @field()
             writtenBy       : Author
         }
 
@@ -120,13 +120,13 @@ StartTest(t => {
     t.it('Helper methods', async t => {
 
         class Author extends Entity(Base) {
-            @field
+            @field()
             firstName       : string
 
-            @field
+            @field()
             lastName        : string
 
-            @field
+            @field()
             fullName        : string
 
 

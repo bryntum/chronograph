@@ -4,7 +4,7 @@ import {AnyConstructor, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Field, Name} from "../schema/Field.js";
 import {isAtomicValue} from "../util/Helper.js";
 import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
-import {Entity, generic_field} from "./Entity.js";
+import {Entity, FieldDecorator, generic_field} from "./Entity.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ export class ReferenceField extends Field {
 
     resolver            : ResolverFunc
 
-    storageKey          : Name
+    bucket              : Name
 }
 
 
@@ -30,34 +30,10 @@ export class ReferenceStorageField extends Field {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const storage : PropertyDecorator = generic_field(ReferenceStorageField)
+export const bucket : FieldDecorator<typeof ReferenceStorageField> = (fieldConfig?, fieldCls = ReferenceStorageField) => generic_field(fieldConfig, fieldCls)
 
 
-// we allow references w/o storage
-export const reference = function (storageKey? : string) : PropertyDecorator {
-    return generic_field(ReferenceField, { storageKey })
-}
-
-export const resolver = function (resolverFunc : ResolverFunc) : PropertyDecorator {
-
-    return function (target : Entity, propertyKey : string) : void {
-        if (!target.hasOwnProperty('$entity'))
-            throw new Error("No entity on the target class - check the order of decorators. " +
-                "The `resolver` decorator should be above of one of the fields decorators")
-
-        const entity            = target.$entity
-        const field             = entity.getField(propertyKey)
-
-        if (!field)
-            throw new Error(`No field [${propertyKey}] on the target class - check the order of decorators.` +
-                "The `resolver` decorator should be above of one of the fields decorators")
-
-        if (!(field instanceof ReferenceField))
-            throw new Error(`The field [${propertyKey}] on the target class is not a reference field`)
-        else
-            field.resolver      = resolverFunc
-    }
-}
+export const reference : FieldDecorator<typeof ReferenceField> = (fieldConfig?, fieldCls = ReferenceField) => generic_field(fieldConfig, fieldCls)
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -127,7 +103,7 @@ class ReferenceAtom extends base {
 
 
     hasStorage () : boolean {
-        return Boolean(this.field.storageKey)
+        return Boolean(this.field.bucket)
     }
 
 
@@ -167,7 +143,7 @@ class ReferenceAtom extends base {
 
 
     getStorage (entity : Entity) : ReferenceStorageAtom {
-        return entity.$[ this.field.storageKey ]
+        return entity.$[ this.field.bucket ]
     }
 
 

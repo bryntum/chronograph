@@ -1,6 +1,6 @@
 import {Base} from "../../src/class/Mixin.js";
 import {Entity} from "../../src/replica/Entity.js";
-import {reference, storage} from "../../src/replica/Reference.js";
+import {reference, bucket} from "../../src/replica/Reference.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
 import {Schema} from "../../src/schema/Schema.js";
 
@@ -15,13 +15,13 @@ StartTest(t => {
 
         @entity
         class Author extends Entity(Base) {
-            @storage
+            @bucket()
             books           : Set<Book>
         }
 
         @entity
         class Book extends Entity(Base) {
-            @reference('books')
+            @reference({ bucket : 'books' })
             writtenBy       : Author
         }
 
@@ -53,8 +53,8 @@ StartTest(t => {
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
     })
-    
-    
+
+
     t.it('TreeNode', async t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
@@ -62,10 +62,10 @@ StartTest(t => {
 
         @entity
         class TreeNode extends Entity(Base) {
-            @storage
+            @bucket()
             children            : Set<TreeNode>
 
-            @reference('children')
+            @reference({ bucket : 'children'})
             parent              : TreeNode
         }
 
@@ -85,5 +85,5 @@ StartTest(t => {
         t.isDeeply(node3.children, new Set(), 'Correctly resolved `children` reference')
         t.isDeeply(node4.children, new Set(), 'Correctly resolved `children` reference')
     })
-    
+
 })

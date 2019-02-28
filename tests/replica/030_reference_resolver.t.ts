@@ -1,8 +1,7 @@
 import {Base} from "../../src/class/Mixin.js";
-import {Entity, field} from "../../src/replica/Entity.js";
-import {reference, resolver, storage} from "../../src/replica/Reference.js";
+import {Entity} from "../../src/replica/Entity.js";
+import {bucket, reference} from "../../src/replica/Reference.js";
 import {MinimalReplica} from "../../src/replica/Replica.js";
-import {Schema} from "../../src/schema/Schema.js";
 
 declare const StartTest : any
 
@@ -14,7 +13,7 @@ StartTest(t => {
         class Author extends Entity(Base) {
             id          : string
 
-            @storage
+            @bucket()
             books           : Set<Book>
 
             initialize () {
@@ -25,8 +24,7 @@ StartTest(t => {
         }
 
         class Book extends Entity(Base) {
-            @resolver(locator => authors.get(locator))
-            @reference('books')
+            @reference({ bucket : 'books', resolver : locator => authors.get(locator) })
             writtenBy       : Author | string
         }
 
@@ -60,8 +58,7 @@ StartTest(t => {
         }
 
         class Book extends Entity(Base) {
-            @resolver(locator => authors.get(locator))
-            @reference()
+            @reference({ resolver : locator => authors.get(locator) })
             writtenBy       : Author | string
         }
 

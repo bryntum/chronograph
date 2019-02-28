@@ -261,9 +261,11 @@ export const ensureEntityOnPrototype = (proto : any) : EntityData => {
 }
 
 
+export type FieldDecorator<Default extends AnyConstructor = typeof Field> = <T extends Default = Default> (fieldConfig? : Partial<InstanceType<T>>, fieldCls? : T | Default) => PropertyDecorator
+
 
 //---------------------------------------------------------------------------------------------------------------------
-export const generic_field = <T extends typeof Field> (fieldCls : T, fieldConfig? : Partial<InstanceType<T>>) : PropertyDecorator => {
+export const generic_field : FieldDecorator = <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
 
     return function (target : Entity, propertyKey : string) : void {
         let entity      = ensureEntityOnPrototype(target)
@@ -307,7 +309,7 @@ export const generic_field = <T extends typeof Field> (fieldCls : T, fieldConfig
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const field : PropertyDecorator = generic_field(Field)
+export const field : typeof generic_field = generic_field
 
 
 //---------------------------------------------------------------------------------------------------------------------

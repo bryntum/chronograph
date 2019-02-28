@@ -17,13 +17,13 @@ StartTest(t => {
         @entity
         class SomeEntity extends Entity(Base) {
 
-            @field
+            @field()
             someField1      : string        = 'someField'
 
-            @field
+            @field()
             someField2      : number        = 11
 
-            @field
+            @field()
             someField3      : Date          = new Date(2018, 11, 11)
         }
 

@@ -9,17 +9,17 @@ StartTest(t => {
     t.it('Child class fields should stay at child level', async t => {
 
         class Vehicle extends Entity(Base) {
-            @field
+            @field()
             name : string
         }
 
         class Car extends Vehicle {
-            @generic_field(Field)
+            @field()
             drivingWheel : boolean = true
         }
 
         class Boat extends Vehicle {
-            @field
+            @field()
             helm : boolean = true
         }
 
