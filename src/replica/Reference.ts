@@ -22,24 +22,24 @@ export class ReferenceField extends Field {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReferenceStorageField extends Field {
+export class ReferenceBucketField extends Field {
     persistent          : boolean   = false
 
-    atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceStorageAtom
+    atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceBucketAtom
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const bucket : FieldDecorator<typeof ReferenceStorageField> = (fieldConfig?, fieldCls = ReferenceStorageField) => generic_field(fieldConfig, fieldCls)
+export const bucket : FieldDecorator<typeof ReferenceBucketField> = (fieldConfig?, fieldCls = ReferenceBucketField) => generic_field(fieldConfig, fieldCls)
 
 
 export const reference : FieldDecorator<typeof ReferenceField> = (fieldConfig?, fieldCls = ReferenceField) => generic_field(fieldConfig, fieldCls)
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceStorageAtom = <T extends AnyConstructor<FieldAtom>>(base : T) =>
+export const ReferenceBucketAtom = <T extends AnyConstructor<FieldAtom>>(base : T) =>
 
-class ReferenceStorageAtom extends base {
+class ReferenceBucketAtom extends base {
     // upgrade the type of the `incoming` property
     incoming        : Set<MinimalReferenceAtom>
 
@@ -88,9 +88,9 @@ class ReferenceStorageAtom extends base {
     }
 }
 
-export type ReferenceStorageAtom = Mixin<typeof ReferenceStorageAtom>
+export type ReferenceBucketAtom = Mixin<typeof ReferenceBucketAtom>
 
-export class MinimalReferenceStorageAtom extends ReferenceStorageAtom(MinimalFieldAtom) {}
+export class MinimalReferenceBucketAtom extends ReferenceBucketAtom(MinimalFieldAtom) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -107,14 +107,14 @@ class ReferenceAtom extends base {
     }
 
 
-    addToStorage (storage : ReferenceStorageAtom) {
+    addToStorage (storage : ReferenceBucketAtom) {
         storage.newRefs.add(this.self.$$)
 
         this.graph && this.graph.markAsNeedRecalculation(storage)
     }
 
 
-    removeFromStorage (storage : ReferenceStorageAtom) {
+    removeFromStorage (storage : ReferenceBucketAtom) {
         storage.oldRefs.add(this.self.$$)
 
         this.graph && this.graph.markAsNeedRecalculation(storage)
@@ -142,7 +142,7 @@ class ReferenceAtom extends base {
     }
 
 
-    getStorage (entity : Entity) : ReferenceStorageAtom {
+    getStorage (entity : Entity) : ReferenceBucketAtom {
         return entity.$[ this.field.bucket ]
     }
 
