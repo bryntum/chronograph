@@ -45,7 +45,7 @@ export type AnyConstructor<A = object>  = new (...input: any[]) => A
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
 
 export type MixinConstructor<T extends AnyFunction> =
-    T extends AnyFunction<BaseConstructor> ? ReturnType<T> & BaseConstructor : ReturnType<T>
+    T extends AnyFunction<infer M> ? (M extends AnyConstructor<Base> ? M & BaseConstructor : M) : ReturnType<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------
