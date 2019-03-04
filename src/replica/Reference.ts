@@ -102,22 +102,22 @@ class ReferenceAtom extends base {
     value           : Entity
 
 
-    hasStorage () : boolean {
+    hasBucket () : boolean {
         return Boolean(this.field.bucket)
     }
 
 
-    addToStorage (storage : ReferenceBucketAtom) {
-        storage.newRefs.add(this.self.$$)
+    addToBucket (bucket : ReferenceBucketAtom) {
+        bucket.newRefs.add(this.self.$$)
 
-        this.graph && this.graph.markAsNeedRecalculation(storage)
+        this.graph && this.graph.markAsNeedRecalculation(bucket)
     }
 
 
-    removeFromStorage (storage : ReferenceBucketAtom) {
-        storage.oldRefs.add(this.self.$$)
+    removeFromBucket (bucket : ReferenceBucketAtom) {
+        bucket.oldRefs.add(this.self.$$)
 
-        this.graph && this.graph.markAsNeedRecalculation(storage)
+        this.graph && this.graph.markAsNeedRecalculation(bucket)
     }
 
 
@@ -142,7 +142,7 @@ class ReferenceAtom extends base {
     }
 
 
-    getStorage (entity : Entity) : ReferenceBucketAtom {
+    getBucket (entity : Entity) : ReferenceBucketAtom {
         return entity.$[ this.field.bucket ]
     }
 
@@ -168,19 +168,19 @@ class ReferenceAtom extends base {
 
         super.onEnterGraph(graph)
 
-        if (this.get() !== undefined && resolves && this.hasStorage()) {
-            const referenceStorage  = this.getStorage(this.get())
+        if (this.get() !== undefined && resolves && this.hasBucket()) {
+            const referenceBucket  = this.getBucket(this.get())
 
-            this.addToStorage(referenceStorage)
+            this.addToBucket(referenceBucket)
         }
     }
 
 
     onLeaveGraph (graph : ChronoGraph) {
-        if (this.hasStableValue() && this.hasStorage()) {
-            const referenceStorage  = this.getStorage(this.value)
+        if (this.hasStableValue() && this.hasBucket()) {
+            const referenceBucket  = this.getBucket(this.value)
 
-            this.removeFromStorage(referenceStorage)
+            this.removeFromBucket(referenceBucket)
         }
 
         super.onLeaveGraph(graph)
@@ -191,12 +191,12 @@ class ReferenceAtom extends base {
         const value     = this.value
 
         // value is not empty and resolved to entity
-        if (value != null && !isAtomicValue(value) && this.hasStorage()) {
-            this.removeFromStorage(this.getStorage(value))
+        if (value != null && !isAtomicValue(value) && this.hasBucket()) {
+            this.removeFromBucket(this.getBucket(value))
         }
 
-        if (nextValue != null && !isAtomicValue(nextValue) && this.hasStorage()) {
-            this.addToStorage(this.getStorage(nextValue))
+        if (nextValue != null && !isAtomicValue(nextValue) && this.hasBucket()) {
+            this.addToBucket(this.getBucket(nextValue))
         }
 
         super.put(nextValue)
