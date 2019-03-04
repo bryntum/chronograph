@@ -24,7 +24,8 @@ class FieldAtom extends base {
             if (!continuationOfAtom.equality(continuationOfAtom.value, this.value)) {
                 continuationOfAtom.value    = this.value
 
-                this.graph.initialAtoms.push(continuationOfAtom)
+                // atom can be already removed from graph
+                this.graph && this.graph.initialAtoms.push(continuationOfAtom)
             }
         }
     }
