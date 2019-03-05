@@ -1,4 +1,4 @@
-import {AnyConstructor, Base, Mixin, MixinConstructor} from "../class/Mixin.js";
+import {AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor} from "../class/Mixin.js";
 import {Graph} from "../graph/Graph.js";
 import { WalkableBackwardNode, WalkableForwardNode, Node} from "../graph/Node.js";
 import { Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep, OnCycleAction, cycleInfo} from "../graph/Walkable.js";
@@ -46,6 +46,10 @@ class ChronoGraph extends base {
 
     // temp workaround to mark changed initial atoms as "need recalculation"
     initialAtoms            : ChronoAtom[]          = []
+
+    isPropagating           : boolean               = false
+
+    propagateCompletedListeners : AnyFunction[]     = []
 
 
     // processingQueue         : ChronoAtom[]          = []
@@ -370,8 +374,21 @@ class ChronoGraph extends base {
     }
 
 
+    waitForPropagateCompleted () : Promise<PropagationResult | null> {
+        if (!this.isPropagating) return Promise.resolve(null)
+
+        return new Promise(resolve => {
+            this.propagateCompletedListeners.push(resolve)
+        })
+    }
+
+
     async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
+        if (this.isPropagating) throw new Error("Can not nest calls to `propagate`, use `waitForPropagateCompleted`")
+
         let needToRestart : boolean
+
+        this.isPropagating          = true
 
         do {
             needToRestart           = false
@@ -397,6 +414,10 @@ class ChronoGraph extends base {
                     if (resolutionResult === EffectResolutionResult.Cancel) {
                         await this.reject()
 
+                        this.isPropagating  = false
+
+                        this.onPropagationCompleted(PropagationResult.Canceled)
+
                         return PropagationResult.Canceled
                     }
                     else if (resolutionResult === EffectResolutionResult.Restart) {
@@ -413,7 +434,18 @@ class ChronoGraph extends base {
 
         await this.commit()
 
+        this.isPropagating          = false
+
+        this.onPropagationCompleted(PropagationResult.Completed)
+
         return PropagationResult.Completed
+    }
+
+
+    onPropagationCompleted (result : PropagationResult) {
+        this.propagateCompletedListeners.forEach(listener => listener(result))
+
+        this.propagateCompletedListeners    = []
     }
 
 

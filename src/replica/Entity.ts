@@ -177,6 +177,11 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
+        async waitForPropagateCompleted () : Promise<PropagationResult | null> {
+            return this.getGraph().waitForPropagateCompleted()
+        }
+
+
         markAsNeedRecalculation (atom : ChronoAtom) {
             this.getGraph().markAsNeedRecalculation(atom)
         }

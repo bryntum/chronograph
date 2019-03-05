@@ -104,6 +104,40 @@ StartTest(t => {
     })
 
 
+    t.it('Should allow to wait until the propagation completes', async t => {
+        const graph : WithEffect        = WithEffect(MinimalChronoGraph).new()
+
+        let resolved1       = false
+
+        const box1 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({
+
+            calculation : function * (proposedValue : number) {
+
+                yield WaitUntilResolvedEffect.new({
+                    promise     : new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            resolved1    = true
+                            resolve()
+                        }, 10)
+                    })
+                })
+
+                return proposedValue
+            }
+        }))
+
+        box1.put(1)
+
+        graph.propagate()
+
+        await graph.waitForPropagateCompleted()
+
+        t.ok(resolved1, "Promise has been resolved after propagate")
+
+        t.is(box1.get(), 1, "Correct result calculated")
+    })
+
+
     t.it('Should allow to cancel the propagation', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
