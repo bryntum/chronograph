@@ -271,7 +271,7 @@ export type FieldDecorator<Default extends AnyConstructor = typeof Field> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const generic_field : FieldDecorator =
+export const generic_field : FieldDecorator<typeof Field> =
     <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
 
         return function (target : Entity, propertyKey : string) : void {
