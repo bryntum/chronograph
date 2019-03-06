@@ -189,5 +189,3 @@ export const WalkableBackward = <T extends AnyConstructor<Walkable>>(base : T) =
 }
 
 export type WalkableBackward = Mixin<typeof WalkableBackward>
-
-

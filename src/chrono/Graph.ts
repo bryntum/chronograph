@@ -4,7 +4,7 @@ import { WalkableBackwardNode, WalkableForwardNode, Node} from "../graph/Node.js
 import { Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep, OnCycleAction, cycleInfo} from "../graph/Walkable.js";
 import {FieldAtom} from "../replica/Atom.js";
 import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
-import {CancelPropagationEffect, Effect, EffectResolutionResult, EffectResolverFunction, RestartPropagationEffect} from "./Effect.js";
+import { CancelPropagationEffect, Effect, EffectResolutionResult, EffectResolverFunction, RestartPropagationEffect, GraphCycleDetectedEffect} from "./Effect.js";
 import {ChronoId} from "./Id.js";
 
 
@@ -239,11 +239,28 @@ class ChronoGraph extends base {
                 sourceAtom.observedDuringCalculation.push(incomingAtom)
 
                 // ideally should be removed (same as while condition)
-                if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) throw new Error("Cycle")
+                if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) {
+                    let cycle : Node[];
 
-                iteratorValue   = iterator.next(
-                    incomingAtom.hasNextStableValue() ? incomingAtom.getNextStableValue() : incomingAtom.getConsistentValue()
-                )
+                    this.commitAllEdges();
+
+                    this.walkDepth(WalkForwardContext.new({
+                        onCycle                 : (node : Node, stack : WalkStep[]) => {
+                            // NOTE: After onCycle call walkDepth instantly returns
+                            cycle = cycleInfo(stack) as Node[]
+
+                            return OnCycleAction.Cancel
+                        }
+                    }))
+
+                    iteratorValue = { value: GraphCycleDetectedEffect.new({ cycle }), done : true }
+                }
+                else {
+                    iteratorValue   = iterator.next(
+                        incomingAtom.hasNextStableValue() ? incomingAtom.getNextStableValue() : incomingAtom.getConsistentValue()
+                    )
+                }
+
             } else {
                 iteratorValue   = iterator.next()
             }
@@ -275,6 +292,8 @@ class ChronoGraph extends base {
 
         const me                = this
 
+        let cycle : Node[]      = null
+
         this.walkDepth(WalkForwardContext.new({
             forEachNext             : function (atom : ChronoAtom, func) {
                 if (atom === <any>me) {
@@ -287,7 +306,12 @@ class ChronoGraph extends base {
             onNode                  : (atom : ChronoAtom) => {
                 // console.log(`Visiting ${node}`)
             },
-            onCycle                 : () => { throw new Error("Cycle in graph") },
+            onCycle                 : (node : Node, stack : WalkStep[]) => {
+                // NOTE: After onCycle call walkDepth instantly returns
+                cycle = cycleInfo(stack) as Node[]
+
+                return OnCycleAction.Cancel
+            },
 
             onTopologicalNode       : (atom : ChronoAtom) => {
                 if (<any>atom === <any>this) return
@@ -298,6 +322,9 @@ class ChronoGraph extends base {
             }
         }))
 
+        if (cycle) {
+            return GraphCycleDetectedEffect.new({ cycle })
+        }
 
         let depth
 
@@ -368,6 +395,10 @@ class ChronoGraph extends base {
 
         if (effect instanceof RestartPropagationEffect) {
             return EffectResolutionResult.Restart
+        }
+
+        if (effect instanceof GraphCycleDetectedEffect) {
+            throw new Error('Graph cycle detected');
         }
 
         return EffectResolutionResult.Resume
@@ -540,9 +571,9 @@ class ChronoGraph extends base {
         // Cycle detection
         this.walkDepth(WalkForwardContext.new({
             onCycle : (_node : Node, stack : WalkStep[]) : OnCycleAction => {
-                cycle   = cycleInfo(stack) as Node[]
+                const ci : Node[]   = cycleInfo(stack) as Node[]
 
-                cycle = cycleInfo(stack).reduce(
+                cycle = ci.reduce(
                     ([cycle, prevNode], curNode) => {
                         if (prevNode) {
                             cycle[(prevNode as ChronoAtom).id] = (curNode as ChronoAtom).id

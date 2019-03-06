@@ -1,4 +1,5 @@
 import {Base} from "../class/Mixin.js";
+import { Node } from "../graph/Node.js";
 
 
 export type EffectResolverFunction  = (effect : Effect) => Promise<EffectResolutionResult>
@@ -26,4 +27,9 @@ export class CancelPropagationEffect extends Effect {
 //---------------------------------------------------------------------------------------------------------------------
 export class RestartPropagationEffect extends Effect {
     description         : string
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+export class GraphCycleDetectedEffect extends Effect {
+    cycle               : Node[]
 }
