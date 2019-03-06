@@ -266,50 +266,52 @@ export const ensureEntityOnPrototype = (proto : any) : EntityData => {
 }
 
 
-export type FieldDecorator<Default extends AnyConstructor = typeof Field> = <T extends Default = Default> (fieldConfig? : Partial<InstanceType<T>>, fieldCls? : T | Default) => PropertyDecorator
+export type FieldDecorator<Default extends AnyConstructor = typeof Field> =
+    <T extends Default = Default> (fieldConfig? : Partial<InstanceType<T>>, fieldCls? : T | Default) => PropertyDecorator
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const generic_field : FieldDecorator = <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
+export const generic_field : FieldDecorator =
+    <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
 
-    return function (target : Entity, propertyKey : string) : void {
-        let entity      = ensureEntityOnPrototype(target)
+        return function (target : Entity, propertyKey : string) : void {
+            let entity      = ensureEntityOnPrototype(target)
 
-        const field     = entity.addField(
-            fieldCls.new(Object.assign(fieldConfig || {}, {
-                name    : propertyKey
-            } as Partial<InstanceType<T>>))
-        );
+            const field     = entity.addField(
+                fieldCls.new(Object.assign(fieldConfig || {}, {
+                    name    : propertyKey
+                } as Partial<InstanceType<T>>))
+            );
 
-        if (field.createAccessors) {
+            if (field.createAccessors) {
 
-            Object.defineProperty(target, propertyKey, {
-                get     : function () {
-                    return this.$[ propertyKey ].get()
-                },
+                Object.defineProperty(target, propertyKey, {
+                    get     : function () {
+                        return this.$[ propertyKey ].get()
+                    },
 
-                set     : function (value : any) {
-                    return this.$[ propertyKey ].put(value)
+                    set     : function (value : any) {
+                        return this.$[ propertyKey ].put(value)
+                    }
+                })
+
+                const getterFnName = `get${ uppercaseFirst(propertyKey) }`
+                const setterFnName = `set${ uppercaseFirst(propertyKey) }`
+
+                if (!(getterFnName in target)) {
+                    target[ getterFnName ] = function (...args) : unknown {
+                        return this.$[ propertyKey ].get(...args)
+                    }
                 }
-            })
 
-            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
-            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
-
-            if (!(getterFnName in target)) {
-                target[ getterFnName ] = function (...args) : unknown {
-                    return this.$[ propertyKey ].get(...args)
-                }
-            }
-
-            if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (...args) : Promise<PropagationResult> {
-                    return this.$[ propertyKey ].set(...args)
+                if (!(setterFnName in target)) {
+                    target[ setterFnName ] = function (...args) : Promise<PropagationResult> {
+                        return this.$[ propertyKey ].set(...args)
+                    }
                 }
             }
         }
     }
-}
 
 
 
