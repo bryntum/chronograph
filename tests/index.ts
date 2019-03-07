@@ -40,7 +40,8 @@ project.start(
             'replica/010_replica.t.js',
             'replica/020_relation.t.js',
             'replica/030_reference_resolver.t.js',
-            'replica/040_fields_leak.t.js'
+            'replica/040_fields_leak.t.js',
+            'replica/060_try_propagate.t.js'
         ]
     },
     {
