@@ -17,7 +17,8 @@ project.start(
             'chrono/020_performance.t.js',
             'chrono/030_behavior.t.js',
             'chrono/040_effects.t.js',
-            'chrono/050_cycle_effect.t.js'
+            'chrono/050_cycle_effect.t.js',
+            'chrono/060_try_propagate.t.js'
         ]
     },
     {

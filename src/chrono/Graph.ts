@@ -15,12 +15,13 @@ export type ChronoRevision          = number
 export type ChronoContinuation      = { iterator : ChronoIterator, atom? : ChronoAtom }
 export type ChronoIterationResult   = { value? : ChronoValue, continuation? : ChronoContinuation, effect? : Effect }
 export type PropagateSingleResult   = { success : true }
-
+export type FinalizerFn             = () => Promise<PropagationResult>
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum PropagationResult {
     Canceled,
-    Completed
+    Completed,
+    Passed
 }
 
 
@@ -423,10 +424,11 @@ class ChronoGraph extends base {
     }
 
 
-    async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
+    async propagate (onEffect? : EffectResolverFunction, dryRun : (boolean | Function) = false) : Promise<PropagationResult> {
         if (this.isPropagating) throw new Error("Can not nest calls to `propagate`, use `waitForPropagateCompleted`")
 
-        let needToRestart : boolean
+        let needToRestart : boolean,
+            result        : PropagationResult
 
         this.isPropagating          = true
 
@@ -472,13 +474,35 @@ class ChronoGraph extends base {
 
         } while (needToRestart)
 
-        await this.commit()
+        if (dryRun) {
+            // Escape hatch to get next consistent atom value before rejection
+            if (typeof dryRun === 'function') {
+                dryRun()
+            }
+            await this.reject()
+            this.isPropagating = false
+            this.onPropagationCompleted(PropagationResult.Completed)
+            result = PropagationResult.Passed
+        }
+        else {
+            await this.commit()
+            this.isPropagating = false
+            this.onPropagationCompleted(PropagationResult.Completed)
+            result = PropagationResult.Completed
+        }
 
-        this.isPropagating          = false
+        return result
+    }
 
-        this.onPropagationCompleted(PropagationResult.Completed)
 
-        return PropagationResult.Completed
+    async tryPropagateWithNodes(onEffect? : EffectResolverFunction, nodes? : this[ 'nodeT' ][], hatchFn? : Function) : Promise<PropagationResult> {
+        nodes && this.addNodes(nodes)
+
+        const result = await this.propagate(onEffect, hatchFn || true)
+
+        nodes && this.removeNodes(nodes)
+
+        return result
     }
 
 
