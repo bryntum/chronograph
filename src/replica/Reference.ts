@@ -12,13 +12,20 @@ export type ResolverFunc    = (locator : any) => Entity
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReferenceField extends Field {
+export const ReferenceFieldMixin = <T extends AnyConstructor<Field>>(base : T) =>
+
+class ReferenceFieldMixin extends base {
     atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceAtom
 
     resolver            : ResolverFunc
 
     bucket              : Name
 }
+
+export type ReferenceFieldMixin = Mixin<typeof ReferenceFieldMixin>
+
+
+export class ReferenceField extends ReferenceFieldMixin(Field) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
