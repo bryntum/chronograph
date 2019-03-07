@@ -11,17 +11,23 @@ StartTest(t => {
 
         const graph = MinimalChronoGraph.new();
 
-        let a1, a2;
+        let a1, a2, a3
 
         a1 = graph.addNode(MinimalChronoAtom.new({
             calculation : function * (proposeValue : number) {
-                return yield a2;
+                return yield a2
             }
         }))
 
         a2 = graph.addNode(MinimalChronoAtom.new({
             calculation : function * (proposedValue : number) {
-                return yield a1;
+                return yield a1
+            }
+        }))
+
+        a3 = graph.addNode(MinimalChronoAtom.new({
+            calculation : function * (proposedValue : number) {
+                return 0
             }
         }))
 
@@ -35,6 +41,7 @@ StartTest(t => {
                 const cycle : Node[] = (effect as GraphCycleDetectedEffect).cycle
                 t.ok(cycle.includes(a1), 'A1 atom is in cycle')
                 t.ok(cycle.includes(a2), 'A2 atom is in cycle')
+                t.notOk(cycle.includes(a3), 'A3 atom is not in cycle')
             }
 
             return  EffectResolutionResult.Cancel

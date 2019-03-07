@@ -228,7 +228,8 @@ class ChronoGraph extends base {
 
 
     continueAtomCalculation (sourceAtom : ChronoAtom, continuation : ChronoContinuation, maybeDirtyAtoms : Set<ChronoAtom>) : ChronoIterationResult {
-        const iterator      = continuation.iterator
+        const me            = this,
+              iterator      = continuation.iterator
 
         let incomingAtom    = continuation.atom
 
@@ -238,13 +239,21 @@ class ChronoGraph extends base {
             if (incomingAtom) {
                 sourceAtom.observedDuringCalculation.push(incomingAtom)
 
+                // Cycle condition
                 // ideally should be removed (same as while condition)
                 if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) {
                     let cycle : Node[];
 
-                    this.commitAllEdges();
+                    me.walkDepth(WalkForwardContext.new({
+                        forEachNext             : function (atom : ChronoAtom, func) {
+                            if (atom === <any>me) {
+                                me.needRecalculationAtoms.forEach(func)
+                            }
+                            else {
+                                atom.observedDuringCalculation.forEach(func)
+                            }
+                        },
 
-                    this.walkDepth(WalkForwardContext.new({
                         onCycle                 : (node : Node, stack : WalkStep[]) => {
                             // NOTE: After onCycle call walkDepth instantly returns
                             cycle = cycleInfo(stack) as Node[]
