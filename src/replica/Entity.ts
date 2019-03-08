@@ -6,7 +6,7 @@ import {Entity as EntityData} from "../schema/Entity.js";
 import {Field, Name} from "../schema/Field.js";
 import {lazyBuild, uppercaseFirst} from "../util/Helper.js";
 import {EntityAtomI, FieldAtom, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
-import { Replica } from "./Replica.js";
+import { isReplica } from "./Replica.js";
 
 
 // LAZY ATOMS CREATION - investigate if it improves performance
@@ -193,8 +193,8 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
             let result
 
-            if (graph instanceof Replica) {
-                result = (graph as Replica).tryPropagateWithEntities(onEffect, entities, hatchFn);
+            if (isReplica(graph)) {
+                result = graph.tryPropagateWithEntities(onEffect, entities, hatchFn);
             }
             else {
                 throw new Error("Entity is not part of replica")

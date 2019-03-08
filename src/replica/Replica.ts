@@ -4,11 +4,15 @@ import {Schema} from "../schema/Schema.js";
 import {Entity} from "./Entity.js";
 import { EffectResolverFunction } from "../chrono/Effect.js";
 
+const hasReplica = Symbol('isReplica')
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Replica = <T extends AnyConstructor<ChronoGraph>>(base : T) =>
 
 class Replica extends base {
+    [hasReplica] () {}
+
+
     schema              : Schema
 
 
@@ -54,3 +58,11 @@ export type Replica = Mixin<typeof Replica>
 
 export const MinimalReplica = Replica(MinimalChronoGraph)
 export type MinimalReplica = InstanceType<typeof MinimalReplica>
+
+
+/**
+ * Replica mixin type guard
+ */
+export function isReplica(replica : object) : replica is Replica {
+    return replica && !!replica[hasReplica]
+}
