@@ -123,12 +123,14 @@ export const cycleInfo = (stack : WalkStep[]) : Walkable[] => {
         // going backward in steps, skipping the nodes with identical `from`
         for (; pos >= 0 && stack[ pos ].from === stack[ anotherNodePos ].from; pos--) ;
 
-        // the first node with different `from` will be part of the cycle path
-        cycle.push(stack[ pos ].node)
+        if (pos >= 0) {
+            // the first node with different `from` will be part of the cycle path
+            cycle.push(stack[ pos ].node)
 
-        anotherNodePos          = pos
+            anotherNodePos          = pos
 
-        pos--
+            pos--
+        }
 
     } while (pos >= 0 && stack[ pos ].node !== cycleSource)
 
