@@ -496,11 +496,19 @@ class ChronoGraph extends base {
 
 
     async tryPropagateWithNodes(onEffect? : EffectResolverFunction, nodes? : this[ 'nodeT' ][], hatchFn? : Function) : Promise<PropagationResult> {
-        nodes && this.addNodes(nodes)
+
+        if (nodes && nodes.length) {
+            nodes = nodes.filter(n => n.graph !== this)
+            if (nodes.length) {
+                this.addNodes(nodes)
+            }
+        }
 
         const result = await this.propagate(onEffect, hatchFn || true)
 
-        nodes && this.removeNodes(nodes)
+        if (nodes && nodes.length) {
+            nodes && this.removeNodes(nodes)
+        }
 
         return result
     }
