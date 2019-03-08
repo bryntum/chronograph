@@ -1,5 +1,5 @@
 import {ChronoAtom, ChronoIterator} from "../chrono/Atom.js";
-import {Effect} from "../chrono/Effect.js";
+import { Effect, EffectResolverFunction} from "../chrono/Effect.js";
 import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
 import {AnyConstructor, AnyFunction, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
@@ -173,8 +173,8 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        async propagate () : Promise<PropagationResult> {
-            return this.getGraph().propagate()
+        async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
+            return this.getGraph().propagate(onEffect)
         }
 
 
@@ -182,17 +182,19 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             return this.getGraph().waitForPropagateCompleted()
         }
 
-        async tryPropagateWithNodes () : Promise<PropagationResult> {
-            return this.getGraph().tryPropagateWithNodes()
+
+        async tryPropagateWithNodes (onEffect? : EffectResolverFunction, nodes? : ChronoAtom[], hatchFn? : Function) : Promise<PropagationResult> {
+            return this.getGraph().tryPropagateWithNodes(onEffect, nodes, hatchFn)
         }
 
-        async tryPropagateWithEntities () : Promise<PropagationResult> {
+
+        async tryPropagateWithEntities (onEffect? : EffectResolverFunction, entities? : Entity[], hatchFn? : Function) : Promise<PropagationResult> {
             const graph = this.getGraph()
 
             let result
 
             if (graph instanceof Replica) {
-                result = (graph as Replica).tryPropagateWithEntities();
+                result = (graph as Replica).tryPropagateWithEntities(onEffect, entities, hatchFn);
             }
             else {
                 throw new Error("Entity is not part of replica")
