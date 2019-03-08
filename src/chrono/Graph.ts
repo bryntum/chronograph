@@ -122,7 +122,7 @@ class ChronoGraph extends base {
     }
 
 
-    async commit () {
+    commit () {
         this.changedAtoms.forEach(atom => atom.commitValue())
         this.changedAtoms   = []
 
@@ -154,15 +154,15 @@ class ChronoGraph extends base {
     }
 
 
-    async reject () {
-        await this.rejectPartialProgress()
+    reject () {
+        this.rejectPartialProgress()
 
         this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
     }
 
 
-    async rejectPartialProgress () {
+    rejectPartialProgress () {
         // stable atoms includes changed ones
         this.stableAtoms.forEach(atom => atom.reject())
         this.stableAtoms.clear()
@@ -454,7 +454,7 @@ class ChronoGraph extends base {
                     }
 
                     if (resolutionResult === EffectResolutionResult.Cancel) {
-                        await this.reject()
+                        this.reject()
 
                         this.isPropagating  = false
 
@@ -463,7 +463,7 @@ class ChronoGraph extends base {
                         return PropagationResult.Canceled
                     }
                     else if (resolutionResult === EffectResolutionResult.Restart) {
-                        await this.rejectPartialProgress()
+                        this.rejectPartialProgress()
 
                         needToRestart       = true
 
@@ -479,13 +479,13 @@ class ChronoGraph extends base {
             if (typeof dryRun === 'function') {
                 dryRun()
             }
-            await this.reject()
+            this.reject()
             this.isPropagating = false
             this.onPropagationCompleted(PropagationResult.Completed)
             result = PropagationResult.Passed
         }
         else {
-            await this.commit()
+            this.commit()
             this.isPropagating = false
             this.onPropagationCompleted(PropagationResult.Completed)
             result = PropagationResult.Completed
