@@ -40,7 +40,7 @@ StartTest(t => {
         const a = A3.new();
 
         let a3value = undefined
-        let result  = await graph.tryPropagateWithEntites(null, [a], () => {
+        let result  = await graph.tryPropagateWithEntities(null, [a], () => {
             a3value = a.a3
         })
 
