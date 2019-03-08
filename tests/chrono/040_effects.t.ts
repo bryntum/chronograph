@@ -1,6 +1,6 @@
 import {ChronoAtom, MinimalChronoAtom} from "../../src/chrono/Atom.js";
 import {CancelPropagationEffect, Effect, EffectResolutionResult, RestartPropagationEffect} from "../../src/chrono/Effect.js";
-import {ChronoGraph, MinimalChronoGraph} from "../../src/chrono/Graph.js";
+import {ChronoGraph, MinimalChronoGraph, PropagationResult} from "../../src/chrono/Graph.js";
 import {AnyConstructor, Mixin} from "../../src/class/Mixin.js";
 
 
@@ -18,10 +18,10 @@ class WithEffect extends base {
     waitUntilResolvedEffects        : WaitUntilResolvedEffect[]     = []
 
 
-    async commit () {
-        await this.waitForAllPromises()
+    async propagationCompletedHook () {
+        await super.propagationCompletedHook()
 
-        await super.commit()
+        await this.waitForAllPromises()
     }
 
 

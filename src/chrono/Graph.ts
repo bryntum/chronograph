@@ -454,10 +454,11 @@ class ChronoGraph extends base {
                     }
 
                     if (resolutionResult === EffectResolutionResult.Cancel) {
+
+                        // POST-PROPAGATE sequence, TODO refactor
                         this.reject()
-
                         this.isPropagating  = false
-
+                        await this.propagationCompletedHook()
                         this.onPropagationCompleted(PropagationResult.Canceled)
 
                         return PropagationResult.Canceled
@@ -479,15 +480,22 @@ class ChronoGraph extends base {
             if (typeof dryRun === 'function') {
                 dryRun()
             }
+
+            // POST-PROPAGATE sequence, TODO refactor
             this.reject()
             this.isPropagating = false
+            await this.propagationCompletedHook()
             this.onPropagationCompleted(PropagationResult.Completed)
+
             result = PropagationResult.Passed
         }
         else {
+            // POST-PROPAGATE sequence, TODO refactor
             this.commit()
             this.isPropagating = false
+            await this.propagationCompletedHook()
             this.onPropagationCompleted(PropagationResult.Completed)
+
             result = PropagationResult.Completed
         }
 
@@ -511,6 +519,10 @@ class ChronoGraph extends base {
         }
 
         return result
+    }
+
+
+    async propagationCompletedHook () {
     }
 
 
