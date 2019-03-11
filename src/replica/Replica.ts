@@ -38,19 +38,19 @@ class Replica extends base {
     async tryPropagateWithEntities(onEffect? : EffectResolverFunction, entities? : Entity[], hatchFn? : Function) : Promise<PropagationResult> {
 
         if (entities && entities.length) {
-            entities = entities.filter(e => e.getGraph() !== this)
-            if (entities.length) {
-                this.addEntities(entities)
+            entities = entities.filter(e => e.$$.graph !== this);
+            if (entities && entities.length) {
+                entities.forEach(e => e.enterGraph(this));
             }
         }
 
         const result = await this.propagate(onEffect, hatchFn || true)
 
         if (entities && entities.length) {
-            this.removeEntities(entities)
+            entities.forEach(e => e.leaveGraph());
         }
 
-        return result
+        return result;
     }
 }
 
