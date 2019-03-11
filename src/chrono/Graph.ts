@@ -122,7 +122,7 @@ class ChronoGraph extends base {
     }
 
 
-    async commit () {
+    commit () {
         this.changedAtoms.forEach(atom => atom.commitValue())
         this.changedAtoms   = []
 
@@ -154,15 +154,15 @@ class ChronoGraph extends base {
     }
 
 
-    async reject () {
-        await this.rejectPartialProgress()
+    reject () {
+        this.rejectPartialProgress()
 
         this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
     }
 
 
-    async rejectPartialProgress () {
+    rejectPartialProgress () {
         // stable atoms includes changed ones
         this.stableAtoms.forEach(atom => atom.reject())
         this.stableAtoms.clear()
@@ -454,16 +454,17 @@ class ChronoGraph extends base {
                     }
 
                     if (resolutionResult === EffectResolutionResult.Cancel) {
-                        await this.reject()
 
+                        // POST-PROPAGATE sequence, TODO refactor
+                        this.reject()
                         this.isPropagating  = false
-
+                        await this.propagationCompletedHook()
                         this.onPropagationCompleted(PropagationResult.Canceled)
 
                         return PropagationResult.Canceled
                     }
                     else if (resolutionResult === EffectResolutionResult.Restart) {
-                        await this.rejectPartialProgress()
+                        this.rejectPartialProgress()
 
                         needToRestart       = true
 
@@ -479,15 +480,22 @@ class ChronoGraph extends base {
             if (typeof dryRun === 'function') {
                 dryRun()
             }
-            await this.reject()
+
+            // POST-PROPAGATE sequence, TODO refactor
+            this.reject()
             this.isPropagating = false
+            await this.propagationCompletedHook()
             this.onPropagationCompleted(PropagationResult.Completed)
+
             result = PropagationResult.Passed
         }
         else {
-            await this.commit()
+            // POST-PROPAGATE sequence, TODO refactor
+            this.commit()
             this.isPropagating = false
+            await this.propagationCompletedHook()
             this.onPropagationCompleted(PropagationResult.Completed)
+
             result = PropagationResult.Completed
         }
 
@@ -511,6 +519,10 @@ class ChronoGraph extends base {
         }
 
         return result
+    }
+
+
+    async propagationCompletedHook () {
     }
 
 
