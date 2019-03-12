@@ -454,6 +454,10 @@ class ChronoGraph extends base {
                     }
 
                     if (resolutionResult === EffectResolutionResult.Cancel) {
+                        // Escape hatch to get next consistent atom value before rejection
+                        if (typeof dryRun === 'function') {
+                            dryRun()
+                        }
 
                         // POST-PROPAGATE sequence, TODO refactor
                         this.reject()
