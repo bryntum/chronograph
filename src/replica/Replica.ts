@@ -39,15 +39,13 @@ class Replica extends base {
 
         if (entities && entities.length) {
             entities = entities.filter(e => e.$$.graph !== this);
-            if (entities && entities.length) {
-                entities.forEach(e => e.enterGraph(this));
-            }
+            this.addEntities(entities)
         }
 
         const result = await this.propagate(onEffect, hatchFn || true)
 
         if (entities && entities.length) {
-            entities.forEach(e => e.leaveGraph());
+            this.removeEntities(entities)
         }
 
         return result;

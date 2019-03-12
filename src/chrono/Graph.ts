@@ -485,7 +485,7 @@ class ChronoGraph extends base {
             this.reject()
             this.isPropagating = false
             await this.propagationCompletedHook()
-            this.onPropagationCompleted(PropagationResult.Completed)
+            this.onPropagationCompleted(PropagationResult.Completed) // Shouldn't it be PropagationResult.Passed?
 
             result = PropagationResult.Passed
         }
