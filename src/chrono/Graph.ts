@@ -123,6 +123,9 @@ class ChronoGraph extends base {
 
 
     commit () {
+        this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
+        this.needRecalculationAtoms.clear()
+
         this.changedAtoms.forEach(atom => atom.commitValue())
         this.changedAtoms   = []
 
@@ -130,9 +133,6 @@ class ChronoGraph extends base {
         // because of that, we commit the edges for all recalculated atoms (stable atoms)
         this.stableAtoms.forEach(atom => atom.commitEdges())
         this.stableAtoms.clear()
-
-        this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
-        this.needRecalculationAtoms.clear()
 
         // temp workaround
         this.initialAtoms.forEach((initialAtom : FieldAtom) => {
