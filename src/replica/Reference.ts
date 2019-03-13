@@ -184,10 +184,14 @@ class ReferenceAtom extends base {
 
 
     onLeaveGraph (graph : ChronoGraph) {
-        if (this.hasStableValue() && this.hasBucket()) {
-            const referenceBucket  = this.getBucket(this.value)
+        if (this.hasValue() && this.hasBucket()) {
 
-            this.removeFromBucket(referenceBucket)
+            const value = this.get()
+
+            if (!isAtomicValue(value)) {
+                const referenceBucket  = this.getBucket(value)
+                this.removeFromBucket(referenceBucket)
+            }
         }
 
         super.onLeaveGraph(graph)
