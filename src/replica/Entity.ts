@@ -146,7 +146,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        forEachFieldAtom (func : (field : MinimalFieldAtom, name : Name) => any) {
+        forEachFieldAtom<T extends this> (func : (field : MinimalFieldAtom, name : keyof T) => any) {
             const fields        = this.$
 
             for (let name in fields) {
