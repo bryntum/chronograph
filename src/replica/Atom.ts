@@ -1,4 +1,4 @@
-import {ChronoAtom, MinimalChronoAtom} from "../chrono/Atom.js";
+import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
 import {AnyConstructor, Mixin} from "../class/Mixin.js";
 import {Entity as EntityData} from "../schema/Entity.js";
 import {Field as FieldData} from "../schema/Field.js";
@@ -12,6 +12,12 @@ class FieldAtom extends base {
     field       : FieldData
 
     self        : Entity
+
+
+    put (proposedValue : ChronoValue, ...args) {
+        return super.put(this.field.converter ? this.field.converter(proposedValue) : proposedValue, ...args)
+    }
+
 
     commitValue () {
         super.commitValue()
@@ -32,7 +38,7 @@ class FieldAtom extends base {
 
 
     toString () : string {
-        return `Field atom [${this.field.name}] of entity [${(this.self as any).id}]`
+        return `Field atom [${ this.field.name }] of entity [${ this.self }}]`
     }
 }
 

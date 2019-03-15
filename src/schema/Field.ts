@@ -1,3 +1,4 @@
+import {ChronoValue} from "../chrono/Atom.js";
 import {Base, MixinConstructor} from "../class/Mixin.js";
 import {FieldAtom, MinimalFieldAtom} from "../replica/Atom.js";
 import {Entity} from "./Entity.js";
@@ -5,6 +6,8 @@ import {Entity} from "./Entity.js";
 export type Name    = string
 export type Type    = string
 
+//---------------------------------------------------------------------------------------------------------------------
+export type ConverterFunc    = (value : ChronoValue) => ChronoValue
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Field extends Base {
@@ -22,6 +25,8 @@ export class Field extends Base {
     // this flag indicates that atom should ignore its value during commit - it will come from the final atom instead
     continued           : boolean   = false
     continuationOf      : Field
+
+    converter           : ConverterFunc
 
     atomCls             : MixinConstructor<typeof FieldAtom>   = MinimalFieldAtom
 }
