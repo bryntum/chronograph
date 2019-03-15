@@ -15,7 +15,7 @@ class FieldAtom extends base {
 
 
     put (proposedValue : ChronoValue, ...args) {
-        return super.put(this.field.converter ? this.field.converter(proposedValue) : proposedValue, ...args)
+        return super.put(this.field.converter ? this.field.converter(proposedValue, this.field) : proposedValue, ...args)
     }
 
 

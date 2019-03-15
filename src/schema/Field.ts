@@ -7,7 +7,7 @@ export type Name    = string
 export type Type    = string
 
 //---------------------------------------------------------------------------------------------------------------------
-export type ConverterFunc    = (value : ChronoValue) => ChronoValue
+export type ConverterFunc    = (value : ChronoValue, field : Field) => ChronoValue
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Field extends Base {
