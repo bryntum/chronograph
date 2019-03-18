@@ -59,7 +59,15 @@ class ReferenceBucketAtom extends base {
     oldRefs         : Set<ChronoAtom>       = new Set()
     newRefs         : Set<ChronoAtom>       = new Set()
 
-    value           : Set<Entity>           = new Set();
+    value           : Set<Entity>
+
+
+    initialize (...args) {
+        // moved from the initializer for compatibility with Engine
+        this.value          = new Set()
+
+        super.initialize(...args)
+    }
 
 
     * calculate (proposedValue : ChronoValue) : IterableIterator<ChronoAtom | this[ 'value' ]> {
