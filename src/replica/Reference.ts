@@ -29,12 +29,18 @@ export class ReferenceField extends ReferenceFieldMixin(Field) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReferenceBucketField extends Field {
+export const ReferenceBucketFieldMixin = <T extends AnyConstructor<Field>>(base : T) =>
+
+class ReferenceBucketFieldMixin extends base {
     persistent          : boolean   = false
 
     atomCls             : MixinConstructor<typeof FieldAtom>    = MinimalReferenceBucketAtom
 }
 
+export type ReferenceBucketFieldMixin = Mixin<typeof ReferenceBucketFieldMixin>
+
+
+export class ReferenceBucketField extends ReferenceBucketFieldMixin(Field) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 export const bucket : FieldDecorator<typeof ReferenceBucketField> = (fieldConfig?, fieldCls = ReferenceBucketField) => generic_field(fieldConfig, fieldCls)
