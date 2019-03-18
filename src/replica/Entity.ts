@@ -91,14 +91,11 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         get $() : { [s in keyof this] : FieldAtomI } {
             const atomsCollection   = {}
 
-            // hide the getter as early as possible
-            lazyBuild(this as any, '$', atomsCollection)
-
             this.$entity.forEachField((field : Field, name : Name) => {
                 atomsCollection[ name ] = this.createFieldAtom(field)
             })
 
-            return atomsCollection as any
+            return lazyBuild(this as any, '$', atomsCollection)
         }
 
 
