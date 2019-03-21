@@ -172,6 +172,9 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             }
         }
 
+        isPropagating() {
+            return this.getGraph().isPropagating;
+        }
 
         async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
             return this.getGraph().propagate(onEffect)
