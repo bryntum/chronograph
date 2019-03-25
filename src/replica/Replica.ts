@@ -61,6 +61,4 @@ export type MinimalReplica = InstanceType<typeof MinimalReplica>
 /**
  * Replica mixin type guard
  */
-export function isReplica(replica : object) : replica is Replica {
-    return replica && !!replica[hasReplica]
-}
+export const isReplica = (replica : any) : replica is Replica => Boolean(replica && replica[hasReplica])
