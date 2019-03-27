@@ -58,7 +58,4 @@ export const MinimalReplica = Replica(MinimalChronoGraph)
 export type MinimalReplica = InstanceType<typeof MinimalReplica>
 
 
-/**
- * Replica mixin type guard
- */
 export const isReplica = (replica : any) : replica is Replica => Boolean(replica && replica[hasReplica])
