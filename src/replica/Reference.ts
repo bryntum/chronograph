@@ -207,13 +207,23 @@ class ReferenceAtom extends base {
     put (nextValue : this[ 'value']) {
         const value     = this.value
 
-        // value is not empty and resolved to entity
-        if (value != null && !isAtomicValue(value) && this.hasBucket()) {
-            this.removeFromBucket(this.getBucket(value))
-        }
+        if (this.hasBucket()) {
+            // value is not empty and resolved to entity
+            if (value != null && !isAtomicValue(value)) {
+                this.removeFromBucket(this.getBucket(value))
+            }
 
-        if (nextValue != null && !isAtomicValue(nextValue) && this.hasBucket()) {
-            this.addToBucket(this.getBucket(nextValue))
+            if (nextValue != null) {
+                if (isAtomicValue(nextValue)) {
+                    const newValue = this.resolve(nextValue)
+                    if (newValue != null) {
+                        this.addToBucket(this.getBucket(newValue))
+                        nextValue = newValue
+                    } 
+                } else {
+                    this.addToBucket(this.getBucket(nextValue))
+                }
+            }
         }
 
         super.put(nextValue)
