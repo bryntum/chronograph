@@ -200,6 +200,8 @@ class ChronoGraph extends base {
         const res   = super.removeNode(node)
 
         this.nodesMap.delete(node.id)
+        this.needRecalculationAtoms.delete(node);
+        this.stableAtoms.delete(node);
 
         node.onLeaveGraph(this)
 
