@@ -43,7 +43,8 @@ class ChronoGraph extends base {
     needRecalculationAtoms  : Set<ChronoAtom>       = new Set()
     stableAtoms             : Set<ChronoAtom>       = new Set()
 
-    changedAtoms            : ChronoAtom[]          = []
+    changedAtoms            : ChronoAtom[]
+    touchedAtoms            : Map<ChronoAtom, ChronoContinuation>
 
     // temp workaround to mark changed initial atoms as "need recalculation"
     initialAtoms            : ChronoAtom[]          = []
@@ -127,7 +128,6 @@ class ChronoGraph extends base {
         this.needRecalculationAtoms.clear()
 
         this.changedAtoms.forEach(atom => atom.commitValue())
-        this.changedAtoms   = []
 
         // the edges might have changed, even the atom value itself did not
         // because of that, we commit the edges for all recalculated atoms (stable atoms)
@@ -163,11 +163,9 @@ class ChronoGraph extends base {
 
 
     rejectPartialProgress () {
-        // stable atoms includes changed ones
-        this.stableAtoms.forEach(atom => atom.reject())
-        this.stableAtoms.clear()
+        this.touchedAtoms.forEach((_, atom) => atom.reject())
 
-        this.changedAtoms   = []
+        this.stableAtoms.clear()
     }
 
 
@@ -297,9 +295,6 @@ class ChronoGraph extends base {
     * propagateSingle () : IterableIterator<Effect | PropagateSingleResult> {
         const toCalculate       = []
         const maybeDirty        = new Set()
-        const conts             = new Map<ChronoAtom, ChronoContinuation>()
-        const visitedAt         = new Map<ChronoAtom, number>()
-
         const me                = this
 
         let cycle : Node[]      = null
@@ -338,7 +333,9 @@ class ChronoGraph extends base {
 
         let depth
 
-        const changedAtoms      = this.changedAtoms
+        const conts             = this.touchedAtoms = new Map<ChronoAtom, ChronoContinuation>()
+        const visitedAt         = new Map<ChronoAtom, number>()
+        const changedAtoms      = this.changedAtoms = []
 
         while (depth = toCalculate.length) {
             const sourceAtom : ChronoAtom   = toCalculate[ depth - 1 ]
@@ -380,6 +377,11 @@ class ChronoGraph extends base {
                     toCalculate.push(atom)
                 }
             } else {
+                // this makes sure that _all_ atoms, for which the calculation has started
+                // are "collected" in the `conts` Map
+                // then, during reject, we'll iterate over this map
+                conts.set(sourceAtom, null)
+
                 const consistentValue   = calcRes.value
 
                 if (!sourceAtom.equality(consistentValue, sourceAtom.getConsistentValue())) {
