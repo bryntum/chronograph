@@ -197,20 +197,14 @@ class ChronoGraph extends base {
 
 
     removeNode (node : this[ 'nodeT' ]) {
+        node.outgoing.forEach((toNode : ChronoAtom) => this.markAsNeedRecalculation(toNode))
+
         const res   = super.removeNode(node)
 
         this.nodesMap.delete(node.id)
         this.needRecalculationAtoms.delete(node)
+        // we probably don't need this line, since `stableAtoms` are internal state of the propagation process
         this.stableAtoms.delete(node)
-
-        node.outgoing.forEach((a : ChronoAtom) => {
-            a.removeEdgeFrom(node)
-            this.markAsNeedRecalculation(a)
-        })
-
-        node.incoming.forEach((a : ChronoAtom) => {
-            a.removeEdgeTo(node)
-        })
 
         node.onLeaveGraph(this)
 

@@ -86,6 +86,9 @@ export type WalkableBackwardNode = Mixin<typeof WalkableBackwardNode>
 export const Node = <T extends AnyConstructor<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
 
 class Node extends base {
+    incoming        : Set<Node>
+    outgoing        : Set<Node>
+
 
     addEdgeTo (toNode : Node) {
         super.addEdgeTo(toNode)

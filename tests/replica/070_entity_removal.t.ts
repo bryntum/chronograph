@@ -8,35 +8,32 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('All entity atoms should be removed from the graph primary/secondary atoms collections upon entity removal from replica', t => {
+    const SomeSchema        = Schema.new()
+    const entity            = SomeSchema.getEntityDecorator()
 
-        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+    @entity
+    class Person extends Entity(Base) {
+        @field()
+        id              : string
 
-        const entity            = SomeSchema.getEntityDecorator()
+        @field()
+        firstName       : string
 
-        @entity
-        class Person extends Entity(Base) {
-            @field()
-            id              : string
+        @field()
+        lastName        : string
 
-            @field()
-            firstName       : string
-
-            @field()
-            lastName        : string
-
-            @field()
-            fullName        : string
+        @field()
+        fullName        : string
 
 
-            @calculate('fullName')
-            * calculateFullName (proposed : string) : ChronoIterator<string> {
-                return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
-            }
+        @calculate('fullName')
+        * calculateFullName (proposed : string) : ChronoIterator<string> {
+            return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
         }
+    }
 
-        t.diag('Need recalculation atoms collection check');
 
+    t.it('All entity atoms should be removed from the graph `need recalculations` atoms collections', t => {
         const replica1 = MinimalReplica.new({ schema : SomeSchema })
 
         const p1 = Person.new({ firstName : 'Ivan', lastName : 'Navi' });
@@ -55,10 +52,14 @@ StartTest(t => {
         p1.forEachFieldAtom(a => allNeedRecalc = allNeedRecalc || replica1.isAtomNeedRecalculation(a));
 
         t.notOk(allNeedRecalc, 'None entity atoms need recalculation after entity removal from a replica');
+    });
 
-        t.diag('Stable atoms collection check')
 
+    // we probably don't need this section, since stable atoms are internal state
+    t.it('All entity atoms should be removed from the graph `stable` atoms collections', t => {
         const replica2 = MinimalReplica.new({ schema : SomeSchema });
+
+        const p1 = Person.new({ firstName : 'Ivan', lastName : 'Navi' });
 
         replica2.addEntity(p1);
 
@@ -72,4 +73,5 @@ StartTest(t => {
 
         t.notOk(allStable, 'None entity atoms are marked stable after entity removal from a replica');
     });
+
 });

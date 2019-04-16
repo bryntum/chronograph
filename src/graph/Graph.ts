@@ -43,6 +43,9 @@ class Graph extends base {
         if (!this.hasDirectNode(node)) throw new Error(`This [${node}] does not exists in the graph`)
         // </debug>
 
+        node.outgoing.forEach(toNode => toNode.removeEdgeFrom(node))
+        node.incoming.forEach(fromNode => fromNode.removeEdgeTo(node))
+
         this.nodes.delete(node)
     }
 
