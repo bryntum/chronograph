@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js";
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 
 export enum OnCycleAction {
     Cancel,
@@ -182,7 +182,7 @@ export const WalkableBackward = <T extends AnyConstructor<Walkable>>(base : T) =
     abstract class WalkableBackward extends base {
         abstract getIncoming (context : WalkBackwardContext) : WalkableBackward[]
 
-        forEachIncoming(context : WalkBackwardContext, func : (WalkableBackward) => any) {
+        forEachIncoming (context : WalkBackwardContext, func : (WalkableBackward) => any) {
             this.getIncoming(context).forEach(func)
         }
     }

@@ -1,5 +1,5 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js";
-import { Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext } from "./Walkable.js";
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext } from "./Walkable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export const WalkableForwardNode = <T extends AnyConstructor<WalkableForward>>(base : T) =>
@@ -73,7 +73,7 @@ class WalkableBackwardNode extends base {
         return Array.from(this.incoming)
     }
 
-    forEachIncoming(context : WalkBackwardContext, func : (node : WalkableBackward) => any) {
+    forEachIncoming (context : WalkBackwardContext, func : (node : WalkableBackward) => any) {
         this.incoming.forEach(func)
     }
 }

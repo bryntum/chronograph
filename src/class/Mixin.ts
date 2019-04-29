@@ -19,12 +19,12 @@
 
 export class Base {
 
-    initialize<T extends Base>(props? : Partial<T>) {
+    initialize<T extends Base> (props? : Partial<T>) {
         props && Object.assign(this, props)
     }
 
 
-    static new<T extends typeof Base>(this: T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
+    static new<T extends typeof Base> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance      = new this()
 
         instance.initialize<InstanceType<T>>(props)
@@ -37,8 +37,8 @@ export type BaseConstructor             = typeof Base
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type AnyFunction<A = any>        = (...input: any[]) => A
-export type AnyConstructor<A = object>  = new (...input: any[]) => A
+export type AnyFunction<A = any>        = (...input : any[]) => A
+export type AnyConstructor<A = object>  = new (...input : any[]) => A
 
 
 //---------------------------------------------------------------------------------------------------------------------

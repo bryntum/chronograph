@@ -1,9 +1,9 @@
-import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js";
-import { Graph } from "../graph/Graph.js";
-import { Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js";
-import { cycleInfo, OnCycleAction, Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep } from "../graph/Walkable.js";
-import { FieldAtom } from "../replica/Atom.js";
-import { ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom } from "./Atom.js";
+import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { Graph } from "../graph/Graph.js"
+import { Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js"
+import { cycleInfo, OnCycleAction, Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep } from "../graph/Walkable.js"
+import { FieldAtom } from "../replica/Atom.js"
+import { ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom } from "./Atom.js"
 import {
     CancelPropagationEffect,
     Effect,
@@ -11,8 +11,8 @@ import {
     EffectResolverFunction,
     GraphCycleDetectedEffect,
     RestartPropagationEffect
-} from "./Effect.js";
-import { ChronoId } from "./Id.js";
+} from "./Effect.js"
+import { ChronoId } from "./Id.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -253,11 +253,11 @@ class ChronoGraph extends base {
                 // Cycle condition
                 // ideally should be removed (same as while condition)
                 if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) {
-                    let cycle : Node[];
+                    let cycle : Node[]
 
                     me.walkDepth(WalkForwardContext.new({
                         forEachNext             : function (atom : ChronoAtom, func) {
-                            if (atom === <any>me) {
+                            if (atom === <any> me) {
                                 me.needRecalculationAtoms.forEach(func)
                             }
                             else {
@@ -313,7 +313,7 @@ class ChronoGraph extends base {
 
         this.walkDepth(WalkForwardContext.new({
             forEachNext             : function (atom : ChronoAtom, func) {
-                if (atom === <any>me) {
+                if (atom === <any> me) {
                     me.needRecalculationAtoms.forEach(func)
                 } else {
                     WalkForwardContext.prototype.forEachNext.call(this, atom, func)
@@ -331,7 +331,7 @@ class ChronoGraph extends base {
             },
 
             onTopologicalNode       : (atom : ChronoAtom) => {
-                if (<any>atom === <any>this) return
+                if (<any> atom === <any> this) return
 
                 maybeDirty.add(atom)
 
@@ -422,7 +422,7 @@ class ChronoGraph extends base {
         }
 
         if (effect instanceof GraphCycleDetectedEffect) {
-            throw new Error('Graph cycle detected');
+            throw new Error('Graph cycle detected')
         }
 
         return EffectResolutionResult.Resume
@@ -521,7 +521,7 @@ class ChronoGraph extends base {
     }
 
 
-    async tryPropagateWithNodes(onEffect? : EffectResolverFunction, nodes? : this[ 'nodeT' ][], hatchFn? : Function) : Promise<PropagationResult> {
+    async tryPropagateWithNodes (onEffect? : EffectResolverFunction, nodes? : this[ 'nodeT' ][], hatchFn? : Function) : Promise<PropagationResult> {
 
         if (nodes && nodes.length) {
             nodes = nodes.filter(n => n.graph !== this)
@@ -608,7 +608,7 @@ class ChronoGraph extends base {
                         if ((atom as any).newRefs && (atom as any).oldRefs) {
                             const collection    = atom.get()
 
-                            value = `Set(${collection && collection.size || 0})`;
+                            value = `Set(${collection && collection.size || 0})`
                         }
                         else {
                             value = atom.get()

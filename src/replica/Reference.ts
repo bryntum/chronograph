@@ -1,10 +1,10 @@
-import { ChronoAtom, ChronoValue, MinimalChronoAtom } from "../chrono/Atom.js";
-import { ChronoGraph } from "../chrono/Graph.js";
-import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js";
-import { Field, Name } from "../schema/Field.js";
-import { isAtomicValue } from "../util/Helper.js";
-import { FieldAtom, MinimalFieldAtom } from "./Atom.js";
-import { Entity, FieldDecorator, generic_field } from "./Entity.js";
+import { ChronoAtom, ChronoValue, MinimalChronoAtom } from "../chrono/Atom.js"
+import { ChronoGraph } from "../chrono/Graph.js"
+import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { Field, Name } from "../schema/Field.js"
+import { isAtomicValue } from "../util/Helper.js"
+import { FieldAtom, MinimalFieldAtom } from "./Atom.js"
+import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -59,7 +59,23 @@ class ReferenceBucketAtom extends base {
     oldRefs         : Set<ChronoAtom>       = new Set()
     newRefs         : Set<ChronoAtom>       = new Set()
 
-    value           : Set<Entity>           = new Set();
+    value           : Set<Entity>           = new Set()
+
+
+    commitValue () {
+        super.commitValue()
+
+        this.oldRefs.clear()
+        this.newRefs.clear()
+    }
+
+
+    reject () {
+        super.reject()
+
+        this.oldRefs.clear()
+        this.newRefs.clear()
+    }
 
 
     * calculate (proposedValue : ChronoValue) : IterableIterator<ChronoAtom | this[ 'value' ]> {
@@ -82,22 +98,6 @@ class ReferenceBucketAtom extends base {
         }
 
         return result
-    }
-
-
-    commitValue () {
-        super.commitValue()
-
-        this.oldRefs.clear()
-        this.newRefs.clear()
-    }
-
-
-    reject () {
-        super.reject()
-
-        this.oldRefs.clear()
-        this.newRefs.clear()
     }
 }
 

@@ -1,6 +1,6 @@
-import { Base } from "../class/Mixin.js";
-import { Field, Name } from "./Field.js";
-import { Schema } from "./Schema.js";
+import { Base } from "../class/Mixin.js"
+import { Field, Name } from "./Field.js"
+import { Schema } from "./Schema.js"
 
 export const IteratorReturnedEarly  = Symbol("IteratorReturnedEarly")
 export type IteratorResult          = typeof IteratorReturnedEarly | void
@@ -38,7 +38,7 @@ export class Entity extends Base {
     }
 
 
-    addField <T extends Field>(field : T) : T {
+    addField <T extends Field> (field : T) : T {
         const name      = field.name
         if (!name) throw new Error(`Field must have a name`)
 

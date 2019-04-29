@@ -1,8 +1,8 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js";
-import { MinimalNode, Node } from "../graph/Node.js";
-import { Effect } from "./Effect.js";
-import { ChronoGraphI, PropagationResult } from "./Graph.js";
-import { HasId } from "./HasId.js";
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { MinimalNode, Node } from "../graph/Node.js"
+import { Effect } from "./Effect.js"
+import { ChronoGraphI, PropagationResult } from "./Graph.js"
+import { HasId } from "./HasId.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoValue         = any
@@ -41,17 +41,7 @@ class ChronoAtom extends base {
     calculationContext  : any
     calculation         : ChronoCalculation
 
-    observedDuringCalculation   :  ChronoAtom[]     = [];
-
-
-
-    * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
-        if (this.calculation) {
-            return yield* this.calculation.call(this.calculationContext || this, proposedValue)
-        } else
-            // identity-like case, translates to user-provided or current value
-            return proposedValue !== undefined ? proposedValue : this.value
-    }
+    observedDuringCalculation   : ChronoAtom[]     = []
 
 
     clearUserInput () {
@@ -82,6 +72,15 @@ class ChronoAtom extends base {
     reject () {
         this.nextStableValue            = undefined
         this.observedDuringCalculation  = []
+    }
+
+
+    * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
+        if (this.calculation) {
+            return yield* this.calculation.call(this.calculationContext || this, proposedValue)
+        } else
+            // identity-like case, translates to user-provided or current value
+            return proposedValue !== undefined ? proposedValue : this.value
     }
 
 

@@ -1,5 +1,5 @@
-import { Base } from "../class/Mixin.js";
-import { Node } from "../graph/Node.js";
+import { Base } from "../class/Mixin.js"
+import { Node } from "../graph/Node.js"
 
 
 export type EffectResolverFunction  = (effect : Effect) => Promise<EffectResolutionResult>

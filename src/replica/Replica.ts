@@ -1,8 +1,8 @@
-import { EffectResolverFunction } from "../chrono/Effect.js";
-import { ChronoGraph, MinimalChronoGraph, PropagationResult } from "../chrono/Graph.js";
-import { AnyConstructor, Mixin } from "../class/Mixin.js";
-import { Schema } from "../schema/Schema.js";
-import { Entity } from "./Entity.js";
+import { EffectResolverFunction } from "../chrono/Effect.js"
+import { ChronoGraph, MinimalChronoGraph, PropagationResult } from "../chrono/Graph.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { Schema } from "../schema/Schema.js"
+import { Entity } from "./Entity.js"
 
 const hasReplica = Symbol('isReplica')
 
@@ -35,10 +35,10 @@ class Replica extends base {
         entities.forEach(entity => this.removeEntity(entity))
     }
 
-    async tryPropagateWithEntities(onEffect? : EffectResolverFunction, entities? : Entity[], hatchFn? : Function) : Promise<PropagationResult> {
+    async tryPropagateWithEntities (onEffect? : EffectResolverFunction, entities? : Entity[], hatchFn? : Function) : Promise<PropagationResult> {
 
         if (entities && entities.length) {
-            entities = entities.filter(e => e.$$.graph !== this);
+            entities = entities.filter(e => e.$$.graph !== this)
             this.addEntities(entities)
         }
 
@@ -48,7 +48,7 @@ class Replica extends base {
             this.removeEntities(entities)
         }
 
-        return result;
+        return result
     }
 }
 

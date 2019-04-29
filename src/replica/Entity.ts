@@ -1,12 +1,12 @@
-import { ChronoAtom, ChronoIterator } from "../chrono/Atom.js";
-import { Effect, EffectResolverFunction } from "../chrono/Effect.js";
-import { ChronoGraph, PropagationResult } from "../chrono/Graph.js";
-import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js";
-import { Entity as EntityData } from "../schema/Entity.js";
-import { Field, Name } from "../schema/Field.js";
-import { lazyBuild, uppercaseFirst } from "../util/Helper.js";
-import { EntityAtomI, FieldAtom, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom } from "./Atom.js";
-import { isReplica } from "./Replica.js";
+import { ChronoAtom, ChronoIterator } from "../chrono/Atom.js"
+import { Effect, EffectResolverFunction } from "../chrono/Effect.js"
+import { ChronoGraph, PropagationResult } from "../chrono/Graph.js"
+import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js"
+import { Entity as EntityData } from "../schema/Entity.js"
+import { Field, Name } from "../schema/Field.js"
+import { lazyBuild, uppercaseFirst } from "../util/Helper.js"
+import { EntityAtomI, FieldAtom, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom } from "./Atom.js"
+import { isReplica } from "./Replica.js"
 
 
 // LAZY ATOMS CREATION - investigate if it improves performance
@@ -65,7 +65,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         // TODO this is not completed, needs to check against the full set of "maybe dirty" atoms during propagation
         // this is an optimization idea, based on assumption, that "yielding" is expensive
         // so if we'll "inline" the "need recalculation" check for not stale atoms, we get some performance improvement
-        * resolve <T extends keyof this>(atomName : T) : ChronoIterator<this[ T ]> {
+        * resolve <T extends keyof this> (atomName : T) : ChronoIterator<this[ T ]> {
             const atom : FieldAtom      = this.$[ atomName ]
             const graph                 = atom.graph
 
@@ -82,13 +82,13 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
 
         // lazy meta instance creation - will work even w/o any @field or @entity decorator
-        get $entity() : EntityData {
+        get $entity () : EntityData {
             // this will lazily create an EntityData instance in the prototype
             return createEntityOnPrototype(this.constructor.prototype)
         }
 
 
-        get $() : { [s in keyof this] : FieldAtomI } {
+        get $ () : { [s in keyof this] : FieldAtomI } {
             const atomsCollection   = {}
 
             this.$entity.forEachField((field : Field, name : Name) => {
@@ -99,7 +99,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        get $$() : EntityAtomI {
+        get $$ () : EntityAtomI {
             return lazyBuild(this, '$$', MinimalEntityAtom.new({
                 entity              : this.$entity,
 
@@ -172,14 +172,14 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             }
         }
 
-        isPropagating() {
-            return this.getGraph().isPropagating;
+        isPropagating () {
+            return this.getGraph().isPropagating
         }
 
         async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
-            const graph = this.getGraph();
+            const graph = this.getGraph()
 
-            return graph && graph.propagate(onEffect) || Promise.resolve(PropagationResult.Completed);
+            return graph && graph.propagate(onEffect) || Promise.resolve(PropagationResult.Completed)
         }
 
 
@@ -199,7 +199,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             let result
 
             if (isReplica(graph)) {
-                result = graph.tryPropagateWithEntities(onEffect, entities, hatchFn);
+                result = graph.tryPropagateWithEntities(onEffect, entities, hatchFn)
             }
             else {
                 throw new Error("Entity is not part of replica")
@@ -241,7 +241,7 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         }
 
 
-        run <Name extends keyof this, S extends AnyFunction & this[ Name ]>(methodName : Name, ...args : Parameters<S>)
+        run <Name extends keyof this, S extends AnyFunction & this[ Name ]> (methodName : Name, ...args : Parameters<S>)
             : ReturnType<S> extends ChronoIterator<infer Res1> ? Res1 : ReturnType<S> extends IterableIterator<infer Res2> ? Res2 : ReturnType<S>
         {
             const iterator      = (this[ methodName ] as S)(...args)
@@ -311,7 +311,7 @@ export const generic_field : FieldDecorator<typeof Field> =
                 fieldCls.new(Object.assign(fieldConfig || {}, {
                     name    : propertyKey
                 } as Partial<InstanceType<T>>))
-            );
+            )
 
             if (field.createAccessors) {
 
@@ -370,7 +370,7 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
     return function (target : Entity, propertyKey : string, /*descriptor*/_ : TypedPropertyDescriptor<any>) : void {
         let calculations        = target.$calculations
 
-        if (!calculations) calculations = target.$calculations = <any>{}
+        if (!calculations) calculations = target.$calculations = <any> {}
 
         calculations[ fieldName ]       = propertyKey
     }
