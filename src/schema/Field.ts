@@ -1,7 +1,7 @@
-import {ChronoValue} from "../chrono/Atom.js";
-import {Base, MixinConstructor} from "../class/Mixin.js";
-import {FieldAtom, MinimalFieldAtom} from "../replica/Atom.js";
-import {Entity} from "./Entity.js";
+import { ChronoValue } from "../chrono/Atom.js";
+import { Base, MixinConstructor } from "../class/Mixin.js";
+import { FieldAtom, MinimalFieldAtom } from "../replica/Atom.js";
+import { Entity } from "./Entity.js";
 
 export type Name    = string
 export type Type    = string

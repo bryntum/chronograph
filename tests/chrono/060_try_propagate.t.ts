@@ -1,5 +1,5 @@
-import { MinimalChronoGraph, PropagationResult } from "../../src/chrono/Graph.js";
 import { MinimalChronoAtom } from "../../src/chrono/Atom.js";
+import { MinimalChronoGraph, PropagationResult } from "../../src/chrono/Graph.js";
 
 declare const StartTest : any
 

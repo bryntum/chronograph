@@ -1,11 +1,18 @@
-import {AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor} from "../class/Mixin.js";
-import {Graph} from "../graph/Graph.js";
-import { WalkableBackwardNode, WalkableForwardNode, Node} from "../graph/Node.js";
-import { Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep, OnCycleAction, cycleInfo} from "../graph/Walkable.js";
-import {FieldAtom} from "../replica/Atom.js";
-import {ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom} from "./Atom.js";
-import { CancelPropagationEffect, Effect, EffectResolutionResult, EffectResolverFunction, RestartPropagationEffect, GraphCycleDetectedEffect} from "./Effect.js";
-import {ChronoId} from "./Id.js";
+import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js";
+import { Graph } from "../graph/Graph.js";
+import { Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js";
+import { cycleInfo, OnCycleAction, Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep } from "../graph/Walkable.js";
+import { FieldAtom } from "../replica/Atom.js";
+import { ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom } from "./Atom.js";
+import {
+    CancelPropagationEffect,
+    Effect,
+    EffectResolutionResult,
+    EffectResolverFunction,
+    GraphCycleDetectedEffect,
+    RestartPropagationEffect
+} from "./Effect.js";
+import { ChronoId } from "./Id.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------

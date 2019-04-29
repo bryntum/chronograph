@@ -1,8 +1,8 @@
-import { ChronoGraph, MinimalChronoGraph, PropagationResult} from "../chrono/Graph.js";
-import {AnyConstructor, Mixin} from "../class/Mixin.js";
-import {Schema} from "../schema/Schema.js";
-import {Entity} from "./Entity.js";
 import { EffectResolverFunction } from "../chrono/Effect.js";
+import { ChronoGraph, MinimalChronoGraph, PropagationResult } from "../chrono/Graph.js";
+import { AnyConstructor, Mixin } from "../class/Mixin.js";
+import { Schema } from "../schema/Schema.js";
+import { Entity } from "./Entity.js";
 
 const hasReplica = Symbol('isReplica')
 

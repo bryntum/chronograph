@@ -1,8 +1,8 @@
-import {AnyConstructor, Mixin} from "../class/Mixin.js";
-import {MinimalNode, Node} from "../graph/Node.js";
-import {Effect} from "./Effect.js";
-import {ChronoGraphI, PropagationResult} from "./Graph.js";
-import {HasId} from "./HasId.js";
+import { AnyConstructor, Mixin } from "../class/Mixin.js";
+import { MinimalNode, Node } from "../graph/Node.js";
+import { Effect } from "./Effect.js";
+import { ChronoGraphI, PropagationResult } from "./Graph.js";
+import { HasId } from "./HasId.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoValue         = any

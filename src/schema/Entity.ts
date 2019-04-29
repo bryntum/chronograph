@@ -1,6 +1,6 @@
-import {Base} from "../class/Mixin.js";
-import {Field, Name} from "./Field.js";
-import {Schema} from "./Schema.js";
+import { Base } from "../class/Mixin.js";
+import { Field, Name } from "./Field.js";
+import { Schema } from "./Schema.js";
 
 export const IteratorReturnedEarly  = Symbol("IteratorReturnedEarly")
 export type IteratorResult          = typeof IteratorReturnedEarly | void

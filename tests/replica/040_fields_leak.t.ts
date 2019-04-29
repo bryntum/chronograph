@@ -1,6 +1,6 @@
-import {Base} from "../../src/class/Mixin.js";
-import {Entity, field, generic_field} from "../../src/replica/Entity.js";
-import {Field, Name} from "../../src/schema/Field.js";
+import { Base } from "../../src/class/Mixin.js";
+import { Entity, field } from "../../src/replica/Entity.js";
+import { Name } from "../../src/schema/Field.js";
 
 declare const StartTest : any
 

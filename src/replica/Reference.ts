@@ -1,10 +1,10 @@
-import {ChronoAtom, ChronoValue, MinimalChronoAtom} from "../chrono/Atom.js";
-import {ChronoGraph} from "../chrono/Graph.js";
-import {AnyConstructor, Mixin, MixinConstructor} from "../class/Mixin.js";
-import {Field, Name} from "../schema/Field.js";
-import {isAtomicValue} from "../util/Helper.js";
-import {FieldAtom, MinimalFieldAtom} from "./Atom.js";
-import {Entity, FieldDecorator, generic_field} from "./Entity.js";
+import { ChronoAtom, ChronoValue, MinimalChronoAtom } from "../chrono/Atom.js";
+import { ChronoGraph } from "../chrono/Graph.js";
+import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js";
+import { Field, Name } from "../schema/Field.js";
+import { isAtomicValue } from "../util/Helper.js";
+import { FieldAtom, MinimalFieldAtom } from "./Atom.js";
+import { Entity, FieldDecorator, generic_field } from "./Entity.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -219,7 +219,7 @@ class ReferenceAtom extends base {
                     if (newValue != null) {
                         this.addToBucket(this.getBucket(newValue))
                         nextValue = newValue
-                    } 
+                    }
                 } else {
                     this.addToBucket(this.getBucket(nextValue))
                 }

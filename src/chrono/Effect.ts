@@ -1,4 +1,4 @@
-import {Base} from "../class/Mixin.js";
+import { Base } from "../class/Mixin.js";
 import { Node } from "../graph/Node.js";
 
 

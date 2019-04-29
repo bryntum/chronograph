@@ -1,5 +1,5 @@
-import {AnyConstructor, Base, Mixin} from "../class/Mixin.js";
-import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext} from "./Walkable.js";
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js";
+import { Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext } from "./Walkable.js";
 
 //---------------------------------------------------------------------------------------------------------------------
 export const WalkableForwardNode = <T extends AnyConstructor<WalkableForward>>(base : T) =>

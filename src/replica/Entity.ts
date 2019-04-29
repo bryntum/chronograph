@@ -1,11 +1,11 @@
-import {ChronoAtom, ChronoIterator} from "../chrono/Atom.js";
-import { Effect, EffectResolverFunction} from "../chrono/Effect.js";
-import {ChronoGraph, PropagationResult} from "../chrono/Graph.js";
-import {AnyConstructor, AnyFunction, Mixin} from "../class/Mixin.js";
-import {Entity as EntityData} from "../schema/Entity.js";
-import {Field, Name} from "../schema/Field.js";
-import {lazyBuild, uppercaseFirst} from "../util/Helper.js";
-import {EntityAtomI, FieldAtom, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom} from "./Atom.js";
+import { ChronoAtom, ChronoIterator } from "../chrono/Atom.js";
+import { Effect, EffectResolverFunction } from "../chrono/Effect.js";
+import { ChronoGraph, PropagationResult } from "../chrono/Graph.js";
+import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js";
+import { Entity as EntityData } from "../schema/Entity.js";
+import { Field, Name } from "../schema/Field.js";
+import { lazyBuild, uppercaseFirst } from "../util/Helper.js";
+import { EntityAtomI, FieldAtom, FieldAtomI, MinimalEntityAtom, MinimalFieldAtom } from "./Atom.js";
 import { isReplica } from "./Replica.js";
 
 

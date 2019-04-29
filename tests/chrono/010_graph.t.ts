@@ -1,6 +1,6 @@
-import {ChronoAtom, MinimalChronoAtom} from "../../src/chrono/Atom.js";
-import {EffectResolutionResult} from "../../src/chrono/Effect.js";
-import {ChronoGraph, MinimalChronoGraph} from "../../src/chrono/Graph.js";
+import { ChronoAtom, MinimalChronoAtom } from "../../src/chrono/Atom.js";
+import { EffectResolutionResult } from "../../src/chrono/Effect.js";
+import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js";
 
 declare const StartTest : any
 

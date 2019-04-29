@@ -1,6 +1,6 @@
-import {MinimalChronoGraph} from "../../src/chrono/Graph.js";
-import {MinimalChronoAtom} from "../../src/chrono/Atom.js";
-import { GraphCycleDetectedEffect, EffectResolutionResult} from "../../src/chrono/Effect.js";
+import { MinimalChronoAtom } from "../../src/chrono/Atom.js";
+import { EffectResolutionResult, GraphCycleDetectedEffect } from "../../src/chrono/Effect.js";
+import { MinimalChronoGraph } from "../../src/chrono/Graph.js";
 import { Node } from "../../src/graph/Node.js";
 
 declare const StartTest : any

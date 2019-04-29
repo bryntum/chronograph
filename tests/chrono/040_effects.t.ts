@@ -1,7 +1,7 @@
-import {ChronoAtom, MinimalChronoAtom} from "../../src/chrono/Atom.js";
-import {CancelPropagationEffect, Effect, EffectResolutionResult, RestartPropagationEffect} from "../../src/chrono/Effect.js";
-import {ChronoGraph, MinimalChronoGraph, PropagationResult} from "../../src/chrono/Graph.js";
-import {AnyConstructor, Mixin} from "../../src/class/Mixin.js";
+import { ChronoAtom, MinimalChronoAtom } from "../../src/chrono/Atom.js";
+import { CancelPropagationEffect, Effect, EffectResolutionResult, RestartPropagationEffect } from "../../src/chrono/Effect.js";
+import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js";
+import { AnyConstructor, Mixin } from "../../src/class/Mixin.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------

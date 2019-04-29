@@ -1,5 +1,5 @@
-import {chronoId, ChronoId} from "../chrono/Id.js";
-import {AnyConstructor, Base, Mixin} from "../class/Mixin.js";
+import { chronoId, ChronoId } from "../chrono/Id.js";
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------

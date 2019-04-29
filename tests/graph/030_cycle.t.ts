@@ -1,8 +1,8 @@
-import {HasId} from "../../src/chrono/HasId.js";
-import {MinimalNode} from "../../src/graph/Node.js";
-import {cycleInfo, OnCycleAction, Walkable, WalkForwardContext, WalkStep} from "../../src/graph/Walkable.js";
-import { Entity, field, calculate } from "../../src/replica/Entity.js";
+import { HasId } from "../../src/chrono/HasId.js";
 import { Base } from "../../src/class/Mixin.js";
+import { MinimalNode } from "../../src/graph/Node.js";
+import { cycleInfo, OnCycleAction, Walkable, WalkForwardContext, WalkStep } from "../../src/graph/Walkable.js";
+import { calculate, Entity, field } from "../../src/replica/Entity.js";
 import { MinimalReplica } from "../../src/replica/Replica.js";
 
 declare const StartTest : any

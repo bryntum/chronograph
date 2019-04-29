@@ -1,7 +1,7 @@
 import { PropagationResult } from "../../src/chrono/Graph.js";
-import { MinimalReplica } from "../../src/replica/Replica.js";
-import { Entity, calculate, field } from "../../src/replica/Entity.js";
 import { Base } from "../../src/class/Mixin.js";
+import { calculate, Entity, field } from "../../src/replica/Entity.js";
+import { MinimalReplica } from "../../src/replica/Replica.js";
 
 declare const StartTest : any
 

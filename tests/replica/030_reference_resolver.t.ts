@@ -1,7 +1,7 @@
-import {Base} from "../../src/class/Mixin.js";
-import {Entity} from "../../src/replica/Entity.js";
-import {bucket, reference} from "../../src/replica/Reference.js";
-import {MinimalReplica} from "../../src/replica/Replica.js";
+import { Base } from "../../src/class/Mixin.js";
+import { Entity } from "../../src/replica/Entity.js";
+import { bucket, reference } from "../../src/replica/Reference.js";
+import { MinimalReplica } from "../../src/replica/Replica.js";
 
 declare const StartTest : any
 

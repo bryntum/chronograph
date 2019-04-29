@@ -1,7 +1,7 @@
-import {HasId} from "../../src/chrono/HasId.js";
-import {Base} from "../../src/class/Mixin.js";
-import {MinimalNode, WalkableBackwardNode, WalkableForwardNode} from "../../src/graph/Node.js";
-import {Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext} from "../../src/graph/Walkable.js";
+import { HasId } from "../../src/chrono/HasId.js";
+import { Base } from "../../src/class/Mixin.js";
+import { MinimalNode, WalkableBackwardNode, WalkableForwardNode } from "../../src/graph/Node.js";
+import { Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext } from "../../src/graph/Walkable.js";
 
 declare const StartTest : any
 

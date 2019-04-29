@@ -1,7 +1,7 @@
-import {Base, MixinConstructor} from "../class/Mixin.js";
-import {ensureEntityOnPrototype} from "../replica/Entity.js";
-import {Entity} from "./Entity.js";
-import {Name} from "./Field.js";
+import { Base, MixinConstructor } from "../class/Mixin.js";
+import { ensureEntityOnPrototype } from "../replica/Entity.js";
+import { Entity } from "./Entity.js";
+import { Name } from "./Field.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
