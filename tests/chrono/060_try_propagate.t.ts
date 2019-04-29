@@ -1,5 +1,5 @@
-import { MinimalChronoAtom } from "../../src/chrono/Atom.js";
-import { MinimalChronoGraph, PropagationResult } from "../../src/chrono/Graph.js";
+import { MinimalChronoAtom } from "../../src/chrono/Atom.js"
+import { MinimalChronoGraph, PropagationResult } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
@@ -7,7 +7,7 @@ StartTest(t => {
 
     t.it("It should be possible to dry run graph propagation", async t => {
 
-        const graph = MinimalChronoGraph.new();
+        const graph = MinimalChronoGraph.new()
 
         let a1, a2, a3
 
@@ -42,7 +42,7 @@ StartTest(t => {
 
     t.it("Dry run shouldn't affect nodes which are already in the graph", async t => {
 
-        const graph = MinimalChronoGraph.new();
+        const graph = MinimalChronoGraph.new()
 
         let a1, a2, a3
 

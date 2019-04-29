@@ -1,9 +1,9 @@
-import { HasId } from "../../src/chrono/HasId.js";
-import { Base } from "../../src/class/Mixin.js";
-import { MinimalNode } from "../../src/graph/Node.js";
-import { cycleInfo, OnCycleAction, Walkable, WalkForwardContext, WalkStep } from "../../src/graph/Walkable.js";
-import { calculate, Entity, field } from "../../src/replica/Entity.js";
-import { MinimalReplica } from "../../src/replica/Replica.js";
+import { HasId } from "../../src/chrono/HasId.js"
+import { Base } from "../../src/class/Mixin.js"
+import { MinimalNode } from "../../src/graph/Node.js"
+import { cycleInfo, OnCycleAction, Walkable, WalkForwardContext, WalkStep } from "../../src/graph/Walkable.js"
+import { calculate, Entity, field } from "../../src/replica/Entity.js"
+import { MinimalReplica } from "../../src/replica/Replica.js"
 
 declare const StartTest : any
 
@@ -116,17 +116,17 @@ StartTest(t => {
             pointC : number
 
             @calculate('pointA')
-            * calcPointA(proposedValue? : number) {
+            * calcPointA (proposedValue? : number) {
                 return (yield this.$.pointB) + (yield this.$.pointC)
             }
 
             @calculate('pointB')
-            * calcPointB(proposedValue? : number) {
+            * calcPointB (proposedValue? : number) {
                 return (yield this.$.pointA) + (yield this.$.pointC)
             }
 
             @calculate('pointC')
-            * calcPointC(proposedValue? : number) {
+            * calcPointC (proposedValue? : number) {
                 return (yield this.$.pointA) + (yield this.$.pointB)
             }
         }

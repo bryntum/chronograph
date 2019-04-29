@@ -1,7 +1,7 @@
-import { PropagationResult } from "../../src/chrono/Graph.js";
-import { Base } from "../../src/class/Mixin.js";
-import { calculate, Entity, field } from "../../src/replica/Entity.js";
-import { MinimalReplica } from "../../src/replica/Replica.js";
+import { PropagationResult } from "../../src/chrono/Graph.js"
+import { Base } from "../../src/class/Mixin.js"
+import { calculate, Entity, field } from "../../src/replica/Entity.js"
+import { MinimalReplica } from "../../src/replica/Replica.js"
 
 declare const StartTest : any
 
@@ -9,7 +9,7 @@ StartTest(t => {
 
     t.it("It should be possible to dry run graph propagation with entities", async t => {
 
-        const graph = MinimalReplica.new();
+        const graph = MinimalReplica.new()
 
         class A3 extends Entity(Base) {
             @field()
@@ -22,17 +22,17 @@ StartTest(t => {
             a3 : number
 
             @calculate('a1')
-            * calculateA1() {
+            * calculateA1 () {
                 return 1
             }
 
             @calculate('a2')
-            * calculateA2() {
+            * calculateA2 () {
                 return 2
             }
 
             @calculate('a3')
-            * calclateA3() {
+            * calclateA3 () {
                 return (yield this.$.a1) + (yield this.$.a2)
             }
         }
@@ -52,7 +52,7 @@ StartTest(t => {
 
     t.it("Dry run shouldn't affect nodes which are already in the graph", async t => {
 
-        const graph = MinimalReplica.new();
+        const graph = MinimalReplica.new()
 
         class A12 extends Entity(Base) {
             @field()
@@ -63,12 +63,12 @@ StartTest(t => {
 
 
             @calculate('a1')
-            * calculateA1() {
+            * calculateA1 () {
                 return 1
             }
 
             @calculate('a2')
-            * calculateA2() {
+            * calculateA2 () {
                 return 2
             }
 
@@ -81,7 +81,7 @@ StartTest(t => {
             a12 : A12
 
             @calculate('a3')
-            * calclateA3() {
+            * calclateA3 () {
                 return (yield this.a12.$.a1) + (yield this.a12.$.a2)
             }
         }

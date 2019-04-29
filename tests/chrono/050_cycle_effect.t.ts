@@ -1,7 +1,7 @@
-import { MinimalChronoAtom } from "../../src/chrono/Atom.js";
-import { EffectResolutionResult, GraphCycleDetectedEffect } from "../../src/chrono/Effect.js";
-import { MinimalChronoGraph } from "../../src/chrono/Graph.js";
-import { Node } from "../../src/graph/Node.js";
+import { MinimalChronoAtom } from "../../src/chrono/Atom.js"
+import { EffectResolutionResult, GraphCycleDetectedEffect } from "../../src/chrono/Effect.js"
+import { MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { Node } from "../../src/graph/Node.js"
 
 declare const StartTest : any
 
@@ -9,7 +9,7 @@ StartTest(t => {
 
     t.it("Cycle should be possible to detect outside via cycle detection effect", async t => {
 
-        const graph = MinimalChronoGraph.new();
+        const graph = MinimalChronoGraph.new()
 
         let a1, a2, a3
 
@@ -31,7 +31,7 @@ StartTest(t => {
             }
         }))
 
-        let gotCycle;
+        let gotCycle
 
         await graph.propagate(async effect => {
 
@@ -47,24 +47,24 @@ StartTest(t => {
             return  EffectResolutionResult.Cancel
         })
 
-        t.ok(gotCycle, 'Cycle detected');
+        t.ok(gotCycle, 'Cycle detected')
     })
 
     t.it("Cycle without effect resolution function should result in exception", async t => {
 
-        const graph = MinimalChronoGraph.new();
+        const graph = MinimalChronoGraph.new()
 
-        let a1, a2;
+        let a1, a2
 
         a1 = graph.addNode(MinimalChronoAtom.new({
             calculation : function * (proposeValue : number) {
-                return yield a2;
+                return yield a2
             }
         }))
 
         a2 = graph.addNode(MinimalChronoAtom.new({
             calculation : function * (proposedValue : number) {
-                return yield a1;
+                return yield a1
             }
         }))
 

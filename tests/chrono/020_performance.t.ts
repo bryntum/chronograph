@@ -1,5 +1,5 @@
-import { ChronoAtom, MinimalChronoAtom } from "../../src/chrono/Atom.js";
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js";
+import { ChronoAtom, MinimalChronoAtom } from "../../src/chrono/Atom.js"
+import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
@@ -64,7 +64,7 @@ StartTest(t => {
 
         await graph.propagate()
 
-        console.timeEnd("Calc #0");
+        console.timeEnd("Calc #0")
 
         t.chain(
             async next => {
@@ -76,21 +76,21 @@ StartTest(t => {
                 await graph.propagate()
 
                 // console.profileEnd()
-                console.timeEnd("Calc #1");
+                console.timeEnd("Calc #1")
 
                 console.log("Result: ", boxes[ boxes.length - 1 ].get())
             },
             async next => {
                 boxes[ 49500 ].put(0)
 
-                console.time("Calc #2");
+                console.time("Calc #2")
 
                 await graph.propagate()
 
-                console.timeEnd("Calc #2");
+                console.timeEnd("Calc #2")
 
                 console.log("Result: ", boxes[ boxes.length - 1 ].get())
             }
         )
-    });
-});
+    })
+})

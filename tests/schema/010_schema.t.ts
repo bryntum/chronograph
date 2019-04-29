@@ -1,7 +1,7 @@
-import { Base } from "../../src/class/Mixin.js";
-import { MinimalFieldAtom } from "../../src/replica/Atom.js";
-import { Entity, field } from "../../src/replica/Entity.js";
-import { Schema } from "../../src/schema/Schema.js";
+import { Base } from "../../src/class/Mixin.js"
+import { MinimalFieldAtom } from "../../src/replica/Atom.js"
+import { Entity, field } from "../../src/replica/Entity.js"
+import { Schema } from "../../src/schema/Schema.js"
 
 declare const StartTest : any
 

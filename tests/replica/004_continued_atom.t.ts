@@ -1,7 +1,7 @@
-import { ChronoIterator } from "../../src/chrono/Atom.js";
-import { Base } from "../../src/class/Mixin.js";
-import { calculate, continuationOf, Entity, field } from "../../src/replica/Entity.js";
-import { MinimalReplica } from "../../src/replica/Replica.js";
+import { ChronoIterator } from "../../src/chrono/Atom.js"
+import { Base } from "../../src/class/Mixin.js"
+import { calculate, continuationOf, Entity, field } from "../../src/replica/Entity.js"
+import { MinimalReplica } from "../../src/replica/Replica.js"
 
 declare const StartTest : any
 
