@@ -3,7 +3,7 @@ import { Graph } from "../graph/Graph.js"
 import { Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js"
 import { cycleInfo, OnCycleAction, Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep } from "../graph/Walkable.js"
 import { FieldAtom } from "../replica/Atom.js"
-import { ChronoAtom, ChronoIterator, ChronoValue, MinimalChronoAtom } from "./Atom.js"
+import { ChronoAtom, ChronoAtomI, ChronoIterator, ChronoValue, MinimalChronoAtom } from "./Atom.js"
 import {
     CancelPropagationEffect,
     Effect,
@@ -43,18 +43,18 @@ class ChronoGraph extends base {
 
     // readObservationState : ChronoAtom[]         = []
 
-    nodeT                   : ChronoAtom
+    nodeT                   : ChronoAtomI
 
-    nodesMap                : Map<ChronoId, ChronoAtom> = new Map()
+    nodesMap                : Map<ChronoId, ChronoAtomI> = new Map()
 
-    needRecalculationAtoms  : Set<ChronoAtom>       = new Set()
-    stableAtoms             : Set<ChronoAtom>       = new Set()
+    needRecalculationAtoms  : Set<ChronoAtomI>       = new Set()
+    stableAtoms             : Set<ChronoAtomI>       = new Set()
 
-    changedAtoms            : ChronoAtom[]
-    touchedAtoms            : Map<ChronoAtom, ChronoContinuation>
+    changedAtoms            : ChronoAtomI[]
+    touchedAtoms            : Map<ChronoAtomI, ChronoContinuation>
 
     // temp workaround to mark changed initial atoms as "need recalculation"
-    initialAtoms            : ChronoAtom[]          = []
+    initialAtoms            : ChronoAtomI[]          = []
 
     isPropagating           : boolean               = false
 
@@ -94,27 +94,27 @@ class ChronoGraph extends base {
     // }
 
 
-    isAtomNeedRecalculation (atom : ChronoAtom) : boolean {
+    isAtomNeedRecalculation (atom : ChronoAtomI) : boolean {
         return this.needRecalculationAtoms.has(atom)
     }
 
 
-    markAsNeedRecalculation (atom : ChronoAtom) {
+    markAsNeedRecalculation (atom : ChronoAtomI) {
         this.needRecalculationAtoms.add(atom)
     }
 
 
-    markProcessed (atom : ChronoAtom) {
+    markProcessed (atom : ChronoAtomI) {
         this.needRecalculationAtoms.delete(atom)
     }
 
 
-    markStable (atom : ChronoAtom) {
+    markStable (atom : ChronoAtomI) {
         this.stableAtoms.add(atom)
     }
 
 
-    isAtomStable (atom : ChronoAtom) : boolean {
+    isAtomStable (atom : ChronoAtomI) : boolean {
         return this.stableAtoms.has(atom)
     }
 
@@ -219,7 +219,7 @@ class ChronoGraph extends base {
     }
 
 
-    startAtomCalculation (sourceAtom : ChronoAtom) : ChronoIterationResult {
+    startAtomCalculation (sourceAtom : ChronoAtomI) : ChronoIterationResult {
         const iterator : ChronoIterator<ChronoValue> = sourceAtom.calculate(sourceAtom.proposedValue)
 
         let iteratorValue   = iterator.next()
@@ -238,7 +238,7 @@ class ChronoGraph extends base {
     }
 
 
-    continueAtomCalculation (sourceAtom : ChronoAtom, continuation : ChronoContinuation, maybeDirtyAtoms : Set<ChronoAtom>) : ChronoIterationResult {
+    continueAtomCalculation (sourceAtom : ChronoAtomI, continuation : ChronoContinuation, maybeDirtyAtoms : Set<ChronoAtomI>) : ChronoIterationResult {
         const me            = this,
               iterator      = continuation.iterator
 
@@ -306,7 +306,7 @@ class ChronoGraph extends base {
 
     * propagateSingle () : IterableIterator<Effect | PropagateSingleResult> {
         const toCalculate       = []
-        const maybeDirty        = new Set()
+        const maybeDirty        = new Set<ChronoAtom>()
         const me                = this
 
         let cycle : Node[]      = null

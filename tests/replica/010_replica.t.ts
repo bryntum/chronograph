@@ -151,6 +151,7 @@ StartTest(t => {
 
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 
+        // @ts-ignore
         const result            = markTwain.run('helperMethod', 'Mr. ')
 
         t.is(result, 'Mr. Mark Twain', 'Correct result from helper method')
