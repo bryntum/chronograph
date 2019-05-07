@@ -124,12 +124,6 @@ class ChronoGraph extends base {
     // }
 
 
-    // used for debugging, when exception is thrown in the middle of the propagate and edges are not yet committed
-    commitAllEdges () {
-        this.nodes.forEach(atom => atom.commitEdges())
-    }
-
-
     commit () {
         this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
@@ -548,6 +542,12 @@ class ChronoGraph extends base {
         this.propagateCompletedListeners.forEach(listener => listener(result))
 
         this.propagateCompletedListeners    = []
+    }
+
+
+    // used for debugging, when exception is thrown in the middle of the propagate and edges are not yet committed
+    commitAllEdges () {
+        this.nodes.forEach(atom => atom.commitEdges())
     }
 
 
