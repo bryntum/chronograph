@@ -54,6 +54,8 @@ class Replica extends base {
 
 export type Replica = Mixin<typeof Replica>
 
-export class MinimalReplica extends Replica(MinimalChronoGraph) {}
+export class MinimalReplica extends Replica(MinimalChronoGraph) {
+    nodeT                   : ChronoAtomI
+}
 
 export const isReplica = (replica : any) : replica is Replica => Boolean(replica && replica[hasReplica])
