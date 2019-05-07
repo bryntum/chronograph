@@ -119,6 +119,12 @@ class Node extends base {
 
 export type Node = Mixin<typeof Node>
 
-
-export const MinimalNode    = Node(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(Base))))))
-export type MinimalNode     = InstanceType<typeof MinimalNode>
+export class MinimalNode extends
+    Node(
+    WalkableForwardNode(
+    WalkableBackwardNode(
+    WalkableForward(
+    WalkableBackward(
+    Walkable(
+        Base
+    )))))) {}

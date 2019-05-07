@@ -1,3 +1,4 @@
+import { ChronoAtom, ChronoAtomI } from "../chrono/Atom.js"
 import { EffectResolverFunction } from "../chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph, PropagationResult } from "../chrono/Graph.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
@@ -11,7 +12,6 @@ export const Replica = <T extends AnyConstructor<ChronoGraph>>(base : T) =>
 
 class Replica extends base {
     [hasReplica] () {}
-
 
     schema              : Schema
 
@@ -54,8 +54,6 @@ class Replica extends base {
 
 export type Replica = Mixin<typeof Replica>
 
-export const MinimalReplica = Replica(MinimalChronoGraph)
-export type MinimalReplica = InstanceType<typeof MinimalReplica>
-
+export class MinimalReplica extends Replica(MinimalChronoGraph) {}
 
 export const isReplica = (replica : any) : replica is Replica => Boolean(replica && replica[hasReplica])

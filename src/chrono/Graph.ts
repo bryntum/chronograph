@@ -1,5 +1,5 @@
 import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { Graph } from "../graph/Graph.js"
+import { Graph, MinimalGraph } from "../graph/Graph.js"
 import { Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js"
 import { cycleInfo, OnCycleAction, Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep } from "../graph/Walkable.js"
 import { FieldAtom } from "../replica/Atom.js"
@@ -695,5 +695,6 @@ class ChronoGraph extends base {
 export type ChronoGraph = Mixin<typeof ChronoGraph>
 export interface ChronoGraphI extends Mixin<typeof ChronoGraph> {}
 
-export const MinimalChronoGraph = ChronoGraph(Graph(WalkableForwardNode(WalkableBackwardNode(WalkableForward(WalkableBackward(Walkable(Base)))))))
-export type MinimalChronoGraph  = InstanceType<typeof MinimalChronoGraph>
+export class MinimalChronoGraph extends ChronoGraph(MinimalGraph) {
+    nodeT                   : ChronoAtomI
+}

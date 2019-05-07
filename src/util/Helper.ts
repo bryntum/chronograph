@@ -14,7 +14,7 @@ export const isAtomicValue = (value : any) : boolean => Object(value) !== value
  * @private
  */
 export const lazyBuild = <T extends object, S extends keyof T>(target : T, property : S, value : T[ S ]) : T[ S ] => {
-    Object.defineProperty(target, property, { value : value })
+    Object.defineProperty(target, property, { value })
 
     return value
 }
