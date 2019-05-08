@@ -1,7 +1,7 @@
 {
   "name": "chronograph",
   "version": "0.0.1",
-  "description": "Graph-based computational engine",
+  "description": "Graph-based reactive computational engine",
   "main": "index.js",
   "module": "main.js",
   "scripts": {
