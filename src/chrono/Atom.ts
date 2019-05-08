@@ -127,18 +127,6 @@ class ChronoAtom extends base {
         this.proposedArgs       = Array.prototype.slice.call(arguments)
 
         this.graph && this.graph.markAsNeedRecalculation(this)
-
-
-        // const graph                 = this.graph
-        //
-        // if (graph) {
-        //     this.proposedValue      = proposedValue
-        //     this.proposedArgs       = Array.prototype.slice.call(arguments)
-        //
-        //     graph && graph.markAsNeedRecalculation(this)
-        // } else {
-        //     this.value              = proposedValue
-        // }
     }
 
 
