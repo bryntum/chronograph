@@ -8,9 +8,9 @@ StartTest(t => {
     t.it('Behavior depending from data', async t => {
         const graph : ChronoGraph  = MinimalChronoGraph.new()
 
-        const box0 : ChronoAtom        = graph.createAtom()
-        const box1 : ChronoAtom        = graph.createAtom()
-        const box2 : ChronoAtom        = graph.createAtom()
+        const box0 : ChronoAtom        = graph.addNode(MinimalChronoAtom.new())
+        const box1 : ChronoAtom        = graph.addNode(MinimalChronoAtom.new())
+        const box2 : ChronoAtom        = graph.addNode(MinimalChronoAtom.new())
 
         const box3 : ChronoAtom        = graph.addNode(MinimalChronoAtom.new({
             calculation : function * () {

@@ -1,7 +1,7 @@
-import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, AnyFunction, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { Graph, MinimalGraph } from "../graph/Graph.js"
-import { Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js"
-import { cycleInfo, OnCycleAction, Walkable, WalkableBackward, WalkableForward, WalkForwardContext, WalkStep } from "../graph/Walkable.js"
+import { Node } from "../graph/Node.js"
+import { cycleInfo, OnCycleAction, WalkForwardContext, WalkStep } from "../graph/Walkable.js"
 import { FieldAtom } from "../replica/Atom.js"
 import { ChronoAtom, ChronoAtomI, ChronoIterator, ChronoValue, MinimalChronoAtom } from "./Atom.js"
 import {
@@ -176,11 +176,6 @@ class ChronoGraph extends base {
         if (existing) return existing
 
         return this.addNode(cls.new({ id : id }))
-    }
-
-
-    createAtom () {
-        return this.addNode(MinimalChronoAtom.new())
     }
 
 
