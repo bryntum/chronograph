@@ -36,13 +36,6 @@ export enum PropagationResult {
 export const ChronoGraph = <T extends AnyConstructor<Graph>>(base : T) =>
 
 class ChronoGraph extends base {
-    // revision            : ChronoRevision
-
-    // isObservingRead     : number        = 0
-    // isObservingWrite    : number        = 0
-
-    // readObservationState : ChronoAtom[]         = []
-
     nodeT                   : ChronoAtomI
 
     nodesMap                : Map<ChronoId, ChronoAtomI> = new Map()
@@ -59,39 +52,6 @@ class ChronoGraph extends base {
     isPropagating           : boolean               = false
 
     propagateCompletedListeners : AnyFunction[]     = []
-
-
-    // processingQueue         : ChronoAtom[]          = []
-
-
-    // startReadObservation () {
-    //     this.isObservingRead++
-    // }
-    //
-    //
-    // stopReadObservation () : ChronoAtom[] {
-    //     this.isObservingRead--
-    //
-    //     const res       = this.readObservationState
-    //
-    //     this.readObservationState   = []
-    //
-    //     return res
-    // }
-
-
-    // nextRevision () {
-    //     return this.revision
-    // }
-
-
-    // onReadObserved (atom : ChronoAtom) {
-    //     this.readObservationState.push(atom)
-    // }
-    //
-    //
-    // onWriteObserved (atom : ChronoAtom) {
-    // }
 
 
     isAtomNeedRecalculation (atom : ChronoAtomI) : boolean {
@@ -117,11 +77,6 @@ class ChronoGraph extends base {
     isAtomStable (atom : ChronoAtomI) : boolean {
         return this.stableAtoms.has(atom)
     }
-
-
-    // processNext (atom : ChronoAtom) {
-    //     this.processingQueue.push(atom)
-    // }
 
 
     commit () {
