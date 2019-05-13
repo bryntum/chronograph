@@ -62,23 +62,23 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 //             return super.$          = atomsCollection
 //         }
 
-        // TODO this is not completed, needs to check against the full set of "maybe dirty" atoms during propagation
-        // this is an optimization idea, based on assumption, that "yielding" is expensive
-        // so if we'll "inline" the "need recalculation" check for not stale atoms, we get some performance improvement
-        * resolve <T extends keyof this> (atomName : T) : ChronoIterator<this[ T ]> {
-            const atom : FieldAtom      = this.$[ atomName ]
-            const graph                 = atom.graph
-
-            if (graph) {
-                if (graph.isAtomNeedRecalculation(atom)) {
-                    return yield atom
-                } else {
-                    return atom.get()
-                }
-            } else {
-                return atom.get()
-            }
-        }
+        // // TODO this is not completed, needs to check against the full set of "maybe dirty" atoms during propagation
+        // // this is an optimization idea, based on assumption, that "yielding" is expensive
+        // // so if we'll "inline" the "need recalculation" check for not stale atoms, we get some performance improvement
+        // * resolve <T extends keyof this> (atomName : T) : ChronoIterator<this[ T ]> {
+        //     const atom : FieldAtom      = this.$[ atomName ]
+        //     const graph                 = atom.graph
+        //
+        //     if (graph) {
+        //         if (graph.isAtomNeedRecalculation(atom)) {
+        //             return yield atom
+        //         } else {
+        //             return atom.get()
+        //         }
+        //     } else {
+        //         return atom.get()
+        //     }
+        // }
 
 
         // lazy meta instance creation - will work even w/o any @field or @entity decorator
@@ -215,18 +215,6 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
         markStable (atom : ChronoAtom) {
             this.getGraph().markStable(atom)
         }
-
-
-        // isStable (atom : ChronoAtom) : boolean {
-        //     return this.getGraph().isAtomStable(atom)
-        // }
-
-
-        // processNext (atom : ChronoAtom) {
-        //     this.getGraph().processNext(atom)
-        // }
-
-
 
 
         static getField (name : Name) : Field {
