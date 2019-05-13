@@ -54,8 +54,8 @@ StartTest(t => {
     t.it('2 mutations in graph context', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const box1 : ChronoAtom         = graph.getOrCreateAtom('inp1')
-        const box2 : ChronoAtom         = graph.getOrCreateAtom('inp2')
+        const box1 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({ id : 'inp1' }))
+        const box2 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({ id : 'inp2' }))
 
         const box1p2 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
             id      : '1p2',
@@ -65,7 +65,7 @@ StartTest(t => {
             }
         }))
 
-        const box3 : ChronoAtom         = graph.getOrCreateAtom('inp3')
+        const box3 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({ id : 'inp3' }))
 
         const res : ChronoAtom          = graph.addNode(MinimalChronoAtom.new({
             id      : 'res',
@@ -113,8 +113,8 @@ StartTest(t => {
     t.it('2 mutations in graph context', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const box1 : ChronoAtom         = graph.getOrCreateAtom('inp1')
-        const box2 : ChronoAtom         = graph.getOrCreateAtom('inp2')
+        const box1 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({ id : 'inp1' }))
+        const box2 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({ id : 'inp2' }))
 
         const box1p2 : ChronoAtom       = graph.addNode(MinimalChronoAtom.new({
             id      : '1p2',
@@ -124,7 +124,7 @@ StartTest(t => {
             }
         }))
 
-        const box3 : ChronoAtom         = graph.getOrCreateAtom('inp3')
+        const box3 : ChronoAtom         = graph.addNode(MinimalChronoAtom.new({ id : 'inp3' }))
 
         const res : ChronoAtom          = graph.addNode(MinimalChronoAtom.new({
             id      : 'res',

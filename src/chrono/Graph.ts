@@ -170,15 +170,6 @@ class ChronoGraph extends base {
     }
 
 
-    getOrCreateAtom (id : ChronoId, cls : MixinConstructor<typeof ChronoAtom> = MinimalChronoAtom) : this[ 'nodeT' ] {
-        const existing      = this.nodesMap.get(id)
-
-        if (existing) return existing
-
-        return this.addNode(cls.new({ id : id }))
-    }
-
-
     addNode (node : this[ 'nodeT' ]) : this[ 'nodeT' ] {
         const res   = super.addNode(node)
 
