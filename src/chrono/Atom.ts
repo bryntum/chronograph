@@ -32,8 +32,6 @@ class ChronoAtom extends base {
     nextStableValue     : ChronoValue
     value               : ChronoValue
 
-    shouldCommitValue   : boolean   = true
-
     graph               : ChronoGraphI
 
     equality            : (v1, v2) => boolean       = strictEqualityWithDates
@@ -57,7 +55,7 @@ class ChronoAtom extends base {
 
         // this assignment may cause side effects (when using delegated storage)
         // so we do it after the `this.nextStableValue` is cleared
-        if (this.shouldCommitValue) this.value = nextStableValue
+        this.value              = nextStableValue
     }
 
 

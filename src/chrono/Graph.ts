@@ -46,9 +46,6 @@ class ChronoGraph extends base {
     changedAtoms            : ChronoAtomI[]
     touchedAtoms            : Map<ChronoAtomI, ChronoContinuation>
 
-    // temp workaround to mark changed initial atoms as "need recalculation"
-    initialAtoms            : ChronoAtomI[]          = []
-
     isPropagating           : boolean               = false
 
     propagateCompletedListeners : AnyFunction[]     = []
@@ -89,24 +86,6 @@ class ChronoGraph extends base {
         // because of that, we commit the edges for all recalculated atoms (stable atoms)
         this.stableAtoms.forEach(atom => atom.commitEdges())
         this.stableAtoms.clear()
-
-        // temp workaround
-        this.initialAtoms.forEach((initialAtom : FieldAtom) => {
-            initialAtom.outgoing.forEach((atom : FieldAtom) => {
-                // same entity
-                if (initialAtom.self === atom.self) {
-                    const field         = atom.field
-
-                    if (field && field.continuationOf && field.continuationOf === initialAtom.field) {
-                        // do nothing for the "final" atom
-                        return
-                    }
-                }
-
-                this.markAsNeedRecalculation(atom)
-            })
-        })
-        this.initialAtoms   = []
     }
 
 

@@ -133,8 +133,6 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
                 self                : this,
 
-                shouldCommitValue   : !field.continued,
-
                 calculationContext  : calculationFunction ? this : undefined,
                 calculation         : calculationFunction
             })
@@ -347,20 +345,6 @@ export const generic_field : FieldDecorator<typeof Field> =
 
 //---------------------------------------------------------------------------------------------------------------------
 export const field : typeof generic_field = generic_field
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const continuationOf = function (continuationOfAtomName : string) : PropertyDecorator {
-
-    return function (target : Entity, propertyKey : string) : void {
-        const entity            = target.$entity
-        const field             = entity.getField(propertyKey)
-        const precedingField    = entity.getField(continuationOfAtomName)
-
-        field.continuationOf        = precedingField
-        precedingField.continued    = true
-    }
-}
 
 
 //---------------------------------------------------------------------------------------------------------------------

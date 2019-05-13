@@ -19,24 +19,6 @@ class FieldAtom extends base {
     }
 
 
-    commitValue () {
-        super.commitValue()
-
-        const continuationOfField           = this.field.continuationOf
-
-        if (continuationOfField) {
-            const continuationOfAtom : ChronoAtom = this.self.$[ continuationOfField.name ]
-
-            if (!continuationOfAtom.equality(continuationOfAtom.value, this.value)) {
-                continuationOfAtom.value    = this.value
-
-                // atom can be already removed from graph
-                this.graph && this.graph.initialAtoms.push(continuationOfAtom)
-            }
-        }
-    }
-
-
     toString () : string {
         return `Field atom [${ this.field.name }] of entity [${ this.self }}]`
     }
