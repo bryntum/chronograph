@@ -21,8 +21,12 @@ export type ChronoRevision          = number
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoContinuation      = { iterator : ChronoIterator, atom? : ChronoAtom }
 export type ChronoIterationResult   = { value? : ChronoValue, continuation? : ChronoContinuation, effect? : Effect }
-export type PropagateSingleResult   = { success : true }
-export type FinalizerFn             = () => Promise<PropagationResult>
+
+export type PropagationState        = {
+    changedAtoms            : ChronoAtom[],
+    calculationStartedAtoms : ChronoAtom[],
+    atomsPropagationInfo    : Map<ChronoAtom, AtomPropagationInfo>
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum PropagationResult {
@@ -30,6 +34,16 @@ export enum PropagationResult {
     Completed,
     Passed
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+type AtomPropagationInfo = Partial<{
+    visited             : boolean,
+    continuation        : ChronoContinuation,
+    stable              : boolean,
+    newValue            : ChronoValue,
+    changed             : boolean
+}>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -41,10 +55,6 @@ class ChronoGraph extends base {
     nodesMap                : Map<ChronoId, ChronoAtomI> = new Map()
 
     needRecalculationAtoms  : Set<ChronoAtomI>       = new Set()
-    stableAtoms             : Set<ChronoAtomI>       = new Set()
-
-    changedAtoms            : ChronoAtomI[]
-    touchedAtoms            : Map<ChronoAtomI, ChronoContinuation>
 
     isPropagating           : boolean               = false
 
@@ -61,46 +71,28 @@ class ChronoGraph extends base {
     }
 
 
-    markProcessed (atom : ChronoAtomI) {
-        this.needRecalculationAtoms.delete(atom)
-    }
-
-
-    markStable (atom : ChronoAtomI) {
-        this.stableAtoms.add(atom)
-    }
-
-
-    isAtomStable (atom : ChronoAtomI) : boolean {
-        return this.stableAtoms.has(atom)
-    }
-
-
-    commit () {
+    commit (propagationState : PropagationState) {
         this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
 
-        this.changedAtoms.forEach(atom => atom.commitValue())
+        propagationState.changedAtoms.forEach(atom => atom.commitValue())
 
         // the edges might have changed, even the atom value itself did not
-        // because of that, we commit the edges for all recalculated atoms (stable atoms)
-        this.stableAtoms.forEach(atom => atom.commitEdges())
-        this.stableAtoms.clear()
+        // because of that, we commit the edges for all atoms, which we started to compute (at completed, because this is commit)
+        propagationState.calculationStartedAtoms.forEach(atom => atom.commitEdges())
     }
 
 
-    reject () {
-        this.rejectPartialProgress()
-
+    reject (propagationState : PropagationState) {
         this.needRecalculationAtoms.forEach(atom => atom.clearUserInput())
         this.needRecalculationAtoms.clear()
+
+        this.rejectPartialProgress(propagationState)
     }
 
 
-    rejectPartialProgress () {
-        this.touchedAtoms.forEach((_, atom) => atom.reject())
-
-        this.stableAtoms.clear()
+    rejectPartialProgress (propagationState : PropagationState) {
+        propagationState.calculationStartedAtoms.forEach(atom => atom.reject())
     }
 
 
@@ -124,8 +116,6 @@ class ChronoGraph extends base {
 
         this.nodesMap.delete(node.id)
         this.needRecalculationAtoms.delete(node)
-        // we probably don't need this line, since `stableAtoms` are internal state of the propagation process
-        this.stableAtoms.delete(node)
 
         node.onLeaveGraph(this)
 
@@ -152,11 +142,13 @@ class ChronoGraph extends base {
     }
 
 
-    continueAtomCalculation (sourceAtom : ChronoAtomI, continuation : ChronoContinuation, maybeDirtyAtoms : Set<ChronoAtomI>) : ChronoIterationResult {
-        const me            = this,
-              iterator      = continuation.iterator
+    continueAtomCalculation (sourceAtom : ChronoAtomI, continuation : ChronoContinuation, atomsPropagationInfo : Map<ChronoAtomI, AtomPropagationInfo>) : ChronoIterationResult {
+        const me            = this
+        const iterator      = continuation.iterator
 
         let incomingAtom    = continuation.atom
+
+        let propagationInfo = atomsPropagationInfo.get(incomingAtom)
 
         do {
             let iteratorValue : IteratorResult<Effect | ChronoAtom | ChronoValue>
@@ -166,7 +158,7 @@ class ChronoGraph extends base {
 
                 // Cycle condition
                 // ideally should be removed (same as while condition)
-                if (maybeDirtyAtoms.has(incomingAtom) && !this.isAtomStable(incomingAtom)) {
+                if (propagationInfo && !propagationInfo.stable) {
                     let cycle : Node[]
 
                     me.walkDepth(WalkForwardContext.new({
@@ -212,15 +204,19 @@ class ChronoGraph extends base {
             // TODO should ignore non-final non-atom values
             incomingAtom    = value
 
-        } while (!maybeDirtyAtoms.has(incomingAtom) || this.isAtomStable(incomingAtom))
+            propagationInfo = atomsPropagationInfo.get(incomingAtom)
+
+        } while (!propagationInfo || propagationInfo.stable)
 
         return { continuation : { iterator, atom : incomingAtom } }
     }
 
 
-    * propagateSingle () : IterableIterator<Effect | PropagateSingleResult> {
-        const toCalculate       = []
-        const maybeDirty        = new Set<ChronoAtom>()
+    * propagateSingle () : IterableIterator<Effect | PropagationState> {
+        const calculationStack  = []
+
+        const atomsPropagationInfo : Map<ChronoAtom, AtomPropagationInfo> = new Map()
+
         const me                = this
 
         let cycle : Node[]      = null
@@ -247,9 +243,9 @@ class ChronoGraph extends base {
             onTopologicalNode       : (atom : ChronoAtom) => {
                 if (<any> atom === <any> this) return
 
-                maybeDirty.add(atom)
+                atomsPropagationInfo.set(atom, {})
 
-                toCalculate.push(atom)
+                calculationStack.push(atom)
             }
         }))
 
@@ -257,41 +253,40 @@ class ChronoGraph extends base {
             return GraphCycleDetectedEffect.new({ cycle })
         }
 
-        let depth
+        const changedAtoms              = []
+        const calculationStartedAtoms   = []
 
-        const conts             = this.touchedAtoms = new Map<ChronoAtom, ChronoContinuation>()
-        const visitedAt         = new Map<ChronoAtom, number>()
-        const changedAtoms      = this.changedAtoms = []
+        while (calculationStack.length) {
+            const sourceAtom : ChronoAtom   = calculationStack[ calculationStack.length - 1 ]
 
-        while (depth = toCalculate.length) {
-            const sourceAtom : ChronoAtom   = toCalculate[ depth - 1 ]
+            const propagationInfo   = atomsPropagationInfo.get(sourceAtom)
 
-            if (this.isAtomStable(sourceAtom) || !maybeDirty.has(sourceAtom)) {
-                toCalculate.pop()
+            if (!propagationInfo || propagationInfo.stable) {
+                calculationStack.pop()
                 continue
             }
-
-            const visitedAtDepth    = visitedAt.get(sourceAtom)
 
             let calcRes : ChronoIterationResult
 
             // node has been already visited
-            if (visitedAtDepth != null) {
-                const cont          = conts.get(sourceAtom)
-
-                calcRes             = this.continueAtomCalculation(sourceAtom, cont, maybeDirty)
+            if (propagationInfo.visited) {
+                calcRes                 = this.continueAtomCalculation(sourceAtom, propagationInfo.continuation, atomsPropagationInfo)
             } else {
-                visitedAt.set(sourceAtom, depth)
+                propagationInfo.visited = true
 
-                calcRes             = this.startAtomCalculation(sourceAtom)
+                calculationStartedAtoms.push(sourceAtom)
+
+                calcRes                 = this.startAtomCalculation(sourceAtom)
             }
 
             if (calcRes.effect) {
+                calcRes.effect.propagationState = { changedAtoms, atomsPropagationInfo, calculationStartedAtoms }
+
                 yield calcRes.effect
             }
 
             if (calcRes.continuation) {
-                conts.set(sourceAtom, calcRes.continuation)
+                propagationInfo.continuation    = calcRes.continuation
 
                 const atom  = calcRes.continuation.atom
 
@@ -300,29 +295,25 @@ class ChronoGraph extends base {
                     // because in non-cycle scenario "observedDuringCalculation" is filled in the `continueAtomCalculation`
                     sourceAtom.observedDuringCalculation.push(atom)
 
-                    toCalculate.push(atom)
+                    calculationStack.push(atom)
                 }
             } else {
-                // this makes sure that _all_ atoms, for which the calculation has started
-                // are "collected" in the `conts` Map
-                // then, during reject, we'll iterate over this map
-                conts.set(sourceAtom, null)
-
-                const consistentValue   = calcRes.value
+                const consistentValue   = propagationInfo.newValue = calcRes.value
 
                 if (!sourceAtom.equality(consistentValue, sourceAtom.getConsistentValue())) {
                     changedAtoms.push(sourceAtom)
+                    propagationInfo.changed     = true
 
-                    sourceAtom.nextStableValue = consistentValue
+                    sourceAtom.nextStableValue  = consistentValue
                 }
 
-                this.markStable(sourceAtom)
+                propagationInfo.stable          = true
 
-                toCalculate.pop()
+                calculationStack.pop()
             }
         }
 
-        return { success : true }
+        return { changedAtoms, atomsPropagationInfo, calculationStartedAtoms } as PropagationState
     }
 
 
@@ -360,6 +351,8 @@ class ChronoGraph extends base {
 
         this.isPropagating          = true
 
+        let value   : Effect | PropagationState
+
         do {
             needToRestart           = false
 
@@ -370,7 +363,7 @@ class ChronoGraph extends base {
             do {
                 iteratorValue       = propagationIterator.next()
 
-                const value         = iteratorValue.value
+                value               = iteratorValue.value
 
                 if (value instanceof Effect) {
                     let resolutionResult : EffectResolutionResult
@@ -388,7 +381,7 @@ class ChronoGraph extends base {
                         }
 
                         // POST-PROPAGATE sequence, TODO refactor
-                        this.reject()
+                        this.reject(value.propagationState)
                         this.isPropagating  = false
                         await this.propagationCompletedHook()
                         this.onPropagationCompleted(PropagationResult.Canceled)
@@ -396,7 +389,7 @@ class ChronoGraph extends base {
                         return PropagationResult.Canceled
                     }
                     else if (resolutionResult === EffectResolutionResult.Restart) {
-                        this.rejectPartialProgress()
+                        this.rejectPartialProgress(value.propagationState)
 
                         needToRestart       = true
 
@@ -414,16 +407,16 @@ class ChronoGraph extends base {
             }
 
             // POST-PROPAGATE sequence, TODO refactor
-            this.reject()
+            this.reject(value as PropagationState)
             this.isPropagating = false
             await this.propagationCompletedHook()
-            this.onPropagationCompleted(PropagationResult.Completed) // Shouldn't it be PropagationResult.Passed?
+            this.onPropagationCompleted(PropagationResult.Completed)
 
             result = PropagationResult.Passed
         }
         else {
             // POST-PROPAGATE sequence, TODO refactor
-            this.commit()
+            this.commit(value as PropagationState)
             this.isPropagating = false
             await this.propagationCompletedHook()
             this.onPropagationCompleted(PropagationResult.Completed)
@@ -541,7 +534,7 @@ class ChronoGraph extends base {
                             value = `Array(${value.length})`
                         }
 
-                        let color = (!this.isAtomNeedRecalculation(atom) || this.isAtomStable(atom)) ? 'darkgreen' : 'red'
+                        let color = (!this.isAtomNeedRecalculation(atom) /*|| this.isAtomStable(atom)*/) ? 'darkgreen' : 'red'
 
                         dot.push(`"${atom.id}" [label="${name}=${value}\", fontcolor="${color}"]`)
 
@@ -591,7 +584,7 @@ class ChronoGraph extends base {
                         //let edgeLabel = this.getEdgeLabel(fromId, atom.id)
                         const edgeLabel = ''
 
-                        let color = (!this.isAtomNeedRecalculation(fromAtom) || this.isAtomStable(fromAtom)) ? 'darkgreen' : 'red'
+                        let color = (!this.isAtomNeedRecalculation(fromAtom) /*|| this.isAtomStable(fromAtom)*/) ? 'darkgreen' : 'red'
                         let penwidth = (cycle[fromId] == toAtom.id) ? 5 : 1
 
                         dot.push(`"${fromId}" -> "${toAtom.id}" [label="${edgeLabel}", color="${color}", penwidth=${penwidth}]`)

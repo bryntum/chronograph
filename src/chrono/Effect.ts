@@ -1,5 +1,6 @@
 import { Base } from "../class/Mixin.js"
 import { Node } from "../graph/Node.js"
+import { PropagationState } from "./Graph.js"
 
 
 export type EffectResolverFunction  = (effect : Effect) => Promise<EffectResolutionResult>
@@ -15,6 +16,7 @@ export enum EffectResolutionResult {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Effect extends Base {
+    propagationState        : PropagationState
 }
 
 

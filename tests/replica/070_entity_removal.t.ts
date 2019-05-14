@@ -53,25 +53,4 @@ StartTest(t => {
 
         t.notOk(allNeedRecalc, 'None entity atoms need recalculation after entity removal from a replica')
     })
-
-
-    // we probably don't need this section, since stable atoms are internal state
-    t.it('All entity atoms should be removed from the graph `stable` atoms collections', t => {
-        const replica2 = MinimalReplica.new({ schema : SomeSchema })
-
-        const p1 = Person.new({ firstName : 'Ivan', lastName : 'Navi' })
-
-        replica2.addEntity(p1)
-
-        p1.forEachFieldAtom(a => replica2.markStable(a))
-
-        replica2.removeEntity(p1)
-
-        let allStable = false
-
-        p1.forEachFieldAtom(a => allStable = allStable || replica2.isAtomStable(a))
-
-        t.notOk(allStable, 'None entity atoms are marked stable after entity removal from a replica')
-    })
-
 })
