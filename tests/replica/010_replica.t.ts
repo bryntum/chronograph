@@ -65,56 +65,55 @@ StartTest(t => {
 
 
     // TODO
-    t.xit('Alternative atom yielding', async t => {
-
-        class Author extends Entity(Base) {
-            @field()
-            id              : string
-
-            @field()
-            firstName       : string
-
-            @field()
-            lastName        : string
-
-            @field()
-            fullName        : string
-
-
-            @calculate('fullName')
-            * calculateFullName (proposed : string) : ChronoIterator<string> {
-                return (yield* this.resolve('firstName')) + ' ' + (yield* this.resolve('lastName'))
-            }
-        }
-
-        class Book extends Entity(Base) {
-            @field()
-            namez            : string
-
-            @field()
-            writtenBy       : Author
-        }
-
-
-        const replica1          = MinimalReplica.new()
-
-        const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
-        const tomSoyer          = Book.new({ namez : 'Tom Soyer', writtenBy : markTwain })
-
-        replica1.addEntity(markTwain)
-        replica1.addEntity(tomSoyer)
-
-        await replica1.propagate()
-
-        t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
-
-        markTwain.firstName     = 'MARK'
-
-        await replica1.propagate()
-
-        t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
-    })
-
+    // t.xit('Alternative atom yielding', async t => {
+    //
+    //     class Author extends Entity(Base) {
+    //         @field()
+    //         id              : string
+    //
+    //         @field()
+    //         firstName       : string
+    //
+    //         @field()
+    //         lastName        : string
+    //
+    //         @field()
+    //         fullName        : string
+    //
+    //
+    //         @calculate('fullName')
+    //         * calculateFullName (proposed : string) : ChronoIterator<string> {
+    //             return (yield* this.resolve('firstName')) + ' ' + (yield* this.resolve('lastName'))
+    //         }
+    //     }
+    //
+    //     class Book extends Entity(Base) {
+    //         @field()
+    //         namez            : string
+    //
+    //         @field()
+    //         writtenBy       : Author
+    //     }
+    //
+    //
+    //     const replica1          = MinimalReplica.new()
+    //
+    //     const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
+    //     const tomSoyer          = Book.new({ namez : 'Tom Soyer', writtenBy : markTwain })
+    //
+    //     replica1.addEntity(markTwain)
+    //     replica1.addEntity(tomSoyer)
+    //
+    //     await replica1.propagate()
+    //
+    //     t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
+    //
+    //     markTwain.firstName     = 'MARK'
+    //
+    //     await replica1.propagate()
+    //
+    //     t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
+    // })
 
 
     t.it('Helper methods', async t => {
