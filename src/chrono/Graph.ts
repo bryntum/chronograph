@@ -124,6 +124,7 @@ class ChronoGraph extends base {
 
     startAtomCalculation (sourceAtom : ChronoAtomI) : ChronoIterationResult {
         const proposedValue     = sourceAtom.proposedValue
+
         const iterator : ChronoIterator<ChronoValue> =
             sourceAtom.calculation
             ?
@@ -161,8 +162,8 @@ class ChronoGraph extends base {
             if (incomingAtom) {
                 sourceAtom.observedDuringCalculation.push(incomingAtom)
 
-                // Cycle condition
-                // ideally should be removed (same as while condition)
+                // Cycle condition - we've encountered an atom, which is dirty and not yet stable
+                // since the atom from the continuation should be already stable - this means there's a cycle
                 if (propagationInfo && !propagationInfo.stable) {
                     let cycle : Node[]
 
@@ -248,9 +249,8 @@ class ChronoGraph extends base {
             onTopologicalNode       : (atom : ChronoAtom) => {
                 if (<any> atom === <any> this) return
 
-                // create filled object in assumption that will
-                // prevent memory allocation - since this map may have huge amount
-                // of entries
+                // create filled object in assumption that this will prevent excessive memory allocation
+                // since this map may have huge amount of entries
                 atomsPropagationInfo.set(atom, {
                     changed         : false,
                     continuation    : null,
