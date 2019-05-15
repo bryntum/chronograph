@@ -124,7 +124,13 @@ class ChronoGraph extends base {
 
 
     startAtomCalculation (sourceAtom : ChronoAtomI) : ChronoIterationResult {
-        const iterator : ChronoIterator<ChronoValue> = sourceAtom.calculate(sourceAtom.proposedValue)
+        const proposedValue     = sourceAtom.proposedValue
+        const iterator : ChronoIterator<ChronoValue> =
+            sourceAtom.calculation
+            ?
+            sourceAtom.calculation.call(sourceAtom.calculationContext || sourceAtom, proposedValue)
+            :
+            sourceAtom.calculate(proposedValue)
 
         let iteratorValue   = iterator.next()
 
