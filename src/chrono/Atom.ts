@@ -74,9 +74,9 @@ class ChronoAtom extends base {
 
 
     * calculate (proposedValue : this[ 'value' ]) : IterableIterator<ChronoAtom | this[ 'value' ]> {
-        // if (this.calculation) {
-        //     return yield* this.calculation.call(this.calculationContext || this, proposedValue)
-        // } else
+        if (this.calculation) {
+            return yield* this.calculation.call(this.calculationContext || this, proposedValue)
+        } else
             // identity-like case, translates to user-provided or current value
             return proposedValue !== undefined ? proposedValue : this.value
     }
