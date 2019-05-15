@@ -37,13 +37,13 @@ export enum PropagationResult {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-type AtomPropagationInfo = Partial<{
+type AtomPropagationInfo = {
     visited             : boolean,
     continuation        : ChronoContinuation,
     stable              : boolean,
     newValue            : ChronoValue,
     changed             : boolean
-}>
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -243,7 +243,16 @@ class ChronoGraph extends base {
             onTopologicalNode       : (atom : ChronoAtom) => {
                 if (<any> atom === <any> this) return
 
-                atomsPropagationInfo.set(atom, {})
+                // create filled object in assumption that will
+                // prevent memory allocation - since this map may have huge amount
+                // of entries
+                atomsPropagationInfo.set(atom, {
+                    changed         : false,
+                    continuation    : null,
+                    newValue        : undefined,
+                    stable          : false,
+                    visited         : false
+                })
 
                 calculationStack.push(atom)
             }
