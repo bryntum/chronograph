@@ -31,8 +31,7 @@ export type PropagationState        = {
 //---------------------------------------------------------------------------------------------------------------------
 export enum PropagationResult {
     Canceled,
-    Completed,
-    Passed
+    Completed
 }
 
 
@@ -427,7 +426,7 @@ class ChronoGraph extends base {
             await this.propagationCompletedHook()
             this.onPropagationCompleted(PropagationResult.Completed)
 
-            result = PropagationResult.Passed
+            result = PropagationResult.Completed
         }
         else {
             // POST-PROPAGATE sequence, TODO refactor

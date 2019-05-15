@@ -35,7 +35,7 @@ StartTest(t => {
         })
 
         t.is(graph.getNodes().size, 0, "No nodes left in graph after propagation try")
-        t.is(result, PropagationResult.Passed, "Propagation result is Passed")
+        t.is(result, PropagationResult.Completed, "Propagation result is Completed")
         t.is(a3.get(), undefined, "Consistent a3 value is undefined")
         t.is(a3value, 3, "Hatched a3 value is correct")
     })
@@ -74,7 +74,7 @@ StartTest(t => {
         t.is(graph.getNodes().size, 2, "Existing graph nodes are not affected")
         t.is(a1.graph, graph, "A1 left in the graph")
         t.is(a2.graph, graph, "A2 left in the graph")
-        t.is(result, PropagationResult.Passed, "Propagation result is Passed")
+        t.is(result, PropagationResult.Completed, "Propagation result is Completed")
         t.is(a3.get(), undefined, "Consistent a3 value is undefined")
         t.is(a3value, 3, "Hatched a3 value is correct")
         t.isNot(a3.graph, graph, "A3 is not in the graph")
