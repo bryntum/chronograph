@@ -1,9 +1,10 @@
-import { AnyConstructor, AnyFunction, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js"
 import { Graph, MinimalGraph } from "../graph/Graph.js"
 import { Node } from "../graph/Node.js"
 import { cycleInfo, OnCycleAction, WalkForwardContext, WalkStep } from "../graph/Walkable.js"
 import { FieldAtom } from "../replica/Atom.js"
-import { ChronoAtom, ChronoAtomI, ChronoIterator, ChronoValue, MinimalChronoAtom } from "./Atom.js"
+import { ChronoAtom, ChronoAtomI, MinimalChronoAtom } from "./Atom.js"
+import { ChronoCalculationFunc, ChronoIterator, ChronoValue } from "./Calculation.js"
 import {
     CancelPropagationEffect,
     Effect,
@@ -309,7 +310,7 @@ class ChronoGraph extends base {
                     // because in non-cycle scenario "observedDuringCalculation" is filled in the `continueAtomCalculation`
                     sourceAtom.observedDuringCalculation.push(atom)
 
-                    calculationStack.push(atom)
+                calculationStack.push(atom)
                 }
             } else {
                 const consistentValue   = propagationInfo.newValue = calcRes.value
@@ -469,6 +470,17 @@ class ChronoGraph extends base {
         this.propagateCompletedListeners.forEach(listener => listener(result))
 
         this.propagateCompletedListeners    = []
+    }
+
+
+    observe (calculation : ChronoCalculationFunc) : ChronoAtomI {
+        const observerAtom  = MinimalChronoAtom.new({
+            calculation
+        })
+
+        this.addNode(observerAtom)
+
+        return observerAtom
     }
 
 

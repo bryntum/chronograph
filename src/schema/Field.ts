@@ -1,4 +1,4 @@
-import { ChronoValue } from "../chrono/Atom.js"
+import { ChronoValue } from "../chrono/Calculation.js"
 import { Base, MixinConstructor } from "../class/Mixin.js"
 import { FieldAtom, MinimalFieldAtom } from "../replica/Atom.js"
 import { Entity } from "./Entity.js"

@@ -1,4 +1,5 @@
-import { ChronoAtom, ChronoValue, MinimalChronoAtom } from "../chrono/Atom.js"
+import { ChronoAtom, MinimalChronoAtom } from "../chrono/Atom.js"
+import { ChronoValue } from "../chrono/Calculation.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { Entity as EntityData } from "../schema/Entity.js"
 import { Field as FieldData } from "../schema/Field.js"

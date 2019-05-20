@@ -1,16 +1,9 @@
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { MinimalNode, Node } from "../graph/Node.js"
-import { Effect } from "./Effect.js"
+import { Box } from "./Box.js"
+import { ChronoCalculationFunc, ChronoValue } from "./Calculation.js"
 import { ChronoGraphI, PropagationResult } from "./Graph.js"
 import { HasId } from "./HasId.js"
-
-//---------------------------------------------------------------------------------------------------------------------
-export type ChronoValue         = any
-
-export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | Effect | T>
-
-//---------------------------------------------------------------------------------------------------------------------
-export type ChronoCalculation   = (...args : any[]) => ChronoIterator
 
 //---------------------------------------------------------------------------------------------------------------------
 export const strictEquality     = (v1, v2) => v1 === v2
@@ -21,23 +14,25 @@ export const strictEqualityWithDates = (v1, v2) => {
     return v1 === v2
 }
 
+const isChronoAtomSymbol = Symbol('isChronoAtomSymbol')
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoAtom = <T extends AnyConstructor<HasId & Node>>(base : T) =>
+export const ChronoAtom = <T extends AnyConstructor<HasId & Node & Box>>(base : T) =>
 
 class ChronoAtom extends base {
+    [isChronoAtomSymbol] () {}
+
     proposedArgs        : ChronoValue[]
     proposedValue       : ChronoValue
 
     nextStableValue     : ChronoValue
-    value               : ChronoValue
 
     graph               : ChronoGraphI
 
     equality            : (v1, v2) => boolean       = strictEqualityWithDates
 
     calculationContext  : any
-    calculation         : ChronoCalculation
+    calculation         : ChronoCalculationFunc
 
     observedDuringCalculation   : ChronoAtom[]     = []
 
@@ -167,5 +162,7 @@ export type ChronoAtom = Mixin<typeof ChronoAtom>
 export interface ChronoAtomI extends Mixin<typeof ChronoAtom> {}
 
 
+export const isChronoAtom = (value : any) : value is ChronoAtom => Boolean(value && value[ isChronoAtomSymbol ])
+
 //---------------------------------------------------------------------------------------------------------------------
-export class MinimalChronoAtom extends ChronoAtom(HasId(MinimalNode)) {}
+export class MinimalChronoAtom extends ChronoAtom(HasId(Box(MinimalNode))) {}

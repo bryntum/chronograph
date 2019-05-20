@@ -1,4 +1,5 @@
-import { ChronoAtom, ChronoIterator } from "../chrono/Atom.js"
+import { ChronoAtom} from "../chrono/Atom.js"
+import { ChronoIterator } from "../chrono/Calculation.js"
 import { Effect, EffectResolverFunction } from "../chrono/Effect.js"
 import { ChronoGraph, PropagationResult } from "../chrono/Graph.js"
 import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js"

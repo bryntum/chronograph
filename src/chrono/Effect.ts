@@ -16,7 +16,7 @@ export enum EffectResolutionResult {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Effect extends Base {
-    propagationState        : PropagationState
+    propagationState?   : PropagationState
 }
 
 
@@ -35,3 +35,5 @@ export class RestartPropagationEffect extends Effect {
 export class GraphCycleDetectedEffect extends Effect {
     cycle               : Node[]
 }
+
+export const isEffect = (value : any) : value is Effect => value instanceof Effect
