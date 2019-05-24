@@ -1,21 +1,21 @@
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 
-// TODO figure out the best way to box the native primitives like number and string
-// this implementation overrides the `valueOf` method
-
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Box = <T extends AnyConstructor<object>>(base : T) =>
 
 class Box extends base {
-    valueT      : any
+    ValueT      : any
 
-    value       : this[ 'valueT' ]
 
-    valueOf () : this[ 'valueT' ] {
-        return this.value
+    get value () : this[ 'ValueT' ] {
+        return this.valueOf()
+    }
+
+
+    hasValue () : boolean {
+        return this.value !== undefined
     }
 }
 
 export type Box = Mixin<typeof Box>
-
