@@ -1,6 +1,5 @@
 import { Base } from "../class/Mixin.js"
-import { Node } from "../graph/Node.js"
-import { PropagationState } from "./Graph.js"
+import { ChronoAtom } from "./Atom.js"
 
 
 export type EffectResolverFunction  = (effect : Effect) => Promise<EffectResolutionResult>
@@ -16,7 +15,6 @@ export enum EffectResolutionResult {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Effect extends Base {
-    propagationState?   : PropagationState
 }
 
 
@@ -33,7 +31,19 @@ export class RestartPropagationEffect extends Effect {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GraphCycleDetectedEffect extends Effect {
-    cycle               : Node[]
+    cycle               : ChronoAtom[]
 }
 
 export const isEffect = (value : any) : value is Effect => value instanceof Effect
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const NotChanged     = Symbol('NotChanged')
+
+export type NotChanged      = typeof NotChanged
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class InputMarker extends Base {
+    atom            : ChronoAtom
+}

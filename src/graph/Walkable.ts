@@ -10,7 +10,7 @@ export type WalkStep<Walkable>    = { node : Walkable, from : Walkable }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export abstract class WalkContext<Walkable> extends Base {
+export class WalkContext<Walkable> extends Base {
 
     visited         : Map<Walkable, { visitedAt : number, visitedTopologically : boolean }>     = new Map()
 
@@ -26,7 +26,9 @@ export abstract class WalkContext<Walkable> extends Base {
     }
 
 
-    abstract forEachNext (node : Walkable, func : (node : Walkable) => any)
+    forEachNext (node : Walkable, func : (node : Walkable) => any) {
+        throw new Error("Abstract method called")
+    }
 
 
     walkDepth () {

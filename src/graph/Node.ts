@@ -29,7 +29,7 @@ class WalkableForwardNode extends base {
     }
 
 
-    addEdgeTo (toNode : WalkableForwardNode, label : this[ 'LabelT' ]) {
+    addEdgeTo (toNode : WalkableForwardNode, label? : this[ 'LabelT' ]) {
         this.outgoing.set(toNode, label)
     }
 
@@ -75,7 +75,7 @@ class WalkableBackwardNode extends base {
     }
 
 
-    addEdgeFrom (fromNode : WalkableBackwardNode, label : this[ 'LabelT' ]) {
+    addEdgeFrom (fromNode : WalkableBackwardNode, label? : this[ 'LabelT' ]) {
         this.incoming.set(fromNode, label)
     }
 
@@ -98,30 +98,33 @@ export type WalkableBackwardNode = Mixin<typeof WalkableBackwardNode>
 export const Node = <T extends AnyConstructor<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
 
 class Node extends base {
-    outgoing        : Map<Node, this[ 'LabelT' ]>   = new Map()
-    incoming        : Map<Node, this[ 'LabelT' ]>   = new Map()
+    LabelT          : any
+    NodeT           : Node
+
+    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
+    incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 
 
-    addEdgeTo (toNode : Node, label : this[ 'LabelT' ]) {
+    addEdgeTo (toNode : this[ 'NodeT' ], label? : this[ 'LabelT' ]) {
         super.addEdgeTo(toNode, label)
 
         toNode.incoming.set(this, label)
     }
 
-    removeEdgeTo (toNode : Node) {
+    removeEdgeTo (toNode : this[ 'NodeT' ]) {
         super.removeEdgeTo(toNode)
 
         toNode.incoming.delete(this)
     }
 
 
-    addEdgeFrom (fromNode : Node, label : this[ 'LabelT' ]) {
+    addEdgeFrom (fromNode : this[ 'NodeT' ], label? : this[ 'LabelT' ]) {
         super.addEdgeFrom(fromNode, label)
 
         fromNode.outgoing.set(this, label)
     }
 
-    removeEdgeFrom (fromNode : Node) {
+    removeEdgeFrom (fromNode : this[ 'NodeT' ]) {
         super.removeEdgeFrom(fromNode)
 
         fromNode.outgoing.delete(this)
@@ -135,4 +138,8 @@ export class MinimalNode extends
     WalkableForwardNode(
     WalkableBackwardNode(
         Base
-    ))) {}
+    )))
+{
+    NodeT           : Node
+    LabelT          : any
+}

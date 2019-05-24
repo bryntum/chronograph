@@ -62,7 +62,8 @@ StartTest(t => {
 
         console.time("Calc #0")
 
-        await graph.propagate()
+        await graph.propagateAsync()
+        // graph.propagateSync()
 
         console.timeEnd("Calc #0")
 
@@ -73,7 +74,8 @@ StartTest(t => {
                 console.time("Calc #1")
                 // console.profile('Propagate')
 
-                await graph.propagate()
+                await graph.propagateAsync()
+                // graph.propagateSync()
 
                 // console.profileEnd()
                 console.timeEnd("Calc #1")
@@ -85,7 +87,8 @@ StartTest(t => {
 
                 console.time("Calc #2")
 
-                await graph.propagate()
+                await graph.propagateAsync()
+                // graph.propagateSync()
 
                 console.timeEnd("Calc #2")
 

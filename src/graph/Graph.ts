@@ -10,13 +10,8 @@ class Graph extends base {
     nodes           : Set<this[ 'NodeT' ]>         = new Set()
 
 
-    getNodes () : Set<this[ 'NodeT' ]> {
-        return this.nodes
-    }
-
-
     hasNode (node : this[ 'NodeT' ]) : boolean {
-        return this.getNodes().has(node)
+        return this.nodes.has(node)
     }
 
 
@@ -66,4 +61,7 @@ export class MinimalGraph extends
     WalkableForwardNode(
     WalkableBackwardNode(
         Base
-    ))) {}
+    )))
+{
+    NodeT           : Node
+}

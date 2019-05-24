@@ -24,9 +24,13 @@
 
     "include" : [
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/chrono/010_graph.t.ts"
+//    ,
+//        "tests/**/*.ts"
     ],
 
     "exclude" : [
+        "src/replica/**/*.ts",
+        "src/schema/**/*.ts"
     ]
 }

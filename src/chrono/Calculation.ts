@@ -53,7 +53,7 @@ class ChronoCalculation extends base {
         if (this.isCalculationStarted()) throw new Error("Calculation already started")
         // </debug>
 
-        const iterator : this[ 'iterator' ] = this.iterator = this.calculate.call(this.calculationContext || this, ...args)
+        const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.calculationContext || this, ...args)
 
         return this.iterationResult = iterator.next()
     }
@@ -64,8 +64,8 @@ class ChronoCalculation extends base {
     }
 
 
-    * calculate (...args : this[ 'ArgsT' ]) : this[ 'iterator' ] {
-        throw new Error("Abstract method `calculate` called")
+    * calculation (...args : this[ 'ArgsT' ]) : this[ 'iterator' ] {
+        throw new Error("Abstract method `calculation` called")
     }
 
 

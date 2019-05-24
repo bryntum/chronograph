@@ -1,6 +1,6 @@
 //---------------------------------------------------------------------------------------------------------------------
 export type ChronoId        = string | number
 
-let ATOM_ID : number = 1
+let ID : number = 1
 
-export const chronoId = () : ChronoId => `chrono${ATOM_ID++}`
+export const chronoId = () : ChronoId => `chrono${ID++}`
