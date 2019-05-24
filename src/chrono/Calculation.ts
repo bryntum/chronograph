@@ -1,7 +1,5 @@
-import { AnyConstructor, AnyFunction, Base, Mixin } from "../class/Mixin.js"
-import { ChronoAtom, isChronoAtom } from "./Atom.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { Box } from "./Box.js"
-import { Effect, isEffect } from "./Effect.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -9,33 +7,25 @@ export type ChronoValue = any
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type ChronoIterator<T = ChronoValue> = IterableIterator<ChronoAtom | Effect | T>
+export type ChronoIterator<ResultT = any, YieldT = any> = IterableIterator<YieldT | ResultT>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type ChronoCalculationFunc<T = ChronoValue> = (...args : any[]) => ChronoIterator<T>
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export type ChronoIterationResult = { value? : ChronoValue, requested? : ChronoAtom, effect? : Effect }
-
-
-//---------------------------------------------------------------------------------------------------------------------
-const isChronoCalculationSymbol = Symbol('isChronoCalculationSymbol')
+export type ChronoCalculationFunction<ResultT = any, YieldT = any, ArgsT extends any[] = any[]> = (...args : ArgsT) => ChronoIterator<ResultT, YieldT>
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const ChronoCalculation = <T extends AnyConstructor<Box>>(base : T) =>
 
 class ChronoCalculation extends base {
-    [isChronoCalculationSymbol] () {}
+    ArgsT               : any[]
+    YieldT              : any
 
-    calculation         : ChronoCalculationFunc<this[ 'valueT' ]>
     calculationContext  : any
 
-    iterator            : IterableIterator<this[ 'valueT' ]>
+    iterator            : ChronoIterator<this[ 'ValueT' ], this[ 'YieldT' ]>
 
-    requested           : ChronoAtom
+    iterationResult     : IteratorResult<any>
 
 
     isCalculationStarted () : boolean {
@@ -44,111 +34,62 @@ class ChronoCalculation extends base {
 
 
     isCalculationCompleted () : boolean {
-        return this.hasOwnProperty('value')
+        return Boolean(this.iterationResult && this.iterationResult.done)
     }
 
 
-    startCalculation (...args : any[]) : ChronoIterationResult {
+    get value () : this[ 'ValueT' ] {
+        return this.iterationResult.value
+    }
+
+
+    hasValue () : boolean {
+        return this.isCalculationCompleted()
+    }
+
+
+    startCalculation (...args : this[ 'ArgsT' ]) : IteratorResult<any> {
+        // <debug>
         if (this.isCalculationStarted()) throw new Error("Calculation already started")
+        // </debug>
 
-        const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.calculationContext, ...args)
+        const iterator : this[ 'iterator' ] = this.iterator = this.calculate.call(this.calculationContext || this, ...args)
 
-        const iterationResult   = iterator.next()
-
-        return this.continueCalculation(iterationResult)
+        return this.iterationResult = iterator.next()
     }
 
 
-    continueCalculation (iterationResult : IteratorResult<this[ 'valueT' ]>) : ChronoIterationResult {
-        if (!this.isCalculationStarted()) throw new Error("Calculation not started")
+    supplyYieldValue (value : this[ 'YieldT' ]) : IteratorResult<any> {
+        return this.iterationResult = this.iterator.next(value)
+    }
 
-        const value = iterationResult.value
 
-        if (iterationResult.done) {
-            this.value      = value
+    * calculate (...args : this[ 'ArgsT' ]) : this[ 'iterator' ] {
+        throw new Error("Abstract method `calculate` called")
+    }
 
-            return { value }
-        } else {
-            if (isChronoAtom(value)) {
-                this.requested  = value
 
-                return { requested : value }
+    runSyncWithEffect (onEffect : (effect : this[ 'YieldT' ]) => any, ...args : this[ 'ArgsT' ]) : this[ 'ValueT' ] {
+        this.startCalculation(...args)
 
-            } else if (isEffect(value)) {
-
-                return { effect : value }
-
-            } else
-                throw new Error("Invalid yield")
+        while (!this.isCalculationCompleted()) {
+            this.supplyYieldValue(onEffect(this.iterationResult.value))
         }
+
+        return this.value
     }
 
 
-    supplyRequestedValue (value : ChronoValue) : ChronoIterationResult {
-        this.requested      = null
+    async runAsyncWithEffect (onEffect : (effect : this[ 'YieldT' ]) => Promise<any>, ...args : this[ 'ArgsT' ]) : Promise<this[ 'ValueT' ]> {
+        this.startCalculation(...args)
 
-        return this.continueCalculation(this.iterator.next(value))
+        while (!this.isCalculationCompleted()) {
+            this.supplyYieldValue(await onEffect(this.iterationResult.value))
+        }
+
+        return this.value
     }
 }
 
 export type ChronoCalculation = Mixin<typeof ChronoCalculation>
 export interface ChronoCalculationI extends Mixin<typeof ChronoCalculation> {}
-
-export class MinimalChronoCalculation extends ChronoCalculation(Box(Base)) {}
-
-export const isChronoCalculation = (value : any) : value is ChronoCalculation => Boolean(value && value[ isChronoCalculationSymbol ])
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export class CalculationContext<OnEffectReturnType = any> extends Base {
-//     onEffect                : (effect : Effect) => OnEffectReturnType
-//
-//     // onValue                 : (value : Value) => OnEffectReturnType
-// }
-//
-//
-// // export type SynchronousRun<Value> = (calculation : ChronoCalculation, context : CalculationContext<Value, void>) => Value
-// //
-// // export function runSyncInContext<Value> (calculation : ChronoCalculation, context : CalculationContext<Value, void>) : Value {
-// //
-// //     do {
-// //         const iterationResult       = calculation.startCalculation()
-// //     } while (true)
-// // }
-//
-//
-
-// export type GeneratorFunc<A> = (...args : any[]) => IterableIterator<A>
-//
-//
-// export const runGeneratorSync = <V>(genFunc : GeneratorFunc<V>, ...args : any[]) : V => {
-//     const iterator      = genFunc(...args)
-//
-//     let iteratorValue : IteratorResult<any>
-//
-//     do {
-//         iteratorValue   = iterator.next()
-//     } while (!iteratorValue.done)
-//
-//     return iteratorValue.value
-// }
-//
-//
-//
-// export const runGeneratorWithEffect = function* <V>(onEffect : GeneratorFunc<any>, genFunc : GeneratorFunc<V>, ...args : any[]) : IterableIterator<V> {
-//     const iterator      = genFunc(...args)
-//
-//     let iteratorValue : IteratorResult<V>
-//
-//     let nextArgs : any  = undefined
-//
-//     do {
-//         iteratorValue   = iterator.next(nextArgs)
-//
-//         const value     = iteratorValue.value
-//
-//         if (iteratorValue.done) return value
-//
-//         nextArgs        = yield* onEffect(value)
-//
-//     } while (true)
-// }
