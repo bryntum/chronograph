@@ -55,10 +55,12 @@ class ChronoGraph extends base {
     }
 
 
-    async propagateAsync () {
+    async propagateAsync () : Promise<PropagationResult> {
         await this.activeTransaction.runAsyncWithEffect(async () => null)
 
         this.applyTransaction(this.activeTransaction)
+
+        return PropagationResult.Completed
     }
 
 

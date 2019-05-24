@@ -8,7 +8,7 @@ StartTest(t => {
     t.it("Should be performant", async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        let atomNum     = 50000
+        let atomNum     = 300000
 
         let boxes       = []
 
