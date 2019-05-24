@@ -1,11 +1,22 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkContext, WalkForwardContext } from "./Walkable.js"
+import { WalkContext } from "./Walkable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableForwardNode = <T extends AnyConstructor<WalkableForward>>(base : T) =>
+export class WalkForwardNodeContext extends WalkContext<WalkableForwardNode> {
+
+    forEachNext (node : WalkableForwardNode, func : (node : WalkableForwardNode) => any) {
+        node.forEachOutgoing(this, func)
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const WalkableForwardNode = <T extends AnyConstructor<object>>(base : T) =>
 
 class WalkableForwardNode extends base {
-    outgoing        : Set<WalkableForwardNode>         = new Set()
+    LabelT          : any
+
+    outgoing        : Map<WalkableForwardNode, this[ 'LabelT' ]>
 
 
     hasEdgeTo (toNode : WalkableForwardNode) : boolean {
@@ -13,8 +24,13 @@ class WalkableForwardNode extends base {
     }
 
 
-    addEdgeTo (toNode : WalkableForwardNode) {
-        this.outgoing.add(toNode)
+    getLabelTo (toNode : WalkableForwardNode) : this[ 'LabelT' ] {
+        return this.outgoing.get(toNode)
+    }
+
+
+    addEdgeTo (toNode : WalkableForwardNode, label : this[ 'LabelT' ]) {
+        this.outgoing.set(toNode, label)
     }
 
 
@@ -23,30 +39,30 @@ class WalkableForwardNode extends base {
     }
 
 
-    addEdgesTo (toNodes : WalkableForwardNode[]) {
-        toNodes.forEach(toNode => this.addEdgeTo(toNode))
-    }
-
-
-    getOutgoing (context : WalkContext) : WalkableForwardNode[] {
-        return Array.from(this.outgoing)
-    }
-
-
-    forEachOutgoing (context : WalkForwardContext, func : (node : WalkableForward) => any) {
-        this.outgoing.forEach(func)
+    forEachOutgoing (context : WalkForwardNodeContext, func : (node : WalkableForwardNode) => any) {
+        this.outgoing.forEach((label, node) => func(node))
     }
 }
 
 export type WalkableForwardNode = Mixin<typeof WalkableForwardNode>
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export class WalkBackwardNodeContext extends WalkContext<WalkableBackwardNode> {
+
+    forEachNext (node : WalkableBackwardNode, func : (node : WalkableBackwardNode) => any) {
+        node.forEachIncoming(this, func)
+    }
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableBackwardNode = <T extends AnyConstructor<WalkableBackward>>(base : T) =>
+export const WalkableBackwardNode = <T extends AnyConstructor<object>>(base : T) =>
 
 class WalkableBackwardNode extends base {
-    incoming        : Set<WalkableBackwardNode>         = new Set()
+    LabelT          : any
+
+    incoming        : Map<WalkableBackwardNode, this[ 'LabelT' ]>
 
 
     hasEdgeFrom (fromNode : WalkableBackwardNode) : boolean {
@@ -54,8 +70,13 @@ class WalkableBackwardNode extends base {
     }
 
 
-    addEdgeFrom (fromNode : WalkableBackwardNode) {
-        this.incoming.add(fromNode)
+    getLabelFrom (fromNode : WalkableBackwardNode) : this[ 'LabelT' ] {
+        return this.incoming.get(fromNode)
+    }
+
+
+    addEdgeFrom (fromNode : WalkableBackwardNode, label : this[ 'LabelT' ]) {
+        this.incoming.set(fromNode, label)
     }
 
 
@@ -64,17 +85,8 @@ class WalkableBackwardNode extends base {
     }
 
 
-    addEdgesFrom (fromNodes : WalkableBackwardNode[]) {
-        fromNodes.forEach(fromNode => this.addEdgeFrom(fromNode))
-    }
-
-
-    getIncoming (context : WalkContext) : WalkableBackwardNode[] {
-        return Array.from(this.incoming)
-    }
-
-    forEachIncoming (context : WalkBackwardContext, func : (node : WalkableBackward) => any) {
-        this.incoming.forEach(func)
+    forEachIncoming (context : WalkBackwardNodeContext, func : (node : WalkableBackwardNode) => any) {
+        this.incoming.forEach((label, node) => func(node))
     }
 }
 
@@ -86,14 +98,14 @@ export type WalkableBackwardNode = Mixin<typeof WalkableBackwardNode>
 export const Node = <T extends AnyConstructor<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
 
 class Node extends base {
-    incoming        : Set<Node>
-    outgoing        : Set<Node>
+    outgoing        : Map<Node, this[ 'LabelT' ]>   = new Map()
+    incoming        : Map<Node, this[ 'LabelT' ]>   = new Map()
 
 
-    addEdgeTo (toNode : Node) {
-        super.addEdgeTo(toNode)
+    addEdgeTo (toNode : Node, label : this[ 'LabelT' ]) {
+        super.addEdgeTo(toNode, label)
 
-        toNode.incoming.add(this)
+        toNode.incoming.set(this, label)
     }
 
     removeEdgeTo (toNode : Node) {
@@ -103,10 +115,10 @@ class Node extends base {
     }
 
 
-    addEdgeFrom (fromNode : Node) {
-        super.addEdgeFrom(fromNode)
+    addEdgeFrom (fromNode : Node, label : this[ 'LabelT' ]) {
+        super.addEdgeFrom(fromNode, label)
 
-        fromNode.outgoing.add(this)
+        fromNode.outgoing.set(this, label)
     }
 
     removeEdgeFrom (fromNode : Node) {
@@ -114,7 +126,6 @@ class Node extends base {
 
         fromNode.outgoing.delete(this)
     }
-
 }
 
 export type Node = Mixin<typeof Node>
@@ -123,8 +134,5 @@ export class MinimalNode extends
     Node(
     WalkableForwardNode(
     WalkableBackwardNode(
-    WalkableForward(
-    WalkableBackward(
-    Walkable(
         Base
-    )))))) {}
+    ))) {}

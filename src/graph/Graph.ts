@@ -1,46 +1,45 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { Node, WalkableBackwardNode, WalkableForwardNode } from "./Node.js"
-import { Walkable, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext } from "./Walkable.js"
+import { Node, WalkableBackwardNode, WalkableForwardNode, WalkBackwardNodeContext, WalkForwardNodeContext } from "./Node.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Graph = <T extends AnyConstructor<WalkableForward & WalkableBackward>>(base : T) =>
+export const Graph = <T extends AnyConstructor<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
 
 class Graph extends base {
-    nodeT           : Node
+    NodeT           : Node
 
-    nodes           : Set<this[ 'nodeT' ]>         = new Set()
+    nodes           : Set<this[ 'NodeT' ]>         = new Set()
 
 
-    getNodes () : Set<this[ 'nodeT' ]> {
+    getNodes () : Set<this[ 'NodeT' ]> {
         return this.nodes
     }
 
 
-    hasDirectNode (node : this[ 'nodeT' ]) : boolean {
+    hasNode (node : this[ 'NodeT' ]) : boolean {
         return this.getNodes().has(node)
     }
 
 
-    addNodes (nodes : this[ 'nodeT' ][]) {
+    addNodes (nodes : this[ 'NodeT' ][]) {
         nodes.forEach(node => this.addNode(node))
     }
 
 
-    addNode (node : this[ 'nodeT' ]) : this[ 'nodeT' ] {
+    addNode (node : this[ 'NodeT' ]) : this[ 'NodeT' ] {
         this.nodes.add(node)
 
         return node
     }
 
 
-    removeNodes (nodes : this[ 'nodeT' ][]) {
+    removeNodes (nodes : this[ 'NodeT' ][]) {
         nodes.forEach(node => this.removeNode(node))
     }
 
 
-    removeNode (node : this[ 'nodeT' ]) {
+    removeNode (node : this[ 'NodeT' ]) {
         // <debug>
-        if (!this.hasDirectNode(node)) throw new Error(`This [${node}] does not exists in the graph`)
+        if (!this.hasNode(node)) throw new Error(`This [${node}] does not exists in the graph`)
         // </debug>
 
         node.outgoing.forEach(toNode => toNode.removeEdgeFrom(node))
@@ -50,22 +49,12 @@ class Graph extends base {
     }
 
 
-    getIncoming () : this[ 'nodeT' ][] {
-        return Array.from(this.nodes)
-    }
-
-
-    getOutgoing () : this[ 'nodeT' ][] {
-        return Array.from(this.nodes)
-    }
-
-
-    forEachIncoming (context : WalkBackwardContext, func : (node : this[ 'nodeT' ]) => any) {
+    forEachIncoming (context : WalkBackwardNodeContext, func : (node : this[ 'NodeT' ]) => any) {
         this.nodes.forEach(func)
     }
 
 
-    forEachOutgoing (context : WalkForwardContext, func : (node : this[ 'nodeT' ]) => any) {
+    forEachOutgoing (context : WalkForwardNodeContext, func : (node : this[ 'NodeT' ]) => any) {
         this.nodes.forEach(func)
     }
 }
@@ -76,8 +65,5 @@ export class MinimalGraph extends
     Graph(
     WalkableForwardNode(
     WalkableBackwardNode(
-    WalkableForward(
-    WalkableBackward(
-    Walkable(
         Base
-    )))))) {}
+    ))) {}

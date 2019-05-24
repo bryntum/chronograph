@@ -1,117 +1,96 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 
 export enum OnCycleAction {
-    Cancel,
-    Resume
+    Cancel  = "Cancel",
+    Resume  = "Resume"
 }
+
+//---------------------------------------------------------------------------------------------------------------------
+export type WalkStep<Walkable>    = { node : Walkable, from : Walkable }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export abstract class WalkContext extends Base {
+export abstract class WalkContext<Walkable> extends Base {
 
-    // onNode                  : (node : Walkable) => any
-    // onTopologicalNode       : (node : Walkable) => any
-    // onCycle                 : (node : Walkable) => any
+    visited         : Map<Walkable, { visitedAt : number, visitedTopologically : boolean }>     = new Map()
 
-    onNode (node : Walkable) {
-    }
+    toVisit         : WalkStep<Walkable>[]
 
 
     onTopologicalNode (node : Walkable) {
     }
 
 
-    onCycle (node : Walkable, stack : WalkStep[]) : OnCycleAction {
+    onCycle (node : Walkable, stack : WalkStep<Walkable>[]) : OnCycleAction {
         return OnCycleAction.Cancel
     }
 
 
     abstract forEachNext (node : Walkable, func : (node : Walkable) => any)
-}
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export type WalkStep    = { node : Walkable, from : Walkable }
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const Walkable = <T extends AnyConstructor<Base>>(base : T) =>
-
-class Walkable extends base {
-
-    /**
-        POSSIBLE OPTIMIZATION (need to benchmark)
-        instead of the separate map for visited data
-
-          const visitedAt             = new Map<this, number>()
-
-        store the number in the node itself (as non-enumerable symbol property)
-    */
-    walkDepth (context : WalkContext) {
-        // POSSIBLE OPTIMIZATION - have a single `visitedAt` map as Map<this, [ number, boolean ]> to
-        // store the "visitedTopologically" flag
-        const visitedAt             = new Map<Walkable, number>()
-        const visitedTopologically  = new Set<Walkable>()
-
-        const toVisit : WalkStep[]  = [ { node : this, from : this } ]
+    walkDepth () {
+        const visited               = this.visited
+        const toVisit               = this.toVisit
 
         let depth
 
         while (depth = toVisit.length) {
             const node              = toVisit[ depth - 1 ].node
 
-            if (visitedTopologically.has(node)) {
+            const visitedInfo       = visited.get(node)
+
+            if (visitedInfo && visitedInfo.visitedTopologically) {
                 toVisit.pop()
                 continue
             }
 
-            const visitedAtDepth    = visitedAt.get(node)
+            if (visitedInfo) {
+                // repeating entry to the node
+                const visitedAtDepth    = visitedInfo.visitedAt
 
-            // node has been already visited
-            if (visitedAtDepth != null) {
-
-                // it is valid to find itself in the visited map, but only if visited at the current depth
+                // it is valid to find itself "visited", but only if visited at the current depth
                 // (which indicates stack unwinding)
                 // if the node has been visited at earlier depth - its a cycle
                 if (visitedAtDepth < depth) {
-                    if (context.onCycle(node, toVisit) !== OnCycleAction.Resume) break
+                    if (this.onCycle(node, toVisit) !== OnCycleAction.Resume) break
                 } else {
-                    visitedTopologically.add(node)
+                    visitedInfo.visitedTopologically = true
 
-                    // we've processed all outgoing edges from this node,
-                    // now we can add it to topologically sorted results (if needed)
-                    context.onTopologicalNode(node)
+                    this.onTopologicalNode(node)
                 }
 
                 toVisit.pop()
-
             } else {
-                visitedAt.set(node, depth)
+                // first entry to the node
+                const visitedInfo       = { visitedAt : depth, visitedTopologically : false }
 
-                context.onNode(node)
+                visited.set(node, visitedInfo)
 
-                const lengthBefore  = toVisit.length
+                const lengthBefore      = toVisit.length
 
-                context.forEachNext(node, nextNode => toVisit.push({ node : nextNode, from : node }))
+                this.forEachNext(node, nextNode => toVisit.push({ node : nextNode, from : node }))
 
-                // no new nodes added
+                // if there's no outgoing edges, node is at topological position
+                // it would be enough to just continue the `while` loop and the `onTopologicalNode`
+                // would happen on next iteration, but with this "inlining" we save one call to `visited.get()`
+                // at the cost of length comparison
                 if (toVisit.length === lengthBefore) {
-                    visitedTopologically.add(node)
+                    visitedInfo.visitedTopologically = true
 
-                    // if there's no outgoing edges, node is at topological position
-                    context.onTopologicalNode(node)
+                    this.onTopologicalNode(node)
 
                     toVisit.pop()
                 }
             }
         }
     }
+
 }
 
-export type Walkable = Mixin<typeof Walkable>
 
-
-export const cycleInfo = (stack : WalkStep[]) : Walkable[] => {
+//---------------------------------------------------------------------------------------------------------------------
+export function cycleInfo<Walkable> (stack : WalkStep<Walkable>[]) : Walkable[] {
     const cycleSource           = stack[ stack.length - 1 ].node
 
     const cycle : Walkable[]    = [ cycleSource ]
@@ -139,55 +118,3 @@ export const cycleInfo = (stack : WalkStep[]) : Walkable[] => {
     return cycle.reverse()
 }
 
-
-//---------------------------------------------------------------------------------------------------------------------
-export class WalkForwardContext extends WalkContext {
-
-    forEachNext (node : WalkableForward, func : (node : WalkableForward) => any) {
-        node.forEachOutgoing(this, func)
-    }
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class WalkBackwardContext extends WalkContext {
-
-    forEachNext (node : WalkableBackward, func : (node : WalkableBackward) => any) {
-        node.forEachIncoming(this, func)
-    }
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const WalkableForward = <T extends AnyConstructor<Walkable>>(base : T) => {
-
-    abstract class WalkableForward extends base {
-        abstract getOutgoing (context : WalkForwardContext) : WalkableForward[]
-
-        forEachOutgoing (context : WalkForwardContext, func : (WalkableForward) => any) {
-            this.getOutgoing(context).forEach(func)
-        }
-    }
-
-    return WalkableForward
-}
-
-export type WalkableForward = Mixin<typeof WalkableForward>
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const WalkableBackward = <T extends AnyConstructor<Walkable>>(base : T) => {
-
-    abstract class WalkableBackward extends base {
-        abstract getIncoming (context : WalkBackwardContext) : WalkableBackward[]
-
-        forEachIncoming (context : WalkBackwardContext, func : (WalkableBackward) => any) {
-            this.getIncoming(context).forEach(func)
-        }
-    }
-
-    return WalkableBackward
-}
-
-export type WalkableBackward = Mixin<typeof WalkableBackward>
