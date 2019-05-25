@@ -1,43 +1,40 @@
 import { HasId } from "../../src/chrono/HasId.js"
-import { Base } from "../../src/class/Mixin.js"
-import { MinimalNode } from "../../src/graph/Node.js"
-import { cycleInfo, OnCycleAction, Walkable, WalkForwardContext, WalkStep } from "../../src/graph/Walkable.js"
-import { calculate, Entity, field } from "../../src/replica/Entity.js"
-import { MinimalReplica } from "../../src/replica/Replica.js"
+import { MinimalNode, WalkForwardNodeContext } from "../../src/graph/Node.js"
+import { cycleInfo, OnCycleAction, WalkStep } from "../../src/graph/Walkable.js"
 
 declare const StartTest : any
 
-class NodeWithId extends HasId(MinimalNode) {}
+class WalkerNode extends HasId(MinimalNode) {}
 
 StartTest(t => {
 
     t.it('Cycle detection #1', t => {
-        const node1     = NodeWithId.new({ id : 1 })
-        const node2     = NodeWithId.new({ id : 2 })
+        const node1     = WalkerNode.new({ id : 1 })
+        const node2     = WalkerNode.new({ id : 2 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node1)
 
-        let cycle : Walkable[]
+        let cycle : WalkerNode[]
 
-        node1.walkDepth(WalkForwardContext.new({
-            onCycle : (node : NodeWithId, stack : WalkStep[]) : OnCycleAction => {
+        WalkForwardNodeContext.new({
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycle   = cycleInfo(stack)
 
                 return OnCycleAction.Cancel
             }
-        }))
+        }).startFrom([ node1 ])
 
         t.isDeeply(cycle, [ node1, node2, node1 ], 'Correct cycle path')
     })
 
 
     t.it('Cycle detection #2', t => {
-        const node1     = NodeWithId.new({ id : 1 })
-        const node2     = NodeWithId.new({ id : 2 })
-        const node3     = NodeWithId.new({ id : 3 })
-        const node4     = NodeWithId.new({ id : 4 })
-        const node5     = NodeWithId.new({ id : 5 })
+        const node1     = WalkerNode.new({ id : 1 })
+        const node2     = WalkerNode.new({ id : 2 })
+        const node3     = WalkerNode.new({ id : 3 })
+        const node4     = WalkerNode.new({ id : 4 })
+        const node5     = WalkerNode.new({ id : 5 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node3)
@@ -45,32 +42,32 @@ StartTest(t => {
         node4.addEdgeTo(node2)
         node3.addEdgeTo(node5)
 
-        let cycle : Walkable[]
+        let cycle : WalkerNode[]
 
-        node1.walkDepth(WalkForwardContext.new({
-            onCycle : (node : NodeWithId, stack : WalkStep[]) : OnCycleAction => {
+        WalkForwardNodeContext.new({
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycle   = cycleInfo(stack)
 
                 return OnCycleAction.Cancel
             }
-        }))
+        }).startFrom([ node1 ])
 
         t.isDeeply(cycle, [ node2, node3, node4, node2 ], 'Correct cycle path')
     })
 
 
     t.it('Cycle detection #3', t => {
-        const node1     = NodeWithId.new({ id : 1 })
-        const node2     = NodeWithId.new({ id : 2 })
-        const node3     = NodeWithId.new({ id : 3 })
-        const node4     = NodeWithId.new({ id : 4 })
-        const node5     = NodeWithId.new({ id : 5 })
-        const node6     = NodeWithId.new({ id : 6 })
-        const node7     = NodeWithId.new({ id : 7 })
-        const node8     = NodeWithId.new({ id : 8 })
-        const node9     = NodeWithId.new({ id : 9 })
-        const node10    = NodeWithId.new({ id : 10 })
-        const node11    = NodeWithId.new({ id : 11 })
+        const node1     = WalkerNode.new({ id : 1 })
+        const node2     = WalkerNode.new({ id : 2 })
+        const node3     = WalkerNode.new({ id : 3 })
+        const node4     = WalkerNode.new({ id : 4 })
+        const node5     = WalkerNode.new({ id : 5 })
+        const node6     = WalkerNode.new({ id : 6 })
+        const node7     = WalkerNode.new({ id : 7 })
+        const node8     = WalkerNode.new({ id : 8 })
+        const node9     = WalkerNode.new({ id : 9 })
+        const node10    = WalkerNode.new({ id : 10 })
+        const node11    = WalkerNode.new({ id : 11 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node3)
@@ -90,60 +87,125 @@ StartTest(t => {
         node4.addEdgeTo(node11)
         node11.addEdgeTo(node10)
 
-        let cycle : Walkable[]
+        let cycle : WalkerNode[]
 
-        node1.walkDepth(WalkForwardContext.new({
-            onCycle : (node : NodeWithId, stack : WalkStep[]) : OnCycleAction => {
+        WalkForwardNodeContext.new({
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycle   = cycleInfo(stack)
 
                 return OnCycleAction.Cancel
             }
-        }))
+        }).startFrom([ node1 ])
 
         t.isDeeply(cycle, [ node2, node3, node4, node2 ], 'Correct cycle path')
     })
 
-    t.it('Cycle vizualization', async t => {
 
-        class CircSum extends Entity(Base) {
-            @field()
-            pointA : number
+    t.it('Resume on cycle #1', t => {
+        const node1     = WalkerNode.new({ id : 1 })
+        const node2     = WalkerNode.new({ id : 2 })
+        const node3     = WalkerNode.new({ id : 3 })
 
-            @field()
-            pointB : number
+        node1.addEdgeTo(node2)
+        node2.addEdgeTo(node3)
+        node2.addEdgeTo(node1)
+        node3.addEdgeTo(node2)
 
-            @field()
-            pointC : number
+        const walkPath  = []
 
-            @calculate('pointA')
-            * calcPointA (proposedValue? : number) {
-                return (yield this.$.pointB) + (yield this.$.pointC)
+        let cycleFound  = []
+
+        WalkForwardNodeContext.new({
+            forEachNext : (node : WalkerNode, func) => {
+                walkPath.push(node.id)
+
+                WalkForwardNodeContext.prototype.forEachNext.call(this, node, func)
+            },
+
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
+                cycleFound.push(cycleInfo(stack))
+
+                return OnCycleAction.Resume
             }
+        }).startFrom([ node1 ])
 
-            @calculate('pointB')
-            * calcPointB (proposedValue? : number) {
-                return (yield this.$.pointA) + (yield this.$.pointC)
-            }
-
-            @calculate('pointC')
-            * calcPointC (proposedValue? : number) {
-                return (yield this.$.pointA) + (yield this.$.pointB)
-            }
-        }
-
-        const replica = MinimalReplica.new()
-
-        const sum = CircSum.new({ pointA : 1, pointB : 2, pointC : 3 })
-
-        replica.addEntity(sum)
-
-        try {
-            const result = await replica.propagate()
-        }
-        catch (e) {
-            t.like(e.message.toLowerCase(), 'cycle', 'Got cycle exception')
-            t.like(replica.toDotOnCycleException(), 'penwidth=5', 'Cycle seems to be drawn')
-        }
+        t.isDeeply(cycleFound, [ [ node1, node2, node1 ], [ node2, node3, node2 ] ], "2 cycles found")
     })
+
+
+    t.it('Resume on cycle #2', t => {
+        const node1     = WalkerNode.new({ id : 1 })
+        const node2     = WalkerNode.new({ id : 2 })
+        const node3     = WalkerNode.new({ id : 3 })
+
+        node1.addEdgeTo(node2)
+        node2.addEdgeTo(node1)
+        node2.addEdgeTo(node3)
+        node3.addEdgeTo(node2)
+
+        const walkPath  = []
+
+        let cycleFound  = []
+
+        WalkForwardNodeContext.new({
+            forEachNext : (node : WalkerNode, func) => {
+                walkPath.push(node.id)
+
+                WalkForwardNodeContext.prototype.forEachNext.call(this, node, func)
+            },
+
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
+                cycleFound.push(cycleInfo(stack))
+
+                return OnCycleAction.Resume
+            }
+        }).startFrom([ node1 ])
+
+        t.isDeeply(cycleFound, [ [ node2, node3, node2 ], [ node1, node2, node1 ] ], "2 cycles found")
+    })
+
+
+    // // t.it('Cycle vizualization', async t => {
+    // //
+    // //     class CircSum extends Entity(Base) {
+    // //         @field()
+    // //         pointA : number
+    // //
+    // //         @field()
+    // //         pointB : number
+    // //
+    // //         @field()
+    // //         pointC : number
+    // //
+    // //         @calculate('pointA')
+    // //         * calcPointA (proposedValue? : number) {
+    // //             return (yield this.$.pointB) + (yield this.$.pointC)
+    // //         }
+    // //
+    // //         @calculate('pointB')
+    // //         * calcPointB (proposedValue? : number) {
+    // //             return (yield this.$.pointA) + (yield this.$.pointC)
+    // //         }
+    // //
+    // //         @calculate('pointC')
+    // //         * calcPointC (proposedValue? : number) {
+    // //             return (yield this.$.pointA) + (yield this.$.pointB)
+    // //         }
+    // //     }
+    // //
+    // //     const replica = MinimalReplica.new()
+    // //
+    // //     const sum = CircSum.new({ pointA : 1, pointB : 2, pointC : 3 })
+    // //
+    // //     replica.addEntity(sum)
+    // //
+    // //     try {
+    // //         const result = await replica.propagate()
+    // //     }
+    // //     catch (e) {
+    // //         t.like(e.message.toLowerCase(), 'cycle', 'Got cycle exception')
+    // //         t.like(replica.toDotOnCycleException(), 'penwidth=5', 'Cycle seems to be drawn')
+    // //     }
+    // // })
 
 })

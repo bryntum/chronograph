@@ -29,7 +29,7 @@ class WalkableForwardNode extends base {
     }
 
 
-    addEdgeTo (toNode : WalkableForwardNode, label? : this[ 'LabelT' ]) {
+    addEdgeTo (toNode : WalkableForwardNode, label : this[ 'LabelT' ] = null) {
         this.outgoing.set(toNode, label)
     }
 
@@ -75,7 +75,7 @@ class WalkableBackwardNode extends base {
     }
 
 
-    addEdgeFrom (fromNode : WalkableBackwardNode, label? : this[ 'LabelT' ]) {
+    addEdgeFrom (fromNode : WalkableBackwardNode, label : this[ 'LabelT' ] = null) {
         this.incoming.set(fromNode, label)
     }
 
@@ -105,7 +105,7 @@ class Node extends base {
     incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 
 
-    addEdgeTo (toNode : this[ 'NodeT' ], label? : this[ 'LabelT' ]) {
+    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
         super.addEdgeTo(toNode, label)
 
         toNode.incoming.set(this, label)
@@ -118,7 +118,7 @@ class Node extends base {
     }
 
 
-    addEdgeFrom (fromNode : this[ 'NodeT' ], label? : this[ 'LabelT' ]) {
+    addEdgeFrom (fromNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
         super.addEdgeFrom(fromNode, label)
 
         fromNode.outgoing.set(this, label)

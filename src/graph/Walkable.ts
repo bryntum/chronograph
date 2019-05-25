@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { Base } from "../class/Mixin.js"
 
 export enum OnCycleAction {
     Cancel  = "Cancel",
@@ -15,6 +15,13 @@ export class WalkContext<Walkable> extends Base {
     visited         : Map<Walkable, { visitedAt : number, visitedTopologically : boolean }>     = new Map()
 
     toVisit         : WalkStep<Walkable>[]
+
+
+    startFrom (sourceNodes : Walkable[]) {
+        this.toVisit    = sourceNodes.map(node => { return { node : node, from : node } })
+
+        this.walkDepth()
+    }
 
 
     onTopologicalNode (node : Walkable) {
@@ -55,7 +62,10 @@ export class WalkContext<Walkable> extends Base {
                 // (which indicates stack unwinding)
                 // if the node has been visited at earlier depth - its a cycle
                 if (visitedAtDepth < depth) {
+                    // ONLY resume if explicitly returned `Resume`, cancel in all other cases (undefined, etc)
                     if (this.onCycle(node, toVisit) !== OnCycleAction.Resume) break
+
+                    visitedInfo.visitedTopologically = true
                 } else {
                     visitedInfo.visitedTopologically = true
 
@@ -87,7 +97,6 @@ export class WalkContext<Walkable> extends Base {
             }
         }
     }
-
 }
 
 
@@ -109,11 +118,9 @@ export function cycleInfo<Walkable> (stack : WalkStep<Walkable>[]) : Walkable[] 
             cycle.push(stack[ pos ].node)
 
             anotherNodePos          = pos
-
-            pos--
         }
 
-    } while (pos >= 0 && stack[ pos ].node !== cycleSource)
+    } while (pos >= 0 && stack[ pos ].from !== cycleSource)
 
     cycle.push(cycleSource)
 
