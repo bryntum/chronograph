@@ -104,32 +104,31 @@ export class WalkContext<Walkable> extends Base {
 
 //---------------------------------------------------------------------------------------------------------------------
 export function cycleInfo<Walkable> (stack : WalkStep<Walkable>[]) : Walkable[] {
-    const cycleSource           = stack[ stack.length - 1 ].node
+    const length                = stack.length
+
+    if (length === 0) return []
+
+    const cycleSource           = stack[ length - 1 ].node
 
     const cycle : Walkable[]    = [ cycleSource ]
 
-    let pos                     = stack.length - 1
-    let anotherNodePos          = stack.length - 1
+    let current                 = length - 1
+    let cursor                  = current
 
-    do {
-        // the cycle is the node reference to itself
-        if (stack[ pos ].from === stack[ pos ].node) break
-
+    while (current >= 0 && stack[ current ].from !== cycleSource) {
         // going backward in steps, skipping the nodes with identical `from`
-        for (; pos >= 0 && stack[ pos ].from === stack[ anotherNodePos ].from; pos--) ;
+        while (current >= 0 && stack[ current ].from === stack[ cursor ].from) current--
 
-        // the stack misses the initial element [ { node : Source, from : Source } ]
-        // (to simplify types), need to account for this case "manually"
-        if (stack[ pos ].from === Source) break
-
-        if (pos >= 0) {
+        if (current >= 0) {
             // the first node with different `from` will be part of the cycle path
-            cycle.push(stack[ pos ].node)
+            cycle.push(stack[ current ].node)
 
-            anotherNodePos          = pos
+            cursor              = current
         }
+    }
 
-    } while (pos >= 0 && stack[ pos ].from !== cycleSource)
+    // no cycle
+    if (current < 0) return []
 
     cycle.push(cycleSource)
 

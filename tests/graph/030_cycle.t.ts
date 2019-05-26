@@ -17,9 +17,16 @@ StartTest(t => {
 
         node1.addEdgeTo(node2)
 
-        let cycleFound  = []
+        const cycleFound = []
+        const walkPath  = []
 
         WalkForwardContext.new({
+            forEachNext : (node : WalkerNode, func) => {
+                walkPath.push(node.id)
+
+                WalkForwardContext.prototype.forEachNext.call(this, node, func)
+            },
+
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycleFound.push(cycleInfo(stack))
 
@@ -28,6 +35,8 @@ StartTest(t => {
         }).startFrom([ node2, node1 ])
 
         t.isDeeply(cycleFound, [ [ node2, node2 ], [ node1, node1 ] ], 'Correct cycle path')
+
+        t.is(walkPath.length, 2, 'Nodes visited once')
     })
 
 
@@ -40,7 +49,7 @@ StartTest(t => {
 
         node1.addEdgeTo(node2)
 
-        let cycleFound  = []
+        const cycleFound = []
 
         WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
@@ -59,17 +68,17 @@ StartTest(t => {
 
         node1.addEdgeTo(node1)
 
-        let cycle : WalkerNode[]
+        const cycleFound = []
 
         WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
-                cycle   = cycleInfo(stack)
+                cycleFound.push(cycleInfo(stack))
 
-                return OnCycleAction.Cancel
+                return OnCycleAction.Resume
             }
         }).startFrom([ node1 ])
 
-        t.isDeeply(cycle, [ node1, node1 ], 'Correct cycle path')
+        t.isDeeply(cycleFound, [ [ node1, node1 ] ], 'Correct cycle path')
     })
 
 
@@ -80,17 +89,17 @@ StartTest(t => {
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node1)
 
-        let cycle : WalkerNode[]
+        const cycleFound = []
 
         WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
-                cycle   = cycleInfo(stack)
+                cycleFound.push(cycleInfo(stack))
 
-                return OnCycleAction.Cancel
+                return OnCycleAction.Resume
             }
         }).startFrom([ node1 ])
 
-        t.isDeeply(cycle, [ node1, node2, node1 ], 'Correct cycle path')
+        t.isDeeply(cycleFound, [ [ node1, node2, node1 ] ], 'Correct cycle path')
     })
 
 
@@ -107,17 +116,17 @@ StartTest(t => {
         node4.addEdgeTo(node2)
         node3.addEdgeTo(node5)
 
-        let cycle : WalkerNode[]
+        const cycleFound = []
 
         WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
-                cycle   = cycleInfo(stack)
+                cycleFound.push(cycleInfo(stack))
 
-                return OnCycleAction.Cancel
+                return OnCycleAction.Resume
             }
         }).startFrom([ node1 ])
 
-        t.isDeeply(cycle, [ node2, node3, node4, node2 ], 'Correct cycle path')
+        t.isDeeply(cycleFound, [ [ node2, node3, node4, node2 ] ], 'Correct cycle path')
     })
 
 
@@ -152,17 +161,17 @@ StartTest(t => {
         node4.addEdgeTo(node11)
         node11.addEdgeTo(node10)
 
-        let cycle : WalkerNode[]
+        const cycleFound = []
 
         WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
-                cycle   = cycleInfo(stack)
+                cycleFound.push(cycleInfo(stack))
 
-                return OnCycleAction.Cancel
+                return OnCycleAction.Resume
             }
         }).startFrom([ node1 ])
 
-        t.isDeeply(cycle, [ node2, node3, node4, node2 ], 'Correct cycle path')
+        t.isDeeply(cycleFound, [ [ node2, node3, node4, node2 ] ], 'Correct cycle path')
     })
 
 
@@ -176,7 +185,7 @@ StartTest(t => {
         node2.addEdgeTo(node1)
         node3.addEdgeTo(node2)
 
-        let cycleFound  = []
+        const cycleFound = []
 
         WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
@@ -200,7 +209,7 @@ StartTest(t => {
         node2.addEdgeTo(node3)
         node3.addEdgeTo(node2)
 
-        let cycleFound  = []
+        const cycleFound = []
 
         WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
