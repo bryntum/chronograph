@@ -2,9 +2,20 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { WalkContext } from "./Walkable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export class WalkForwardNodeContext extends WalkContext<WalkableForwardNode> {
+export interface WalkableForward {
+    forEachOutgoing (context : WalkForwardContext, func : (node : WalkableForward) => any)
+}
 
-    forEachNext (node : WalkableForwardNode, func : (node : WalkableForwardNode) => any) {
+//---------------------------------------------------------------------------------------------------------------------
+export interface WalkableBackward {
+    forEachIncoming (context : WalkBackwardContext, func : (node : WalkableBackward) => any)
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class WalkForwardContext extends WalkContext<WalkableForward> {
+
+    forEachNext (node : WalkableForward, func : (node : WalkableForward) => any) {
         node.forEachOutgoing(this, func)
     }
 }
@@ -13,7 +24,7 @@ export class WalkForwardNodeContext extends WalkContext<WalkableForwardNode> {
 //---------------------------------------------------------------------------------------------------------------------
 export const WalkableForwardNode = <T extends AnyConstructor<object>>(base : T) =>
 
-class WalkableForwardNode extends base {
+class WalkableForwardNode extends base implements WalkableForward {
     LabelT          : any
 
     outgoing        : Map<WalkableForwardNode, this[ 'LabelT' ]>
@@ -39,7 +50,7 @@ class WalkableForwardNode extends base {
     }
 
 
-    forEachOutgoing (context : WalkForwardNodeContext, func : (node : WalkableForwardNode) => any) {
+    forEachOutgoing (context : WalkForwardContext, func : (node : WalkableForwardNode) => any) {
         this.outgoing.forEach((label, node) => func(node))
     }
 }
@@ -48,9 +59,9 @@ export type WalkableForwardNode = Mixin<typeof WalkableForwardNode>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class WalkBackwardNodeContext extends WalkContext<WalkableBackwardNode> {
+export class WalkBackwardContext extends WalkContext<WalkableBackward> {
 
-    forEachNext (node : WalkableBackwardNode, func : (node : WalkableBackwardNode) => any) {
+    forEachNext (node : WalkableBackward, func : (node : WalkableBackward) => any) {
         node.forEachIncoming(this, func)
     }
 }
@@ -59,7 +70,7 @@ export class WalkBackwardNodeContext extends WalkContext<WalkableBackwardNode> {
 //---------------------------------------------------------------------------------------------------------------------
 export const WalkableBackwardNode = <T extends AnyConstructor<object>>(base : T) =>
 
-class WalkableBackwardNode extends base {
+class WalkableBackwardNode extends base implements WalkableBackward {
     LabelT          : any
 
     incoming        : Map<WalkableBackwardNode, this[ 'LabelT' ]>
@@ -85,7 +96,7 @@ class WalkableBackwardNode extends base {
     }
 
 
-    forEachIncoming (context : WalkBackwardNodeContext, func : (node : WalkableBackwardNode) => any) {
+    forEachIncoming (context : WalkBackwardContext, func : (node : WalkableBackwardNode) => any) {
         this.incoming.forEach((label, node) => func(node))
     }
 }

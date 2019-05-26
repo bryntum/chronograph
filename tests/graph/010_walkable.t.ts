@@ -1,6 +1,6 @@
 import { HasId } from "../../src/chrono/HasId.js"
 import { Base } from "../../src/class/Mixin.js"
-import { MinimalNode, WalkableBackwardNode, WalkableForwardNode, WalkBackwardNodeContext, WalkForwardNodeContext } from "../../src/graph/Node.js"
+import { WalkableBackward, WalkableBackwardNode, WalkableForwardNode, WalkBackwardContext, WalkForwardContext } from "../../src/graph/Node.js"
 
 declare const StartTest : any
 
@@ -16,7 +16,7 @@ class WalkerBackwardNode extends HasId(WalkableBackwardNode(Base)) {
 
 // For optimization purposes, walker FIRST goes into the LAST "next" walkable node in the `forEachNext`
 // so we reverse to get the "expected" order
-const edges = <T extends WalkableForwardNode | WalkableBackwardNode>(...nodes : T[]) => new Map(nodes.reverse().map(node => [ node, null ]))
+const edges = <T extends WalkableForwardNode | WalkableBackward>(...nodes : T[]) => new Map(nodes.reverse().map(node => [ node, null ]))
 
 StartTest(t => {
 
@@ -32,11 +32,11 @@ StartTest(t => {
         const walkPath  = []
         const topoPath  = []
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             forEachNext : (node : WalkerForwardNode, func) => {
                 walkPath.push(node.id)
 
-                WalkForwardNodeContext.prototype.forEachNext.call(this, node, func)
+                WalkForwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onTopologicalNode : (node : WalkerForwardNode) => {
@@ -63,11 +63,11 @@ StartTest(t => {
 
         let cycleFound  = false
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             forEachNext : (node : WalkerForwardNode, func) => {
                 walkPath.push(node.id)
 
-                WalkForwardNodeContext.prototype.forEachNext.call(this, node, func)
+                WalkForwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onCycle : (node : WalkerForwardNode) : any => {
@@ -93,11 +93,11 @@ StartTest(t => {
         const walkPath  = []
         const topoPath  = []
 
-        WalkBackwardNodeContext.new({
+        WalkBackwardContext.new({
             forEachNext : (node : WalkerBackwardNode, func) => {
                 walkPath.push(node.id)
 
-                WalkBackwardNodeContext.prototype.forEachNext.call(this, node, func)
+                WalkBackwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onTopologicalNode : (node : WalkerBackwardNode) => {
@@ -123,11 +123,11 @@ StartTest(t => {
 
         let cycleFound  = false
 
-        WalkBackwardNodeContext.new({
+        WalkBackwardContext.new({
             forEachNext : (node : WalkerBackwardNode, func) => {
                 walkPath.push(node.id)
 
-                WalkBackwardNodeContext.prototype.forEachNext.call(this, node, func)
+                WalkBackwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onCycle : (node : WalkerBackwardNode) : any => {

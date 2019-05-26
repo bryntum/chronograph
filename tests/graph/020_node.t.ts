@@ -1,5 +1,5 @@
 import { HasId } from "../../src/chrono/HasId.js"
-import { MinimalNode, WalkForwardNodeContext } from "../../src/graph/Node.js"
+import { MinimalNode, WalkForwardContext } from "../../src/graph/Node.js"
 
 declare const StartTest : any
 
@@ -24,11 +24,11 @@ StartTest(t => {
         const walkPath  = []
         const topoPath  = []
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             forEachNext : (node : WalkerNode, func) => {
                 walkPath.push(node.id)
 
-                WalkForwardNodeContext.prototype.forEachNext.call(this, node, func)
+                WalkForwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onTopologicalNode : (node : WalkerNode) => {

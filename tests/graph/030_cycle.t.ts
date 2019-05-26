@@ -1,5 +1,5 @@
 import { HasId } from "../../src/chrono/HasId.js"
-import { MinimalNode, WalkForwardNodeContext } from "../../src/graph/Node.js"
+import { MinimalNode, WalkForwardContext } from "../../src/graph/Node.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../../src/graph/Walkable.js"
 
 declare const StartTest : any
@@ -19,7 +19,7 @@ StartTest(t => {
 
         let cycleFound  = []
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycleFound.push(cycleInfo(stack))
 
@@ -42,7 +42,7 @@ StartTest(t => {
 
         let cycleFound  = []
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycleFound.push(cycleInfo(stack))
 
@@ -61,7 +61,7 @@ StartTest(t => {
 
         let cycle : WalkerNode[]
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycle   = cycleInfo(stack)
 
@@ -82,7 +82,7 @@ StartTest(t => {
 
         let cycle : WalkerNode[]
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycle   = cycleInfo(stack)
 
@@ -109,7 +109,7 @@ StartTest(t => {
 
         let cycle : WalkerNode[]
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycle   = cycleInfo(stack)
 
@@ -154,7 +154,7 @@ StartTest(t => {
 
         let cycle : WalkerNode[]
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycle   = cycleInfo(stack)
 
@@ -178,7 +178,7 @@ StartTest(t => {
 
         let cycleFound  = []
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycleFound.push(cycleInfo(stack))
 
@@ -202,7 +202,7 @@ StartTest(t => {
 
         let cycleFound  = []
 
-        WalkForwardNodeContext.new({
+        WalkForwardContext.new({
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycleFound.push(cycleInfo(stack))
 
