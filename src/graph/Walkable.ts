@@ -6,7 +6,11 @@ export enum OnCycleAction {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-export type WalkStep<Walkable>    = { node : Walkable, from : Walkable }
+const Source        = Symbol('Source')
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export type WalkStep<Walkable>    = { node : Walkable, from : Walkable | typeof Source }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -18,7 +22,7 @@ export class WalkContext<Walkable> extends Base {
 
 
     startFrom (sourceNodes : Walkable[]) {
-        this.toVisit    = sourceNodes.map(node => { return { node : node, from : node } })
+        this.toVisit    = sourceNodes.map(node => { return { node : node, from : Source } })
 
         this.walkDepth()
     }
@@ -64,8 +68,6 @@ export class WalkContext<Walkable> extends Base {
                 if (visitedAtDepth < depth) {
                     // ONLY resume if explicitly returned `Resume`, cancel in all other cases (undefined, etc)
                     if (this.onCycle(node, toVisit) !== OnCycleAction.Resume) break
-
-                    visitedInfo.visitedTopologically = true
                 } else {
                     visitedInfo.visitedTopologically = true
 
@@ -110,8 +112,15 @@ export function cycleInfo<Walkable> (stack : WalkStep<Walkable>[]) : Walkable[] 
     let anotherNodePos          = stack.length - 1
 
     do {
+        // the cycle is the node reference to itself
+        if (stack[ pos ].from === stack[ pos ].node) break
+
         // going backward in steps, skipping the nodes with identical `from`
         for (; pos >= 0 && stack[ pos ].from === stack[ anotherNodePos ].from; pos--) ;
+
+        // the stack misses the initial element [ { node : Source, from : Source } ]
+        // (to simplify types), need to account for this case "manually"
+        if (stack[ pos ].from === Source) break
 
         if (pos >= 0) {
             // the first node with different `from` will be part of the cycle path

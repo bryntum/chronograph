@@ -8,6 +8,71 @@ class WalkerNode extends HasId(MinimalNode) {}
 
 StartTest(t => {
 
+    t.it('Cycle detection #000', t => {
+        const node1     = WalkerNode.new({ id : 1 })
+        node1.addEdgeTo(node1)
+
+        const node2     = WalkerNode.new({ id : 2 })
+        node2.addEdgeTo(node2)
+
+        node1.addEdgeTo(node2)
+
+        let cycleFound  = []
+
+        WalkForwardNodeContext.new({
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
+                cycleFound.push(cycleInfo(stack))
+
+                return OnCycleAction.Resume
+            }
+        }).startFrom([ node2, node1 ])
+
+        t.isDeeply(cycleFound, [ [ node2, node2 ], [ node1, node1 ] ], 'Correct cycle path')
+    })
+
+
+    t.it('Cycle detection #00', t => {
+        const node1     = WalkerNode.new({ id : 1 })
+        node1.addEdgeTo(node1)
+
+        const node2     = WalkerNode.new({ id : 2 })
+        node2.addEdgeTo(node2)
+
+        node1.addEdgeTo(node2)
+
+        let cycleFound  = []
+
+        WalkForwardNodeContext.new({
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
+                cycleFound.push(cycleInfo(stack))
+
+                return OnCycleAction.Resume
+            }
+        }).startFrom([ node1, node2 ])
+
+        t.isDeeply(cycleFound, [ [ node2, node2 ], [ node1, node1 ] ], 'Correct cycle path')
+    })
+
+
+    t.it('Cycle detection #0', t => {
+        const node1     = WalkerNode.new({ id : 1 })
+
+        node1.addEdgeTo(node1)
+
+        let cycle : WalkerNode[]
+
+        WalkForwardNodeContext.new({
+            onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
+                cycle   = cycleInfo(stack)
+
+                return OnCycleAction.Cancel
+            }
+        }).startFrom([ node1 ])
+
+        t.isDeeply(cycle, [ node1, node1 ], 'Correct cycle path')
+    })
+
+
     t.it('Cycle detection #1', t => {
         const node1     = WalkerNode.new({ id : 1 })
         const node2     = WalkerNode.new({ id : 2 })
@@ -111,17 +176,9 @@ StartTest(t => {
         node2.addEdgeTo(node1)
         node3.addEdgeTo(node2)
 
-        const walkPath  = []
-
         let cycleFound  = []
 
         WalkForwardNodeContext.new({
-            forEachNext : (node : WalkerNode, func) => {
-                walkPath.push(node.id)
-
-                WalkForwardNodeContext.prototype.forEachNext.call(this, node, func)
-            },
-
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycleFound.push(cycleInfo(stack))
 
@@ -143,17 +200,9 @@ StartTest(t => {
         node2.addEdgeTo(node3)
         node3.addEdgeTo(node2)
 
-        const walkPath  = []
-
         let cycleFound  = []
 
         WalkForwardNodeContext.new({
-            forEachNext : (node : WalkerNode, func) => {
-                walkPath.push(node.id)
-
-                WalkForwardNodeContext.prototype.forEachNext.call(this, node, func)
-            },
-
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
                 cycleFound.push(cycleInfo(stack))
 
