@@ -1,6 +1,6 @@
-import { HasId } from "../../src/chrono/HasId.js"
 import { Base } from "../../src/class/Mixin.js"
 import { WalkableBackward, WalkableBackwardNode, WalkableForwardNode, WalkBackwardContext, WalkForwardContext } from "../../src/graph/Node.js"
+import { HasId } from "../../src/util/HasId.js"
 
 declare const StartTest : any
 
@@ -33,10 +33,8 @@ StartTest(t => {
         const topoPath  = []
 
         WalkForwardContext.new({
-            forEachNext : (node : WalkerForwardNode, func) => {
+            onNode : (node : WalkerForwardNode) => {
                 walkPath.push(node.id)
-
-                WalkForwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onTopologicalNode : (node : WalkerForwardNode) => {
@@ -64,10 +62,8 @@ StartTest(t => {
         let cycleFound  = false
 
         WalkForwardContext.new({
-            forEachNext : (node : WalkerForwardNode, func) => {
+            onNode : (node : WalkerForwardNode) => {
                 walkPath.push(node.id)
-
-                WalkForwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onCycle : (node : WalkerForwardNode) : any => {
@@ -94,10 +90,8 @@ StartTest(t => {
         const topoPath  = []
 
         WalkBackwardContext.new({
-            forEachNext : (node : WalkerBackwardNode, func) => {
+            onNode : (node : WalkerBackwardNode) => {
                 walkPath.push(node.id)
-
-                WalkBackwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onTopologicalNode : (node : WalkerBackwardNode) => {
@@ -124,10 +118,8 @@ StartTest(t => {
         let cycleFound  = false
 
         WalkBackwardContext.new({
-            forEachNext : (node : WalkerBackwardNode, func) => {
+            onNode : (node : WalkerBackwardNode) => {
                 walkPath.push(node.id)
-
-                WalkBackwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onCycle : (node : WalkerBackwardNode) : any => {

@@ -1,12 +1,9 @@
 {
     "compilerOptions" : {
-        //"declaration"               : true,
-        //"importHelpers"             : true,
+//        "declaration"               : true,
+//        "importHelpers"             : true,
         "experimentalDecorators"    : true,
-//        "noStrictGenericChecks"     : true,
 
-//        "target"                : "es6",
-        // GOOD: does not transpile async/await to generators, BAD : does not stop on exception in async function
         "target"                : "ES2017",
 
 //        "sourceMap"             : true,
@@ -16,21 +13,13 @@
         ],
         "module"                : "ESNext",
         "moduleResolution"      : "Node"
-//        "baseUrl": "."
-//        "plugins": [
-//            { "transform" : "ts-transformer-imports" }
-//        ]
     },
 
     "include" : [
         "src/**/*.ts",
-        "tests/chrono/010_graph.t.ts"
-//    ,
-//        "tests/**/*.ts"
+        "tests/**/*.ts"
     ],
 
     "exclude" : [
-        "src/replica/**/*.ts",
-        "src/schema/**/*.ts"
     ]
 }

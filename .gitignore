@@ -11,6 +11,7 @@
 /tests/**/*.js
 /tests/**/*.js.map
 /main.js
+/tsconfig.tsbuildinfo
 
 # docs
 /docs

@@ -5,9 +5,10 @@ import { Node, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwa
 export const Graph = <T extends AnyConstructor<object>>(base : T) =>
 
 class Graph extends base implements WalkableForward, WalkableBackward {
+    LabelT          : any
     NodeT           : Node
 
-    nodes           : Set<this[ 'NodeT' ]>         = new Set()
+    nodes           : Map<this[ 'NodeT' ], this[ 'LabelT' ]>         = new Map()
 
 
     hasNode (node : this[ 'NodeT' ]) : boolean {
@@ -15,41 +16,22 @@ class Graph extends base implements WalkableForward, WalkableBackward {
     }
 
 
-    addNodes (nodes : this[ 'NodeT' ][]) {
-        nodes.forEach(node => this.addNode(node))
-    }
-
-
-    addNode (node : this[ 'NodeT' ]) : this[ 'NodeT' ] {
-        this.nodes.add(node)
-
-        return node
-    }
-
-
-    removeNodes (nodes : this[ 'NodeT' ][]) {
-        nodes.forEach(node => this.removeNode(node))
+    addNode (node : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
+        this.nodes.set(node, label)
     }
 
 
     removeNode (node : this[ 'NodeT' ]) {
-        // <debug>
-        if (!this.hasNode(node)) throw new Error(`This [${node}] does not exists in the graph`)
-        // </debug>
-
-        node.outgoing.forEach(toNode => toNode.removeEdgeFrom(node))
-        node.incoming.forEach(fromNode => fromNode.removeEdgeTo(node))
-
         this.nodes.delete(node)
     }
 
 
-    forEachIncoming (context : WalkBackwardContext, func : (node : this[ 'NodeT' ]) => any) {
+    forEachIncoming (context : WalkBackwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
         this.nodes.forEach(func)
     }
 
 
-    forEachOutgoing (context : WalkForwardContext, func : (node : this[ 'NodeT' ]) => any) {
+    forEachOutgoing (context : WalkForwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
         this.nodes.forEach(func)
     }
 }
@@ -59,3 +41,5 @@ export type Graph = Mixin<typeof Graph>
 export class MinimalGraph extends Graph(Base) {
     NodeT           : Node
 }
+
+

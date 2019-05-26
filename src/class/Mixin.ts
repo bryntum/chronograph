@@ -48,11 +48,16 @@ export type MixinConstructor<T extends AnyFunction> =
     T extends AnyFunction<infer M> ? (M extends AnyConstructor<Base> ? M & BaseConstructor : M) : ReturnType<T>
 
 
-//---------------------------------------------------------------------------------------------------------------------
-type FilterFlags<Base, Condition> = {
-    [Key in keyof Base] : Base[Key] extends Condition ? Key : never
-}
+// //---------------------------------------------------------------------------------------------------------------------
+// type FilterFlags<Base, Condition> = {
+//     [Key in keyof Base] : Base[Key] extends Condition ? Key : never
+// }
+//
+// type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[ keyof Base ]
+//
+// export type OnlyPropertiesOfType<Base, Type> = Pick<Base, AllowedNames<Base, Type>>
 
-type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[ keyof Base ]
 
-export type OnlyPropertiesOfType<Base, Type> = Pick<Base, AllowedNames<Base, Type>>
+// //---------------------------------------------------------------------------------------------------------------------
+// export type ReplaceTypeOfProperty<Type, Property extends keyof Type, NewPropertyType> =
+//     NewPropertyType extends Type[ Property ] ? Omit<Type, Property> & { [ P in Property ] : NewPropertyType } : never

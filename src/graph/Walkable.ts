@@ -14,7 +14,7 @@ export type WalkStep<Walkable>    = { node : Walkable, from : Walkable | typeof 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class WalkContext<Walkable> extends Base {
+export class WalkContext<Walkable, Label = any> extends Base {
 
     visited         : Map<Walkable, { visitedAt : number, visitedTopologically : boolean }>     = new Map()
 
@@ -28,6 +28,10 @@ export class WalkContext<Walkable> extends Base {
     }
 
 
+    onNode (node : Walkable) : boolean | void {
+    }
+
+
     onTopologicalNode (node : Walkable) {
     }
 
@@ -37,7 +41,7 @@ export class WalkContext<Walkable> extends Base {
     }
 
 
-    forEachNext (node : Walkable, func : (node : Walkable) => any) {
+    forEachNext (node : Walkable, func : (label : Label, node : Walkable) => any) {
         throw new Error("Abstract method called")
     }
 
@@ -81,9 +85,11 @@ export class WalkContext<Walkable> extends Base {
 
                 visited.set(node, visitedInfo)
 
+                if (this.onNode(node) === false) break
+
                 const lengthBefore      = toVisit.length
 
-                this.forEachNext(node, nextNode => toVisit.push({ node : nextNode, from : node }))
+                this.forEachNext(node, (_, nextNode) => toVisit.push({ node : nextNode, from : node }))
 
                 // if there's no outgoing edges, node is at topological position
                 // it would be enough to just continue the `while` loop and the `onTopologicalNode`

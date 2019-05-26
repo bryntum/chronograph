@@ -1,6 +1,6 @@
-import { HasId } from "../../src/chrono/HasId.js"
 import { MinimalNode, WalkForwardContext } from "../../src/graph/Node.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../../src/graph/Walkable.js"
+import { HasId } from "../../src/util/HasId.js"
 
 declare const StartTest : any
 
@@ -21,10 +21,8 @@ StartTest(t => {
         const walkPath  = []
 
         WalkForwardContext.new({
-            forEachNext : (node : WalkerNode, func) => {
+            onNode : (node : WalkerNode) => {
                 walkPath.push(node.id)
-
-                WalkForwardContext.prototype.forEachNext.call(this, node, func)
             },
 
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
