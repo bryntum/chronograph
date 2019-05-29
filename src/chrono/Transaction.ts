@@ -58,9 +58,7 @@ class Transaction extends base {
 
     derive (quark : Quark) : Quark {
         return MinimalQuark.new({
-            previous            : quark,
-            identifier          : quark.identifier,
-            revision            : this
+            identifier          : quark.identifier
         })
     }
 
@@ -107,7 +105,7 @@ class Transaction extends base {
             if (latestQuark) {
                 startFrom.push(latestQuark)
             } else {
-                const newQuark      = MinimalQuark.new({ identifier, revision : this })
+                const newQuark      = MinimalQuark.new({ identifier })
 
                 scope.set(newQuark.identifier, newQuark)
             }
