@@ -1,4 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { Identifier } from "../../src/primitives/Identifier.js"
 
 declare const StartTest : any
 
@@ -60,6 +61,64 @@ StartTest(t => {
 
         t.expect(calculation1Spy).toHaveBeenCalled(0)
         t.expect(calculation2Spy).toHaveBeenCalled(1)
+    })
+
+
+    t.it('Should not recalculate nodes, dependent on unchanged nodes', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1        = graph.variable(0)
+        const i2        = graph.variable(10)
+
+        const c1        = graph.identifier(function * () {
+            return (yield i1) + (yield i2)
+        })
+
+        const c2        = graph.identifier(function * () {
+            return (yield i1) + (yield c1)
+        })
+
+        const c3        = graph.identifier(function * () {
+            return (yield c1)
+        })
+
+        const c4        = graph.identifier(function * () {
+            return (yield c3)
+        })
+
+        const c5        = graph.identifier(function * () {
+            return (yield c3)
+        })
+
+        const c6        = graph.identifier(function * () {
+            return (yield c5) + (yield i2)
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
+
+        const spy               = (calculation : Identifier) => t.spyOn(calculation, 'calculation')
+        const spies             = nodes.map(calculation => spy(calculation))
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
+
+        spies.forEach(spy => t.expect(spy).toHaveBeenCalled(1))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 5)
+        graph.write(i2, 5)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
+
+        const expectedCalls     = [ 1, 1, 0, 1, 0, 0, 0, 1 ]
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled(expectedCalls[ index ]))
     })
 
 
