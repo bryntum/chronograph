@@ -116,29 +116,29 @@ class Node extends base {
     incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 
 
-    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
+    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
         super.addEdgeTo(toNode, label)
 
-        toNode.incoming.set(this, label)
+        if (!calledFromPartner) toNode.addEdgeFrom(this, label, true)
     }
 
-    removeEdgeTo (toNode : this[ 'NodeT' ]) {
+    removeEdgeTo (toNode : this[ 'NodeT' ], calledFromPartner? : boolean) {
         super.removeEdgeTo(toNode)
 
-        toNode.incoming.delete(this)
+        if (!calledFromPartner) toNode.removeEdgeFrom(this, true)
     }
 
 
-    addEdgeFrom (fromNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
+    addEdgeFrom (fromNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
         super.addEdgeFrom(fromNode, label)
 
-        fromNode.outgoing.set(this, label)
+        if (!calledFromPartner) fromNode.addEdgeTo(this, label, true)
     }
 
-    removeEdgeFrom (fromNode : this[ 'NodeT' ]) {
+    removeEdgeFrom (fromNode : this[ 'NodeT' ], calledFromPartner? : boolean) {
         super.removeEdgeFrom(fromNode)
 
-        fromNode.outgoing.delete(this)
+        if (!calledFromPartner) fromNode.removeEdgeTo(this, true)
     }
 }
 

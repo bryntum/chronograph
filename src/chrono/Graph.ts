@@ -1,68 +1,82 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { Graph, MinimalGraph } from "../graph/Graph.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
-import { Identifier, MinimalQuark, Quark, Variable } from "./Quark.js"
+import { Identifier, Variable } from "../primitives/Identifier.js"
+import { RevisionId, revisionId } from "../primitives/Revision.js"
+import { MinimalTransaction, Transaction } from "./Transaction.js"
+
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoGraph = <T extends AnyConstructor<Graph>>(base : T) =>
+export const ChronoGraph = <T extends AnyConstructor<Base & Graph>>(base : T) =>
 
 class ChronoGraph extends base {
-    NodeT                   : Quark
+    NodeT                   : Transaction
+
+    currentTransaction      : Transaction               = MinimalTransaction.new({ isFrozen : true })
+
+    activeTransaction       : Transaction               = MinimalTransaction.new({ previous : this.currentTransaction })
 
 
-    variablesData           : Map<Variable, any> = new Map()
+    variable (value : any) : Variable {
+        const variable      = Variable.new()
 
-    quarksByIdentifier      : Map<Identifier, Quark> = new Map()
+        this.write(variable, value)
+
+        return variable
+    }
 
 
-    observe (calculation : CalculationFunction) : Identifier {
-        const identifier    = Identifier.new()
+    identifier (calculation : CalculationFunction, calculationContext? : any) : Identifier {
+        const identifier    = Identifier.new({ calculation, calculationContext })
 
-        const quark     = MinimalQuark.new({
-            identifier,
-            calculation
-        })
-
-        this.quarksByIdentifier.set(identifier, quark)
+        this.touch(identifier)
 
         return identifier
     }
 
 
     write (variable : Variable, value : any) {
-        this.variablesData.set(variable, value)
+        return this.activeTransaction.write(variable, value)
     }
 
 
-    read (identifier : Identifier | Variable) : any {
-        if (identifier instanceof Variable) {
-            return this.variablesData.get(identifier)
-        } else {
-            const quark     = this.quarksByIdentifier.get(identifier)
-
-            if (!quark) throw new Error("Unknown identifier")
-
-            if (quark.hasValue()) return quark.value
-
-            quark.runSync()
-
-            return quark.value
-        }
+    touch (identifier : Identifier) {
+        return this.activeTransaction.touch(identifier)
     }
 
 
-    async readAsync (identifier : Identifier) : Promise<any> {
+    read (identifier : Identifier) : any {
+        return this.currentTransaction.read(identifier)
+    }
 
+
+    propagate () {
+        this.activeTransaction.propagate()
+
+        this.addNode(this.activeTransaction)
+
+        this.currentTransaction     = this.activeTransaction
+
+        this.activeTransaction      = MinimalTransaction.new({ previous : this.currentTransaction })
+    }
+
+
+    clone () : ChronoGraph {
+        const Constructor = this.constructor as ChronoGraphConstructor
+
+        return Constructor.new({
+            currentTransaction      : this.currentTransaction
+        })
     }
 }
 
 export type ChronoGraph = Mixin<typeof ChronoGraph>
-export interface ChronoGraphI extends Mixin<typeof ChronoGraph> {
-    NodeT                   : Quark
-}
+// export interface ChronoGraphI extends Mixin<typeof ChronoGraph> {
+//     NodeT                   : Transaction
+// }
 
 export class MinimalChronoGraph extends ChronoGraph(MinimalGraph) {
-    NodeT                   : Quark
+    NodeT                   : Transaction
 }
 
-
+type ChronoGraphConstructor = MixinConstructor<typeof ChronoGraph>

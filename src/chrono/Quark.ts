@@ -1,33 +1,32 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { MinimalNode, Node } from "../graph/Node.js"
 import { Box } from "../primitives/Box.js"
-import { Calculation } from "../primitives/Calculation.js"
+import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
+import { Identifier } from "../primitives/Identifier.js"
+import { RevisionNode } from "../primitives/Revision.js"
 
-//---------------------------------------------------------------------------------------------------------------------
-export class Identifier extends Base {
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class Variable extends Identifier {
-
-    write (...args : any[]) : Quark {
-        return MinimalQuark.new({
-            // identifier          : this,
-            //
-            // iterator            : true,
-            // iterationResult     : { value : args, done : true }
-        })
-    }
-}
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Quark = <T extends AnyConstructor<Node & Calculation>>(base : T) =>
 
 class Quark extends base {
+    NodeT               : Quark
+
+    revision            : RevisionNode
+
+    previous            : Quark
+
     identifier          : Identifier
 
-    NodeT               : Quark
+
+    get calculation () : CalculationFunction {
+        return this.identifier.calculation
+    }
+
+
+    get calculationContext () : any {
+        return this.identifier.calculationContext
+    }
 }
 
 export type Quark = Mixin<typeof Quark>

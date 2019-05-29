@@ -22,7 +22,8 @@ project.start(
         group       : 'chrono',
 
         items       : [
-            'chrono/010_observe_variable.t.js',
+            'chrono/010_identifier_variable.t.js',
+            'chrono/020_graph_cloning.t.js'
             // 'chrono/010_graph.t.js',
             // 'chrono/020_performance.t.js',
             // 'chrono/030_behavior.t.js',
