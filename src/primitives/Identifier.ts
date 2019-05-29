@@ -6,11 +6,16 @@ import { CalculationIterator } from "./Calculation.js"
 export class Identifier extends Base {
     ArgsT               : any[]
     YieldT              : any
-    ValueT              : any
+    ResultT             : any
 
     calculationContext  : any
 
-    * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
+
+    equality (v1 : this[ 'ResultT' ], v2 : this[ 'ResultT' ]) : boolean {
+        return v1 === v2
+    }
+
+    * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
         throw new Error("Abstract method `calculation` called")
     }
 }
@@ -18,11 +23,11 @@ export class Identifier extends Base {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Variable extends Identifier {
-    ArgsT               : [ this[ 'ValueT' ] ]
+    ArgsT               : [ this[ 'ResultT' ] ]
 
     YieldT              : never
 
-    * calculation (value : this[ 'ValueT' ]) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
+    * calculation (value : this[ 'ResultT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
         return value
     }
 }

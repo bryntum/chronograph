@@ -23,13 +23,16 @@ project.start(
 
         items       : [
             'chrono/010_identifier_variable.t.js',
-            'chrono/020_graph_cloning.t.js'
+            'chrono/020_graph_cloning.t.js',
+            'chrono/030_propagation.t.js',
             // 'chrono/010_graph.t.js',
             // 'chrono/020_performance.t.js',
             // 'chrono/030_behavior.t.js',
             // 'chrono/040_effects.t.js',
             // 'chrono/050_cycle_effect.t.js',
             // 'chrono/060_try_propagate.t.js'
+
+            'chrono/900_performance.bench.js'
         ]
     },
     // {

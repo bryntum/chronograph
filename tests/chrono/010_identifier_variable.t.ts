@@ -60,7 +60,7 @@ StartTest(t => {
     })
 
 
-    t.it('Observe variable yield in calculation', async t => {
+    t.it('Observe calculation yield in calculation', async t => {
         const graph : ChronoGraph = MinimalChronoGraph.new()
 
         const var1      = graph.variable(0)
