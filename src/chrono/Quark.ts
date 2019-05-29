@@ -31,16 +31,3 @@ export class MinimalQuark extends Quark(Calculation(Box(MinimalNode))) {
     NodeT               : Quark
 }
 
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export const Snapshot = <T extends AnyConstructor<object>>(base : T) =>
-//
-// class Snapshot extends base {
-//     CurrentT            : Node
-//
-//     graph               : ReplaceTypeOfProperty<Graph, 'NodeT', this[ 'CurrentT' ]>
-//
-//     current             : this[ 'CurrentT' ]
-// }
-//
-// export type Snapshot = Mixin<typeof Snapshot>
