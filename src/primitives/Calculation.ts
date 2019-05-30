@@ -25,7 +25,7 @@ class Calculation extends base {
 
 
     isCalculationStarted () : boolean {
-        return Boolean(this.iterator)
+        return Boolean(this.iterator || this.iterationResult)
     }
 
 

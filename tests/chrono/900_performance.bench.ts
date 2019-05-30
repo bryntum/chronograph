@@ -16,12 +16,12 @@ StartTest(t => {
 
         for (let i = 0; i < atomNum; i++) {
             if (i <= 3) {
-                boxes.push(graph.variable(1))
+                boxes.push(graph.variableId(1, i))
             } else {
 
                 if (i % 2 == 0) {
 
-                    boxes.push(graph.identifier(function * () {
+                    boxes.push(graph.identifierId(function * () {
                         const input = [
                             yield boxes[ this - 1 ],
                             yield boxes[ this - 2 ],
@@ -30,10 +30,10 @@ StartTest(t => {
                         ]
 
                         return input.reduce((sum, op) => (sum + op) % 10000, 0)
-                    }, i))
+                    }, i, i))
                 }
                 else {
-                    boxes.push(graph.identifier(function * () {
+                    boxes.push(graph.identifierId(function * () {
                         const input = [
                             yield boxes[ this - 1 ],
                             yield boxes[ this - 2 ],
@@ -42,7 +42,7 @@ StartTest(t => {
                         ]
 
                         return input.reduce((sum, op) => (sum - op) % 10000, 0)
-                    }, i))
+                    }, i, i))
                 }
             }
         }
@@ -64,16 +64,30 @@ StartTest(t => {
                 graph.write(boxes[ 0 ], 0)
 
                 console.time("Calc #1")
-                console.profile('Propagate #1')
+                // console.profile('Propagate #1')
 
                 graph.propagate()
                 // graph.propagateSync()
 
-                console.profileEnd()
+                // console.profileEnd()
                 console.timeEnd("Calc #1")
 
                 console.log("Result #1: ", graph.read(boxes[ boxes.length - 1 ]))
-            }
+            },
+            // async next => {
+            //     graph.write(boxes[ 1 ], 0)
+            //
+            //     console.time("Calc #2")
+            //     // console.profile('Propagate #2')
+            //
+            //     graph.propagate()
+            //     // graph.propagateSync()
+            //
+            //     // console.profileEnd()
+            //     console.timeEnd("Calc #2")
+            //
+            //     console.log("Result #2: ", graph.read(boxes[ boxes.length - 1 ]))
+            // }
         )
     })
 })

@@ -1,5 +1,4 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { Identifier } from "../../src/primitives/Identifier.js"
 
 declare const StartTest : any
 
@@ -64,41 +63,40 @@ StartTest(t => {
     })
 
 
-    t.it('Should not recalculate nodes, dependent on unchanged nodes', async t => {
+    t.it('Should eliminate unchanged trees', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variable(0)
-        const i2        = graph.variable(10)
+        const i1        = graph.variableId(0, 'i1')
+        const i2        = graph.variableId(10, 'i2')
 
-        const c1        = graph.identifier(function * () {
+        const c1        = graph.identifierId(function * () {
             return (yield i1) + (yield i2)
-        })
+        }, null, 'c1')
 
-        const c2        = graph.identifier(function * () {
+        const c2        = graph.identifierId(function * () {
             return (yield i1) + (yield c1)
-        })
+        }, null, 'c2')
 
-        const c3        = graph.identifier(function * () {
+        const c3        = graph.identifierId(function * () {
             return (yield c1)
-        })
+        }, null, 'c3')
 
-        const c4        = graph.identifier(function * () {
+        const c4        = graph.identifierId(function * () {
             return (yield c3)
-        })
+        }, null, 'c4')
 
-        const c5        = graph.identifier(function * () {
+        const c5        = graph.identifierId(function * () {
             return (yield c3)
-        })
+        }, null, 'c5')
 
-        const c6        = graph.identifier(function * () {
+        const c6        = graph.identifierId(function * () {
             return (yield c5) + (yield i2)
-        })
+        }, null, 'c6')
 
         // ----------------
         const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
 
-        const spy               = (calculation : Identifier) => t.spyOn(calculation, 'calculation')
-        const spies             = nodes.map(calculation => spy(calculation))
+        const spies             = nodes.map(calculation => t.spyOn(calculation, 'calculation'))
 
         graph.propagate()
 
@@ -116,7 +114,7 @@ StartTest(t => {
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
 
-        const expectedCalls     = [ 1, 1, 0, 1, 0, 0, 0, 1 ]
+        const expectedCalls     = [ 1, 1, 1, 1, 0, 0, 0, 1 ]
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled(expectedCalls[ index ]))
     })

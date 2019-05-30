@@ -35,6 +35,24 @@ class ChronoGraph extends base {
     }
 
 
+    variableId (value : any, id : any) : Variable {
+        const variable      = Variable.new({ id })
+
+        this.write(variable, value)
+
+        return variable
+    }
+
+
+    identifierId (calculation : CalculationFunction, calculationContext? : any, id? : any) : Identifier {
+        const identifier    = Identifier.new({ calculation, calculationContext, id })
+
+        this.touch(identifier)
+
+        return identifier
+    }
+
+
     write (variable : Variable, value : any) {
         return this.activeTransaction.write(variable, value)
     }

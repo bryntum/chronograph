@@ -4,6 +4,8 @@ import { CalculationIterator } from "./Calculation.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Identifier extends Base {
+    id                  : any
+
     ArgsT               : any[]
     YieldT              : any
     ResultT             : any

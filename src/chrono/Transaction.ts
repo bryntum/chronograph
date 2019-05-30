@@ -2,11 +2,13 @@ import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { MinimalNode, WalkForwardContext } from "../graph/Node.js"
 import { OnCycleAction, WalkStep } from "../graph/Walkable.js"
 import { Box } from "../primitives/Box.js"
-import { Calculation, CalculationIterator } from "../primitives/Calculation.js"
+import { Calculation } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { RevisionNode } from "../primitives/Revision.js"
 import { MinimalQuark, Quark } from "./Quark.js"
 
+
+type QuarkTransition    = { previous : Quark, current : Quark, edgesFlow : number }
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Transaction = <T extends AnyConstructor<RevisionNode & Calculation>>(base : T) =>
@@ -14,8 +16,8 @@ export const Transaction = <T extends AnyConstructor<RevisionNode & Calculation>
 class Transaction extends base {
     NodeT                   : Transaction
 
-    // YieldT                  : GraphCycleDetectedEffect
-    ValueT                  : Map<Identifier, Quark>
+    // YieldT                  : unknown
+    ValueT                  : Map<Identifier, QuarkTransition>
 
     isClosed                : boolean                   = false
     isFrozen                : boolean                   = false
@@ -24,7 +26,7 @@ class Transaction extends base {
 
     touchedIdentifiers      : Map<Identifier, Quark>    = new Map()
 
-    scope                   : Map<Identifier, Quark>    = new Map()
+    scope                   : Map<Identifier, QuarkTransition> = new Map()
 
 
     read (identifier : Identifier) : any {
@@ -78,7 +80,7 @@ class Transaction extends base {
         while (previous) {
             const quark = previous.scope.get(identifier)
 
-            if (quark) return quark
+            if (quark) return quark.current
 
             previous    = previous.previous
         }
@@ -90,86 +92,119 @@ class Transaction extends base {
     getLatestQuarkFor (identifier : Identifier) : Quark {
         const current       = this.scope.get(identifier)
 
-        if (current) return current
+        if (current) return current.current
 
         return this.getPreviousQuarkFor(identifier)
     }
 
 
-    determinePotentiallyChangedQuarks () : { stack : Quark[], scope : Map<Identifier, Quark> } {
-        const scope : Map<Identifier, Quark>    = new Map()
+    determinePotentiallyChangedQuarks () : { stack : Quark[], scope : Map<Identifier, QuarkTransition> } {
+        const scope : Map<Identifier, QuarkTransition>  = new Map()
 
-        const startFrom                         = []
+        const startFrom : Quark[]                       = []
 
-        this.touchedIdentifiers.forEach((latestQuark, identifier) => {
-            if (latestQuark) {
-                startFrom.push(latestQuark)
+        this.touchedIdentifiers.forEach((quark, identifier) => {
+            if (quark) {
+                startFrom.push(quark)
             } else {
                 const newQuark      = MinimalQuark.new({ identifier })
 
-                scope.set(newQuark.identifier, newQuark)
+                scope.set(newQuark.identifier, { previous : null, current : newQuark, edgesFlow : 1 })
             }
         })
 
         WalkForwardContext.new({
             // ignore cycles when determining potentially changed atoms
-            onCycle                 : (node : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
+            onCycle                 : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
 
             onTopologicalNode       : (quark : Quark) => {
                 const newQuark      = this.derive(quark)
 
-                scope.set(newQuark.identifier, newQuark)
+                scope.set(newQuark.identifier, { previous : quark, current : newQuark, edgesFlow : quark.incoming.size })
             }
         }).startFrom(startFrom)
 
+        this.touchedIdentifiers.forEach((quark, identifier) => {
+            if (quark) {
+                const transition        = scope.get(identifier)
+
+                transition.edgesFlow    = 1
+            }
+        })
+
         // since Map preserves the order of addition, `stack` will be in topo-sorted order as well
-        return { stack : Array.from(scope.values()), scope }
+        return { stack : Array.from(scope.values()).map(transition => transition.current), scope }
     }
 
 
-    * calculation (...args : any[]) : CalculationIterator {
+    * calculation (...args : any[]) : this[ 'iterator' ] {
         const { stack, scope }      = this.determinePotentiallyChangedQuarks()
 
         while (stack.length) {
             const quark : Quark     = stack[ stack.length - 1 ]
 
-            if (quark.isCalculationCompleted()) {
+            const transition        = scope.get(quark.identifier)
+
+            if (quark.isCalculationCompleted() || transition.edgesFlow < 0) {
                 stack.pop()
                 continue
             }
 
-            let iterationResult : IteratorResult<any>   =
-                quark.isCalculationStarted() ? quark.iterationResult : quark.startCalculation(this.variablesData.get(quark.identifier))
+            let iterationResult : IteratorResult<any>
+
+            if (quark.isCalculationStarted()) {
+                iterationResult     = quark.iterationResult
+            } else {
+                if (transition.edgesFlow == 0) {
+                    transition.edgesFlow--
+
+                    const previousQuark = transition.previous
+
+                    quark.iterationResult = { value : previousQuark.value, done : true }
+
+                    previousQuark.outgoing.forEach((label : any, quark : Quark) => {
+                        scope.get(quark.identifier).edgesFlow--
+                    })
+
+                    stack.pop()
+                    continue
+                } else {
+                    iterationResult = quark.startCalculation(this.variablesData.get(quark.identifier))
+                }
+            }
 
             do {
                 const value         = iterationResult.value
 
                 if (iterationResult.done) {
+                    const previousQuark = transition.previous
 
-                    // if (value === NotChanged || calculationQuark.equality(value, calculationQuark.value)) {
-                    //     // TODO calculated the same value
-                    //     // remove the quark and its descendants from the `calculationQuarks` map to indicate it did not change
-                    // }
+                    if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {
+                        previousQuark.outgoing.forEach((label : any, quark : Quark) => {
+                            scope.get(quark.identifier).edgesFlow--
+                        })
+                    }
 
                     stack.pop()
 
                     break
                 }
                 else if (value instanceof Identifier) {
-                    const requestedQuark    = scope.get(value) || this.getPreviousQuarkFor(value)
+                    const requestedTransition   = scope.get(value)
+
+                    const requestedQuark        = requestedTransition ? requestedTransition.current : this.getPreviousQuarkFor(value)
+
+                    if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
 
                     quark.addEdgeFrom(requestedQuark)
 
-                    if (!requestedQuark) {
-                        throw new Error("Unknown identifier")
+                    if (requestedQuark.isCalculationCompleted()) {
+                        iterationResult         = quark.supplyYieldValue(requestedQuark.value)
                     }
                     else if (!requestedQuark.isCalculationStarted()) {
                         stack.push(requestedQuark)
 
                         break
-                    }
-                    else if (requestedQuark.isCalculationCompleted()) {
-                        iterationResult     = quark.supplyYieldValue(requestedQuark.value)
                     }
                     else {
                         throw new Error("cycle")
@@ -180,7 +215,7 @@ class Transaction extends base {
                 }
                 else {
                     // bypass the unrecognized effect to the outer context
-                    iterationResult         = quark.supplyYieldValue(yield value)
+                    iterationResult             = quark.supplyYieldValue(yield value)
                 }
 
             } while (true)
@@ -200,5 +235,5 @@ export type Transaction = Mixin<typeof Transaction>
 export class MinimalTransaction extends Transaction(Calculation(Box(RevisionNode(MinimalNode)))) {
     NodeT                   : Transaction
     // YieldT                  : GraphCycleDetectedEffect
-    ValueT                  : Map<Identifier, Quark>
+    ValueT                  : Map<Identifier, QuarkTransition>
 }
