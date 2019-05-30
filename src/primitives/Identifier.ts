@@ -37,9 +37,9 @@ export class Variable extends Identifier {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Reference extends Identifier {
-    ArgsT               : [ this[ 'ResultT' ] ]
+    ArgsT               : [ this[ 'ResultT' ], boolean ]
 
-    YieldT              : never
+    YieldT              : ReturnType<typeof dereference>
 
     * calculation (value : this[ 'ResultT' ], isDereference : boolean) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
         if (isDereference) {
@@ -50,4 +50,22 @@ export class Reference extends Identifier {
 }
 
 
-dereference = Symbol('dereference')
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceBucket extends Identifier {
+    ArgsT               : [ this[ 'ResultT' ], boolean ]
+
+    YieldT              : ReturnType<typeof dereference>
+
+    * calculation (value : this[ 'ResultT' ], isDereference : boolean) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+        if (isDereference) {
+            return yield dereference(value)
+        } else
+            return value
+    }
+}
+
+
+
+const DereferenceSymbol = Symbol("DereferenceSymbol")
+
+const dereference = (value : any) => { return { DereferenceSymbol, value } }

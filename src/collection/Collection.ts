@@ -18,7 +18,7 @@ export interface OrderedBackward<Element = any> extends Collection<Element> {
 //---------------------------------------------------------------------------------------------------------------------
 export const Indexed = <T extends AnyConstructor<OrderedForward & OrderedBackward>>(base : T) =>
 
-class Indexed extends Base {
+class Indexed extends base {
     ElementT        : any
 
     storage         : this[ 'ElementT' ][]
@@ -69,7 +69,7 @@ class Indexed extends Base {
     }
 
 
-    referenceToElementAtIndex () {
+    referenceToBoxAtIndex () {
 
     }
 
