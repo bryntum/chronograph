@@ -35,3 +35,19 @@ export class Variable extends Identifier {
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export class Reference extends Identifier {
+    ArgsT               : [ this[ 'ResultT' ] ]
+
+    YieldT              : never
+
+    * calculation (value : this[ 'ResultT' ], isDereference : boolean) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+        if (isDereference) {
+            return yield dereference(value)
+        } else
+            return value
+    }
+}
+
+
+dereference = Symbol('dereference')
