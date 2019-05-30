@@ -10,6 +10,13 @@ project.configure({
 
 project.start(
     {
+        group       : 'class',
+
+        items       : [
+            'class/010_instanceof.t.js',
+        ]
+    },
+    {
         group       : 'graph',
 
         items       : [
@@ -33,6 +40,13 @@ project.start(
             // 'chrono/060_try_propagate.t.js'
 
             'chrono/900_performance.bench.js'
+        ]
+    },
+    {
+        group       : 'Benchmarks',
+
+        items       : [
+            // 'benchmark/010_performance.bench.js'
         ]
     },
     // {
