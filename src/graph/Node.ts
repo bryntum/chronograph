@@ -35,31 +35,32 @@ export const WalkableForwardNode = <T extends AnyConstructor<object>>(base : T) 
 
 class WalkableForwardNode extends base implements WalkableForward {
     LabelT          : any
+    NodeT           : WalkableForwardNode
 
-    outgoing        : Map<WalkableForwardNode, this[ 'LabelT' ]>
+    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>
 
 
-    hasEdgeTo (toNode : WalkableForwardNode) : boolean {
+    hasEdgeTo (toNode : this[ 'NodeT' ]) : boolean {
         return this.outgoing.has(toNode)
     }
 
 
-    getLabelTo (toNode : WalkableForwardNode) : this[ 'LabelT' ] {
+    getLabelTo (toNode : this[ 'NodeT' ]) : this[ 'LabelT' ] {
         return this.outgoing.get(toNode)
     }
 
 
-    addEdgeTo (toNode : WalkableForwardNode, label : this[ 'LabelT' ] = null) {
+    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
         this.outgoing.set(toNode, label)
     }
 
 
-    removeEdgeTo (toNode : WalkableForwardNode) {
+    removeEdgeTo (toNode : this[ 'NodeT' ]) {
         this.outgoing.delete(toNode)
     }
 
 
-    forEachOutgoing (context : WalkForwardContext, func : (label : this[ 'LabelT' ], node : WalkableForwardNode) => any) {
+    forEachOutgoing (context : WalkForwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
         this.outgoing.forEach(func)
     }
 }
@@ -72,31 +73,32 @@ export const WalkableBackwardNode = <T extends AnyConstructor<object>>(base : T)
 
 class WalkableBackwardNode extends base implements WalkableBackward {
     LabelT          : any
+    NodeT           : WalkableBackwardNode
 
-    incoming        : Map<WalkableBackwardNode, this[ 'LabelT' ]>
+    incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>
 
 
-    hasEdgeFrom (fromNode : WalkableBackwardNode) : boolean {
+    hasEdgeFrom (fromNode : this[ 'NodeT' ]) : boolean {
         return this.incoming.has(fromNode)
     }
 
 
-    getLabelFrom (fromNode : WalkableBackwardNode) : this[ 'LabelT' ] {
+    getLabelFrom (fromNode : this[ 'NodeT' ]) : this[ 'LabelT' ] {
         return this.incoming.get(fromNode)
     }
 
 
-    addEdgeFrom (fromNode : WalkableBackwardNode, label : this[ 'LabelT' ] = null) {
+    addEdgeFrom (fromNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
         this.incoming.set(fromNode, label)
     }
 
 
-    removeEdgeFrom (fromNode : WalkableBackwardNode) {
+    removeEdgeFrom (fromNode : this[ 'NodeT' ]) {
         this.incoming.delete(fromNode)
     }
 
 
-    forEachIncoming (context : WalkBackwardContext, func : (label : this[ 'LabelT' ], node : WalkableBackwardNode) => any) {
+    forEachIncoming (context : WalkBackwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
         this.incoming.forEach(func)
     }
 }
@@ -111,9 +113,6 @@ export const Node = <T extends AnyConstructor<WalkableForwardNode & WalkableBack
 class Node extends base {
     LabelT          : any
     NodeT           : Node
-
-    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
-    incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 
 
     addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
@@ -153,4 +152,7 @@ export class MinimalNode extends
 {
     LabelT          : any
     NodeT           : Node
+
+    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
+    incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 }
