@@ -1,5 +1,4 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { Node } from "../graph/Node.js"
+import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type RevisionId      = number
@@ -10,31 +9,56 @@ export const revisionId = () : RevisionId => ID++
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const RevisionNode = <T extends AnyConstructor<Node>>(base : T) =>
+export const BranchNode = <T extends AnyConstructor<object>>(base : T) =>
 
-class RevisionNode extends base {
-    revision        : RevisionId    = revisionId()
-
-    NodeT           : RevisionNode
-
-
-    get previous () : this[ 'NodeT' ] {
-        return Array.from(this.incoming.keys())[ 0 ]
-    }
-
-    set previous (revisionNode : this[ 'NodeT' ]) {
-        this.addEdgeFrom(revisionNode)
-    }
-
-
-    addEdgeFrom (fromNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
-        if (this.incoming.size > 0) throw new Error("Revision can have only one incoming node")
-        if (fromNode.revision > this.revision) throw new Error("Can only depend on earlier revision")
-
-        super.addEdgeFrom(fromNode, label)
-    }
+class BranchNode extends base {
+    previous                : BranchNode
+    branch                  : BranchI
 }
 
-export type RevisionNode = Mixin<typeof RevisionNode>
+export type BranchNode = Mixin<typeof BranchNode>
+
+export class MinimalBranchNode extends BranchNode(Base) {}
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export const Branch = <T extends AnyConstructor<Base>>(base : T) =>
+
+class Branch extends base {
+    NodeT               : BranchNode
+
+    baseBranch          : Branch
+    baseNodeIndex       : number                = -1
+
+    nodes               : this[ 'NodeT' ][]     = []
+
+    source              : this[ 'NodeT' ]
+
+
+    addNode (node : this[ 'NodeT' ]) {
+        if (this.nodes.length > 0 && node.previous !== this.nodes[ this.nodes.length - 1 ]) throw new Error("Invalid state")
+
+        this.nodes.push(node)
+    }
+
+
+    branch () : this {
+        const Constructor = this.constructor as BranchConstructor
+
+        return Constructor.new({
+            baseBranch      : this,
+            baseNodeIndex   : this.nodes.length - 1
+        }) as this
+    }
+
+
+    headNode () : this[ 'NodeT' ] {
+        return this.nodes.length > 0 ? this.nodes[ this.nodes.length - 1 ] : this.baseBranch ? this.baseBranch.nodes[ this.baseNodeIndex ] : this.source
+    }
+
+}
+
+export type Branch = Mixin<typeof Branch>
+export interface BranchI extends Mixin<typeof Branch> {}
+
+type BranchConstructor = MixinConstructor<typeof Branch>

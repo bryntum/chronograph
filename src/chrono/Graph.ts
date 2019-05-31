@@ -1,24 +1,24 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { Graph, MinimalGraph } from "../graph/Graph.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { RevisionId, revisionId } from "../primitives/Revision.js"
+import { Branch } from "../primitives/Revision.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 
+const Source = MinimalTransaction.new({ isFrozen : true })
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoGraph = <T extends AnyConstructor<Base & Graph>>(base : T) =>
+export const ChronoGraph = <T extends AnyConstructor<Branch>>(base : T) =>
 
 class ChronoGraph extends base {
     NodeT                   : Transaction
 
-    currentTransaction      : Transaction               = MinimalTransaction.new({ isFrozen : true })
+    source                  : Transaction   = Source
 
 
     get activeTransaction () : Transaction {
         return lazyProperty<this, 'activeTransaction'>(
-            this, '_activeTransaction', () => MinimalTransaction.new({ previous : this.currentTransaction })
+            this, '_activeTransaction', () => MinimalTransaction.new({ previous : this.headNode(), branch : this })
         )
     }
 
@@ -70,7 +70,7 @@ class ChronoGraph extends base {
 
 
     read (identifier : Identifier) : any {
-        return this.currentTransaction.read(identifier)
+        return this.headNode().read(identifier)
     }
 
 
@@ -79,18 +79,7 @@ class ChronoGraph extends base {
 
         this.addNode(this.activeTransaction)
 
-        this.currentTransaction     = this.activeTransaction
-
         clearLazyProperty(this, '_activeTransaction')
-    }
-
-
-    branch () : ChronoGraph {
-        const Constructor = this.constructor as ChronoGraphConstructor
-
-        return Constructor.new({
-            currentTransaction      : this.currentTransaction
-        })
     }
 }
 
@@ -99,7 +88,7 @@ export type ChronoGraph = Mixin<typeof ChronoGraph>
 //     NodeT                   : Transaction
 // }
 
-export class MinimalChronoGraph extends ChronoGraph(MinimalGraph) {
+export class MinimalChronoGraph extends ChronoGraph(Branch(Base)) {
     NodeT                   : Transaction
 }
 

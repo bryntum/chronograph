@@ -11,7 +11,11 @@ export function lazyProperty <T extends object, Property extends keyof T> (targe
 }
 
 
-export function clearLazyProperty (target : object, storage : string | symbol) {
-    target[ storage ] = undefined
+export function clearLazyProperty (target : object, storage : string | symbol) : any {
+    const value         = target[ storage ]
+
+    target[ storage ]   = undefined
+
+    return value
 }
 

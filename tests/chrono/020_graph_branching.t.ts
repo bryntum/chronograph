@@ -4,7 +4,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Graph cloning', async t => {
+    t.it('Graph branching', async t => {
         const graph1 : ChronoGraph   = MinimalChronoGraph.new()
 
         const var1      = graph1.variable(0)
@@ -26,7 +26,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Cross-branch unchanged trees elimination', async t => {
+    t.it('Cross-branch unchanged trees elimination', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)

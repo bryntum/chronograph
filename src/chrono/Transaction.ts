@@ -1,20 +1,20 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { MinimalNode, WalkForwardContext } from "../graph/Node.js"
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { OnCycleAction, WalkStep } from "../graph/Walkable.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
+import { WalkForwardDimensionedNodeContext } from "../primitives/DimensionedNode.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { RevisionNode } from "../primitives/Revision.js"
+import { BranchNode } from "../primitives/Revision.js"
 import { MinimalQuark, Quark } from "./Quark.js"
 
 
 type QuarkTransition    = { previous : Quark, current : Quark, edgesFlow : number }
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Transaction = <T extends AnyConstructor<RevisionNode & Calculation>>(base : T) =>
+export const Transaction = <T extends AnyConstructor<BranchNode & Calculation>>(base : T) =>
 
 class Transaction extends base {
-    NodeT                   : Transaction
+    previous                : Transaction
 
     // YieldT                  : unknown
     ValueT                  : Map<Identifier, QuarkTransition>
@@ -113,7 +113,9 @@ class Transaction extends base {
             }
         })
 
-        WalkForwardContext.new({
+        WalkForwardDimensionedNodeContext.new({
+            walkDimension           : this.branch,
+
             // ignore cycles when determining potentially changed atoms
             onCycle                 : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
 
@@ -162,7 +164,7 @@ class Transaction extends base {
 
                     quark.iterationResult = { value : previousQuark.value, done : true }
 
-                    previousQuark.outgoing.forEach((label : any, quark : Quark) => {
+                    previousQuark.forEachOutgoingInDimension(this.branch, (label : any, quark : Quark) => {
                         scope.get(quark.identifier).edgesFlow--
                     })
 
@@ -180,7 +182,7 @@ class Transaction extends base {
                     const previousQuark = transition.previous
 
                     if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {
-                        previousQuark.outgoing.forEach((label : any, quark : Quark) => {
+                        previousQuark.forEachOutgoingInDimension(this.branch, (label : any, quark : Quark) => {
                             scope.get(quark.identifier).edgesFlow--
                         })
                     }
@@ -196,7 +198,7 @@ class Transaction extends base {
 
                     if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
 
-                    quark.addEdgeFrom(requestedQuark)
+                    quark.addEdgeFrom(requestedQuark, this.branch)
 
                     if (requestedQuark.isCalculationCompleted()) {
                         iterationResult         = quark.supplyYieldValue(requestedQuark.value)
@@ -232,8 +234,7 @@ export type Transaction = Mixin<typeof Transaction>
 //     ValueT                  : Map<Identifier, Quark>
 // }
 
-export class MinimalTransaction extends Transaction(Calculation(Box(RevisionNode(MinimalNode)))) {
-    NodeT                   : Transaction
+export class MinimalTransaction extends Transaction(Calculation(Box(BranchNode(Base)))) {
     // YieldT                  : GraphCycleDetectedEffect
     ValueT                  : Map<Identifier, QuarkTransition>
 }

@@ -37,7 +37,7 @@ class WalkableForwardNode extends base implements WalkableForward {
     LabelT          : any
     NodeT           : WalkableForwardNode
 
-    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>
+    outgoing?       : Map<this[ 'NodeT' ], this[ 'LabelT' ]>
 
 
     hasEdgeTo (toNode : this[ 'NodeT' ]) : boolean {
