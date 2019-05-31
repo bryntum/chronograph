@@ -3,6 +3,7 @@ import { Graph, MinimalGraph } from "../graph/Graph.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { RevisionId, revisionId } from "../primitives/Revision.js"
+import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 
 
@@ -14,7 +15,12 @@ class ChronoGraph extends base {
 
     currentTransaction      : Transaction               = MinimalTransaction.new({ isFrozen : true })
 
-    activeTransaction       : Transaction               = MinimalTransaction.new({ previous : this.currentTransaction })
+
+    get activeTransaction () : Transaction {
+        return lazyProperty<this, 'activeTransaction'>(
+            this, '_activeTransaction', () => MinimalTransaction.new({ previous : this.currentTransaction })
+        )
+    }
 
 
     variable (value : any) : Variable {
@@ -75,7 +81,7 @@ class ChronoGraph extends base {
 
         this.currentTransaction     = this.activeTransaction
 
-        this.activeTransaction      = MinimalTransaction.new({ previous : this.currentTransaction })
+        clearLazyProperty(this, '_activeTransaction')
     }
 
 
