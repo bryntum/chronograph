@@ -38,8 +38,6 @@ project.start(
             // 'chrono/040_effects.t.js',
             // 'chrono/050_cycle_effect.t.js',
             // 'chrono/060_try_propagate.t.js'
-
-            'chrono/900_performance.bench.js'
         ]
     },
     {

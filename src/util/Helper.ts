@@ -4,8 +4,9 @@ export const uppercaseFirst = (str : string) : string => str.slice(0, 1).toUpper
 export const isAtomicValue = (value : any) : boolean => Object(value) !== value
 
 
-export const lazyBuild = <T extends object, S extends keyof T>(target : T, property : S, value : T[ S ]) : T[ S ] => {
-    Object.defineProperty(target, property, { value })
+export function lazyProperty <T extends object, Property extends keyof T> (target : T, storage : string | symbol, builder : () => T[ Property ]) : T[ Property ] {
+    if (target[ storage ] !== undefined) return target[ storage ]
 
-    return value
+    return target[ storage ] = builder()
 }
+
