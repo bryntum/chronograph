@@ -35,7 +35,7 @@ class ChronoGraph extends base {
     }
 
 
-    variableId (value : any, id : any) : Variable {
+    variableId (id : any, value : any) : Variable {
         const variable      = Variable.new({ id })
 
         this.write(variable, value)
@@ -44,7 +44,7 @@ class ChronoGraph extends base {
     }
 
 
-    identifierId (calculation : CalculationFunction, calculationContext? : any, id? : any) : Identifier {
+    identifierId (id : any, calculation : CalculationFunction, calculationContext? : any) : Identifier {
         const identifier    = Identifier.new({ calculation, calculationContext, id })
 
         this.touch(identifier)
@@ -79,7 +79,7 @@ class ChronoGraph extends base {
     }
 
 
-    clone () : ChronoGraph {
+    branch () : ChronoGraph {
         const Constructor = this.constructor as ChronoGraphConstructor
 
         return Constructor.new({

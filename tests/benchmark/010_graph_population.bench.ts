@@ -16,33 +16,33 @@ StartTest(t => {
 
         for (let i = 0; i < atomNum; i++) {
             if (i <= 3) {
-                boxes.push(graph.variableId(1, i))
+                boxes.push(graph.variableId(i, 1))
             } else {
 
                 if (i % 2 == 0) {
 
-                    boxes.push(graph.identifierId(function * () {
+                    boxes.push(graph.identifierId(i, function* () {
                         const input = [
-                            yield boxes[ this - 1 ],
-                            yield boxes[ this - 2 ],
-                            yield boxes[ this - 3 ],
-                            yield boxes[ this - 4 ]
+                            yield boxes[this - 1],
+                            yield boxes[this - 2],
+                            yield boxes[this - 3],
+                            yield boxes[this - 4]
                         ]
 
                         return input.reduce((sum, op) => (sum + op) % 10000, 0)
-                    }, i, i))
+                    }, i))
                 }
                 else {
-                    boxes.push(graph.identifierId(function * () {
+                    boxes.push(graph.identifierId(i, function* () {
                         const input = [
-                            yield boxes[ this - 1 ],
-                            yield boxes[ this - 2 ],
-                            yield boxes[ this - 3 ],
-                            yield boxes[ this - 4 ]
+                            yield boxes[this - 1],
+                            yield boxes[this - 2],
+                            yield boxes[this - 3],
+                            yield boxes[this - 4]
                         ]
 
                         return input.reduce((sum, op) => (sum - op) % 10000, 0)
-                    }, i, i))
+                    }, i))
                 }
             }
         }

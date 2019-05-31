@@ -66,32 +66,32 @@ StartTest(t => {
     t.it('Should eliminate unchanged trees', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variableId(0, 'i1')
-        const i2        = graph.variableId(10, 'i2')
+        const i1        = graph.variableId('i1', 0)
+        const i2        = graph.variableId('i2', 10)
 
-        const c1        = graph.identifierId(function * () {
+        const c1        = graph.identifierId('c1', function* () {
             return (yield i1) + (yield i2)
-        }, null, 'c1')
+        })
 
-        const c2        = graph.identifierId(function * () {
+        const c2        = graph.identifierId('c2', function* () {
             return (yield i1) + (yield c1)
-        }, null, 'c2')
+        })
 
-        const c3        = graph.identifierId(function * () {
+        const c3        = graph.identifierId('c3', function* () {
             return (yield c1)
-        }, null, 'c3')
+        })
 
-        const c4        = graph.identifierId(function * () {
+        const c4        = graph.identifierId('c4', function* () {
             return (yield c3)
-        }, null, 'c4')
+        })
 
-        const c5        = graph.identifierId(function * () {
+        const c5        = graph.identifierId('c5', function* () {
             return (yield c3)
-        }, null, 'c5')
+        })
 
-        const c6        = graph.identifierId(function * () {
+        const c6        = graph.identifierId('c6', function* () {
             return (yield c5) + (yield i2)
-        }, null, 'c6')
+        })
 
         // ----------------
         const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
