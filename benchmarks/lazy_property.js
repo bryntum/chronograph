@@ -22,6 +22,10 @@ const lazyBuild3 = (target, storage, builder) => {
 
 class Benchmark {
 
+    constructor () {
+        this.nonLazyProperty = 1
+    }
+
     buildLazyProp () {
         return 1
     }
@@ -54,6 +58,14 @@ class Benchmark {
     get lazyProperty3 () {
         return lazyBuild3(this, '$lazyProperty3', () => 1)
     }
+
+
+    get lazyProperty4 () {
+        if (this.lazyProp4 !== undefined) return this.lazyProp4
+
+        return this.lazyProp4 = 1
+    }
+
 }
 
 
@@ -65,3 +77,7 @@ instances.reduce((sum, instance) => sum += instance.lazyProperty + instance.lazy
 instances.reduce((sum, instance) => sum += instance.lazyProperty2 + instance.lazyProperty2 + instance.lazyProperty2 + instance.lazyProperty2 + instance.lazyProperty2 + instance.lazyProperty2)
 
 instances.reduce((sum, instance) => sum += instance.getLazyProperty() + instance.getLazyProperty() + instance.getLazyProperty() + instance.getLazyProperty() + instance.getLazyProperty() + instance.getLazyProperty())
+
+instances.reduce((sum, instance) => sum += instance.nonLazyProperty + instance.nonLazyProperty + instance.nonLazyProperty + instance.nonLazyProperty + instance.nonLazyProperty + instance.nonLazyProperty)
+
+instances.reduce((sum, instance) => sum += instance.lazyProperty4 + instance.lazyProperty4 + instance.lazyProperty4 + instance.lazyProperty4 + instance.lazyProperty4 + instance.lazyProperty4)
