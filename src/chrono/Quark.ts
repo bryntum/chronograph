@@ -1,7 +1,7 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { MinimalNode, Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js"
 import { Box } from "../primitives/Box.js"
-import { DimensionedNode } from "../primitives/DimensionedNode.js"
+import { DimensionedNode } from "../graph/DimensionedNode.js"
 import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier } from "../primitives/Identifier.js"
 

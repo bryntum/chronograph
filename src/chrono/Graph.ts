@@ -1,7 +1,7 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { Branch } from "../primitives/Revision.js"
+import { Branch } from "../primitives/Branch.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 

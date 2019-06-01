@@ -2,9 +2,9 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { OnCycleAction, WalkStep } from "../graph/Walkable.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
-import { WalkForwardDimensionedNodeContext } from "../primitives/DimensionedNode.js"
+import { WalkForwardDimensionedNodeContext } from "../graph/DimensionedNode.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { BranchNode } from "../primitives/Revision.js"
+import { BranchNode } from "../primitives/Branch.js"
 import { MinimalQuark, Quark } from "./Quark.js"
 
 

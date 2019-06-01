@@ -1,6 +1,6 @@
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { WalkableForwardNode, WalkForwardContext } from "../graph/Node.js"
-import { WalkContext } from "../graph/Walkable.js"
+import { WalkableForwardNode, WalkForwardContext } from "./Node.js"
+import { WalkContext } from "./Walkable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
