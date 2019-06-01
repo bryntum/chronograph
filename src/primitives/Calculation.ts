@@ -39,6 +39,11 @@ class Calculation extends base {
     }
 
 
+    forceValue (value : this[ 'ValueT' ]) {
+        this.iterationResult    = this.iterator ? this.iterator.return(value) : { value : value, done : true }
+    }
+
+
     startCalculation (...args : this[ 'ArgsT' ]) : IteratorResult<any> {
         const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.calculationContext || this, ...args)
 
