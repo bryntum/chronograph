@@ -42,6 +42,11 @@ class Branch extends base {
     }
 
 
+    isEmpty () : boolean {
+        return this.nodes.length === 0
+    }
+
+
     branch () : this {
         const Constructor = this.constructor as BranchConstructor
 

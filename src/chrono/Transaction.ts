@@ -114,7 +114,7 @@ class Transaction extends base {
         })
 
         WalkForwardDimensionedNodeContext.new({
-            walkDimension           : this.branch,
+            walkDimension           : this.branch.isEmpty() ? this.branch.baseBranch : this.branch,
 
             // ignore cycles when determining potentially changed atoms
             onCycle                 : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
