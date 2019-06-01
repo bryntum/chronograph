@@ -114,24 +114,24 @@ StartTest(t => {
 
         const graph2            = graph1.branch()
 
-        graph2.write(i1, 1)
-        graph2.write(i2, 1)
+        graph2.write(i1, 5)
+        graph2.write(i2, 5)
 
         graph2.propagate()
 
-        t.isDeeply(nodes.map(node => graph2.read(node)), [ 1, 1, 2, 3, 2, 2, 2, 3 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => graph2.read(node)), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
 
-        spies.forEach(spy => t.expect(spy).toHaveBeenCalled(1))
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 1, 1, 1, 1, 0, 0, 0, 1 ][ index ]))
 
         // ----------------
         spies.forEach(spy => spy.reset())
 
-        graph1.write(i1, 5)
-        graph1.write(i2, 5)
+        graph1.write(i1, 3)
+        graph1.write(i2, 7)
 
         graph1.propagate()
 
-        t.isDeeply(nodes.map(node => graph1.read(node)), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => graph1.read(node)), [ 3, 7, 10, 13, 10, 10, 10, 17 ], "Correct result calculated")
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 1, 1, 1, 1, 0, 0, 0, 1 ][ index ]))
     })

@@ -98,6 +98,11 @@ class Transaction extends base {
     }
 
 
+    getDimensionBranch () {
+        return this.branch.isEmpty() ? this.branch.baseBranch : this.branch
+    }
+
+
     determinePotentiallyChangedQuarks () : { stack : Quark[], scope : Map<Identifier, QuarkTransition> } {
         const scope : Map<Identifier, QuarkTransition>  = new Map()
 
@@ -114,7 +119,7 @@ class Transaction extends base {
         })
 
         WalkForwardDimensionedNodeContext.new({
-            walkDimension           : this.branch.isEmpty() ? this.branch.baseBranch : this.branch,
+            walkDimension           : this.getDimensionBranch(),
 
             // ignore cycles when determining potentially changed atoms
             onCycle                 : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
@@ -162,9 +167,9 @@ class Transaction extends base {
 
                     const previousQuark = transition.previous
 
-                    quark.iterationResult = { value : previousQuark.value, done : true }
+                    quark.forceValue(previousQuark.value)
 
-                    previousQuark.forEachOutgoingInDimension(this.branch, (label : any, quark : Quark) => {
+                    previousQuark.forEachOutgoingInDimension(this.getDimensionBranch(), (label : any, quark : Quark) => {
                         scope.get(quark.identifier).edgesFlow--
                     })
 
@@ -182,7 +187,7 @@ class Transaction extends base {
                     const previousQuark = transition.previous
 
                     if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {
-                        previousQuark.forEachOutgoingInDimension(this.branch, (label : any, quark : Quark) => {
+                        previousQuark.forEachOutgoingInDimension(this.getDimensionBranch(), (label : any, quark : Quark) => {
                             scope.get(quark.identifier).edgesFlow--
                         })
                     }
