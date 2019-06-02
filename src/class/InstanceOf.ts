@@ -11,10 +11,7 @@ export const instanceOf = <T extends AnyConstructor<object>>(base : AnyFunction<
 
     return new Proxy(base, {
         get : function (target, property, receiver) {
-            if (property === Symbol.hasInstance)
-                return isInstanceOf
-            else
-                return target[ property ]
+            return property === Symbol.hasInstance ? isInstanceOf : target[ property ]
         },
 
         apply : function (target, context, args) {
