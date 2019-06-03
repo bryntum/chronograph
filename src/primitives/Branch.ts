@@ -36,7 +36,7 @@ class Branch extends base {
 
 
     addNode (node : this[ 'NodeT' ]) {
-        if (this.nodes.length > 0 && node.previous !== this.nodes[ this.nodes.length - 1 ]) throw new Error("Invalid state")
+        if (node.previous !== this.headNode()) throw new Error("Invalid state")
 
         this.nodes.push(node)
     }

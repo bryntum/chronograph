@@ -12,6 +12,8 @@ export class Identifier extends Base {
 
     calculationContext  : any
 
+    lazy                : boolean       = false
+
 
     equality (v1 : this[ 'ResultT' ], v2 : this[ 'ResultT' ]) : boolean {
         return v1 === v2

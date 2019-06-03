@@ -15,6 +15,14 @@ export interface OrderedBackward<Element = any> extends Collection<Element> {
     iterateBackwardFrom ()       : IterableIterator<Element>
 }
 
+
+export interface Mappable<Coll extends Collection> {
+    fmap<Element, Result> (func : (a : Element) => Result, collection : Coll) : Coll
+}
+
+
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export const Indexed = <T extends AnyConstructor<OrderedForward & OrderedBackward>>(base : T) =>
 
