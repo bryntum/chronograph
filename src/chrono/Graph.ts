@@ -41,6 +41,11 @@ class ChronoGraph extends base {
     }
 
 
+    removeIdentifier (identifier : Identifier) {
+        return this.activeTransaction.removeIdentifier(identifier)
+    }
+
+
     variableId (id : any, value : any) : Variable {
         const variable      = Variable.new({ id })
 

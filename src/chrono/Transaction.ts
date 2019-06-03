@@ -5,7 +5,7 @@ import { Calculation } from "../primitives/Calculation.js"
 import { WalkForwardDimensionedNodeContext } from "../graph/DimensionedNode.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { BranchNode } from "../primitives/Branch.js"
-import { MinimalQuark, Quark } from "./Quark.js"
+import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
 
 
 type QuarkTransition    = { previous : Quark, current : Quark, edgesFlow : number }
@@ -25,6 +25,7 @@ class Transaction extends base {
     variablesData           : Map<Identifier, any>      = new Map()
 
     touchedIdentifiers      : Map<Identifier, Quark>    = new Map()
+    removedIdentifiers      : Set<Identifier>           = new Set()
 
     scope                   : Map<Identifier, QuarkTransition> = new Map()
 
@@ -55,6 +56,11 @@ class Transaction extends base {
         const previousQuark     = this.getLatestQuarkFor(identifier)
 
         this.touchedIdentifiers.set(identifier, previousQuark)
+    }
+
+
+    removeIdentifier (identifier : Identifier) {
+        this.removedIdentifiers.add(identifier)
     }
 
 
@@ -138,6 +144,12 @@ class Transaction extends base {
                 transition.edgesFlow    = 1
             }
         })
+
+        // removed identifiers will be calculated first
+        this.removedIdentifiers.forEach(identifier => {
+            scope.set(identifier, { previous : this.getLatestQuarkFor(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1 })
+        })
+
 
         // since Map preserves the order of addition, `stack` will be in topo-sorted order as well
         return { stack : Array.from(scope.values()).map(transition => transition.current), scope }

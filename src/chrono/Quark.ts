@@ -1,5 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { MinimalNode, Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js"
+import { TombstoneNode } from "../graph/TombstoneNode.js"
 import { Box } from "../primitives/Box.js"
 import { DimensionedNode } from "../graph/DimensionedNode.js"
 import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
@@ -38,3 +39,38 @@ export class MinimalQuark extends Quark(Calculation(Box(DimensionedNode(Walkable
     NodeT               : Quark
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export class TombstoneQuark extends MinimalQuark {
+    NodeT               : TombstoneQuark
+
+
+    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
+        throw new Error("Can not add edges from tombstone node")
+    }
+
+
+    addEdgeFrom (fromNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
+        throw new Error("Can not add edges to tombstone node")
+    }
+
+
+    get value () {
+        throw new Error("Can not read the value from the tombstone quark")
+    }
+
+
+    isCalculationStarted () : boolean {
+        return true
+    }
+
+
+    isCalculationCompleted () : boolean {
+        return true
+    }
+
+
+    hasValue () : boolean {
+        return false
+    }
+}
