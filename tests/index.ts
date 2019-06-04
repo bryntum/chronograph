@@ -45,7 +45,7 @@ project.start(
         group       : 'Benchmarks',
 
         items       : [
-            // 'benchmark/010_performance.bench.js'
+            'benchmark/020_performance.bench.js'
         ]
     },
     // {

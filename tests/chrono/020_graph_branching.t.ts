@@ -113,6 +113,45 @@ StartTest(t => {
     })
 
 
+    t.iit('Should not use stale deep history', async t => {
+        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1            = graph1.variableId('i1', 0)
+        const i2            = graph1.variableId('i2', 1)
+        const dispatcher    = graph1.variableId('dispatcher', i1)
+
+        const c1            = graph1.identifierId('c1', function* () {
+            return (yield (yield dispatcher)) + 1
+        })
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
+
+        // ----------------
+        const c1Spy         = t.spyOn(c1, 'calculation')
+
+        graph1.write(dispatcher, i2)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Original branch not affected")
+
+        // ----------------
+        c1Spy.reset()
+
+        graph1.write(i1, 10)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, i2, 2 ], "Correct result calculated")
+    })
+
+
     t.it('Should recalculate nodes, changed in deep history', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
