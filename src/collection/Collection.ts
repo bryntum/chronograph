@@ -16,8 +16,13 @@ export interface OrderedBackward<Element = any> extends Collection<Element> {
 }
 
 
+interface HKT<F, A> {
+    readonly F  : F
+    readonly A  : A
+}
+
 export interface Mappable<Coll extends Collection> {
-    fmap<Element, Result> (func : (a : Element) => Result, collection : Coll) : Coll
+    fmap<Element, Result> (func : (a : Element) => Result, collection : HKT<Coll, Element>) : HKT<Coll, Result>
 }
 
 
@@ -87,33 +92,27 @@ export type Indexed = Mixin<typeof Indexed>
 
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export const TreeChildNode = <T extends AnyConstructor<OrderedForward & OrderedBackward>>(base : T) =>
-
-class TreeChildNode extends Base {
-    ElementT        : any
-}
-
-export type TreeChildNode = Mixin<typeof TreeChildNode>
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const TreeParentNode = <T extends AnyConstructor<OrderedForward & OrderedBackward>>(base : T) =>
-
-class TreeParentNode extends Base {
-    ElementT        : any
-}
-
-export type TreeParentNode = Mixin<typeof TreeParentNode>
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const TreeNode = <T extends AnyConstructor<TreeChildNode & TreeParentNode>>(base : T) =>
-
-class TreeNode extends Base {
-    ElementT        : any
-}
-
-export type TreeNode = Mixin<typeof TreeNode>
+// //---------------------------------------------------------------------------------------------------------------------
+// export const TreeLeafNode = <T extends AnyConstructor<OrderedForward & OrderedBackward>>(base : T) =>
+//
+// class TreeLeafNode extends base {
+//     parent          : TreeParentNode
+// }
+//
+// export type TreeLeafNode = Mixin<typeof TreeLeafNode>
+//
+//
+//
+// //---------------------------------------------------------------------------------------------------------------------
+// export const TreeParentNode = <T extends AnyConstructor<TreeLeafNode & OrderedForward & OrderedBackward>>(base : T) =>
+//
+// class TreeParentNode extends base {
+//     ElementT        : any
+//
+//     children        : TreeLeafNode[]
+// }
+//
+// export type TreeParentNode = Mixin<typeof TreeParentNode>
+//
+//
+// export type TreeNode = TreeLeafNode | TreeParentNode

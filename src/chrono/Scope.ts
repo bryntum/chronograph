@@ -1,0 +1,72 @@
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { CalculationFunction } from "../primitives/Calculation.js"
+import { Identifier, Variable } from "../primitives/Identifier.js"
+import { Transaction } from "./Transaction.js"
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Scope = <T extends AnyConstructor<object>>(base : T) =>
+
+class Scope extends base {
+
+    baseTransaction             : Transaction
+    activeTransaction           : Transaction
+
+
+    variable (value : any) : Variable {
+        const variable      = Variable.new()
+
+        this.write(variable, value)
+
+        return variable
+    }
+
+
+    identifier (calculation : CalculationFunction, calculationContext? : any) : Identifier {
+        const identifier    = Identifier.new({ calculation, calculationContext })
+
+        this.touch(identifier)
+
+        return identifier
+    }
+
+
+    removeIdentifier (identifier : Identifier) {
+        return this.activeTransaction.removeIdentifier(identifier)
+    }
+
+
+    variableId (id : any, value : any) : Variable {
+        const variable      = Variable.new({ id })
+
+        this.write(variable, value)
+
+        return variable
+    }
+
+
+    identifierId (id : any, calculation : CalculationFunction, calculationContext? : any) : Identifier {
+        const identifier    = Identifier.new({ calculation, calculationContext, id })
+
+        this.touch(identifier)
+
+        return identifier
+    }
+
+
+    write (variable : Variable, value : any) {
+        return this.activeTransaction.write(variable, value)
+    }
+
+
+    touch (identifier : Identifier) {
+        return this.activeTransaction.touch(identifier)
+    }
+
+
+    read (identifier : Identifier) : any {
+        return this.baseTransaction.read(identifier)
+    }
+}
+
+export type Scope = Mixin<typeof Scope>

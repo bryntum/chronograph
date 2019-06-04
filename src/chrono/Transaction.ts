@@ -245,11 +245,6 @@ class Transaction extends base {
 }
 
 export type Transaction = Mixin<typeof Transaction>
-// export interface TransactionI extends Mixin<typeof Transaction> {
-//     NodeT                   : Transaction
-//     // YieldT                  : GraphCycleDetectedEffect
-//     ValueT                  : Map<Identifier, Quark>
-// }
 
 export class MinimalTransaction extends Transaction(Calculation(Box(BranchNode(Base)))) {
     // YieldT                  : GraphCycleDetectedEffect

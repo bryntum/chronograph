@@ -41,6 +41,7 @@ StartTest(t => {
 
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
 
+        // ----------------
         const graph2    = graph1.branch()
 
         graph2.write(dispatcher, i2)
@@ -65,6 +66,84 @@ StartTest(t => {
 
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, i1, 11 ], "Correct result calculated")
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph2.read(node)), [ 0, 1, i2, 2 ], "Correct result calculated")
+    })
+
+
+    t.iit('Should not recalculate nodes from alternative branch', async t => {
+        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1            = graph1.variableId('i1', 0)
+        const i2            = graph1.variableId('i2', 1)
+        const dispatcher    = graph1.variableId('dispatcher', i1)
+
+        const c1            = graph1.identifierId('c1', function* () {
+            return (yield (yield dispatcher)) + 1
+        })
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
+
+        // ----------------
+        const graph2        = graph1.branch()
+
+        // ----------------
+        const c1Spy         = t.spyOn(c1, 'calculation')
+
+        graph1.write(dispatcher, i2)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Original branch not affected")
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph2.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated in new branch ")
+
+        // ----------------
+        c1Spy.reset()
+
+        graph2.write(i2, 10)
+
+        graph2.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Correct result calculated")
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph2.read(node)), [ 0, 10, i1, 1 ], "Correct result calculated")
+    })
+
+
+    t.iit('Should recalculate nodes, changed in deep history', async t => {
+        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1            = graph1.variableId('i1', 0)
+        const i2            = graph1.variableId('i2', 1)
+
+        const c1            = graph1.identifierId('c1', function* () {
+            return (yield i1) + (yield i2)
+        })
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, c1 ].map(node => graph1.read(node)), [ 0, 1, 1 ], "Correct result calculated")
+
+        // ----------------
+        const graph2        = graph1.branch()
+
+        const i3            = graph2.variableId('i3', 2)
+
+        graph2.propagate()
+
+        t.isDeeply([ i1, i2, c1, i3 ].map(node => graph2.read(node)), [ 0, 1, 1, 2 ], "Correct result calculated")
+
+        // ----------------
+        const graph3        = graph2.branch()
+
+        graph3.write(i1, 1)
+
+        graph3.propagate()
+
+        t.isDeeply([ i1, i2, c1, i3 ].map(node => graph3.read(node)), [ 1, 1, 2, 2 ], "Correct result calculated")
     })
 
 
