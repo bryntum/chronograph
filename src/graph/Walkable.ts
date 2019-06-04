@@ -80,12 +80,13 @@ export class WalkContext<Walkable, Label = any> extends Base {
 
                 toVisit.pop()
             } else {
+                // if we break here, we can re-enter the loop later
+                if (this.onNode(node) === false) break
+
                 // first entry to the node
                 const visitedInfo       = { visitedAt : depth, visitedTopologically : false }
 
                 visited.set(node, visitedInfo)
-
-                if (this.onNode(node) === false) break
 
                 const lengthBefore      = toVisit.length
 

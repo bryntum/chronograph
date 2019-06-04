@@ -1,17 +1,14 @@
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { WalkableForwardNode, WalkForwardContext } from "./Node.js"
+import { WalkForwardContext } from "./Node.js"
 import { WalkContext } from "./Walkable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardDimensionedNodeContext<Label = any> extends WalkContext<DimensionedNode, Label> {
+    walkDimension       : Set<Label>     = new Set()
 
-    walkDimension       : Label
-
-    forEachNext (node : DimensionedNode, func : (label : any, node : DimensionedNode) => any) {
-        const dimension     = node.outgoingByLabel.get(this.walkDimension)
-
-        dimension && dimension.forEach(func)
+    forEachNext (node : DimensionedNode, func : (label : Label, node : DimensionedNode) => any) {
+        node.forEachOutgoingInDimension(this.walkDimension, func)
     }
 }
 
@@ -20,9 +17,9 @@ export class WalkForwardDimensionedNodeContext<Label = any> extends WalkContext<
 //---------------------------------------------------------------------------------------------------------------------
 export const DimensionedNode = <T extends AnyConstructor<object>>(base : T) =>
 
-class DimensionedNode extends base implements WalkableForwardNode {
-    LabelT          : any
-    NodeT           : DimensionedNode
+class DimensionedNode extends base {
+    LabelT                  : any
+    NodeT                   : DimensionedNode
 
     outgoingByLabel         : Map<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>    = new Map()
 
@@ -43,14 +40,16 @@ class DimensionedNode extends base implements WalkableForwardNode {
 
 
     forEachOutgoing (context : WalkForwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
-        for (const [ node, label ] of this.iterateAllOutgoing()) func(label, node)
+        throw new Error("Not implemented")
     }
 
 
-    forEachOutgoingInDimension (dimension : this[ 'LabelT' ], func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
-        const outgoingOfDimension   = this.outgoingByLabel.get(dimension)
+    forEachOutgoingInDimension (dimension : Set<this[ 'LabelT' ]>, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
+        dimension.forEach((dimension) => {
+            const outgoingOfDimension   = this.outgoingByLabel.get(dimension)
 
-        outgoingOfDimension && outgoingOfDimension.forEach(func)
+            outgoingOfDimension && outgoingOfDimension.forEach(func)
+        })
     }
 
 
@@ -63,15 +62,6 @@ class DimensionedNode extends base implements WalkableForwardNode {
         }
 
         dimension.add(toNode)
-    }
-
-
-    * iterateAllOutgoing () : IterableIterator<[ this[ 'LabelT' ], Set<this[ 'NodeT' ]> ]> {
-        for (const [ dimension, outgoingNodes ] of this.outgoingByLabel) {
-            for (const outgoingNode of outgoingNodes) {
-                yield [ outgoingNode, dimension ]
-            }
-        }
     }
 }
 

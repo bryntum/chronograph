@@ -1,16 +1,37 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { Transaction } from "./Transaction.js"
+import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
+import { Revision } from "./Revision.js"
+import { MinimalTransaction, Transaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Scope = <T extends AnyConstructor<object>>(base : T) =>
+export const Scope = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Scope extends base {
 
-    baseTransaction             : Transaction
-    activeTransaction           : Transaction
+    baseRevision                : Revision
+
+    get activeTransaction () : Transaction {
+        return lazyProperty<this, 'activeTransaction'>(
+            this, '_activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision })
+        )
+    }
+
+
+    derive () : this {
+        const Constructor = this.constructor as ScopeConstructor
+
+        return Constructor.new({ baseRevision : this.baseRevision }) as this
+    }
+
+
+    propagate () {
+        const activeTransaction = clearLazyProperty(this, '_activeTransaction') as Transaction
+
+        this.baseRevision       = activeTransaction.propagate()
+    }
 
 
     variable (value : any) : Variable {
@@ -65,8 +86,10 @@ class Scope extends base {
 
 
     read (identifier : Identifier) : any {
-        return this.baseTransaction.read(identifier)
+        return this.baseRevision.read(identifier)
     }
 }
 
 export type Scope = Mixin<typeof Scope>
+
+type ScopeConstructor = MixinConstructor<typeof Scope>

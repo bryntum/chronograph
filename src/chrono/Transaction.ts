@@ -4,40 +4,32 @@ import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
 import { WalkForwardDimensionedNodeContext } from "../graph/DimensionedNode.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { BranchNode } from "../primitives/Branch.js"
+import { lazyProperty } from "../util/Helper.js"
 import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
+import { MinimalRevision, Revision } from "./Revision.js"
 
 
 type QuarkTransition    = { previous : Quark, current : Quark, edgesFlow : number }
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Transaction = <T extends AnyConstructor<BranchNode & Calculation>>(base : T) =>
+export const Transaction = <T extends AnyConstructor<Calculation>>(base : T) =>
 
 class Transaction extends base {
-    previous                : Transaction
+    baseRevision            : Revision
 
     // YieldT                  : unknown
     ValueT                  : Map<Identifier, QuarkTransition>
 
     isClosed                : boolean                   = false
-    isFrozen                : boolean                   = false
 
     variablesData           : Map<Identifier, any>      = new Map()
 
     touchedIdentifiers      : Map<Identifier, Quark>    = new Map()
     removedIdentifiers      : Set<Identifier>           = new Set()
 
-    scope                   : Map<Identifier, QuarkTransition> = new Map()
 
-
-    read (identifier : Identifier) : any {
-        if (!this.isFrozen) throw new Error("Can only read from frozen transaction")
-
-        const latest    = this.getLatestQuarkFor(identifier)
-
-        if (!latest) throw new Error("Unknown identifier")
-
-        return latest.value
+    isEmpty () : boolean {
+        return this.touchedIdentifiers.size === 0 && this.removedIdentifiers.size === 0
     }
 
 
@@ -53,7 +45,7 @@ class Transaction extends base {
     touch (identifier : Identifier) {
         if (this.touchedIdentifiers.has(identifier)) return
 
-        const previousQuark     = this.getLatestQuarkFor(identifier)
+        const previousQuark     = this.baseRevision.getLatestQuarkFor(identifier)
 
         this.touchedIdentifiers.set(identifier, previousQuark)
     }
@@ -64,48 +56,23 @@ class Transaction extends base {
     }
 
 
-    derive (quark : Quark) : Quark {
-        return MinimalQuark.new({
-            identifier          : quark.identifier
-        })
-    }
-
-
-    propagate () {
+    propagate () : Revision {
         this.isClosed   = true
 
-        this.scope      = this.runSyncWithEffect(() => null)
+        const candidate = MinimalRevision.new({
+            previous    : this.baseRevision
+        })
 
-        this.isFrozen   = true
+        const transitionScope   = this.runSyncWithEffect(() => null, candidate)
+
+        candidate.scope     = new Map(Array.from(transitionScope.entries()).map(([ key, value ]) => [ key, value.current ]))
+
+        return candidate
     }
 
 
-    getPreviousQuarkFor (identifier : Identifier) : Quark {
-        let previous    = this.previous
-
-        while (previous) {
-            const quark = previous.scope.get(identifier)
-
-            if (quark) return quark.current
-
-            previous    = previous.previous
-        }
-
-        return null
-    }
-
-
-    getLatestQuarkFor (identifier : Identifier) : Quark {
-        const current       = this.scope.get(identifier)
-
-        if (current) return current.current
-
-        return this.getPreviousQuarkFor(identifier)
-    }
-
-
-    getDimensionBranch () {
-        return this.branch.isEmpty() ? this.branch.baseBranch : this.branch
+    get dimensionBranch () : Set<Revision> {
+        return lazyProperty<this, 'dimensionBranch'>(this, '_dimensionBranch', () => new Set(this.baseRevision.thisAndAllPrevious()) )
     }
 
 
@@ -125,13 +92,13 @@ class Transaction extends base {
         })
 
         WalkForwardDimensionedNodeContext.new({
-            walkDimension           : this.getDimensionBranch(),
+            walkDimension           : this.dimensionBranch,
 
             // ignore cycles when determining potentially changed atoms
             onCycle                 : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
 
             onTopologicalNode       : (quark : Quark) => {
-                const newQuark      = this.derive(quark)
+                const newQuark      = MinimalQuark.new({ identifier : quark.identifier })
 
                 scope.set(newQuark.identifier, { previous : quark, current : newQuark, edgesFlow : quark.incoming.size })
             }
@@ -147,7 +114,7 @@ class Transaction extends base {
 
         // removed identifiers will be calculated first
         this.removedIdentifiers.forEach(identifier => {
-            scope.set(identifier, { previous : this.getLatestQuarkFor(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1 })
+            scope.set(identifier, { previous : this.baseRevision.getLatestQuarkFor(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1 })
         })
 
 
@@ -156,7 +123,7 @@ class Transaction extends base {
     }
 
 
-    * calculation (...args : any[]) : this[ 'iterator' ] {
+    * calculation (candidate : Revision) : this[ 'iterator' ] {
         const { stack, scope }      = this.determinePotentiallyChangedQuarks()
 
         while (stack.length) {
@@ -181,7 +148,7 @@ class Transaction extends base {
 
                     quark.forceValue(previousQuark.value)
 
-                    previousQuark.forEachOutgoingInDimension(this.getDimensionBranch(), (label : any, quark : Quark) => {
+                    previousQuark.forEachOutgoingInDimension(this.dimensionBranch, (label : any, quark : Quark) => {
                         scope.get(quark.identifier).edgesFlow--
                     })
 
@@ -199,7 +166,7 @@ class Transaction extends base {
                     const previousQuark = transition.previous
 
                     if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {
-                        previousQuark.forEachOutgoingInDimension(this.getDimensionBranch(), (label : any, quark : Quark) => {
+                        previousQuark.forEachOutgoingInDimension(this.dimensionBranch, (label : any, quark : Quark) => {
                             scope.get(quark.identifier).edgesFlow--
                         })
                     }
@@ -211,11 +178,11 @@ class Transaction extends base {
                 else if (value instanceof Identifier) {
                     const requestedTransition   = scope.get(value)
 
-                    const requestedQuark        = requestedTransition ? requestedTransition.current : this.getPreviousQuarkFor(value)
+                    const requestedQuark        = requestedTransition ? requestedTransition.current : this.baseRevision.getLatestQuarkFor(value)
 
                     if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
 
-                    quark.addEdgeFrom(requestedQuark, this.branch)
+                    quark.addEdgeFrom(requestedQuark, candidate)
 
                     if (requestedQuark.isCalculationCompleted()) {
                         iterationResult         = quark.supplyYieldValue(requestedQuark.value)
@@ -246,7 +213,7 @@ class Transaction extends base {
 
 export type Transaction = Mixin<typeof Transaction>
 
-export class MinimalTransaction extends Transaction(Calculation(Box(BranchNode(Base)))) {
+export class MinimalTransaction extends Transaction(Calculation(Box(Base))) {
     // YieldT                  : GraphCycleDetectedEffect
     ValueT                  : Map<Identifier, QuarkTransition>
 }
