@@ -17,33 +17,45 @@ StartTest(t => {
         for (let i = 0; i < atomNum; i++) {
             if (i <= 3) {
                 boxes.push(graph.variableId(i, 1))
+            }
+            else if (i <= 10) {
+                boxes.push(graph.identifierId(i, function* () {
+                    const input = [
+                        yield boxes[0],
+                        yield boxes[1],
+                        yield boxes[2],
+                        yield boxes[3]
+                    ]
+
+                    const res   = input.reduce((sum, op) => sum + op, 0)
+
+                    // console.log(`Ident ${i}: `, res)
+
+                    return res
+                }, i))
+            }
+            else if (i % 2 == 0) {
+                boxes.push(graph.identifierId(i, function* () {
+                    const input = [
+                        yield boxes[this - 1],
+                        yield boxes[this - 2],
+                        yield boxes[this - 3],
+                        yield boxes[this - 4]
+                    ]
+
+                    return input.reduce((sum, op) => (sum + op) % 10000, 0)
+                }, i))
             } else {
+                boxes.push(graph.identifierId(i, function* () {
+                    const input = [
+                        yield boxes[this - 1],
+                        yield boxes[this - 2],
+                        yield boxes[this - 3],
+                        yield boxes[this - 4]
+                    ]
 
-                if (i % 2 == 0) {
-
-                    boxes.push(graph.identifierId(i, function* () {
-                        const input = [
-                            yield boxes[this - 1],
-                            yield boxes[this - 2],
-                            yield boxes[this - 3],
-                            yield boxes[this - 4]
-                        ]
-
-                        return input.reduce((sum, op) => (sum + op) % 10000, 0)
-                    }, i))
-                }
-                else {
-                    boxes.push(graph.identifierId(i, function* () {
-                        const input = [
-                            yield boxes[this - 1],
-                            yield boxes[this - 2],
-                            yield boxes[this - 3],
-                            yield boxes[this - 4]
-                        ]
-
-                        return input.reduce((sum, op) => (sum - op) % 10000, 0)
-                    }, i))
-                }
+                    return input.reduce((sum, op) => (sum - op) % 10000, 0)
+                }, i))
             }
         }
 
@@ -51,10 +63,11 @@ StartTest(t => {
         console.timeEnd("Build graph")
 
         console.time("Calc #0")
+        // console.profile('Propagate #0')
 
         graph.propagate()
-        // graph.propagateSync()
 
+        // console.profileEnd()
         console.timeEnd("Calc #0")
 
         console.log("Result #0: ", graph.read(boxes[ boxes.length - 1 ]))
@@ -62,12 +75,12 @@ StartTest(t => {
         t.chain(
             async next => {
                 graph.write(boxes[ 0 ], 0)
+                graph.write(boxes[ 1 ], 2)
 
                 console.time("Calc #1")
                 // console.profile('Propagate #1')
 
                 graph.propagate()
-                // graph.propagateSync()
 
                 // console.profileEnd()
                 console.timeEnd("Calc #1")

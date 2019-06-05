@@ -1,5 +1,4 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { lookAhead, map, reverse } from "../collection/Iterator.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
