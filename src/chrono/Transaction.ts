@@ -2,10 +2,9 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { OnCycleAction, WalkStep } from "../graph/Walkable.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
-import { WalkForwardDimensionedNodeContext } from "./DimensionedNode.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { lazyProperty } from "../util/Helper.js"
-import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
+import { MinimalQuark, Quark, TombstoneQuark, WalkForwardQuarkContext } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
@@ -91,7 +90,7 @@ class Transaction extends base {
             }
         })
 
-        WalkForwardDimensionedNodeContext.new({
+        WalkForwardQuarkContext.new({
             latest                  : latest,
             walkDimension           : this.dimensionBranch,
 

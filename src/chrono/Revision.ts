@@ -123,4 +123,7 @@ class Revision extends base {
 
 export type Revision = Mixin<typeof Revision>
 
+export interface RevisionI extends Revision {}
+
+
 export class MinimalRevision extends Revision(Base) {}

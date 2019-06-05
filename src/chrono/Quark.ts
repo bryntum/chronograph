@@ -1,9 +1,10 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { DimensionedNode } from "./DimensionedNode.js"
-import { Node, WalkableBackwardNode, WalkableForwardNode } from "../graph/Node.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { MinimalNode, Node, WalkForwardContext } from "../graph/Node.js"
+import { WalkContext } from "../graph/Walkable.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier } from "../primitives/Identifier.js"
+import { Revision } from "./Revision.js"
 
 
 // not clear yet, if Quark should implement WalkableBackwardNode (memory usage concerns)
@@ -11,14 +12,28 @@ import { Identifier } from "../primitives/Identifier.js"
 // also incoming edges are used by references (perhaps not needed)
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Quark = <T extends AnyConstructor<DimensionedNode & WalkableBackwardNode & Calculation>>(base : T) =>
+export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Label> {
+    latest              : Map<Identifier, Quark>
 
-Node(class Quark extends base {
-    NodeT           : Quark
+    walkDimension       : Set<Revision>     = new Set()
 
-    identifier      : Identifier
+    forEachNext (node : Quark, func : (label : Label, node : Quark) => any) {
+        node.forEachOutgoingInDimension(this.latest, this.walkDimension, func)
+    }
+}
 
-    incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Quark = <T extends AnyConstructor<Node & Calculation>>(base : T) =>
+
+class Quark extends base {
+    NodeT                   : Quark
+
+    identifier              : Identifier
+
+    incoming                : Map<this[ 'NodeT' ], this[ 'LabelT' ]>        = new Map()
+    outgoingByLabel         : Map<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>   = new Map()
 
 
     get calculation () : CalculationFunction {
@@ -29,14 +44,59 @@ Node(class Quark extends base {
     get calculationContext () : any {
         return this.identifier.calculationContext
     }
-})
+
+
+    hasEdgeTo (toNode : this[ 'NodeT' ]) : boolean {
+        throw new Error("Not implemented")
+    }
+
+
+    getLabelTo (toNode : this[ 'NodeT' ]) : this[ 'LabelT' ] {
+        throw new Error("Not implemented")
+    }
+
+
+    removeEdgeTo (toNode : this[ 'NodeT' ]) {
+        throw new Error("Not implemented")
+    }
+
+
+    forEachOutgoing (context : WalkForwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
+        throw new Error("Not implemented")
+    }
+
+
+    forEachOutgoingInDimension (latest : Map<Identifier, Quark>, dimensions : Set<this[ 'LabelT' ]>, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
+        for (const dimension of dimensions) {
+            const outgoingOfDimension   = this.outgoingByLabel.get(dimension)
+
+            if (outgoingOfDimension)
+                for (const outgoingNode of outgoingOfDimension)
+                    if (outgoingNode === latest.get(outgoingNode.identifier)) func(undefined, outgoingNode)
+        }
+    }
+
+
+    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
+        let dimension           = this.outgoingByLabel.get(label)
+
+        if (!dimension) {
+            dimension           = new Set()
+            this.outgoingByLabel.set(label, dimension)
+        }
+
+        dimension.add(toNode)
+
+        if (!calledFromPartner) toNode.addEdgeFrom(this, label, true)
+    }
+}
 
 export type Quark = Mixin<typeof Quark>
 
 export interface QuarkI extends Quark {}
 
 
-export class MinimalQuark extends Quark(Calculation(Box(DimensionedNode(WalkableBackwardNode(WalkableForwardNode(Base)))))) {
+export class MinimalQuark extends Quark(Calculation(Box(MinimalNode))) {
     NodeT               : Quark
 }
 
