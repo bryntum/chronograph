@@ -33,6 +33,8 @@ Node(class Quark extends base {
 
 export type Quark = Mixin<typeof Quark>
 
+export interface QuarkI extends Quark {}
+
 
 export class MinimalQuark extends Quark(Calculation(Box(DimensionedNode(WalkableBackwardNode(WalkableForwardNode(Base)))))) {
     NodeT               : Quark

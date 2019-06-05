@@ -2,6 +2,7 @@ import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
+import { Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 
@@ -11,7 +12,21 @@ export const Scope = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Scope extends base {
 
-    baseRevision                : Revision
+    baseRevision            : Revision
+
+    baseRevisionLatest      : Map<Identifier, Quark>
+
+
+    initialize (...args) {
+        super.initialize(...args)
+
+        // copy/create the latest cache
+        this.baseRevisionLatest = this.baseRevision.buildLatest()
+
+        // provide the cache to revision, so that other scopes can benefit from it
+        if (!this.baseRevision.latest) this.baseRevision.latest = this.baseRevisionLatest
+    }
+
 
     get activeTransaction () : Transaction {
         return lazyProperty<this, 'activeTransaction'>(
@@ -30,7 +45,14 @@ class Scope extends base {
     propagate () {
         const activeTransaction = clearLazyProperty(this, '_activeTransaction') as Transaction
 
-        this.baseRevision       = activeTransaction.propagate()
+        // take the cache back, if it was created by this scope
+        if (this.baseRevision.latest === this.baseRevisionLatest) {
+            this.baseRevision.latest    = undefined
+        }
+
+        this.baseRevision               = activeTransaction.propagate(this.baseRevisionLatest)
+
+        this.baseRevision.latest        = this.baseRevision.includeScopeToLatest(this.baseRevisionLatest)
     }
 
 

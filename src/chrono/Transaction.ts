@@ -56,14 +56,14 @@ class Transaction extends base {
     }
 
 
-    propagate () : Revision {
+    propagate (latest : Map<Identifier, Quark>) : Revision {
         this.isClosed   = true
 
         const candidate = MinimalRevision.new({
             previous    : this.baseRevision
         })
 
-        const transitionScope   = this.runSyncWithEffect(() => null, candidate)
+        const transitionScope   = this.runSyncWithEffect(() => null, candidate, latest)
 
         candidate.scope     = new Map(Array.from(transitionScope.entries()).map(([ key, value ]) => [ key, value.current ]))
 
@@ -76,7 +76,7 @@ class Transaction extends base {
     }
 
 
-    determinePotentiallyChangedQuarks () : { stack : Quark[], scope : Map<Identifier, QuarkTransition> } {
+    determinePotentiallyChangedQuarks (latest : Map<Identifier, Quark>) : { stack : Quark[], scope : Map<Identifier, QuarkTransition> } {
         const scope : Map<Identifier, QuarkTransition>  = new Map()
 
         const startFrom : Quark[]                       = []
@@ -92,6 +92,7 @@ class Transaction extends base {
         })
 
         WalkForwardDimensionedNodeContext.new({
+            latest                  : latest,
             walkDimension           : this.dimensionBranch,
 
             // ignore cycles when determining potentially changed atoms
@@ -114,7 +115,7 @@ class Transaction extends base {
 
         // removed identifiers will be calculated first
         this.removedIdentifiers.forEach(identifier => {
-            scope.set(identifier, { previous : this.baseRevision.getLatestQuarkFor(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1 })
+            scope.set(identifier, { previous : latest.get(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1 })
         })
 
 
@@ -123,8 +124,10 @@ class Transaction extends base {
     }
 
 
-    * calculation (candidate : Revision) : this[ 'iterator' ] {
-        const { stack, scope }      = this.determinePotentiallyChangedQuarks()
+    ArgsT   : [ Revision,  Map<Identifier, Quark> ]
+
+    * calculation (candidate : Revision, latest : Map<Identifier, Quark>) : this[ 'iterator' ] {
+        const { stack, scope }      = this.determinePotentiallyChangedQuarks(latest)
 
         while (stack.length) {
             const quark : Quark     = stack[ stack.length - 1 ]
@@ -148,7 +151,7 @@ class Transaction extends base {
 
                     quark.forceValue(previousQuark.value)
 
-                    previousQuark.forEachOutgoingInDimension(this.dimensionBranch, (label : any, quark : Quark) => {
+                    previousQuark.forEachOutgoingInDimension(latest, this.dimensionBranch, (label : any, quark : Quark) => {
                         scope.get(quark.identifier).edgesFlow--
                     })
 
@@ -166,7 +169,7 @@ class Transaction extends base {
                     const previousQuark = transition.previous
 
                     if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {
-                        previousQuark.forEachOutgoingInDimension(this.dimensionBranch, (label : any, quark : Quark) => {
+                        previousQuark.forEachOutgoingInDimension(latest, this.dimensionBranch, (label : any, quark : Quark) => {
                             scope.get(quark.identifier).edgesFlow--
                         })
                     }
@@ -178,7 +181,7 @@ class Transaction extends base {
                 else if (value instanceof Identifier) {
                     const requestedTransition   = scope.get(value)
 
-                    const requestedQuark        = requestedTransition ? requestedTransition.current : this.baseRevision.getLatestQuarkFor(value)
+                    const requestedQuark        = requestedTransition ? requestedTransition.current : latest.get(value)
 
                     if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
 

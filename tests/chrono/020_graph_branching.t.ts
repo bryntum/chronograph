@@ -26,7 +26,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should not recalculate nodes from previous branch', async t => {
+    t.it('Should not recalculate nodes from previous branch', t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
@@ -113,7 +113,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should not use stale deep history', async t => {
+    t.it('Should not use stale deep history', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)

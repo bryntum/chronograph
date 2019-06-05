@@ -1,14 +1,18 @@
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { WalkForwardContext } from "../graph/Node.js"
 import { WalkContext } from "../graph/Walkable.js"
+import { Identifier } from "../primitives/Identifier.js"
+import { Quark, QuarkI } from "./Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardDimensionedNodeContext<Label = any> extends WalkContext<DimensionedNode, Label> {
+    latest              : Map<Identifier, Quark>
+
     walkDimension       : Set<Label>     = new Set()
 
     forEachNext (node : DimensionedNode, func : (label : Label, node : DimensionedNode) => any) {
-        node.forEachOutgoingInDimension(this.walkDimension, func)
+        node.forEachOutgoingInDimension(this.latest, this.walkDimension, func)
     }
 }
 
@@ -44,12 +48,14 @@ class DimensionedNode extends base {
     }
 
 
-    forEachOutgoingInDimension (dimension : Set<this[ 'LabelT' ]>, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
-        dimension.forEach((dimension) => {
+    forEachOutgoingInDimension (latest : Map<Identifier, QuarkI>, dimensions : Set<this[ 'LabelT' ]>, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
+        for (const dimension of dimensions) {
             const outgoingOfDimension   = this.outgoingByLabel.get(dimension)
 
-            outgoingOfDimension && outgoingOfDimension.forEach(func)
-        })
+            if (outgoingOfDimension)
+                for (const outgoingNode of outgoingOfDimension)
+                    if (outgoingNode === latest.get(outgoingNode.identifier)) func(undefined, outgoingNode)
+        }
     }
 
 

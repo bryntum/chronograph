@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { uniqueOnly } from "../collection/Iterator.js"
+import { reverse, takeUntilIncluding, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier } from "../primitives/Identifier.js"
 import { Quark } from "./Quark.js"
 
@@ -11,6 +11,9 @@ class Revision extends base {
     previous                : Revision
 
     scope                   : Map<Identifier, Quark>    = new Map()
+
+    // optional cache, maintained from the outside
+    latest                  : Map<Identifier, Quark>
 
 
     read (identifier : Identifier) : any {
@@ -28,6 +31,8 @@ class Revision extends base {
         let previous    = this.previous
 
         while (previous) {
+            if (previous.latest) return previous.latest.get(identifier)
+
             const quark = previous.scope.get(identifier)
 
             if (quark) return quark
@@ -40,6 +45,8 @@ class Revision extends base {
 
 
     getLatestQuarkFor (identifier : Identifier) : Quark {
+        if (this.latest) return this.latest.get(identifier)
+
         const current       = this.scope.get(identifier)
 
         if (current) return current
@@ -48,14 +55,14 @@ class Revision extends base {
     }
 
 
-    * thisAndAllPrevious () {
+    * thisAndAllPrevious () : IterableIterator<Revision> {
         yield this
 
         yield* this.allPrevious()
     }
 
 
-    * allPrevious () {
+    * allPrevious () : IterableIterator<Revision> {
         let previous    = this.previous
 
         while (previous) {
@@ -66,19 +73,54 @@ class Revision extends base {
     }
 
 
-    * allIdentifiersDeep () {
-        yield* uniqueOnly(function * () {
-            for (const revision of this.thisAndAllPrevious()) {
-                yield* revision.scope.keys()
+    allIdentifiersDeep () : IterableIterator<Identifier> {
+        if (this.latest) {
+            return this.latest.keys()
+        }
+
+        const me        = this
+
+        return uniqueOnly(function * () {
+            for (const revision of me.thisAndAllPrevious()) {
+                if (revision.latest) {
+                    yield* revision.latest.keys()
+
+                    return
+                } else
+                    yield* revision.scope.keys()
             }
         }())
+    }
+
+
+    buildLatest () : Map<Identifier, Quark> {
+        const me        = this
+
+        const entries = function * () : IterableIterator<[ Identifier, Quark ]> {
+
+            for (const revision of reverse(takeUntilIncluding(me.thisAndAllPrevious(), revision => Boolean(revision.latest)))) {
+                if (revision.latest) {
+                    yield* revision.latest
+                } else
+                    yield* revision.scope
+            }
+
+        }
+
+        return new Map(entries())
+    }
+
+
+    includeScopeToLatest (latest) : Map<Identifier, Quark> {
+        for (const [ identifier, quark ] of this.scope) {
+            latest.set(identifier, quark)
+        }
+
+        return latest
     }
 
 }
 
 export type Revision = Mixin<typeof Revision>
 
-export interface RevisionI extends Revision {}
-
-export class MinimalRevision extends Revision(Base) {
-}
+export class MinimalRevision extends Revision(Base) {}
