@@ -70,8 +70,8 @@ class Transaction extends base {
     }
 
 
-    get dimensionBranch () : Set<Revision> {
-        return lazyProperty<this, 'dimensionBranch'>(this, '_dimensionBranch', () => new Set(this.baseRevision.thisAndAllPrevious()) )
+    get dimension () : Set<Revision> {
+        return lazyProperty<this, 'dimension'>(this, '_dimension', () => new Set(this.baseRevision.thisAndAllPrevious()) )
     }
 
 
@@ -92,7 +92,7 @@ class Transaction extends base {
 
         WalkForwardQuarkContext.new({
             latest                  : latest,
-            walkDimension           : this.dimensionBranch,
+            walkDimension           : this.dimension,
 
             // ignore cycles when determining potentially changed atoms
             onCycle                 : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
@@ -150,7 +150,7 @@ class Transaction extends base {
 
                     quark.forceValue(previousQuark.value)
 
-                    previousQuark.forEachOutgoingInDimension(latest, this.dimensionBranch, (label : any, quark : Quark) => {
+                    previousQuark.forEachOutgoingInDimension(latest, this.dimension, (label : any, quark : Quark) => {
                         scope.get(quark.identifier).edgesFlow--
                     })
 
@@ -168,7 +168,7 @@ class Transaction extends base {
                     const previousQuark = transition.previous
 
                     if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {
-                        previousQuark.forEachOutgoingInDimension(latest, this.dimensionBranch, (label : any, quark : Quark) => {
+                        previousQuark.forEachOutgoingInDimension(latest, this.dimension, (label : any, quark : Quark) => {
                             scope.get(quark.identifier).edgesFlow--
                         })
                     }

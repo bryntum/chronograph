@@ -119,6 +119,16 @@ class Revision extends base {
         return latest
     }
 
+
+    // excludeScopeFromLatest (latest) : Map<Identifier, Quark> {
+    //     for (const [ identifier, quark ] of this.scope) {
+    //         latest.set(identifier, quark)
+    //     }
+    //
+    //     return latest
+    // }
+
+
 }
 
 export type Revision = Mixin<typeof Revision>

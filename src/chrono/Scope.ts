@@ -1,4 +1,5 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { lookAhead, map, reverse } from "../collection/Iterator.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
@@ -11,10 +12,25 @@ import { MinimalTransaction, Transaction } from "./Transaction.js"
 export const Scope = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Scope extends base {
-
     baseRevision            : Revision
 
+    topRevision             : Revision      = this.baseRevision
+
     baseRevisionLatest      : Map<Identifier, Quark>
+
+
+    get nextRevision () : Map<Revision, Revision> {
+        return lazyProperty<this, 'nextRevision'>(this, '_nextRevision', () => {
+            const revisions     = Array.from(this.topRevision.thisAndAllPrevious()).reverse()
+
+            const entries : [ Revision, Revision ][]    = []
+
+            for (let i = 0; i < revisions.length - 1; i++)
+                entries.push([ revisions[ i ], revisions[ i + 1 ] ])
+
+            return new Map(entries)
+        })
+    }
 
 
     initialize (...args) {
@@ -35,7 +51,7 @@ class Scope extends base {
     }
 
 
-    derive () : this {
+    branch () : this {
         const Constructor = this.constructor as ScopeConstructor
 
         return Constructor.new({ baseRevision : this.baseRevision }) as this
@@ -45,14 +61,15 @@ class Scope extends base {
     propagate () {
         const activeTransaction = clearLazyProperty(this, '_activeTransaction') as Transaction
 
-        // take the cache back, if it was created by this scope
-        if (this.baseRevision.latest === this.baseRevisionLatest) {
-            this.baseRevision.latest    = undefined
-        }
+        // take the cache back, only if it was created by this scope
+        if (this.baseRevision.latest === this.baseRevisionLatest) this.baseRevision.latest = undefined
 
-        this.baseRevision               = activeTransaction.propagate(this.baseRevisionLatest)
+        const nextRevision              = activeTransaction.propagate(this.baseRevisionLatest)
 
-        this.baseRevision.latest        = this.baseRevision.includeScopeToLatest(this.baseRevisionLatest)
+        this.baseRevision               = this.topRevision = nextRevision
+        this.baseRevisionLatest         = nextRevision.latest = nextRevision.includeScopeToLatest(this.baseRevisionLatest)
+
+        clearLazyProperty(this, '_nextRevision')
     }
 
 
@@ -109,6 +126,35 @@ class Scope extends base {
 
     read (identifier : Identifier) : any {
         return this.baseRevision.read(identifier)
+    }
+
+
+    undo () {
+        const baseRevision      = this.baseRevision
+        const previous          = baseRevision.previous
+
+        if (!previous) return
+
+        // take the cache back, only if it was created by this scope
+        if (baseRevision.latest === this.baseRevisionLatest) baseRevision.latest = undefined
+
+        this.baseRevision           = previous
+        this.baseRevisionLatest     = previous.latest = previous.buildLatest()
+    }
+
+
+    redo () {
+        const baseRevision      = this.baseRevision
+
+        if (baseRevision === this.topRevision) return
+
+        const nextRevision      = this.nextRevision.get(baseRevision)
+
+        // take the cache back, only if it was created by this scope
+        if (baseRevision.latest === this.baseRevisionLatest) baseRevision.latest = undefined
+
+        this.baseRevision       = nextRevision
+        this.baseRevisionLatest = nextRevision.latest = nextRevision.includeScopeToLatest(this.baseRevisionLatest)
     }
 }
 
