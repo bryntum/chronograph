@@ -85,11 +85,11 @@ StartTest(t => {
             },
             async next => {
                 console.time("Undo")
-                console.profile('Undo')
+                // console.profile('Undo')
 
                 graph.undo()
 
-                console.profileEnd()
+                // console.profileEnd()
                 console.timeEnd("Undo")
 
                 console.log("Result after undo: ", graph.read(boxes[ boxes.length - 1 ]))
