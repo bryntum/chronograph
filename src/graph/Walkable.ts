@@ -10,25 +10,27 @@ const Source        = Symbol('Source')
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type WalkStep<Walkable>    = { node : Walkable, from : Walkable | typeof Source }
+export type WalkStep<Walkable, Label = any> = { node : Walkable, from : Walkable | typeof Source, label : Label }
+
+export type VisitInfo = { visitedAt : number, visitedTopologically : boolean }
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkContext<Walkable, Label = any> extends Base {
 
-    visited         : Map<Walkable, { visitedAt : number, visitedTopologically : boolean }>     = new Map()
+    visited         : Map<Walkable, VisitInfo>     = new Map()
 
     toVisit         : WalkStep<Walkable>[]
 
 
     startFrom (sourceNodes : Walkable[]) {
-        this.toVisit    = sourceNodes.map(node => { return { node : node, from : Source } })
+        this.toVisit    = sourceNodes.map(node => { return { node : node, from : Source, label : undefined } })
 
         this.walkDepth()
     }
 
 
-    onNode (node : Walkable) : boolean | void {
+    onNode (node : Walkable, walkStep : WalkStep<Walkable, Label>) : boolean | void {
     }
 
 
@@ -81,7 +83,7 @@ export class WalkContext<Walkable, Label = any> extends Base {
                 toVisit.pop()
             } else {
                 // if we break here, we can re-enter the loop later
-                if (this.onNode(node) === false) break
+                if (this.onNode(node, toVisit[ depth - 1 ]) === false) break
 
                 // first entry to the node
                 const visitedInfo       = { visitedAt : depth, visitedTopologically : false }
@@ -90,7 +92,7 @@ export class WalkContext<Walkable, Label = any> extends Base {
 
                 const lengthBefore      = toVisit.length
 
-                this.forEachNext(node, (_, nextNode) => toVisit.push({ node : nextNode, from : node }))
+                this.forEachNext(node, (label, nextNode) => toVisit.push({ node : nextNode, from : node, label : label }))
 
                 // if there's no outgoing edges, node is at topological position
                 // it would be enough to just continue the `while` loop and the `onTopologicalNode`
@@ -110,7 +112,7 @@ export class WalkContext<Walkable, Label = any> extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function cycleInfo<Walkable> (stack : WalkStep<Walkable>[]) : Walkable[] {
+export function cycleInfo<Walkable, Label = any> (stack : WalkStep<Walkable, Label>[]) : Walkable[] {
     const length                = stack.length
 
     if (length === 0) return []

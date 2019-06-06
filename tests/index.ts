@@ -17,6 +17,13 @@ project.start(
         ]
     },
     {
+        group       : 'util',
+
+        items       : [
+            'util/010_json_walk.t.js',
+        ]
+    },
+    {
         group       : 'graph',
 
         items       : [
