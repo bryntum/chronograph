@@ -6,11 +6,11 @@ export enum OnCycleAction {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-const Source        = Symbol('Source')
+export const WalkSource = Symbol('WalkSource')
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type WalkStep<Walkable, Label = any> = { node : Walkable, from : Walkable | typeof Source, label : Label }
+export type WalkStep<Walkable, Label = any> = { node : Walkable, from : Walkable | typeof WalkSource, label : Label }
 
 export type VisitInfo = { visitedAt : number, visitedTopologically : boolean }
 
@@ -24,7 +24,7 @@ export class WalkContext<Walkable, Label = any> extends Base {
 
 
     startFrom (sourceNodes : Walkable[]) {
-        this.toVisit    = sourceNodes.map(node => { return { node : node, from : Source, label : undefined } })
+        this.toVisit    = sourceNodes.map(node => { return { node : node, from : WalkSource, label : undefined } })
 
         this.walkDepth()
     }
