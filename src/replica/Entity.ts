@@ -36,6 +36,8 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
         $calculations   : { [s in keyof this] : string }
 
+        propagateSuspended : number
+
 // LAZY ATOMS CREATION - investigate if it improves performance
 //         static atomsCollectionCls : AnyConstructor
 //
@@ -174,10 +176,24 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             return this.getGraph().isPropagating
         }
 
-        async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
-            const graph = this.getGraph()
+        suspendPropagate() {
+            this.propagateSuspended = (this.propagateSuspended || 0) + 1
+        }
 
-            return graph && graph.propagate(onEffect) || Promise.resolve(PropagationResult.Completed)
+        async resumePropagate(trigger) {
+            if (this.propagateSuspended && !--this.propagateSuspended) {
+                if (trigger) {
+                    return this.propagate()
+                }
+            }
+        }
+
+        async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
+            if (!this.propagateSuspended) {
+                const graph = this.getGraph()
+
+                return graph && graph.propagate(onEffect) || Promise.resolve(PropagationResult.Completed)
+            }
         }
 
 
