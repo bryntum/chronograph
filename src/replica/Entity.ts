@@ -182,16 +182,37 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             return this.getGraph().isPropagating
         }
 
+        /**
+         * Suspend propagation processing. When propagation is suspended, calls to propagate
+         * do not proceed, instead a propagate call is deferred until a matching
+         * {@link #function-resumePropagate} is called.
+         */
         suspendPropagate() {
             this.propagateSuspended++
         }
 
-        async resumePropagate() {
-            this.propagateSuspended && --this.propagateSuspended
+        /**
+         * Resume propagation. If propagation is resumed (calls may be nested which increments a
+         * suspension counter), then if a call to propagate was made during suspension, propagate is
+         * executed.
+         * @param {Boolean} [trigger] Pass `false` to inhibit automatic propagation if propagate was requested during suspension.
+         */
+        async resumePropagate(trigger? : Boolean) {
+            if (this.propagateSuspended) {
+                // If we are still suspended, return the resumePromise
+                if (--this.propagateSuspended) {
+                    return this.resumePromise;
+                }
+                // Otherwise, if a call to propagate while suspended led to the creation
+                // of the resumePromise, propagate now.
+                else if (this.resumePromise && trigger !== false) {
+                    return this.propagate()
+                }
+            }
 
-            // If we are still suspended, this will return the resumePromise
-            // Otherwise, it will propagate.
-            return this.propagate()
+            // We were not suspended, or we have resumed but there were no calls
+            // to propagate during the suspension, so there's no effect.
+            return Promise.resolve(PropagationResult.Completed)
         }
 
         async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
@@ -221,7 +242,13 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
                             me.resumePromise = me.resumeResolved = me.resumeRejected = null
 
                         // Perform the propagation then inform any callers of propagate during the suspension.
-                        return graph.propagate(onEffect).then(value => resolve(value), value => reject(value))
+                        return graph.propagate(onEffect).then(value => {
+                            resolve(value)
+                            return value
+                        }, value => {
+                            reject(value)
+                            return value
+                        })
                     }
                     else {
                         return graph.propagate(onEffect)
