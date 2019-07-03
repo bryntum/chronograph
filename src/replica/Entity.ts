@@ -36,14 +36,6 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
 
         $calculations   : { [s in keyof this] : string }
 
-        propagateSuspended : number = 0
-
-        resumePromise : Promise<PropagationResult>
-
-        resumeResolved : Function
-
-        resumeRejected : Function
-
 // LAZY ATOMS CREATION - investigate if it improves performance
 //         static atomsCollectionCls : AnyConstructor
 //
@@ -188,7 +180,8 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
          * {@link #function-resumePropagate} is called.
          */
         suspendPropagate() {
-            this.propagateSuspended++
+            const graph = this.getGraph();
+            graph && graph.suspendPropagate();
         }
 
         /**
@@ -198,68 +191,15 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
          * @param {Boolean} [trigger] Pass `false` to inhibit automatic propagation if propagate was requested during suspension.
          */
         async resumePropagate(trigger? : Boolean) {
-            if (this.propagateSuspended) {
-                // If we are still suspended, return the resumePromise
-                if (--this.propagateSuspended) {
-                    return this.resumePromise;
-                }
-                // Otherwise, if a call to propagate while suspended led to the creation
-                // of the resumePromise, propagate now.
-                else if (this.resumePromise && trigger !== false) {
-                    return this.propagate()
-                }
-            }
-
-            // We were not suspended, or we have resumed but there were no calls
-            // to propagate during the suspension, so there's no effect.
-            return Promise.resolve(PropagationResult.Completed)
+            const graph = this.getGraph();
+            return graph && graph.resumePropagate(trigger) || Promise.resolve(PropagationResult.Completed);
         }
 
-        async propagate (onEffect? : EffectResolverFunction) : Promise<PropagationResult> {
-            const me = this
+        async propagate (onEffect? : EffectResolverFunction, dryRun : (boolean | Function) = false) : Promise<PropagationResult> {
+            const graph = this.getGraph()
 
-            if (me.propagateSuspended) {
-                // Create a promise which we will resolve when the suspension is lifted
-                // and this Entity propagates.
-                if (!me.resumePromise) {
-                    me.resumePromise = new Promise<PropagationResult>((resolve, reject) => {
-                        me.resumeResolved = resolve
-                        me.resumeRejected = reject
-                    });
-                }
-                return me.resumePromise
-            }
-            else {
-                const graph = me.getGraph()
-
-                if (graph) {
-                    if (me.resumePromise) {
-                        const
-                            resolve = me.resumeResolved,
-                            reject = me.resumeRejected
-
-                            // Reset the suspension promise apparatus
-                            me.resumePromise = me.resumeResolved = me.resumeRejected = null
-
-                        // Perform the propagation then inform any callers of propagate during the suspension.
-                        return graph.propagate(onEffect).then(value => {
-                            resolve(value)
-                            return value
-                        }, value => {
-                            reject(value)
-                            return value
-                        })
-                    }
-                    else {
-                        return graph.propagate(onEffect)
-                    }
-                }
-                else {
-                    return Promise.resolve(PropagationResult.Completed)
-                }
-            }
+            return graph && graph.propagate(onEffect, dryRun) || Promise.resolve(PropagationResult.Completed)
         }
-
 
         async waitForPropagateCompleted () : Promise<PropagationResult | null> {
             return this.getGraph().waitForPropagateCompleted()

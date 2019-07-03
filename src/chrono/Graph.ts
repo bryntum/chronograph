@@ -50,6 +50,14 @@ class ChronoGraph extends base {
 
     propagateCompletedListeners : AnyFunction[]     = []
 
+    propagateSuspended      : number                = 0
+
+    resumePromise           : Promise<PropagationResult>
+
+    resumeResolved          : Function
+
+    resumeRejected          : Function
+
 
     isAtomNeedRecalculation (atom : ChronoAtomI) : boolean {
         return this.needRecalculationAtoms.has(atom)
@@ -351,8 +359,78 @@ class ChronoGraph extends base {
         })
     }
 
+    /**
+     * Suspend propagation processing. When propagation is suspended, calls to propagate
+     * do not proceed, instead a propagate call is deferred until a matching
+     * {@link #function-resumePropagate} is called.
+     */
+    suspendPropagate() {
+        this.propagateSuspended++;
+    }
+
+    /**
+     * Resume propagation. If propagation is resumed (calls may be nested which increments a
+     * suspension counter), then if a call to propagate was made during suspension, propagate is
+     * executed.
+     * @param {Boolean} [trigger] Pass `false` to inhibit automatic propagation if propagate was requested during suspension.
+     */
+    async resumePropagate(trigger? : Boolean) {
+        if (this.propagateSuspended) {
+            // If we are still suspended, return the resumePromise
+            if (--this.propagateSuspended) {
+                return this.resumePromise;
+            }
+            // Otherwise, if a call to propagate while suspended led to the creation
+            // of the resumePromise, propagate now.
+            else if (this.resumePromise && trigger !== false) {
+                return this.propagate()
+            }
+        }
+
+        // We were not suspended, or we have resumed but there were no calls
+        // to propagate during the suspension, so there's no effect.
+        return Promise.resolve(PropagationResult.Completed)
+    }
 
     async propagate (onEffect? : EffectResolverFunction, dryRun : (boolean | Function) = false) : Promise<PropagationResult> {
+        const me = this
+
+        if (me.propagateSuspended) {
+            // Create a promise which we will resolve when the suspension is lifted
+            // and this Entity propagates.
+            if (!me.resumePromise) {
+                me.resumePromise = new Promise<PropagationResult>((resolve, reject) => {
+                    me.resumeResolved = resolve
+                    me.resumeRejected = reject
+                });
+            }
+            return me.resumePromise
+        }
+        else {
+            if (me.resumePromise) {
+                const
+                    resolve = me.resumeResolved,
+                    reject = me.resumeRejected
+
+                // Reset the suspension promise apparatus
+                me.resumePromise = me.resumeResolved = me.resumeRejected = null
+
+                // Perform the propagation then inform any callers of propagate during the suspension.
+                return me.propagateUnsuspended(onEffect, dryRun).then(value => {
+                    resolve(value)
+                    return value
+                }, value => {
+                    reject(value)
+                    return value
+                })
+            }
+            else {
+                return me.propagateUnsuspended(onEffect, dryRun)
+            }
+        }
+    }
+
+    async propagateUnsuspended (onEffect? : EffectResolverFunction, dryRun : (boolean | Function) = false) : Promise<PropagationResult> {
         if (this.isPropagating) throw new Error("Can not nest calls to `propagate`, use `waitForPropagateCompleted`")
 
         let needToRestart : boolean,
