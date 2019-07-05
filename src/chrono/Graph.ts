@@ -360,9 +360,9 @@ class ChronoGraph extends base {
     }
 
     /**
-     * Suspend propagation processing. When propagation is suspended, calls to propagate
+     * 222 Suspend propagation processing. When propagation is suspended, calls to propagate
      * do not proceed, instead a propagate call is deferred until a matching
-     * {@link #function-resumePropagate} is called.
+     * _resumePropagate_ is called.
      */
     suspendPropagate() {
         this.propagateSuspended++;
