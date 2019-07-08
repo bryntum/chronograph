@@ -1,4 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { map } from "../collection/Iterator.js"
 import { OnCycleAction, WalkStep } from "../graph/Walkable.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
@@ -62,9 +63,11 @@ class Transaction extends base {
             previous    : this.baseRevision
         })
 
-        const transitionScope   = this.runSyncWithEffect(() => null, candidate, latest)
+        const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate, latest)
 
-        candidate.scope     = new Map(Array.from(transitionScope.entries()).map(([ key, value ]) => [ key, value.current ]))
+        candidate.scope     = new Map(
+            map<[ Identifier, QuarkTransition ], [ Identifier, Quark ]>(transitionScope.entries(), ([ key, value ]) => [ key, value.current ])
+        )
 
         return candidate
     }
