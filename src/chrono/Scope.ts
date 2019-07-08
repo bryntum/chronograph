@@ -13,6 +13,7 @@ export const Scope = <T extends AnyConstructor<Base>>(base : T) =>
 class Scope extends base {
     baseRevision            : Revision
 
+    bottomRevision          : Revision
     topRevision             : Revision
 
     historyLimit            : number        = 10
@@ -44,6 +45,8 @@ class Scope extends base {
         if (!this.baseRevision.latest) this.baseRevision.latest = this.baseRevisionLatest
 
         if (!this.topRevision) this.topRevision = this.baseRevision
+
+
     }
 
 

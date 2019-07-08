@@ -8,6 +8,8 @@ import { Quark } from "./Quark.js"
 export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Revision extends base {
+    referencesCount         : number                    = 0
+
     previous                : Revision
 
     scope                   : Map<Identifier, Quark>    = new Map()
