@@ -7,7 +7,9 @@ StartTest(t => {
     t.it("Should be performant", async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        let atomNum     = 300000
+        // should not use too big value, because otherwise, the benchmark
+        // becomes memory-bound and we want to measure CPU consumption
+        let atomNum     = 50000
 
         let boxes       = []
 

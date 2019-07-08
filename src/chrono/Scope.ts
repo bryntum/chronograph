@@ -13,7 +13,9 @@ export const Scope = <T extends AnyConstructor<Base>>(base : T) =>
 class Scope extends base {
     baseRevision            : Revision
 
-    topRevision             : Revision      = this.baseRevision
+    topRevision             : Revision
+
+    historyLimit            : number        = 10
 
     baseRevisionLatest      : Map<Identifier, Quark>
 
@@ -40,6 +42,8 @@ class Scope extends base {
 
         // provide the cache to revision, so that other scopes can benefit from it
         if (!this.baseRevision.latest) this.baseRevision.latest = this.baseRevisionLatest
+
+        if (!this.topRevision) this.topRevision = this.baseRevision
     }
 
 

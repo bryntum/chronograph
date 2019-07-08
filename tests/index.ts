@@ -16,13 +16,13 @@ project.start(
             'class/010_instanceof.t.js',
         ]
     },
-    {
-        group       : 'util',
-
-        items       : [
-            'util/010_json_walk.t.js',
-        ]
-    },
+    // {
+    //     group       : 'util',
+    //
+    //     items       : [
+    //         'util/010_json_walk.t.js',
+    //     ]
+    // },
     {
         group       : 'graph',
 

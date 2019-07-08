@@ -62,13 +62,7 @@ class Calculation extends base {
 
 
     runSync (...args : this[ 'ArgsT' ]) : this[ 'ValueT' ] {
-        this.startCalculation(...args)
-
-        while (!this.isCalculationCompleted()) {
-            this.supplyYieldValue(this.iterationResult.value)
-        }
-
-        return this.value
+        return this.runSyncWithEffect(x => x)
     }
 
 

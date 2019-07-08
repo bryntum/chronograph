@@ -23,7 +23,7 @@
   "devDependencies": {
     "typedoc": "^0.14.2",
     "@types/node": "^10.12.10",
-    "typescript": "^3.5.0-dev.20190524",
+    "typescript": "^3.5.2",
     "siesta-lite": "^5.2.2",
     "tslint": "^5.16.0",
     "regenerator-runtime": "^0.13.1",
