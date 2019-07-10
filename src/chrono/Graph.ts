@@ -365,8 +365,8 @@ class ChronoGraph extends base {
      * do not proceed, instead a propagate call is deferred until a matching
      * _resumePropagate_ is called.
      */
-    suspendPropagate() {
-        this.propagateSuspended++;
+    suspendPropagate () {
+        this.propagateSuspended++
     }
 
     /**
@@ -375,11 +375,11 @@ class ChronoGraph extends base {
      * executed.
      * @param {Boolean} [trigger] Pass `false` to inhibit automatic propagation if propagate was requested during suspension.
      */
-    async resumePropagate(trigger? : Boolean) {
+    async resumePropagate (trigger? : Boolean) {
         if (this.propagateSuspended) {
             // If we are still suspended, return the resumePromise
             if (--this.propagateSuspended) {
-                return this.resumePromise;
+                return this.resumePromise
             }
             // Otherwise, if a call to propagate while suspended led to the creation
             // of the resumePromise, propagate now.
@@ -403,7 +403,7 @@ class ChronoGraph extends base {
                 me.resumePromise = new Promise<PropagationResult>((resolve, reject) => {
                     me.resumeResolved = resolve
                     me.resumeRejected = reject
-                });
+                })
             }
             return me.resumePromise
         }

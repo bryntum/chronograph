@@ -179,9 +179,9 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
          * do not proceed, instead a propagate call is deferred until a matching
          * _resumePropagate_ is called.
          */
-        suspendPropagate() {
-            const graph = this.getGraph();
-            graph && graph.suspendPropagate();
+        suspendPropagate () {
+            const graph = this.getGraph()
+            graph && graph.suspendPropagate()
         }
 
         /**
@@ -190,9 +190,9 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
          * executed.
          * @param {Boolean} [trigger] Pass `false` to inhibit automatic propagation if propagate was requested during suspension.
          */
-        async resumePropagate(trigger? : Boolean) {
-            const graph = this.getGraph();
-            return graph && graph.resumePropagate(trigger) || Promise.resolve(PropagationResult.Completed);
+        async resumePropagate (trigger? : Boolean) {
+            const graph = this.getGraph()
+            return graph && graph.resumePropagate(trigger) || Promise.resolve(PropagationResult.Completed)
         }
 
         async propagate (onEffect? : EffectResolverFunction, dryRun : (boolean | Function) = false) : Promise<PropagationResult> {
