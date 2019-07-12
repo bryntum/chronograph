@@ -18,3 +18,25 @@ export const lazyBuild = <T extends object, S extends keyof T>(target : T, prope
 
     return value
 }
+
+/**
+ * @private
+ */
+export const preWalk = (data : any, childrenFn : Function, fn : Function) => {
+
+    let walkStack = [data],
+        node : any, children : any[];
+
+    while (walkStack.length) {
+
+        node = walkStack.pop();
+
+        fn(node);
+
+        children = childrenFn(node);
+
+        if (children) {
+            walkStack = walkStack.concat(children.slice().reverse());
+        }
+    }
+}

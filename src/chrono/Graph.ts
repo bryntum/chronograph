@@ -13,6 +13,7 @@ import {
     RestartPropagationEffect
 } from "./Effect.js"
 import { ChronoId } from "./Id.js"
+import { preWalk } from "../util/Helper.js";
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -556,6 +557,76 @@ class ChronoGraph extends base {
     }
 
 
+    toDotAtomName(atom : this['nodeT']) {
+        let [idGroup, idField] = String(atom.id).split('/')
+
+        if ((atom as any).self) {
+            const entity = (atom as any).self
+
+            // @ts-ignore
+            if (entity.name) {
+                idGroup = entity.name;
+            }
+        }
+
+        return `${idGroup}/${idField || 'self'}`;
+    }
+
+
+    toDotAtomValue(atom : this['nodeT']) {
+        let value : any
+
+        if ((atom as any).newRefs && (atom as any).oldRefs) {
+            const collection    = atom.get()
+
+            value = `Set(${collection && collection.size || 0})`
+        }
+        else {
+            value = atom.get()
+        }
+
+        if (value instanceof Date) {
+            value = [value.getFullYear(), '.', value.getMonth() + 1, '.', value.getDate(), ' ', value.getHours() + ':' + value.getMinutes()].join('')
+        }
+        else if (Array.isArray(value)) {
+            value = `Array(${value.length})`
+        }
+
+        return value;
+    }
+
+
+    toDotAtomColor(atom : this['nodeT']) {
+        return (!this.isAtomNeedRecalculation(atom) || this.isAtomStable(atom)) ? 'darkgreen' : 'red'
+    }
+
+
+    toDotObtainCycle() {
+        let cycle : object = {}
+
+        // Cycle detection
+        this.walkDepth(WalkForwardContext.new({
+            onCycle : (_node : Node, stack : WalkStep[]) : OnCycleAction => {
+                const ci : Node[]   = cycleInfo(stack) as Node[]
+
+                cycle = ci.reduce(
+                    ([cycle, prevNode], curNode) => {
+                        if (prevNode) {
+                            cycle[(prevNode as ChronoAtom).id] = (curNode as ChronoAtom).id
+                        }
+                        return [cycle, curNode]
+                    },
+                    [cycle, null]
+                )[0]
+
+                return OnCycleAction.Cancel
+            }
+        }))
+
+        return cycle;
+    }
+
+
     toDot () : string {
         let dot = [
             'digraph ChronoGraph {',
@@ -601,25 +672,9 @@ class ChronoGraph extends base {
 
                 dot = Array.from(namedAtoms.values()).reduce(
                     (dot, [name, atom]) => {
-                        let value : any
+                        let value = this.toDotAtomValue(atom)
 
-                        if ((atom as any).newRefs && (atom as any).oldRefs) {
-                            const collection    = atom.get()
-
-                            value = `Set(${collection && collection.size || 0})`
-                        }
-                        else {
-                            value = atom.get()
-                        }
-
-                        if (value instanceof Date) {
-                            value = [value.getFullYear(), '.', value.getMonth() + 1, '.', value.getDate(), ' ', value.getHours() + ':' + value.getMinutes()].join('')
-                        }
-                        else if (Array.isArray(value)) {
-                            value = `Array(${value.length})`
-                        }
-
-                        let color = (!this.isAtomNeedRecalculation(atom) || this.isAtomStable(atom)) ? 'darkgreen' : 'red'
+                        let color = this.toDotAtomColor(atom)
 
                         dot.push(`"${atom.id}" [label="${name}=${value}\", fontcolor="${color}"]`)
 
@@ -635,27 +690,8 @@ class ChronoGraph extends base {
             dot
         )
 
-        let cycle : object = {}
-
         // Cycle detection
-        this.walkDepth(WalkForwardContext.new({
-            onCycle : (_node : Node, stack : WalkStep[]) : OnCycleAction => {
-                const ci : Node[]   = cycleInfo(stack) as Node[]
-
-                cycle = ci.reduce(
-                    ([cycle, prevNode], curNode) => {
-                        if (prevNode) {
-                            cycle[(prevNode as ChronoAtom).id] = (curNode as ChronoAtom).id
-                        }
-                        return [cycle, curNode]
-                    },
-                    [cycle, null]
-                )[0]
-
-                return OnCycleAction.Cancel
-            }
-        }))
-
+        let cycle = this.toDotObtainCycle();
 
         // Generate edges
         dot = arrAtoms.reduce(
@@ -687,6 +723,70 @@ class ChronoGraph extends base {
         dot.push('}')
 
         return dot.join('\n')
+    }
+
+
+    toDotAtomIncoming(atom : this['nodeT']) : string {
+        let dot = [
+            'digraph ChronoGraph {',
+            'splines=spline'
+        ]
+
+        // Collecting incoming sub-graph
+        let subGraph = new Set<ChronoAtom>();
+
+        preWalk(
+            atom,
+            (subGraphAtom : ChronoAtom) => Array.from(subGraphAtom.incoming),
+            (subGraphAtom : ChronoAtom) => subGraph.add(subGraphAtom)
+        );
+
+        // Generating incoming graph nodes
+        dot = Array.from(subGraph).reduce((dot, incomingAtom) => {
+            const name = this.toDotAtomName(incomingAtom),
+                value = this.toDotAtomValue(incomingAtom)
+
+            let color, penwidth
+
+            if (incomingAtom == atom) {
+                color = 'orange'
+                penwidth = 5
+            }
+            else {
+
+                color = this.toDotAtomColor(incomingAtom)
+                penwidth = 1
+            }
+
+            dot.push(`"${incomingAtom.id}" [label="${name}=${value}\", fontcolor="${color}", penwidth=${penwidth}]`)
+
+            return dot;
+        }, dot);
+
+        // Cycle detection
+        const cycle = this.toDotObtainCycle();
+
+        // Generating edges
+        dot = Array.from(subGraph).reduce(
+            (dot, subGraphAtom : ChronoAtom) => Array.from(subGraphAtom.incoming).reduce(
+                (dot, incomingAtom : ChronoAtom) => {
+                    const fromId = incomingAtom.id
+                    const toId = subGraphAtom.id
+                    const color = this.toDotAtomColor(incomingAtom)
+                    const penwidth = (cycle[fromId] == toId) ? 5 : 1
+
+                    dot.push(`"${fromId}" -> "${toId}" [label="", color="${color}", penwidth=${penwidth}]`)
+
+                    return dot
+                },
+                dot
+            ),
+            dot
+        );
+
+        dot.push('}');
+
+        return dot.join('\n');
     }
 }
 
