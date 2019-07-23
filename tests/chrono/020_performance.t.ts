@@ -12,6 +12,9 @@ StartTest(t => {
 
         let boxes       = []
 
+        // cutoff the siesta's stack trace for better profiling results
+        await new Promise(resolve => setTimeout(resolve, 1))
+
         console.time("Build graph")
         // console.profile('Build graph')
 
