@@ -5,6 +5,9 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it("Should be performant", async t => {
+        // cutoff the siesta's stack trace for better profiling results
+        await new Promise(resolve => setTimeout(resolve, 1))
+
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         let atomNum     = 500000
@@ -12,7 +15,7 @@ StartTest(t => {
         let boxes       = []
 
         console.time("Build graph")
-        console.profile('Build graph')
+        // console.profile('Build graph')
 
         for (let i = 0; i < atomNum; i++) {
             if (i <= 3) {
@@ -47,7 +50,7 @@ StartTest(t => {
             }
         }
 
-        console.profileEnd()
+        // console.profileEnd()
         console.timeEnd("Build graph")
     })
 })
