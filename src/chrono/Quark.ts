@@ -1,6 +1,6 @@
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { MinimalNode, Node, WalkForwardContext } from "../graph/Node.js"
-import { WalkContext } from "../graph/Walkable.js"
+import { WalkContext } from "../graph/WalkDepth.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier } from "../primitives/Identifier.js"
@@ -15,7 +15,7 @@ import { Revision } from "./Revision.js"
 export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Label> {
     latest              : Map<Identifier, Quark>
 
-    walkDimension       : Set<Revision>     = new Set()
+    walkDimension       : Revision[]        = []
 
     forEachNext (node : Quark, func : (label : Label, node : Quark) => any) {
         node.forEachOutgoingInDimension(this.latest, this.walkDimension, func)
@@ -66,8 +66,10 @@ class Quark extends base {
     }
 
 
-    forEachOutgoingInDimension (latest : Map<Identifier, Quark>, dimensions : Set<this[ 'LabelT' ]>, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
-        for (const dimension of dimensions) {
+    forEachOutgoingInDimension (latest : Map<Identifier, Quark>, dimensions : this[ 'LabelT' ][], func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
+        for (let i = 0; i < dimensions.length; i++) {
+            const dimension             = dimensions[ i ]
+
             const outgoingOfDimension   = this.outgoingByLabel.get(dimension)
 
             if (outgoingOfDimension)

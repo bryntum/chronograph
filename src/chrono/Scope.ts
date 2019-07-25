@@ -1,4 +1,5 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { reverse, takeUntilIncluding } from "../collection/Iterator.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
@@ -18,35 +19,29 @@ class Scope extends base {
 
     historyLimit            : number        = 10
 
-    baseRevisionLatest      : Map<Identifier, Quark>
-
-
-    get nextRevision () : Map<Revision, Revision> {
-        return lazyProperty<this, 'nextRevision'>(this, '_nextRevision', () => {
-            const revisions     = Array.from(this.topRevision.thisAndAllPrevious()).reverse()
-
-            const entries : [ Revision, Revision ][]    = []
-
-            for (let i = 0; i < revisions.length - 1; i++)
-                entries.push([ revisions[ i ], revisions[ i + 1 ] ])
-
-            return new Map(entries)
-        })
-    }
+    checkout                : Map<Identifier, Quark>
 
 
     initialize (...args) {
         super.initialize(...args)
 
-        // copy/create the latest cache
-        this.baseRevisionLatest = this.baseRevision.buildLatest()
-
-        // provide the cache to revision, so that other scopes can benefit from it
-        if (!this.baseRevision.latest) this.baseRevision.latest = this.baseRevisionLatest
+        this.checkout   = this.baseRevision.buildLatest()
 
         if (!this.topRevision) this.topRevision = this.baseRevision
+    }
 
 
+    get nextRevision () : Map<Revision, Revision> {
+        return lazyProperty<this, 'nextRevision'>(this, '_nextRevision', () => {
+            const revisions     = Array.from(this.topRevision.thisAndAllPrevious())
+
+            const entries : [ Revision, Revision ][]    = []
+
+            for (let i = revisions.length - 1; i > 0; i--)
+                entries.push([ revisions[ i ], revisions[ i - 1 ] ])
+
+            return new Map(entries)
+        })
     }
 
 
@@ -67,13 +62,10 @@ class Scope extends base {
     propagate () {
         const activeTransaction = clearLazyProperty(this, '_activeTransaction') as Transaction
 
-        // take the cache back, only if it was created by this scope
-        if (this.baseRevision.latest === this.baseRevisionLatest) this.baseRevision.latest = undefined
+        const nextRevision      = activeTransaction.propagate(this.checkout)
 
-        const nextRevision              = activeTransaction.propagate(this.baseRevisionLatest)
-
-        this.baseRevision               = this.topRevision = nextRevision
-        this.baseRevisionLatest         = nextRevision.latest = nextRevision.includeScopeToLatest(this.baseRevisionLatest)
+        this.baseRevision       = this.topRevision = nextRevision
+        this.checkout           = this.includeScopeToLatest(this.checkout, nextRevision)
 
         clearLazyProperty(this, '_nextRevision')
     }
@@ -141,11 +133,8 @@ class Scope extends base {
 
         if (!previous) return
 
-        // take the cache back, only if it was created by this scope
-        if (baseRevision.latest === this.baseRevisionLatest) baseRevision.latest = undefined
-
-        this.baseRevision           = previous
-        this.baseRevisionLatest     = previous.latest = previous.buildLatest()
+        this.baseRevision       = previous
+        this.checkout           = previous.buildLatest()
     }
 
 
@@ -156,12 +145,19 @@ class Scope extends base {
 
         const nextRevision      = this.nextRevision.get(baseRevision)
 
-        // take the cache back, only if it was created by this scope
-        if (baseRevision.latest === this.baseRevisionLatest) baseRevision.latest = undefined
-
         this.baseRevision       = nextRevision
-        this.baseRevisionLatest = nextRevision.latest = nextRevision.includeScopeToLatest(this.baseRevisionLatest)
+        this.checkout           = this.includeScopeToLatest(this.checkout, nextRevision)
     }
+
+
+    includeScopeToLatest (checkout : Map<Identifier, Quark>, revision : Revision) : Map<Identifier, Quark> {
+        for (const [ identifier, quark ] of revision.scope) {
+            checkout.set(identifier, quark)
+        }
+
+        return checkout
+    }
+
 }
 
 export type Scope = Mixin<typeof Scope>

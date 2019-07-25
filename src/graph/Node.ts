@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { WalkContext } from "./Walkable.js"
+import { WalkContext } from "./WalkDepth.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface WalkableForward<Label = any> {

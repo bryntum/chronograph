@@ -1,5 +1,5 @@
 import { MinimalNode, WalkForwardContext } from "../../src/graph/Node.js"
-import { cycleInfo, OnCycleAction, WalkStep } from "../../src/graph/Walkable.js"
+import { cycleInfo, OnCycleAction, WalkStep } from "../../src/graph/WalkDepth.js"
 import { HasId } from "../../src/util/HasId.js"
 
 declare const StartTest : any

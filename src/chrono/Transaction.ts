@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { map } from "../collection/Iterator.js"
-import { OnCycleAction, WalkStep } from "../graph/Walkable.js"
+import { OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
@@ -73,8 +73,8 @@ class Transaction extends base {
     }
 
 
-    get dimension () : Set<Revision> {
-        return lazyProperty<this, 'dimension'>(this, '_dimension', () => new Set(this.baseRevision.thisAndAllPrevious()) )
+    get dimension () : Revision[] {
+        return lazyProperty<this, 'dimension'>(this, '_dimension', () => Array.from(this.baseRevision.thisAndAllPrevious()) )
     }
 
 
@@ -111,13 +111,13 @@ class Transaction extends base {
             if (quark) {
                 const transition        = scope.get(identifier)
 
-                transition.edgesFlow    = 1
+                transition.edgesFlow    = 1e9
             }
         })
 
         // removed identifiers will be calculated first
         this.removedIdentifiers.forEach(identifier => {
-            scope.set(identifier, { previous : latest.get(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1 })
+            scope.set(identifier, { previous : latest.get(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1e9 })
         })
 
 
@@ -187,7 +187,7 @@ class Transaction extends base {
 
                     if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
 
-                    quark.addEdgeFrom(requestedQuark, candidate)
+                    requestedQuark.addEdgeTo(quark, candidate)
 
                     if (requestedQuark.isCalculationCompleted()) {
                         iterationResult         = quark.supplyYieldValue(requestedQuark.value)

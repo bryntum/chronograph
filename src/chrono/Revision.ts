@@ -8,14 +8,9 @@ import { Quark } from "./Quark.js"
 export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Revision extends base {
-    referencesCount         : number                    = 0
-
     previous                : Revision
 
     scope                   : Map<Identifier, Quark>    = new Map()
-
-    // optional cache, maintained from the outside
-    latest                  : Map<Identifier, Quark>
 
 
     read (identifier : Identifier) : any {
@@ -28,13 +23,9 @@ class Revision extends base {
 
 
     getPreviousQuarkFor (identifier : Identifier) : Quark {
-        // we could use `allPrevious` here, but this method is going to be a hot path
-        // so trying to stay "optimized"
         let previous    = this.previous
 
         while (previous) {
-            if (previous.latest) return previous.latest.get(identifier)
-
             const quark = previous.scope.get(identifier)
 
             if (quark) return quark
@@ -47,11 +38,9 @@ class Revision extends base {
 
 
     getLatestQuarkFor (identifier : Identifier) : Quark {
-        if (this.latest) return this.latest.get(identifier)
+        const latest        = this.scope.get(identifier)
 
-        const current       = this.scope.get(identifier)
-
-        if (current) return current
+        if (latest) return latest
 
         return this.getPreviousQuarkFor(identifier)
     }
@@ -75,21 +64,13 @@ class Revision extends base {
     }
 
 
+    // this includes Tombstones currently
     allIdentifiersDeep () : IterableIterator<Identifier> {
-        if (this.latest) {
-            return this.latest.keys()
-        }
-
         const me        = this
 
         return uniqueOnly(function * () {
             for (const revision of me.thisAndAllPrevious()) {
-                if (revision.latest) {
-                    yield* revision.latest.keys()
-
-                    return
-                } else
-                    yield* revision.scope.keys()
+                yield* revision.scope.keys()
             }
         }())
     }
@@ -98,28 +79,24 @@ class Revision extends base {
     buildLatest () : Map<Identifier, Quark> {
         const me        = this
 
-        const entries = function * () : IterableIterator<[ Identifier, Quark ]> {
+        const entries   = function * () : IterableIterator<[ Identifier, Quark ]> {
 
-            for (const revision of reverse(takeUntilIncluding(me.thisAndAllPrevious(), revision => Boolean(revision.latest)))) {
-                if (revision.latest) {
-                    yield* revision.latest
-                } else
-                    yield* revision.scope
+            for (const revision of reverse(me.thisAndAllPrevious())) {
+                yield* revision.scope
             }
-
         }
 
         return new Map(entries())
     }
 
 
-    includeScopeToLatest (latest) : Map<Identifier, Quark> {
-        for (const [ identifier, quark ] of this.scope) {
-            latest.set(identifier, quark)
-        }
-
-        return latest
-    }
+    // includeScopeToLatest (latest) : Map<Identifier, Quark> {
+    //     for (const [ identifier, quark ] of this.scope) {
+    //         latest.set(identifier, quark)
+    //     }
+    //
+    //     return latest
+    // }
 
 
     // excludeScopeFromLatest (latest) : Map<Identifier, Quark> {
