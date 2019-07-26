@@ -1,27 +1,8 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { MinimalNode, Node, WalkableForwardNode, WalkForwardContext } from "../graph/Node.js"
-import { WalkContext } from "../graph/WalkDepth.js"
+import { WalkableForwardNode, WalkForwardContext } from "../graph/Node.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier } from "../primitives/Identifier.js"
-import { Revision } from "./Revision.js"
-
-
-// not clear yet, if Quark should implement WalkableBackwardNode (memory usage concerns)
-// incoming edges are used for tree eliminations, but only the size of the set
-// also incoming edges are used by references (perhaps not needed)
-
-//---------------------------------------------------------------------------------------------------------------------
-export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Label> {
-    latest              : Map<Identifier, Quark>
-
-    walkDimension       : Revision[]        = []
-
-    forEachNext (node : Quark, func : (label : Label, node : Quark) => any) {
-        node.forEachOutgoingInDimension(this.latest, this.walkDimension, func)
-    }
-}
-
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -40,9 +40,9 @@ StartTest(t => {
     t.it('Observe variable yield in calculation', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var1      = graph.variable(0)
+        const var1      = graph.variableId('variable', 0)
 
-        const iden1     = graph.identifier(function * () {
+        const iden1     = graph.identifierId('identifier', function * () {
             return yield var1
         })
 

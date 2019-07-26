@@ -32,7 +32,7 @@ export class Variable extends Identifier {
     YieldT              : never
 
     * calculation (value : this[ 'ResultT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
-        return value
+        throw new Error("The 'calculation' method of the variables should not be called for optimization purposes. Instead the value should be set directly to quark")
     }
 }
 

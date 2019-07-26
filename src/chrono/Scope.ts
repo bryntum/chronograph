@@ -47,7 +47,7 @@ class Scope extends base {
 
     get activeTransaction () : Transaction {
         return lazyProperty<this, 'activeTransaction'>(
-            this, '_activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision })
+            this, '_activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision, checkout : this.checkout })
         )
     }
 

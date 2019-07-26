@@ -1,58 +1,124 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { map } from "../collection/Iterator.js"
-import { OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
+import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { lazyProperty } from "../util/Helper.js"
-import { MinimalQuark, Quark, TombstoneQuark, WalkForwardQuarkContext } from "./Quark.js"
+import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
 type QuarkTransition    = { previous : Quark, current : Quark, edgesFlow : number }
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Transaction = <T extends AnyConstructor<Calculation>>(base : T) =>
+export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Label> {
+    checkout        : Map<Identifier, Quark>
+
+    scope           : Map<Identifier, QuarkTransition>
+
+    walkDimension   : Revision[] = []
+
+
+    forEachNext (node : Quark, func : (label : Label, node : Quark) => any) {
+        node.forEachOutgoingInDimension(this.checkout, this.walkDimension, (label : Label, node : Quark) => {
+            let transition      = this.scope.get(node.identifier)
+
+            if (!transition) {
+                transition      = { previous : node, current : MinimalQuark.new({ identifier : node.identifier }), edgesFlow : 0 }
+
+                this.scope.set(node.identifier, transition)
+            }
+
+            transition.edgesFlow++
+
+            func(label, node)
+        })
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Transaction = <T extends AnyConstructor<Calculation & Base>>(base : T) =>
 
 class Transaction extends base {
     baseRevision            : Revision
+
+    checkout                : Map<Identifier, Quark>
 
     // YieldT                  : unknown
     ValueT                  : Map<Identifier, QuarkTransition>
 
     isClosed                : boolean                   = false
 
-    variablesData           : Map<Identifier, any>      = new Map()
+    scope                   : Map<Identifier, QuarkTransition>  = new Map()
 
-    touchedIdentifiers      : Map<Identifier, Quark>    = new Map()
-    removedIdentifiers      : Set<Identifier>           = new Set()
+    walkContext             : WalkForwardQuarkContext
+
+    mainStack               : Quark[]                   = []
+
+
+    initialize (...args) {
+        super.initialize(...args)
+
+        this.walkContext    = WalkForwardQuarkContext.new({
+            checkout        : this.checkout,
+            scope           : this.scope,
+            walkDimension   : this.dimension,
+
+            // ignore cycles when determining potentially changed atoms
+            onCycle         : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
+
+            onTopologicalNode       : (quark : Quark) => {
+                this.mainStack.push(this.scope.get(quark.identifier).current)
+            }
+        })
+
+        // init internal state of the walk context, we'll use `continueFrom` afterwards
+        this.walkContext.startFrom([])
+    }
 
 
     isEmpty () : boolean {
-        return this.touchedIdentifiers.size === 0 && this.removedIdentifiers.size === 0
+        return this.scope.size === 0
     }
 
 
     write (variable : Variable, value : any) {
         if (this.isClosed) throw new Error("Can not write to open transaction")
 
-        this.variablesData.set(variable, value)
+        const variableQuark     = MinimalQuark.new({ identifier : variable })
 
-        this.touch(variable)
+        variableQuark.forceValue(value)
+
+        this.touch(variable, variableQuark)
     }
 
 
-    touch (identifier : Identifier) {
-        if (this.touchedIdentifiers.has(identifier)) return
+    touch (identifier : Identifier, currentQuark : Quark = MinimalQuark.new({ identifier })) {
+        // TODO handle write to already dirty ???
+        if (this.scope.has(identifier)) return
 
-        const previousQuark     = this.baseRevision.getLatestQuarkFor(identifier)
+        const previous      = this.checkout.get(identifier)
 
-        this.touchedIdentifiers.set(identifier, previousQuark)
+        this.scope.set(identifier, { previous : previous, current : currentQuark, edgesFlow : 1e9 })
+
+        if (previous) {
+            this.walkContext.continueFrom([ previous ])
+        } else {
+            // newly created identifier
+            this.mainStack.push(currentQuark)
+        }
     }
 
 
     removeIdentifier (identifier : Identifier) {
-        this.removedIdentifiers.add(identifier)
+        if (this.scope.has(identifier)) {
+            // removing the "dirty" identifier
+            // TODO
+        } else {
+            this.touch(identifier, TombstoneQuark.new({ identifier }))
+        }
     }
 
 
@@ -78,58 +144,12 @@ class Transaction extends base {
     }
 
 
-    determinePotentiallyChangedQuarks (latest : Map<Identifier, Quark>) : { stack : Quark[], scope : Map<Identifier, QuarkTransition> } {
-        const scope : Map<Identifier, QuarkTransition>  = new Map()
-
-        const startFrom : Quark[]                       = []
-
-        this.touchedIdentifiers.forEach((quark, identifier) => {
-            if (quark) {
-                startFrom.push(quark)
-            } else {
-                const newQuark      = MinimalQuark.new({ identifier })
-
-                scope.set(newQuark.identifier, { previous : null, current : newQuark, edgesFlow : 1 })
-            }
-        })
-
-        WalkForwardQuarkContext.new({
-            latest                  : latest,
-            walkDimension           : this.dimension,
-
-            // ignore cycles when determining potentially changed atoms
-            onCycle                 : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
-
-            onTopologicalNode       : (quark : Quark) => {
-                const newQuark      = MinimalQuark.new({ identifier : quark.identifier })
-
-                scope.set(newQuark.identifier, { previous : quark, current : newQuark, edgesFlow : 1e9/*quark.incoming.size*/ })
-            }
-        }).startFrom(startFrom)
-
-        this.touchedIdentifiers.forEach((quark, identifier) => {
-            if (quark) {
-                const transition        = scope.get(identifier)
-
-                transition.edgesFlow    = 1e9
-            }
-        })
-
-        // removed identifiers will be calculated first
-        this.removedIdentifiers.forEach(identifier => {
-            scope.set(identifier, { previous : latest.get(identifier), current : TombstoneQuark.new({ identifier }), edgesFlow : 1e9 })
-        })
-
-
-        // since Map preserves the order of addition, `stack` will be in topo-sorted order as well
-        return { stack : Array.from(scope.values()).map(transition => transition.current), scope }
-    }
-
-
     ArgsT   : [ Revision,  Map<Identifier, Quark> ]
 
     * calculation (candidate : Revision, latest : Map<Identifier, Quark>) : this[ 'iterator' ] {
-        const { stack, scope }      = this.determinePotentiallyChangedQuarks(latest)
+        // const { stack, scope }      = this.determinePotentiallyChangedQuarks(latest)
+        const stack     = this.mainStack
+        const scope     = this.scope
 
         while (stack.length) {
             const quark : Quark     = stack[ stack.length - 1 ]
@@ -160,7 +180,7 @@ class Transaction extends base {
                     stack.pop()
                     continue
                 } else {
-                    iterationResult = quark.startCalculation(this.variablesData.get(quark.identifier))
+                    iterationResult = quark.startCalculation()
                 }
             }
 

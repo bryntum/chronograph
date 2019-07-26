@@ -30,6 +30,13 @@ export class WalkContext<Walkable, Label = any> extends Base {
     }
 
 
+    continueFrom (sourceNodes : Walkable[]) {
+        this.toVisit.push.apply(this.toVisit, sourceNodes.map(node => { return { node : node, from : WalkSource, label : undefined } }))
+
+        this.walkDepth()
+    }
+
+
     onNode (node : Walkable, walkStep : WalkStep<Walkable, Label>) : boolean | void {
     }
 
@@ -51,6 +58,9 @@ export class WalkContext<Walkable, Label = any> extends Base {
     walkDepth () {
         const visited               = this.visited
         const toVisit               = this.toVisit
+
+        // edge case
+        if (toVisit.length === 0) return
 
         let depth
 

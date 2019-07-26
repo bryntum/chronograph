@@ -102,7 +102,7 @@ StartTest(t => {
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
 
-        spies.forEach(spy => t.expect(spy).toHaveBeenCalled(1))
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1, 1, 1, 1 ][ index ]))
 
         // ----------------
         spies.forEach(spy => spy.reset())
@@ -114,7 +114,7 @@ StartTest(t => {
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
 
-        const expectedCalls     = [ 1, 1, 1, 1, 0, 0, 0, 1 ]
+        const expectedCalls     = [ 0, 0, 1, 1, 0, 0, 0, 1 ]
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled(expectedCalls[ index ]))
     })
