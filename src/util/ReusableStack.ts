@@ -1,3 +1,7 @@
+// experiment, rationale is that for big datasets we allocate huge arrays (~100k elements)
+// several times. In theory it would less the workload if we reuse the already allocated array
+// in practice no noticeable speed up, probably the code is bound by something else
+
 export class ReusableStack<T = any> {
     length      : number        = 0
     storage     : T[]           = []
