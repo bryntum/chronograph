@@ -41,6 +41,8 @@ class Calculation extends base {
 
     forceValue (value : this[ 'ValueT' ]) {
         this.iterationResult    = this.iterator ? this.iterator.return(value) : { value : value, done : true }
+
+        this.iterator           = undefined
     }
 
 
@@ -73,6 +75,8 @@ class Calculation extends base {
             this.supplyYieldValue(onEffect(this.iterationResult.value))
         }
 
+        this.iterator   = undefined
+
         return this.value
     }
 
@@ -83,6 +87,8 @@ class Calculation extends base {
         while (!this.isCalculationCompleted()) {
             this.supplyYieldValue(await onEffect(this.iterationResult.value))
         }
+
+        this.iterator   = undefined
 
         return this.value
     }

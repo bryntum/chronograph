@@ -103,7 +103,7 @@ class Transaction extends base {
             onTopologicalNode       : (quark : Quark) => {
                 const newQuark      = MinimalQuark.new({ identifier : quark.identifier })
 
-                scope.set(newQuark.identifier, { previous : quark, current : newQuark, edgesFlow : quark.incoming.size })
+                scope.set(newQuark.identifier, { previous : quark, current : newQuark, edgesFlow : 1e9/*quark.incoming.size*/ })
             }
         }).startFrom(startFrom)
 
@@ -168,6 +168,12 @@ class Transaction extends base {
                 const value         = iterationResult.value
 
                 if (iterationResult.done) {
+                    // garbage collect the generator instances
+                    quark.iterator  = undefined
+                    // for some reason, it seems, the last called generator instance
+                    // installs itself as the prototype property of the generator function
+                    quark.calculation.prototype = undefined
+
                     const previousQuark = transition.previous
 
                     if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {

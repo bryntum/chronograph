@@ -1,5 +1,5 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { MinimalNode, Node, WalkForwardContext } from "../graph/Node.js"
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { MinimalNode, Node, WalkableForwardNode, WalkForwardContext } from "../graph/Node.js"
 import { WalkContext } from "../graph/WalkDepth.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
@@ -25,14 +25,13 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Lab
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Quark = <T extends AnyConstructor<Node & Calculation>>(base : T) =>
+export const Quark = <T extends AnyConstructor<WalkableForwardNode & Calculation>>(base : T) =>
 
 class Quark extends base {
     NodeT                   : Quark
 
     identifier              : Identifier
 
-    incoming                : Map<this[ 'NodeT' ], this[ 'LabelT' ]>        = new Map()
     outgoingByLabel         : Map<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>   = new Map()
 
 
@@ -79,7 +78,7 @@ class Quark extends base {
     }
 
 
-    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
+    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
         let dimension           = this.outgoingByLabel.get(label)
 
         if (!dimension) {
@@ -88,8 +87,6 @@ class Quark extends base {
         }
 
         dimension.add(toNode)
-
-        if (!calledFromPartner) toNode.addEdgeFrom(this, label, true)
     }
 }
 
@@ -98,7 +95,7 @@ export type Quark = Mixin<typeof Quark>
 export interface QuarkI extends Quark {}
 
 
-export class MinimalQuark extends Quark(Calculation(Box(MinimalNode))) {
+export class MinimalQuark extends Quark(Calculation(Box(WalkableForwardNode(Base)))) {
     NodeT               : Quark
 }
 
