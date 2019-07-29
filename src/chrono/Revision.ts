@@ -1,8 +1,7 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { reverse, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier } from "../primitives/Identifier.js"
-import { Scope } from "./Checkout.js"
-import { Quark } from "./Quark.js"
+import { QuarkEntry, Scope } from "./Checkout.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -14,16 +13,7 @@ class Revision extends base {
     scope                   : Scope    = new Map()
 
 
-    read (identifier : Identifier) : any {
-        const latest    = this.getLatestQuarkFor(identifier)
-
-        if (!latest) throw new Error("Unknown identifier")
-
-        return latest.value
-    }
-
-
-    getPreviousQuarkFor (identifier : Identifier) : Quark {
+    getPreviousQuarkFor (identifier : Identifier) : QuarkEntry {
         let previous    = this.previous
 
         while (previous) {
@@ -38,7 +28,7 @@ class Revision extends base {
     }
 
 
-    getLatestQuarkFor (identifier : Identifier) : Quark {
+    getLatestQuarkFor (identifier : Identifier) : QuarkEntry {
         const latest        = this.scope.get(identifier)
 
         if (latest) return latest
@@ -80,7 +70,7 @@ class Revision extends base {
     buildLatest () : Scope {
         const me        = this
 
-        const entries   = function * () : IterableIterator<[ Identifier, Quark ]> {
+        const entries   = function * () : IterableIterator<[ Identifier, QuarkEntry ]> {
 
             for (const revision of reverse(me.thisAndAllPrevious())) {
                 yield* revision.scope
@@ -89,26 +79,6 @@ class Revision extends base {
 
         return new Map(entries())
     }
-
-
-    // includeScopeToLatest (latest) : Scope {
-    //     for (const [ identifier, quark ] of this.scope) {
-    //         latest.set(identifier, quark)
-    //     }
-    //
-    //     return latest
-    // }
-
-
-    // excludeScopeFromLatest (latest) : Scope {
-    //     for (const [ identifier, quark ] of this.scope) {
-    //         latest.set(identifier, quark)
-    //     }
-    //
-    //     return latest
-    // }
-
-
 }
 
 export type Revision = Mixin<typeof Revision>

@@ -2,15 +2,17 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { map } from "../collection/Iterator.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { Box } from "../primitives/Box.js"
-import { Calculation } from "../primitives/Calculation.js"
+import { Calculation, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { lazyProperty } from "../util/Helper.js"
-import { Scope } from "./Checkout.js"
-import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
+import { calculateTransitions } from "./CalculationCore.js"
+import { QuarkEntry, Scope } from "./Checkout.js"
+import { LazyQuarkMarker, MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
-type QuarkTransition    = { previous : Quark, current : Quark, edgesFlow : number }
+//---------------------------------------------------------------------------------------------------------------------
+export type QuarkTransition     = { previous : QuarkEntry, current : QuarkEntry, edgesFlow : number }
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Label> {
@@ -26,7 +28,9 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Lab
             let transition      = this.transitions.get(node.identifier)
 
             if (!transition) {
-                transition      = { previous : node, current : MinimalQuark.new({ identifier : node.identifier }), edgesFlow : 0 }
+                const current   = node.identifier.lazy ? LazyQuarkMarker : MinimalQuark.new({ identifier : node.identifier })
+
+                transition      = { previous : node, current : current, edgesFlow : 0 }
 
                 this.transitions.set(node.identifier, transition)
             }
@@ -40,14 +44,12 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Lab
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Transaction = <T extends AnyConstructor<Calculation & Base>>(base : T) =>
+export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Transaction extends base {
     baseRevision            : Revision
 
     checkout                : Scope
-
-    ValueT                  : Map<Identifier, QuarkTransition>
 
     isClosed                : boolean                   = false
 
@@ -64,13 +66,13 @@ class Transaction extends base {
         this.walkContext    = WalkForwardQuarkContext.new({
             checkout        : this.checkout,
             transitions     : this.transitions,
-            walkDimension   : this.dimension,
+            walkDimension   : Array.from(this.baseRevision.thisAndAllPrevious()),
 
             // ignore cycles when determining potentially changed atoms
             onCycle         : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
 
             onTopologicalNode       : (quark : Quark) => {
-                this.mainStack.push(this.transitions.get(quark.identifier).current)
+                if (!quark.identifier.lazy) this.mainStack.push(this.transitions.get(quark.identifier).current as Quark)
             }
         })
 
@@ -95,7 +97,7 @@ class Transaction extends base {
     }
 
 
-    touch (identifier : Identifier, currentQuark : Quark = MinimalQuark.new({ identifier })) {
+    touch (identifier : Identifier, currentQuark : QuarkEntry = identifier.lazy ? LazyQuarkMarker : MinimalQuark.new({ identifier })) {
         // TODO handle write to already dirty ???
         if (this.transitions.has(identifier)) return
 
@@ -104,10 +106,11 @@ class Transaction extends base {
         this.transitions.set(identifier, { previous : previous, current : currentQuark, edgesFlow : 1e9 })
 
         if (previous) {
-            this.walkContext.continueFrom([ previous ])
+            // already existing identifier, will be added to `mainStack` in the `onTopologicalNode` handler of the walk context
+            if (previous !== LazyQuarkMarker) this.walkContext.continueFrom([ previous ])
         } else {
-            // newly created identifier
-            this.mainStack.push(currentQuark)
+            // newly created identifier, adding to `mainStack` manually
+            if (!identifier.lazy) this.mainStack.push(currentQuark as Quark)
         }
     }
 
@@ -129,122 +132,30 @@ class Transaction extends base {
             previous    : this.baseRevision
         })
 
-        const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate)
+        runSyncWithEffect(
+            x => x,
+            calculateTransitions,
+            [
+                {
+                    stack           : this.mainStack,
+                    transitions     : this.transitions,
+
+                    candidate       : candidate,
+                    checkout        : this.checkout,
+                    dimension       : Array.from(this.baseRevision.thisAndAllPrevious())
+                }
+            ]
+        )
+        // const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate)
 
         candidate.scope     = new Map(
-            map<[ Identifier, QuarkTransition ], [ Identifier, Quark ]>(transitionScope.entries(), ([ key, value ]) => [ key, value.current ])
+            map<[ Identifier, QuarkTransition ], [ Identifier, QuarkEntry ]>(this.transitions.entries(), ([ key, value ]) => [ key, value.current ])
         )
 
         return candidate
-    }
-
-
-    get dimension () : Revision[] {
-        return lazyProperty<this, 'dimension'>(this, '_dimension', () => Array.from(this.baseRevision.thisAndAllPrevious()) )
-    }
-
-
-    ArgsT   : [ Revision ]
-
-    * calculation (candidate : Revision) : this[ 'iterator' ] {
-        const stack     = this.mainStack
-        const scope     = this.transitions
-        const latest    = this.checkout
-
-        while (stack.length) {
-            const quark : Quark     = stack[ stack.length - 1 ]
-
-            const transition        = scope.get(quark.identifier)
-
-            if (quark.isCalculationCompleted() || transition.edgesFlow < 0) {
-                stack.pop()
-                continue
-            }
-
-            let iterationResult : IteratorResult<any>
-
-            if (quark.isCalculationStarted()) {
-                iterationResult     = quark.iterationResult
-            } else {
-                if (transition.edgesFlow == 0) {
-                    transition.edgesFlow--
-
-                    const previousQuark = transition.previous
-
-                    quark.forceValue(previousQuark.value)
-
-                    previousQuark.forEachOutgoingInDimension(latest, this.dimension, (label : any, quark : Quark) => {
-                        scope.get(quark.identifier).edgesFlow--
-                    })
-
-                    stack.pop()
-                    continue
-                } else {
-                    iterationResult = quark.startCalculation()
-                }
-            }
-
-            do {
-                const value         = iterationResult.value
-
-                if (iterationResult.done) {
-                    // garbage collect the generator instances
-                    quark.iterator  = undefined
-                    // for some reason, it seems, the last called generator instance
-                    // installs itself as the prototype property of the generator function
-                    quark.calculation.prototype = undefined
-
-                    const previousQuark = transition.previous
-
-                    if (previousQuark && quark.identifier.equality(value, previousQuark.value)) {
-                        previousQuark.forEachOutgoingInDimension(latest, this.dimension, (label : any, quark : Quark) => {
-                            scope.get(quark.identifier).edgesFlow--
-                        })
-                    }
-
-                    stack.pop()
-
-                    break
-                }
-                else if (value instanceof Identifier) {
-                    const requestedTransition   = scope.get(value)
-
-                    const requestedQuark        = requestedTransition ? requestedTransition.current : latest.get(value)
-
-                    if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
-
-                    requestedQuark.addEdgeTo(quark, candidate)
-
-                    if (requestedQuark.isCalculationCompleted()) {
-                        iterationResult         = quark.supplyYieldValue(requestedQuark.value)
-                    }
-                    else if (!requestedQuark.isCalculationStarted()) {
-                        stack.push(requestedQuark)
-
-                        break
-                    }
-                    else {
-                        throw new Error("cycle")
-                        // cycle - the requested quark has started calculation (means it was encountered in this loop before)
-                        // but the calculation did not complete yet (even that requested quark is calculated before the current)
-                        // yield GraphCycleDetectedEffect.new()
-                    }
-                }
-                else {
-                    // bypass the unrecognized effect to the outer context
-                    iterationResult             = quark.supplyYieldValue(yield value)
-                }
-
-            } while (true)
-        }
-
-        return scope
     }
 }
 
 export type Transaction = Mixin<typeof Transaction>
 
-export class MinimalTransaction extends Transaction(Calculation(Box(Base))) {
-    // YieldT                  : GraphCycleDetectedEffect
-    ValueT                  : Map<Identifier, QuarkTransition>
-}
+export class MinimalTransaction extends Transaction(Calculation(Box(Base))) {}

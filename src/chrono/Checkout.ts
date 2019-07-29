@@ -1,13 +1,16 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { CalculationFunction } from "../primitives/Calculation.js"
+import { CalculationFunction, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
-import { Quark } from "./Quark.js"
+import { calculateTransitions } from "./CalculationCore.js"
+import { LazyQuarkMarker, MinimalQuark, Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
-import { MinimalTransaction, Transaction } from "./Transaction.js"
+import { MinimalTransaction, QuarkTransition, Transaction } from "./Transaction.js"
 
 
-export type Scope   = Map<Identifier, Quark>
+export type QuarkEntry = Quark | LazyQuarkMarker
+
+export type Scope   = Map<Identifier, QuarkEntry>
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Checkout = <T extends AnyConstructor<Base>>(base : T) =>
@@ -66,7 +69,7 @@ class Checkout extends base {
         const nextRevision      = activeTransaction.propagate()
 
         this.baseRevision       = this.topRevision = nextRevision
-        this.checkout           = this.includeScopeToLatest(this.checkout, nextRevision)
+        this.checkout           = this.includeRevisionToCheckout(this.checkout, nextRevision)
 
         clearLazyProperty(this, '_nextRevision')
     }
@@ -78,6 +81,13 @@ class Checkout extends base {
         this.write(variable, value)
 
         return variable
+    }
+
+
+    addIdentifier (identifier : Identifier) : Identifier {
+        this.touch(identifier)
+
+        return identifier
     }
 
 
@@ -124,7 +134,40 @@ class Checkout extends base {
 
 
     read (identifier : Identifier) : any {
-        return this.baseRevision.read(identifier)
+        const latest    = this.baseRevision.getLatestQuarkFor(identifier)
+
+        if (!latest) throw new Error("Unknown identifier")
+
+        if (latest === LazyQuarkMarker) {
+            const quark         = MinimalQuark.new({ identifier })
+
+            const transitions   = new Map<Identifier, QuarkTransition>()
+            transitions.set(identifier, { previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
+
+            runSyncWithEffect(
+                x => x,
+                calculateTransitions,
+                [
+                    {
+                        stack           : [ quark ],
+                        transitions     : transitions,
+
+                        candidate       : this.baseRevision,
+                        checkout        : this.checkout,
+                        dimension       : Array.from(this.baseRevision.thisAndAllPrevious())
+                    }
+                ]
+            )
+
+            transitions.forEach((transition : QuarkTransition, identifier : Identifier) => {
+                this.baseRevision.scope.set(identifier, transition.current)
+                this.checkout.set(identifier, transition.current)
+            })
+
+            return quark.value
+        } else {
+            return latest.value
+        }
     }
 
 
@@ -135,6 +178,7 @@ class Checkout extends base {
         if (!previous) return
 
         this.baseRevision       = previous
+        // TODO switch `checkout` to lazy attribute to avoid costly `buildLatest` call if user just plays with undo/redo buttons
         this.checkout           = previous.buildLatest()
     }
 
@@ -147,11 +191,11 @@ class Checkout extends base {
         const nextRevision      = this.nextRevision.get(baseRevision)
 
         this.baseRevision       = nextRevision
-        this.checkout           = this.includeScopeToLatest(this.checkout, nextRevision)
+        this.checkout           = this.includeRevisionToCheckout(this.checkout, nextRevision)
     }
 
 
-    includeScopeToLatest (checkout : Scope, revision : Revision) : Scope {
+    includeRevisionToCheckout (checkout : Scope, revision : Revision) : Scope {
         for (const [ identifier, quark ] of revision.scope) {
             checkout.set(identifier, quark)
         }
@@ -163,4 +207,4 @@ class Checkout extends base {
 
 export type Checkout = Mixin<typeof Checkout>
 
-type CheckoutConstructor = MixinConstructor<typeof Checkout>
+export type CheckoutConstructor = MixinConstructor<typeof Checkout>

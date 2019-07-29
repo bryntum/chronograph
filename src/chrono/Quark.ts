@@ -3,7 +3,10 @@ import { WalkableForwardNode, WalkForwardContext } from "../graph/Node.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier } from "../primitives/Identifier.js"
-import { Scope } from "./Checkout.js"
+
+//---------------------------------------------------------------------------------------------------------------------
+export const LazyQuarkMarker    = Symbol('LazyQuarkMarker')
+export type LazyQuarkMarker     = typeof LazyQuarkMarker
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -47,7 +50,7 @@ class Quark extends base {
     }
 
 
-    forEachOutgoingInDimension (latest : Map<Identifier, Quark>, dimensions : this[ 'LabelT' ][], func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
+    forEachOutgoingInDimension (latest : Map<Identifier, Quark | LazyQuarkMarker>, dimensions : this[ 'LabelT' ][], func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
         for (let i = 0; i < dimensions.length; i++) {
             const dimension             = dimensions[ i ]
 

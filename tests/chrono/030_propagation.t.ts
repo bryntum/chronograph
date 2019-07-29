@@ -96,7 +96,7 @@ StartTest(t => {
         // ----------------
         const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
 
-        const spies             = nodes.map(calculation => t.spyOn(calculation, 'calculation'))
+        const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
 
         graph.propagate()
 
@@ -150,7 +150,7 @@ StartTest(t => {
         t.is(graph.read(atom3), 4, "Correct result calculated for atom3")
     })
 
-
+// TODO review, if needed adapt
     // // t.it('Reject should clear all observed edges', async t => {
     // //     const graph : ChronoGraph       = MinimalChronoGraph.new()
     // //

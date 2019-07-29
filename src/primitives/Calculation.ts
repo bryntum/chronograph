@@ -1,4 +1,4 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Box } from "./Box.js"
 
 
@@ -75,7 +75,8 @@ class Calculation extends base {
             this.supplyYieldValue(onEffect(this.iterationResult.value))
         }
 
-        this.iterator   = undefined
+        this.iterator               = undefined
+        this.calculation.prototype  = undefined
 
         return this.value
     }
@@ -88,10 +89,31 @@ class Calculation extends base {
             this.supplyYieldValue(await onEffect(this.iterationResult.value))
         }
 
-        this.iterator   = undefined
+        this.iterator               = undefined
+        this.calculation.prototype  = undefined
 
         return this.value
     }
 }
 
 export type Calculation = Mixin<typeof Calculation>
+
+
+export class MinimalCalculation extends Calculation(Box(Base)) {}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export function runSyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
+    onEffect    : (effect : YieldT) => any,
+    func        : CalculationFunction<ResultT, YieldT, ArgsT>,
+    args        : ArgsT,
+    scope?      : any
+) : ResultT
+{
+    const calculation       = MinimalCalculation.new({
+        calculation         : func,
+        calculationContext  : scope
+    })
+
+    return calculation.runSyncWithEffect(onEffect, ...args)
+}
