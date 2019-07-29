@@ -1,6 +1,7 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { reverse, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier } from "../primitives/Identifier.js"
+import { Scope } from "./Checkout.js"
 import { Quark } from "./Quark.js"
 
 
@@ -10,7 +11,7 @@ export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 class Revision extends base {
     previous                : Revision
 
-    scope                   : Map<Identifier, Quark>    = new Map()
+    scope                   : Scope    = new Map()
 
 
     read (identifier : Identifier) : any {
@@ -76,7 +77,7 @@ class Revision extends base {
     }
 
 
-    buildLatest () : Map<Identifier, Quark> {
+    buildLatest () : Scope {
         const me        = this
 
         const entries   = function * () : IterableIterator<[ Identifier, Quark ]> {
@@ -90,7 +91,7 @@ class Revision extends base {
     }
 
 
-    // includeScopeToLatest (latest) : Map<Identifier, Quark> {
+    // includeScopeToLatest (latest) : Scope {
     //     for (const [ identifier, quark ] of this.scope) {
     //         latest.set(identifier, quark)
     //     }
@@ -99,7 +100,7 @@ class Revision extends base {
     // }
 
 
-    // excludeScopeFromLatest (latest) : Map<Identifier, Quark> {
+    // excludeScopeFromLatest (latest) : Scope {
     //     for (const [ identifier, quark ] of this.scope) {
     //         latest.set(identifier, quark)
     //     }

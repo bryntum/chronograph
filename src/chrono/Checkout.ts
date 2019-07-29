@@ -7,6 +7,8 @@ import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 
 
+export type Scope   = Map<Identifier, Quark>
+
 //---------------------------------------------------------------------------------------------------------------------
 export const Checkout = <T extends AnyConstructor<Base>>(base : T) =>
 
@@ -18,7 +20,7 @@ class Checkout extends base {
 
     historyLimit            : number        = 10
 
-    checkout                : Map<Identifier, Quark>
+    checkout                : Scope
 
 
     initialize (...args) {
@@ -149,7 +151,7 @@ class Checkout extends base {
     }
 
 
-    includeScopeToLatest (checkout : Map<Identifier, Quark>, revision : Revision) : Map<Identifier, Quark> {
+    includeScopeToLatest (checkout : Scope, revision : Revision) : Scope {
         for (const [ identifier, quark ] of revision.scope) {
             checkout.set(identifier, quark)
         }

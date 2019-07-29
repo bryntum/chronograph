@@ -5,6 +5,7 @@ import { Box } from "../primitives/Box.js"
 import { Calculation } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { lazyProperty } from "../util/Helper.js"
+import { Scope } from "./Checkout.js"
 import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
@@ -13,21 +14,21 @@ type QuarkTransition    = { previous : Quark, current : Quark, edgesFlow : numbe
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Label> {
-    checkout        : Map<Identifier, Quark>
+    checkout        : Scope
 
-    scope           : Map<Identifier, QuarkTransition>
+    transitions     : Map<Identifier, QuarkTransition>
 
     walkDimension   : Revision[] = []
 
 
     forEachNext (node : Quark, func : (label : Label, node : Quark) => any) {
         node.forEachOutgoingInDimension(this.checkout, this.walkDimension, (label : Label, node : Quark) => {
-            let transition      = this.scope.get(node.identifier)
+            let transition      = this.transitions.get(node.identifier)
 
             if (!transition) {
                 transition      = { previous : node, current : MinimalQuark.new({ identifier : node.identifier }), edgesFlow : 0 }
 
-                this.scope.set(node.identifier, transition)
+                this.transitions.set(node.identifier, transition)
             }
 
             transition.edgesFlow++
@@ -44,13 +45,13 @@ export const Transaction = <T extends AnyConstructor<Calculation & Base>>(base :
 class Transaction extends base {
     baseRevision            : Revision
 
-    checkout                : Map<Identifier, Quark>
+    checkout                : Scope
 
     ValueT                  : Map<Identifier, QuarkTransition>
 
     isClosed                : boolean                   = false
 
-    scope                   : Map<Identifier, QuarkTransition>  = new Map()
+    transitions             : Map<Identifier, QuarkTransition>  = new Map()
 
     walkContext             : WalkForwardQuarkContext
 
@@ -62,14 +63,14 @@ class Transaction extends base {
 
         this.walkContext    = WalkForwardQuarkContext.new({
             checkout        : this.checkout,
-            scope           : this.scope,
+            transitions     : this.transitions,
             walkDimension   : this.dimension,
 
             // ignore cycles when determining potentially changed atoms
             onCycle         : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
 
             onTopologicalNode       : (quark : Quark) => {
-                this.mainStack.push(this.scope.get(quark.identifier).current)
+                this.mainStack.push(this.transitions.get(quark.identifier).current)
             }
         })
 
@@ -79,7 +80,7 @@ class Transaction extends base {
 
 
     isEmpty () : boolean {
-        return this.scope.size === 0
+        return this.transitions.size === 0
     }
 
 
@@ -96,11 +97,11 @@ class Transaction extends base {
 
     touch (identifier : Identifier, currentQuark : Quark = MinimalQuark.new({ identifier })) {
         // TODO handle write to already dirty ???
-        if (this.scope.has(identifier)) return
+        if (this.transitions.has(identifier)) return
 
         const previous      = this.checkout.get(identifier)
 
-        this.scope.set(identifier, { previous : previous, current : currentQuark, edgesFlow : 1e9 })
+        this.transitions.set(identifier, { previous : previous, current : currentQuark, edgesFlow : 1e9 })
 
         if (previous) {
             this.walkContext.continueFrom([ previous ])
@@ -112,7 +113,7 @@ class Transaction extends base {
 
 
     removeIdentifier (identifier : Identifier) {
-        if (this.scope.has(identifier)) {
+        if (this.transitions.has(identifier)) {
             // removing the "dirty" identifier
             // TODO
         } else {
@@ -147,7 +148,7 @@ class Transaction extends base {
 
     * calculation (candidate : Revision) : this[ 'iterator' ] {
         const stack     = this.mainStack
-        const scope     = this.scope
+        const scope     = this.transitions
         const latest    = this.checkout
 
         while (stack.length) {
