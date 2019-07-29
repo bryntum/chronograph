@@ -2,7 +2,7 @@ import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js
 import { CalculationFunction, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
-import { calculateTransitions } from "./CalculationCore.js"
+import { calculateTransitions, CalculationArgs } from "./CalculationCore.js"
 import { LazyQuarkMarker, MinimalQuark, Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, QuarkTransition, Transaction } from "./Transaction.js"
@@ -144,7 +144,7 @@ class Checkout extends base {
             const transitions   = new Map<Identifier, QuarkTransition>()
             transitions.set(identifier, { previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
 
-            runSyncWithEffect(
+            runSyncWithEffect<[ CalculationArgs ], any, any>(
                 x => x,
                 calculateTransitions,
                 [

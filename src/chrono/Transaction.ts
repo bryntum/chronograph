@@ -4,7 +4,7 @@ import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { Box } from "../primitives/Box.js"
 import { Calculation, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { calculateTransitions } from "./CalculationCore.js"
+import { calculateTransitions, CalculationArgs } from "./CalculationCore.js"
 import { QuarkEntry, Scope } from "./Checkout.js"
 import { LazyQuarkMarker, MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
@@ -132,7 +132,7 @@ class Transaction extends base {
             previous    : this.baseRevision
         })
 
-        runSyncWithEffect(
+        runSyncWithEffect<[ CalculationArgs ], any, any>(
             x => x,
             calculateTransitions,
             [
