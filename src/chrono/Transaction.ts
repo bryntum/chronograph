@@ -122,14 +122,14 @@ class Transaction extends base {
     }
 
 
-    propagate (latest : Map<Identifier, Quark>) : Revision {
+    propagate () : Revision {
         this.isClosed   = true
 
         const candidate = MinimalRevision.new({
             previous    : this.baseRevision
         })
 
-        const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate, latest)
+        const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate)
 
         candidate.scope     = new Map(
             map<[ Identifier, QuarkTransition ], [ Identifier, Quark ]>(transitionScope.entries(), ([ key, value ]) => [ key, value.current ])
@@ -144,12 +144,12 @@ class Transaction extends base {
     }
 
 
-    ArgsT   : [ Revision,  Map<Identifier, Quark> ]
+    ArgsT   : [ Revision ]
 
-    * calculation (candidate : Revision, latest : Map<Identifier, Quark>) : this[ 'iterator' ] {
-        // const { stack, scope }      = this.determinePotentiallyChangedQuarks(latest)
+    * calculation (candidate : Revision) : this[ 'iterator' ] {
         const stack     = this.mainStack
         const scope     = this.scope
+        const latest    = this.checkout
 
         while (stack.length) {
             const quark : Quark     = stack[ stack.length - 1 ]

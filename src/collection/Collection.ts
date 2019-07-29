@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
 
 
 export interface Collection<Element = any> {

@@ -1,5 +1,4 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { reverse, takeUntilIncluding } from "../collection/Iterator.js"
 import { CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
@@ -25,7 +24,7 @@ class Scope extends base {
     initialize (...args) {
         super.initialize(...args)
 
-        this.checkout   = this.baseRevision.buildLatest()
+        if (!this.checkout) this.checkout = this.baseRevision.buildLatest()
 
         if (!this.topRevision) this.topRevision = this.baseRevision
     }
@@ -55,14 +54,14 @@ class Scope extends base {
     branch () : this {
         const Constructor = this.constructor as ScopeConstructor
 
-        return Constructor.new({ baseRevision : this.baseRevision }) as this
+        return Constructor.new({ baseRevision : this.baseRevision, checkout : new Map(this.checkout) }) as this
     }
 
 
     propagate () {
         const activeTransaction = clearLazyProperty(this, '_activeTransaction') as Transaction
 
-        const nextRevision      = activeTransaction.propagate(this.checkout)
+        const nextRevision      = activeTransaction.propagate()
 
         this.baseRevision       = this.topRevision = nextRevision
         this.checkout           = this.includeScopeToLatest(this.checkout, nextRevision)

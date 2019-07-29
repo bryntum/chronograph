@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { reverse, takeUntilIncluding, uniqueOnly } from "../collection/Iterator.js"
+import { reverse, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier } from "../primitives/Identifier.js"
 import { Quark } from "./Quark.js"
 
