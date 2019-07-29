@@ -1,4 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { MinimalQuark } from "../../src/chrono/Quark.js"
 
 declare const StartTest : any
 
@@ -117,6 +118,44 @@ StartTest(t => {
         const expectedCalls     = [ 0, 0, 1, 1, 0, 0, 0, 1 ]
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled(expectedCalls[ index ]))
+    })
+
+
+    t.it('Should not instantiate quarks for eliminated nodes', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1        = graph.variableId('i1', 0)
+        const i2        = graph.variableId('i2', 10)
+
+        const c1        = graph.identifierId('c1', function* () {
+            return (yield i1) + (yield i2)
+        })
+
+        const c2        = graph.identifierId('c2', function* () {
+            return (yield c1) + 1
+        })
+
+        const c3        = graph.identifierId('c3', function* () {
+            return (yield c2) + 1
+        })
+
+        // ----------------
+        graph.propagate()
+
+        // ----------------
+        const spy               = t.spyOn(MinimalQuark, 'new')
+
+        graph.write(i1, 5)
+        graph.write(i2, 5)
+
+        t.expect(spy).toHaveBeenCalled(2)
+
+        // ----------------
+        spy.reset()
+
+        graph.propagate()
+
+        t.expect(spy).toHaveBeenCalled(1)
     })
 
 

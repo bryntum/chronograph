@@ -1,11 +1,13 @@
 import { Identifier } from "../primitives/Identifier.js"
 import { Scope } from "./Checkout.js"
-import { LazyQuarkMarker, MinimalQuark, Quark } from "./Quark.js"
+import { LazyQuarkMarker, MinimalQuark, PendingQuarkMarker, Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { QuarkTransition } from "./Transaction.js"
 
+
+//---------------------------------------------------------------------------------------------------------------------
 export type CalculationArgs = {
-    stack               : Quark[],
+    stack               : Identifier[],
     transitions         : Map<Identifier, QuarkTransition>,
     checkout            : Scope,
     candidate           : Revision,
@@ -16,9 +18,32 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
     const { stack, transitions, checkout, candidate, dimension } = args
 
     while (stack.length) {
-        const quark : Quark     = stack[ stack.length - 1 ]
+        const identifier        = stack[ stack.length - 1 ]
+        const transition        = transitions.get(identifier)
 
-        const transition        = transitions.get(quark.identifier)
+        if (transition.edgesFlow == 0) {
+            transition.edgesFlow--
+
+            transitions.delete(identifier)
+
+            const previousQuark = transition.previous
+
+            if (previousQuark !== LazyQuarkMarker) {
+                previousQuark.forEachOutgoingInDimension(checkout, dimension, (label : any, quark : Quark) => {
+                    transitions.get(quark.identifier).edgesFlow--
+                })
+            }
+
+            stack.pop()
+            continue
+        }
+
+        let quark : Quark
+
+        if (transition.current === PendingQuarkMarker) {
+            quark               = transition.current = MinimalQuark.new({ identifier })
+        } else
+            quark               = transition.current as Quark
 
         if (quark.isCalculationCompleted() || transition.edgesFlow < 0) {
             stack.pop()
@@ -27,29 +52,10 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
 
         let iterationResult : IteratorResult<any>
 
-        if (quark.isCalculationStarted()) {
+        if (quark.isCalculationStarted())
             iterationResult     = quark.iterationResult
-        } else {
-            if (transition.edgesFlow == 0) {
-                transition.edgesFlow--
-
-                const previousQuark = transition.previous
-
-                if (previousQuark !== LazyQuarkMarker) {
-                    // TODO remove the "current" property from the transition, to indicate that "previous" should be used
-                    quark.forceValue(previousQuark.value)
-
-                    previousQuark.forEachOutgoingInDimension(checkout, dimension, (label : any, quark : Quark) => {
-                        transitions.get(quark.identifier).edgesFlow--
-                    })
-                }
-
-                stack.pop()
-                continue
-            } else {
-                iterationResult = quark.startCalculation()
-            }
-        }
+        else
+            iterationResult     = quark.startCalculation()
 
         do {
             const value         = iterationResult.value
@@ -84,15 +90,19 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
 
                 if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
 
-                if (requestedQuark === LazyQuarkMarker) {
-                    requestedQuark          = MinimalQuark.new({ identifier : value })
-
-                    if (requestedTransition) {
-                        requestedTransition.current = requestedQuark
-                    } else {
-                        transitions.set(value, { previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 })
-                    }
+                if (requestedQuark === PendingQuarkMarker) {
+                    requestedQuark          = requestedTransition.current = MinimalQuark.new({ identifier : value })
                 }
+                else
+                    if (requestedQuark === LazyQuarkMarker) {
+                        requestedQuark          = MinimalQuark.new({ identifier : value })
+
+                        if (requestedTransition) {
+                            requestedTransition.current = requestedQuark
+                        } else {
+                            transitions.set(value, { previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 })
+                        }
+                    }
 
                 requestedQuark.addEdgeTo(quark, candidate)
 
@@ -100,7 +110,7 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
                     iterationResult         = quark.supplyYieldValue(requestedQuark.value)
                 }
                 else if (!requestedQuark.isCalculationStarted()) {
-                    stack.push(requestedQuark)
+                    stack.push(value)
 
                     break
                 }

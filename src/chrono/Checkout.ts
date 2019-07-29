@@ -64,7 +64,7 @@ class Checkout extends base {
 
 
     propagate () {
-        const activeTransaction = clearLazyProperty(this, '_activeTransaction') as Transaction
+        const activeTransaction : Transaction = clearLazyProperty(this, '_activeTransaction')
 
         const nextRevision      = activeTransaction.propagate()
 
@@ -149,7 +149,7 @@ class Checkout extends base {
                 calculateTransitions,
                 [
                     {
-                        stack           : [ quark ],
+                        stack           : [ identifier ],
                         transitions     : transitions,
 
                         candidate       : this.baseRevision,
@@ -160,8 +160,8 @@ class Checkout extends base {
             )
 
             transitions.forEach((transition : QuarkTransition, identifier : Identifier) => {
-                this.baseRevision.scope.set(identifier, transition.current)
-                this.checkout.set(identifier, transition.current)
+                this.baseRevision.scope.set(identifier, transition.current as QuarkEntry)
+                this.checkout.set(identifier, transition.current as QuarkEntry)
             })
 
             return quark.value

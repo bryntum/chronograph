@@ -8,6 +8,10 @@ import { Identifier } from "../primitives/Identifier.js"
 export const LazyQuarkMarker    = Symbol('LazyQuarkMarker')
 export type LazyQuarkMarker     = typeof LazyQuarkMarker
 
+//---------------------------------------------------------------------------------------------------------------------
+export const PendingQuarkMarker    = Symbol('PendingQuarkMarker')
+export type PendingQuarkMarker     = typeof PendingQuarkMarker
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Quark = <T extends AnyConstructor<WalkableForwardNode & Calculation>>(base : T) =>

@@ -6,12 +6,12 @@ import { Calculation, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { calculateTransitions, CalculationArgs } from "./CalculationCore.js"
 import { QuarkEntry, Scope } from "./Checkout.js"
-import { LazyQuarkMarker, MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
+import { LazyQuarkMarker, MinimalQuark, PendingQuarkMarker, Quark, TombstoneQuark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type QuarkTransition     = { previous : QuarkEntry, current : QuarkEntry, edgesFlow : number }
+export type QuarkTransition     = { previous : QuarkEntry, current : QuarkEntry | PendingQuarkMarker, edgesFlow : number }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Lab
             let transition      = this.transitions.get(node.identifier)
 
             if (!transition) {
-                const current   = node.identifier.lazy ? LazyQuarkMarker : MinimalQuark.new({ identifier : node.identifier })
+                const current   = node.identifier.lazy ? LazyQuarkMarker : PendingQuarkMarker
 
                 transition      = { previous : node, current : current, edgesFlow : 0 }
 
@@ -57,7 +57,7 @@ class Transaction extends base {
 
     walkContext             : WalkForwardQuarkContext
 
-    mainStack               : Quark[]                   = []
+    mainStack               : Identifier[]              = []
 
 
     initialize (...args) {
@@ -72,7 +72,7 @@ class Transaction extends base {
             onCycle         : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
 
             onTopologicalNode       : (quark : Quark) => {
-                if (!quark.identifier.lazy) this.mainStack.push(this.transitions.get(quark.identifier).current as Quark)
+                if (!quark.identifier.lazy) this.mainStack.push(quark.identifier)
             }
         })
 
@@ -110,7 +110,7 @@ class Transaction extends base {
             if (previous !== LazyQuarkMarker) this.walkContext.continueFrom([ previous ])
         } else {
             // newly created identifier, adding to `mainStack` manually
-            if (!identifier.lazy) this.mainStack.push(currentQuark as Quark)
+            if (!identifier.lazy) this.mainStack.push(identifier)
         }
     }
 
@@ -149,7 +149,7 @@ class Transaction extends base {
         // const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate)
 
         candidate.scope     = new Map(
-            map<[ Identifier, QuarkTransition ], [ Identifier, QuarkEntry ]>(this.transitions.entries(), ([ key, value ]) => [ key, value.current ])
+            map<[ Identifier, QuarkTransition ], [ Identifier, QuarkEntry ]>(this.transitions.entries(), ([ key, value ]) => [ key, value.current as QuarkEntry ])
         )
 
         return candidate
