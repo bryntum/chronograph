@@ -1,10 +1,10 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { MinimalRevision, Revision } from "./Revision.js"
-import { Scope } from "./Scope.js"
+import { Checkout } from "./Checkout.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoGraph = <T extends AnyConstructor<Scope>>(base : T) =>
+export const ChronoGraph = <T extends AnyConstructor<Checkout>>(base : T) =>
 
 class ChronoGraph extends base {
     baseRevision        : Revision      = MinimalRevision.new()
@@ -12,4 +12,4 @@ class ChronoGraph extends base {
 
 export type ChronoGraph = Mixin<typeof ChronoGraph>
 
-export class MinimalChronoGraph extends ChronoGraph(Scope(Base)) {}
+export class MinimalChronoGraph extends ChronoGraph(Checkout(Base)) {}

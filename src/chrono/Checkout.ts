@@ -8,9 +8,9 @@ import { MinimalTransaction, Transaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Scope = <T extends AnyConstructor<Base>>(base : T) =>
+export const Checkout = <T extends AnyConstructor<Base>>(base : T) =>
 
-class Scope extends base {
+class Checkout extends base {
     baseRevision            : Revision
 
     bottomRevision          : Revision
@@ -52,7 +52,7 @@ class Scope extends base {
 
 
     branch () : this {
-        const Constructor = this.constructor as ScopeConstructor
+        const Constructor = this.constructor as CheckoutConstructor
 
         return Constructor.new({ baseRevision : this.baseRevision, checkout : new Map(this.checkout) }) as this
     }
@@ -159,6 +159,6 @@ class Scope extends base {
 
 }
 
-export type Scope = Mixin<typeof Scope>
+export type Checkout = Mixin<typeof Checkout>
 
-type ScopeConstructor = MixinConstructor<typeof Scope>
+type CheckoutConstructor = MixinConstructor<typeof Checkout>

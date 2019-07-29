@@ -46,7 +46,6 @@ class Transaction extends base {
 
     checkout                : Map<Identifier, Quark>
 
-    // YieldT                  : unknown
     ValueT                  : Map<Identifier, QuarkTransition>
 
     isClosed                : boolean                   = false

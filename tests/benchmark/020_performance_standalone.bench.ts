@@ -1,5 +1,7 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 
+declare const window : any
+
 const bench1 = () => {
     const graph : ChronoGraph   = window.graph = MinimalChronoGraph.new()
 
