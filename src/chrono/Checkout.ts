@@ -1,4 +1,5 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { concat } from "../collection/Iterator.js"
 import { CalculationFunction, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
@@ -21,7 +22,10 @@ class Checkout extends base {
     bottomRevision          : Revision
     topRevision             : Revision
 
-    historyLimit            : number        = 10
+    // how many revisions (including the `baseRevision`) to keep in memory for undo operation
+    // minimal value is 1 (the `baseRevision` itself only)
+    // users supposed to opt-in for undo/redo by increasing this config
+    historyLimit            : number        = 1
 
     checkout                : Scope
 
@@ -32,11 +36,68 @@ class Checkout extends base {
         if (!this.checkout) this.checkout = this.baseRevision.buildLatest()
 
         if (!this.topRevision) this.topRevision = this.baseRevision
+
+        this.markAndSweep()
     }
 
 
-    get nextRevision () : Map<Revision, Revision> {
-        return lazyProperty<this, 'nextRevision'>(this, '_nextRevision', () => {
+    * eachReachableRevision () : IterableIterator<[ Revision, boolean ]> {
+        let isBetweenTopBottom      = true
+        let counter                 = 0
+
+        for (const revision of this.topRevision.thisAndAllPrevious()) {
+            yield [ revision, isBetweenTopBottom || counter < this.historyLimit ]
+
+            if (revision === this.baseRevision) {
+                isBetweenTopBottom = false
+                counter++
+            } else {
+                if (!isBetweenTopBottom) counter++
+            }
+        }
+    }
+
+
+    markAndSweep () {
+        let lastReferencedRevision : Revision
+
+        const unreachableRevisions : Revision[]     = []
+
+        for (const [ revision, isReferenced ] of this.eachReachableRevision()) {
+            if (isReferenced) {
+                revision.referenceCount++
+                lastReferencedRevision              = revision
+            } else
+                unreachableRevisions.push(revision)
+        }
+
+        unreachableRevisions.unshift(lastReferencedRevision)
+
+        for (let i = unreachableRevisions.length - 1; i >= 1; i--) {
+            this.compactRevisions(unreachableRevisions[ i - 1 ], unreachableRevisions[ i ])
+        }
+    }
+
+
+    compactRevisions (revision : Revision, previous : Revision) {
+        if (revision.previous !== previous) throw new Error("Invalid compact operation")
+
+        if (previous.referenceCount === 0) {
+            this.includeRevisionToCheckout(previous.scope, revision)
+
+            revision.scope          = previous.scope
+            revision.previous       = null
+
+            // make sure the previous revision won't be used inconsistently
+            previous.scope          = null
+        } else {
+            revision.scope          = new Map(concat(previous.scope.entries(), revision.scope.entries()))
+        }
+    }
+
+
+    get followingRevision () : Map<Revision, Revision> {
+        return lazyProperty<this, 'followingRevision'>(this, '_followingRevision', () => {
             const revisions     = Array.from(this.topRevision.thisAndAllPrevious())
 
             const entries : [ Revision, Revision ][]    = []
@@ -68,10 +129,17 @@ class Checkout extends base {
 
         const nextRevision      = activeTransaction.propagate()
 
+        // dereference all revisions
+        for (const [ revision, isReferenced ] of this.eachReachableRevision()) {
+            if (isReferenced) revision.referenceCount--
+        }
+
         this.baseRevision       = this.topRevision = nextRevision
         this.checkout           = this.includeRevisionToCheckout(this.checkout, nextRevision)
 
-        clearLazyProperty(this, '_nextRevision')
+        this.markAndSweep()
+
+        clearLazyProperty(this, '_followingRevision')
     }
 
 
@@ -139,59 +207,68 @@ class Checkout extends base {
         if (!latest) throw new Error("Unknown identifier")
 
         if (latest === LazyQuarkMarker) {
-            const quark         = MinimalQuark.new({ identifier })
-
-            const transitions   = new Map<Identifier, QuarkTransition>()
-            transitions.set(identifier, { previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
-
-            runSyncWithEffect<[ CalculationArgs ], any, any>(
-                x => x,
-                calculateTransitions,
-                [
-                    {
-                        stack           : [ identifier ],
-                        transitions     : transitions,
-
-                        candidate       : this.baseRevision,
-                        checkout        : this.checkout,
-                        dimension       : Array.from(this.baseRevision.thisAndAllPrevious())
-                    }
-                ]
-            )
-
-            transitions.forEach((transition : QuarkTransition, identifier : Identifier) => {
-                this.baseRevision.scope.set(identifier, transition.current as QuarkEntry)
-                this.checkout.set(identifier, transition.current as QuarkEntry)
-            })
-
-            return quark.value
+            return this.calculateLazyIdentifier(identifier)
         } else {
             return latest.value
         }
     }
 
 
-    undo () {
+    calculateLazyIdentifier (identifier : Identifier) : any {
+        const quark         = MinimalQuark.new({ identifier })
+
+        const transitions   = new Map<Identifier, QuarkTransition>()
+        transitions.set(identifier, { previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
+
+        runSyncWithEffect<[ CalculationArgs ], any, any>(
+            x => x,
+            calculateTransitions,
+            [
+                {
+                    stack           : [ identifier ],
+                    transitions     : transitions,
+
+                    candidate       : this.baseRevision,
+                    checkout        : this.checkout,
+                    dimension       : Array.from(this.baseRevision.thisAndAllPrevious())
+                }
+            ]
+        )
+
+        transitions.forEach((transition : QuarkTransition, identifier : Identifier) => {
+            this.baseRevision.scope.set(identifier, transition.current as QuarkEntry)
+            this.checkout.set(identifier, transition.current as QuarkEntry)
+        })
+
+        return quark.value
+    }
+
+
+    undo () : boolean {
         const baseRevision      = this.baseRevision
         const previous          = baseRevision.previous
 
-        if (!previous) return
+        if (!previous) return false
 
         this.baseRevision       = previous
         // TODO switch `checkout` to lazy attribute to avoid costly `buildLatest` call if user just plays with undo/redo buttons
         this.checkout           = previous.buildLatest()
+
+        return true
     }
 
 
-    redo () {
+    redo () : boolean {
         const baseRevision      = this.baseRevision
 
-        if (baseRevision === this.topRevision) return
+        if (baseRevision === this.topRevision) return false
 
-        const nextRevision      = this.nextRevision.get(baseRevision)
+        const nextRevision      = this.followingRevision.get(baseRevision)
 
         this.baseRevision       = nextRevision
         this.checkout           = this.includeRevisionToCheckout(this.checkout, nextRevision)
+
+        return true
     }
 
 

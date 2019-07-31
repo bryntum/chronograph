@@ -16,13 +16,6 @@ project.start(
             'class/010_instanceof.t.js',
         ]
     },
-    // {
-    //     group       : 'util',
-    //
-    //     items       : [
-    //         'util/010_json_walk.t.js',
-    //     ]
-    // },
     {
         group       : 'graph',
 
@@ -40,15 +33,9 @@ project.start(
             'chrono/011_lazy_identifier.t.js',
             'chrono/020_graph_branching.t.js',
             'chrono/030_propagation.t.js',
+            'chrono/031_garbage_collection.t.js',
             'chrono/040_add_remove.t.js',
             'chrono/050_undo_redo.t.js'
-
-            // 'chrono/010_graph.t.js',
-            // 'chrono/020_performance.t.js',
-            // 'chrono/030_behavior.t.js',
-            // 'chrono/040_effects.t.js',
-            // 'chrono/050_cycle_effect.t.js',
-            // 'chrono/060_try_propagate.t.js'
         ]
     },
     {

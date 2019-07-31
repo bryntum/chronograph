@@ -58,6 +58,7 @@ const bench1 = () => {
     // // console.profileEnd()
     console.timeEnd("Build graph")
 
+    //--------------------------
     console.time("Calc #0")
     // console.profile('Propagate #0')
 
@@ -69,11 +70,12 @@ const bench1 = () => {
     console.log("Result #0: ", graph.read(boxes[ boxes.length - 1 ]))
 
 
-    graph.write(boxes[ 0 ], 0)
-    // graph.write(boxes[ 1 ], 2) // only few atoms changes
-
+    //--------------------------
     console.time("Calc #1")
     // console.profile('Propagate #1')
+
+    graph.write(boxes[ 0 ], 0)
+    // graph.write(boxes[ 1 ], 2) // only few atoms changes
 
     graph.propagate()
 
@@ -83,11 +85,12 @@ const bench1 = () => {
     console.log("Result #1: ", graph.read(boxes[ boxes.length - 1 ]))
 
 
-    // graph.write(boxes[ 10 ], 10)
-    // // graph.write(boxes[ 1 ], 2) // only few atoms changes
-    //
+    // //--------------------------
     // console.time("Calc #2")
     // // console.profile('Propagate #1')
+    //
+    // graph.write(boxes[ 10 ], 10)
+    // // graph.write(boxes[ 1 ], 2) // only few atoms changes
     //
     // graph.propagate()
     //

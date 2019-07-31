@@ -3,14 +3,31 @@ import { reverse, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier } from "../primitives/Identifier.js"
 import { QuarkEntry, Scope } from "./Checkout.js"
 
+// Revision should be turned into Node and all Revisions will form a Graph
+
+let ID : number = 0
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Revision extends base {
+    name                    : string    = 'revision-' + (ID++)
+
     previous                : Revision
 
-    scope                   : Scope    = new Map()
+    scope                   : Scope     = new Map()
+
+    referenceCount          : number    = 0
+
+
+    reference (referencedFrom : Revision) {
+        this.referenceCount++
+    }
+
+
+    deReference (referencedFrom : Revision) {
+        this.referenceCount--
+    }
 
 
     getPreviousQuarkFor (identifier : Identifier) : QuarkEntry {

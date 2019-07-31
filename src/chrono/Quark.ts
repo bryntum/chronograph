@@ -21,7 +21,7 @@ class Quark extends base {
 
     identifier              : Identifier
 
-    outgoingByLabel         : Map<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>   = new Map()
+    outgoingByLabel         : WeakMap<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>   = new WeakMap()
 
 
     get calculation () : CalculationFunction {
