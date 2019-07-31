@@ -229,14 +229,16 @@ class Checkout extends base {
         const quark         = MinimalQuark.new({ identifier })
 
         const transitions   = new Map<Identifier, QuarkTransition>()
-        transitions.set(identifier, { previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
+        const transition : QuarkTransition = { identifier : identifier, previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 }
+
+        transitions.set(identifier, transition)
 
         runSyncWithEffect<[ CalculationArgs ], any, any>(
             x => x,
             calculateTransitions,
             [
                 {
-                    stack           : [ identifier ],
+                    stack           : [ transition ],
                     transitions     : transitions,
 
                     candidate       : this.baseRevision,

@@ -7,7 +7,7 @@ import { QuarkTransition } from "./Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type CalculationArgs = {
-    stack               : Identifier[],
+    stack               : QuarkTransition[],
     transitions         : Map<Identifier, QuarkTransition>,
     checkout            : Scope,
     candidate           : Revision,
@@ -18,8 +18,8 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
     const { stack, transitions, checkout, candidate, dimension } = args
 
     while (stack.length) {
-        const identifier        = stack[ stack.length - 1 ]
-        const transition        = transitions.get(identifier)
+        const transition        = stack[ stack.length - 1 ]
+        const identifier        = transition.identifier
 
         if (transition.edgesFlow == 0) {
             transition.edgesFlow--
@@ -84,7 +84,7 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
                 break
             }
             else if (value instanceof Identifier) {
-                const requestedTransition   = transitions.get(value)
+                let requestedTransition     = transitions.get(value)
 
                 let requestedQuark          = requestedTransition ? requestedTransition.current : checkout.get(value)
 
@@ -100,7 +100,9 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
                         if (requestedTransition) {
                             requestedTransition.current = requestedQuark
                         } else {
-                            transitions.set(value, { previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 })
+                            requestedTransition = { identifier : value, previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 }
+
+                            transitions.set(value, requestedTransition)
                         }
                     }
 
@@ -110,7 +112,7 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
                     iterationResult         = quark.supplyYieldValue(requestedQuark.value)
                 }
                 else if (!requestedQuark.isCalculationStarted()) {
-                    stack.push(value)
+                    stack.push(requestedTransition)
 
                     break
                 }

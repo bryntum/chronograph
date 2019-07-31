@@ -11,7 +11,7 @@ import { MinimalRevision, Revision } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type QuarkTransition     = { previous : QuarkEntry, current : QuarkEntry | PendingQuarkMarker, edgesFlow : number }
+export type QuarkTransition     = { identifier : Identifier, previous : QuarkEntry, current : QuarkEntry | PendingQuarkMarker, edgesFlow : number }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Lab
             if (!transition) {
                 const current   = node.identifier.lazy ? LazyQuarkMarker : PendingQuarkMarker
 
-                transition      = { previous : node, current : current, edgesFlow : 0 }
+                transition      = { identifier : node.identifier, previous : node, current : current, edgesFlow : 0 }
 
                 this.transitions.set(node.identifier, transition)
             }
@@ -57,7 +57,7 @@ class Transaction extends base {
 
     walkContext             : WalkForwardQuarkContext
 
-    mainStack               : Identifier[]              = []
+    mainStack               : QuarkTransition[]         = []
 
 
     initialize (...args) {
@@ -72,7 +72,7 @@ class Transaction extends base {
             onCycle         : (quark : Quark, stack : WalkStep<Quark>[]) => OnCycleAction.Resume,
 
             onTopologicalNode       : (quark : Quark) => {
-                if (!quark.identifier.lazy) this.mainStack.push(quark.identifier)
+                if (!quark.identifier.lazy) this.mainStack.push(this.transitions.get(quark.identifier))
             }
         })
 
@@ -103,14 +103,16 @@ class Transaction extends base {
 
         const previous      = this.checkout.get(identifier)
 
-        this.transitions.set(identifier, { previous : previous, current : currentQuark, edgesFlow : 1e9 })
+        const transition : QuarkTransition = { identifier, previous, current : currentQuark, edgesFlow : 1e9 }
+
+        this.transitions.set(identifier, transition)
 
         if (previous) {
             // already existing identifier, will be added to `mainStack` in the `onTopologicalNode` handler of the walk context
             if (previous !== LazyQuarkMarker) this.walkContext.continueFrom([ previous ])
         } else {
             // newly created identifier, adding to `mainStack` manually
-            if (!identifier.lazy) this.mainStack.push(identifier)
+            if (!identifier.lazy) this.mainStack.push(transition)
         }
     }
 
