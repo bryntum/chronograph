@@ -148,6 +148,7 @@ StartTest(t => {
         graph.write(i1, 5)
         graph.write(i2, 5)
 
+        // quarks created for `i1` and `i2`
         t.expect(spy).toHaveBeenCalled(2)
 
         // ----------------
@@ -155,6 +156,7 @@ StartTest(t => {
 
         graph.propagate()
 
+        // quark created for `c1` only
         t.expect(spy).toHaveBeenCalled(1)
     })
 
