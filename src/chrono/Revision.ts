@@ -17,17 +17,8 @@ class Revision extends base {
 
     scope                   : Scope     = new Map()
 
+    reachableCount          : number    = 0
     referenceCount          : number    = 0
-
-
-    reference (referencedFrom : Revision) {
-        this.referenceCount++
-    }
-
-
-    deReference (referencedFrom : Revision) {
-        this.referenceCount--
-    }
 
 
     getPreviousQuarkFor (identifier : Identifier) : QuarkEntry {

@@ -63,36 +63,45 @@ class Checkout extends base {
 
         const unreachableRevisions : Revision[]     = []
 
-        for (const [ revision, isReferenced ] of this.eachReachableRevision()) {
-            if (isReferenced) {
-                revision.referenceCount++
+        for (const [ revision, isReachable ] of this.eachReachableRevision()) {
+            if (isReachable) {
+                revision.reachableCount++
                 lastReferencedRevision              = revision
             } else
                 unreachableRevisions.push(revision)
+
+            revision.referenceCount++
         }
 
         unreachableRevisions.unshift(lastReferencedRevision)
 
-        for (let i = unreachableRevisions.length - 1; i >= 1; i--) {
+        for (let i = unreachableRevisions.length - 1; i >= 1 && unreachableRevisions[ i ].reachableCount === 0; i--) {
             this.compactRevisions(unreachableRevisions[ i - 1 ], unreachableRevisions[ i ])
         }
     }
 
 
     compactRevisions (revision : Revision, previous : Revision) {
-        if (revision.previous !== previous) throw new Error("Invalid compact operation")
+        if (previous.reachableCount > 0 || revision.previous !== previous) throw new Error("Invalid compact operation")
 
-        if (previous.referenceCount === 0) {
+        // we can only shred revision if its being reference maximum 1 time (from the current Checkout instance)
+        if (previous.referenceCount <= 1) {
             this.includeRevisionToCheckout(previous.scope, revision)
 
             revision.scope          = previous.scope
-            revision.previous       = null
 
             // make sure the previous revision won't be used inconsistently
             previous.scope          = null
-        } else {
-            revision.scope          = new Map(concat(previous.scope.entries(), revision.scope.entries()))
         }
+        // otherwise, we have to copy from it, and keep it intact
+        else {
+            revision.scope          = new Map(concat(previous.scope.entries(), revision.scope.entries()))
+
+            previous.referenceCount--
+        }
+
+        // in both cases break the `previous` chain
+        revision.previous       = null
     }
 
 
@@ -130,8 +139,10 @@ class Checkout extends base {
         const nextRevision      = activeTransaction.propagate()
 
         // dereference all revisions
-        for (const [ revision, isReferenced ] of this.eachReachableRevision()) {
-            if (isReferenced) revision.referenceCount--
+        for (const [ revision, isReachable ] of this.eachReachableRevision()) {
+            if (isReachable) revision.reachableCount--
+
+            revision.referenceCount--
         }
 
         this.baseRevision       = this.topRevision = nextRevision
