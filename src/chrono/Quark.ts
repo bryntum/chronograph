@@ -14,7 +14,7 @@ export type PendingQuarkMarker     = typeof PendingQuarkMarker
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Quark = <T extends AnyConstructor<WalkableForwardNode & Calculation>>(base : T) =>
+export const Quark = <T extends AnyConstructor<WalkableForwardNode>>(base : T) =>
 
 class Quark extends base {
     NodeT                   : Quark
@@ -23,14 +23,11 @@ class Quark extends base {
 
     outgoingByLabel         : WeakMap<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>   = new WeakMap()
 
-
-    get calculation () : CalculationFunction {
-        return this.identifier.calculation
-    }
+    value                   : any
 
 
-    get calculationContext () : any {
-        return this.identifier.calculationContext
+    hasValue () : boolean {
+        return this.value !== undefined
     }
 
 
@@ -84,7 +81,7 @@ export type Quark = Mixin<typeof Quark>
 export interface QuarkI extends Quark {}
 
 
-export class MinimalQuark extends Quark(Calculation(Box(WalkableForwardNode(Base)))) {
+export class MinimalQuark extends Quark(WalkableForwardNode(Base)) {
     NodeT               : Quark
 }
 
@@ -109,17 +106,7 @@ export class TombstoneQuark extends MinimalQuark {
     }
 
 
-    isCalculationStarted () : boolean {
-        return true
-    }
-
-
-    isCalculationCompleted () : boolean {
-        return true
-    }
-
-
     hasValue () : boolean {
-        return false
+        return true
     }
 }

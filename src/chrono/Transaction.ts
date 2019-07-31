@@ -2,7 +2,7 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { map } from "../collection/Iterator.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { Box } from "../primitives/Box.js"
-import { Calculation, runSyncWithEffect } from "../primitives/Calculation.js"
+import { Calculation, CalculationFunction, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { calculateTransitions, CalculationArgs } from "./CalculationCore.js"
 import { QuarkEntry, Scope } from "./Checkout.js"
@@ -11,7 +11,24 @@ import { MinimalRevision, Revision } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type QuarkTransition     = { identifier : Identifier, previous : QuarkEntry, current : QuarkEntry | PendingQuarkMarker, edgesFlow : number }
+export class QuarkTransition extends Calculation(Box(Base)) {
+    identifier      : Identifier
+
+    previous        : QuarkEntry
+    current         : QuarkEntry | PendingQuarkMarker
+
+    edgesFlow       : number
+
+
+    get calculation () : CalculationFunction {
+        return this.identifier.calculation
+    }
+
+
+    get calculationContext () : any {
+        return this.identifier.calculationContext
+    }
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -30,7 +47,7 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Lab
             if (!transition) {
                 const current   = node.identifier.lazy ? LazyQuarkMarker : PendingQuarkMarker
 
-                transition      = { identifier : node.identifier, previous : node, current : current, edgesFlow : 0 }
+                transition      = QuarkTransition.new({ identifier : node.identifier, previous : node, current : current, edgesFlow : 0 })
 
                 this.transitions.set(node.identifier, transition)
             }
@@ -89,9 +106,7 @@ class Transaction extends base {
     write (variable : Variable, value : any) {
         if (this.isClosed) throw new Error("Can not write to open transaction")
 
-        const variableQuark     = MinimalQuark.new({ identifier : variable })
-
-        variableQuark.forceValue(value)
+        const variableQuark     = MinimalQuark.new({ identifier : variable, value : value })
 
         this.touch(variable, variableQuark)
     }
@@ -103,7 +118,7 @@ class Transaction extends base {
 
         const previous      = this.checkout.get(identifier)
 
-        const transition : QuarkTransition = { identifier, previous, current : currentQuark, edgesFlow : 1e9 }
+        const transition : QuarkTransition = QuarkTransition.new({ identifier, previous, current : currentQuark, edgesFlow : 1e9 })
 
         this.transitions.set(identifier, transition)
 

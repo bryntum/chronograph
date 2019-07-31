@@ -229,7 +229,7 @@ class Checkout extends base {
         const quark         = MinimalQuark.new({ identifier })
 
         const transitions   = new Map<Identifier, QuarkTransition>()
-        const transition : QuarkTransition = { identifier : identifier, previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 }
+        const transition : QuarkTransition = QuarkTransition.new({ identifier : identifier, previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
 
         transitions.set(identifier, transition)
 

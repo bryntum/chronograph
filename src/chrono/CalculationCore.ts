@@ -45,27 +45,29 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
         } else
             quark               = transition.current as Quark
 
-        if (quark.isCalculationCompleted() || transition.edgesFlow < 0) {
+        if (quark.hasValue() || transition.edgesFlow < 0) {
             stack.pop()
             continue
         }
 
         let iterationResult : IteratorResult<any>
 
-        if (quark.isCalculationStarted())
-            iterationResult     = quark.iterationResult
+        if (transition.isCalculationStarted())
+            iterationResult     = transition.iterationResult
         else
-            iterationResult     = quark.startCalculation()
+            iterationResult     = transition.startCalculation()
 
         do {
             const value         = iterationResult.value
 
             if (iterationResult.done) {
+                quark.value                     = value
+
                 // garbage collect the generator instances
-                quark.iterator                  = undefined
+                transition.iterator             = undefined
                 // for some reason, it seems, the last called generator instance
                 // installs itself as the prototype property of the generator function
-                quark.calculation.prototype     = undefined
+                transition.calculation.prototype = undefined
 
                 const previousQuark             = transition.previous
 
@@ -100,7 +102,7 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
                         if (requestedTransition) {
                             requestedTransition.current = requestedQuark
                         } else {
-                            requestedTransition = { identifier : value, previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 }
+                            requestedTransition = QuarkTransition.new({ identifier : value, previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 })
 
                             transitions.set(value, requestedTransition)
                         }
@@ -108,10 +110,10 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
 
                 requestedQuark.addEdgeTo(quark, candidate)
 
-                if (requestedQuark.isCalculationCompleted()) {
-                    iterationResult         = quark.supplyYieldValue(requestedQuark.value)
+                if (!requestedTransition || requestedQuark.hasValue()) {
+                    iterationResult         = transition.supplyYieldValue(requestedQuark.value)
                 }
-                else if (!requestedQuark.isCalculationStarted()) {
+                else if (!requestedTransition.isCalculationStarted()) {
                     stack.push(requestedTransition)
 
                     break
@@ -125,7 +127,7 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
             }
             else {
                 // bypass the unrecognized effect to the outer context
-                iterationResult             = quark.supplyYieldValue(yield value)
+                iterationResult             = transition.supplyYieldValue(yield value)
             }
 
         } while (true)
