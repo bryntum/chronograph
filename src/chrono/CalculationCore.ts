@@ -63,12 +63,6 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
             if (iterationResult.done) {
                 quark.value                     = value
 
-                // garbage collect the generator instances
-                transition.iterator             = undefined
-                // for some reason, it seems, the last called generator instance
-                // installs itself as the prototype property of the generator function
-                transition.calculation.prototype = undefined
-
                 const previousQuark             = transition.previous
 
                 if (previousQuark && previousQuark !== LazyQuarkMarker && quark.identifier.equality(value, previousQuark.value)) {
