@@ -95,7 +95,7 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
                 }
                 else
                     if (requestedQuark === LazyQuarkMarker) {
-                        requestedQuark          = MinimalQuark.new({ identifier : value })
+                        requestedQuark      = MinimalQuark.new({ identifier : value })
 
                         if (requestedTransition) {
                             requestedTransition.current = requestedQuark
