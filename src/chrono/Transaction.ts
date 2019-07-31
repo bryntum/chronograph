@@ -148,6 +148,8 @@ class Transaction extends base {
         )
         // const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate)
 
+        // this version is ~100ms faster than the one with allocation of intermediate array:
+        // Array.from(this.transitions.entries()).map(([ key, value ]) => [ key, value.current ])
         candidate.scope     = new Map(
             map<[ Identifier, QuarkTransition ], [ Identifier, QuarkEntry ]>(this.transitions.entries(), ([ key, value ]) => [ key, value.current as QuarkEntry ])
         )

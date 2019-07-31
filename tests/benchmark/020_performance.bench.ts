@@ -5,6 +5,8 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it("Should be performant", async t => {
+        await new Promise(resolve => setTimeout(resolve, 1))
+
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         // should not use too big value, because otherwise, the benchmark
@@ -72,11 +74,11 @@ StartTest(t => {
 
         t.chain(
             async next => {
-                graph.write(boxes[ 0 ], 0)
-                // graph.write(boxes[ 1 ], 2) // only few atoms changes
-
                 console.time("Calc #1")
                 // console.profile('Propagate #1')
+
+                graph.write(boxes[ 0 ], 0)
+                // graph.write(boxes[ 1 ], 2) // only few atoms changes
 
                 graph.propagate()
 
