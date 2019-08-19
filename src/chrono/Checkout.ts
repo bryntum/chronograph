@@ -3,23 +3,24 @@ import { concat } from "../collection/Iterator.js"
 import { CalculationFunction, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
-import { calculateTransitions, CalculationArgs } from "./CalculationCore.js"
-import { LazyQuarkMarker, MinimalQuark, Quark } from "./Quark.js"
+import { calculateTransitions, CalculationArgs, LazyQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
+import { MinimalQuark } from "./Quark.js"
 import { Revision } from "./Revision.js"
-import { MinimalTransaction, QuarkTransition, Transaction } from "./Transaction.js"
+import { MinimalTransaction, Transaction } from "./Transaction.js"
 
 
-export type QuarkEntry = Quark | LazyQuarkMarker
-
-export type Scope   = Map<Identifier, QuarkEntry>
+// Possibly we don't need the `checkout` and `buildLatest` things at all - its not clear
+// what performance gain is provided by this caching (and building it is somewhat lengthy operation)
+// we could just do a series of the lookups on the `previous` axis
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Checkout = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Checkout extends base {
+    // the revision currently being "checked out"
     baseRevision            : Revision
 
-    bottomRevision          : Revision
+    // the revision to follow to, when performing `redo` operation
     topRevision             : Revision
 
     // how many revisions (including the `baseRevision`) to keep in memory for undo operation

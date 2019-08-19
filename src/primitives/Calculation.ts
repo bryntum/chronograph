@@ -42,6 +42,7 @@ class Calculation extends base {
     forceValue (value : this[ 'ValueT' ]) {
         this.iterationResult    = this.iterator ? this.iterator.return(value) : { value : value, done : true }
 
+        // help to garbage collector
         this.iterator           = undefined
     }
 
@@ -75,8 +76,8 @@ class Calculation extends base {
             this.supplyYieldValue(onEffect(this.iterationResult.value))
         }
 
+        // help to garbage collector
         this.iterator               = undefined
-        this.calculation.prototype  = undefined
 
         return this.value
     }
@@ -89,8 +90,8 @@ class Calculation extends base {
             this.supplyYieldValue(await onEffect(this.iterationResult.value))
         }
 
+        // help to garbage collector
         this.iterator               = undefined
-        this.calculation.prototype  = undefined
 
         return this.value
     }

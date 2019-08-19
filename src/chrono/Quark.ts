@@ -1,16 +1,7 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { WalkableForwardNode, WalkForwardContext } from "../graph/Node.js"
-import { Box } from "../primitives/Box.js"
-import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier } from "../primitives/Identifier.js"
-
-//---------------------------------------------------------------------------------------------------------------------
-export const LazyQuarkMarker    = Symbol('LazyQuarkMarker')
-export type LazyQuarkMarker     = typeof LazyQuarkMarker
-
-//---------------------------------------------------------------------------------------------------------------------
-export const PendingQuarkMarker    = Symbol('PendingQuarkMarker')
-export type PendingQuarkMarker     = typeof PendingQuarkMarker
+import { LazyQuarkMarker } from "./CalculationCore.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

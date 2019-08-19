@@ -1,9 +1,42 @@
+import { Base } from "../class/Mixin.js"
+import { Box } from "../primitives/Box.js"
+import { Calculation, CalculationFunction } from "../primitives/Calculation.js"
 import { Identifier } from "../primitives/Identifier.js"
-import { Scope } from "./Checkout.js"
-import { LazyQuarkMarker, MinimalQuark, PendingQuarkMarker, Quark } from "./Quark.js"
+import { MinimalQuark, Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
-import { QuarkTransition } from "./Transaction.js"
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export const LazyQuarkMarker        = Symbol('LazyQuarkMarker')
+export type LazyQuarkMarker         = typeof LazyQuarkMarker
+
+export const PendingQuarkMarker     = Symbol('PendingQuarkMarker')
+export type PendingQuarkMarker      = typeof PendingQuarkMarker
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export type QuarkEntry              = Quark | LazyQuarkMarker
+export type Scope                   = Map<Identifier, QuarkEntry>
+
+//---------------------------------------------------------------------------------------------------------------------
+export class QuarkTransition extends Calculation(Box(Base)) {
+    identifier      : Identifier
+
+    previous        : QuarkEntry
+    current         : QuarkEntry | PendingQuarkMarker
+
+    edgesFlow       : number
+
+
+    get calculation () : CalculationFunction {
+        return this.identifier.calculation
+    }
+
+
+    get calculationContext () : any {
+        return this.identifier.calculationContext
+    }
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 export type CalculationArgs = {
@@ -50,12 +83,7 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
             continue
         }
 
-        let iterationResult : IteratorResult<any>
-
-        if (transition.isCalculationStarted())
-            iterationResult     = transition.iterationResult
-        else
-            iterationResult     = transition.startCalculation()
+        let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation()
 
         do {
             const value         = iterationResult.value
@@ -76,7 +104,6 @@ export function* calculateTransitions<YieldT, ResultT> (args : CalculationArgs) 
                 }
 
                 stack.pop()
-
                 break
             }
             else if (value instanceof Identifier) {

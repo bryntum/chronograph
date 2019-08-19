@@ -1,7 +1,7 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { reverse, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier } from "../primitives/Identifier.js"
-import { QuarkEntry, Scope } from "./Checkout.js"
+import { QuarkEntry, Scope } from "./CalculationCore.js"
 
 // Revision should be turned into Node and all Revisions will form a Graph
 

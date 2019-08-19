@@ -1,34 +1,11 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { map } from "../collection/Iterator.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
-import { Box } from "../primitives/Box.js"
-import { Calculation, CalculationFunction, runSyncWithEffect } from "../primitives/Calculation.js"
+import { runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "../primitives/Identifier.js"
-import { calculateTransitions, CalculationArgs } from "./CalculationCore.js"
-import { QuarkEntry, Scope } from "./Checkout.js"
-import { LazyQuarkMarker, MinimalQuark, PendingQuarkMarker, Quark, TombstoneQuark } from "./Quark.js"
+import { calculateTransitions, CalculationArgs, LazyQuarkMarker, PendingQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
+import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class QuarkTransition extends Calculation(Box(Base)) {
-    identifier      : Identifier
-
-    previous        : QuarkEntry
-    current         : QuarkEntry | PendingQuarkMarker
-
-    edgesFlow       : number
-
-
-    get calculation () : CalculationFunction {
-        return this.identifier.calculation
-    }
-
-
-    get calculationContext () : any {
-        return this.identifier.calculationContext
-    }
-}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -112,7 +89,7 @@ class Transaction extends base {
     }
 
 
-    touch (identifier : Identifier, currentQuark : QuarkEntry = identifier.lazy ? LazyQuarkMarker : MinimalQuark.new({ identifier })) {
+    touch (identifier : Identifier, currentQuark : QuarkEntry | PendingQuarkMarker = identifier.lazy ? LazyQuarkMarker : PendingQuarkMarker) {
         // TODO handle write to already dirty ???
         if (this.transitions.has(identifier)) return
 
@@ -163,7 +140,6 @@ class Transaction extends base {
                 }
             ]
         )
-        // const transitionScope : Map<Identifier, QuarkTransition> = this.runSyncWithEffect(() => null, candidate)
 
         // this version is ~100ms faster than the one with allocation of intermediate array:
         // Array.from(this.transitions.entries()).map(([ key, value ]) => [ key, value.current ])
@@ -177,4 +153,4 @@ class Transaction extends base {
 
 export type Transaction = Mixin<typeof Transaction>
 
-export class MinimalTransaction extends Transaction(Calculation(Box(Base))) {}
+export class MinimalTransaction extends Transaction(Base) {}
