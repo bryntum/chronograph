@@ -1,17 +1,13 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
-import { CalculationFunction, runSyncWithEffect } from "../primitives/Calculation.js"
-import { Identifier, Variable } from "../primitives/Identifier.js"
+import { CalculationGenFunction } from "../primitives/Calculation.js"
+import { CalculatedValueGen, Identifier, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
-import { calculateTransitions, CalculationArgs, LazyQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
+import { getTransitionClass, LazyQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
 import { MinimalQuark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 
-
-// Possibly we don't need the `checkout` and `buildLatest` things at all - its not clear
-// what performance gain is provided by this caching (and building it is somewhat lengthy operation)
-// we could just do a series of the lookups on the `previous` axis
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Checkout = <T extends AnyConstructor<Base>>(base : T) =>
@@ -24,10 +20,13 @@ class Checkout extends base {
     topRevision             : Revision
 
     // how many revisions (including the `baseRevision`) to keep in memory for undo operation
-    // minimal value is 1 (the `baseRevision` itself only)
+    // minimal value is 1 (the `baseRevision` itself only, no undo/redo)
     // users supposed to opt-in for undo/redo by increasing this config
     historyLimit            : number        = 1
 
+    // Possibly we don't need the `checkout` and `buildLatest` things at all - its not clear
+    // what performance gain is provided by this caching (and building it is somewhat lengthy operation)
+    // we could just do a series of the lookups on the `previous` axis
     checkout                : Scope
 
 
@@ -171,8 +170,8 @@ class Checkout extends base {
     }
 
 
-    identifier (calculation : CalculationFunction, calculationContext? : any) : Identifier {
-        const identifier    = Identifier.new({ calculation, calculationContext })
+    identifier (calculation : CalculationGenFunction, calculationContext? : any) : Identifier {
+        const identifier    = CalculatedValueGen.new({ calculation, calculationContext })
 
         this.touch(identifier)
 
@@ -194,8 +193,8 @@ class Checkout extends base {
     }
 
 
-    identifierId (id : any, calculation : CalculationFunction, calculationContext? : any) : Identifier {
-        const identifier    = Identifier.new({ calculation, calculationContext, id })
+    identifierId (id : any, calculation : CalculationGenFunction, calculationContext? : any) : Identifier {
+        const identifier    = CalculatedValueGen.new({ calculation, calculationContext, id })
 
         this.touch(identifier)
 
@@ -229,28 +228,24 @@ class Checkout extends base {
     calculateLazyIdentifier (identifier : Identifier) : any {
         const quark         = MinimalQuark.new({ identifier })
 
-        const transitions   = new Map<Identifier, QuarkTransition>()
-        const transition : QuarkTransition = QuarkTransition.new({ identifier : identifier, previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
+        // MARKER
+        // this manual preparations of the `transitions` and `stack` properties of the transaction can definitely be improved
+        // possibly the `touch` method of the transaction can be smart and accept additional arguments,
+        // like `deep` (whether to do walk depth), `forceStack` - whether to add identifier to stack even if its lazy)
+        // I don't like when method becomes that smart though
+        const transaction   = MinimalTransaction.new({ baseRevision : this.baseRevision, checkout : this.checkout, candidate : this.baseRevision })
+
+        const transitions   = transaction.transitions
+        const transition : QuarkTransition = getTransitionClass(identifier).new({ identifier : identifier, previous : LazyQuarkMarker, current : quark, edgesFlow : 1e9 })
 
         transitions.set(identifier, transition)
 
-        runSyncWithEffect<[ CalculationArgs ], any, any>(
-            x => x,
-            calculateTransitions,
-            [
-                {
-                    stack           : [ transition ],
-                    transitions     : transitions,
+        transaction.stackGen   = [ transition ]
+        // EOF MARKER
 
-                    candidate       : this.baseRevision,
-                    checkout        : this.checkout,
-                    dimension       : Array.from(this.baseRevision.thisAndAllPrevious())
-                }
-            ]
-        )
+        const revision      = transaction.propagate()
 
-        transitions.forEach((transition : QuarkTransition, identifier : Identifier) => {
-            this.baseRevision.scope.set(identifier, transition.current as QuarkEntry)
+        transaction.transitions.forEach((transition : QuarkTransition, identifier : Identifier) => {
             this.checkout.set(identifier, transition.current as QuarkEntry)
         })
 
@@ -268,6 +263,8 @@ class Checkout extends base {
         // TODO switch `checkout` to lazy attribute to avoid costly `buildLatest` call if user just plays with undo/redo buttons
         this.checkout           = previous.buildLatest()
 
+        clearLazyProperty(this, '_activeTransaction')
+
         return true
     }
 
@@ -281,6 +278,8 @@ class Checkout extends base {
 
         this.baseRevision       = nextRevision
         this.checkout           = this.includeRevisionToCheckout(this.checkout, nextRevision)
+
+        clearLazyProperty(this, '_activeTransaction')
 
         return true
     }

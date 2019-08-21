@@ -1,5 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { Identifier } from "../../src/primitives/Identifier.js"
+import { CalculatedValueGen, Identifier } from "../../src/primitives/Identifier.js"
 
 declare const StartTest : any
 
@@ -11,7 +11,7 @@ StartTest(t => {
         const var1                  = graph.variableId('var1', 0)
         const var2                  = graph.variableId('var2', 1)
 
-        const ident1                = graph.addIdentifier(Identifier.new({
+        const ident1                = graph.addIdentifier(CalculatedValueGen.new({
             id              : 'ident1',
             lazy            : true,
             calculation     : function * () {
@@ -19,7 +19,7 @@ StartTest(t => {
             }
         }))
 
-        const ident2                = graph.addIdentifier(Identifier.new({
+        const ident2                = graph.addIdentifier(CalculatedValueGen.new({
             id              : 'ident2',
             lazy            : true,
             calculation     : function * () {

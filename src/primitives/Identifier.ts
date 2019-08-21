@@ -19,7 +19,8 @@ export class Identifier extends Base {
         return v1 === v2
     }
 
-    * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+
+    calculation (...args : this[ 'ArgsT' ]) : unknown {
         throw new Error("Abstract method `calculation` called")
     }
 }
@@ -27,12 +28,33 @@ export class Identifier extends Base {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Variable extends Identifier {
-    ArgsT               : [ this[ 'ResultT' ] ]
 
-    YieldT              : never
-
-    * calculation (value : this[ 'ResultT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+    calculation (...args : this[ 'ArgsT' ]) : any {
         throw new Error("The 'calculation' method of the variables should not be called for optimization purposes. Instead the value should be set directly to quark")
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const isSyncSymbol  = Symbol('isSyncSymbol')
+
+export class CalculatedValueSync extends Identifier {
+    [isSyncSymbol] () {}
+
+    calculation (context : any) : this[ 'ResultT' ] {
+        throw new Error("Abstract method `calculation` called")
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const isGenSymbol  = Symbol('isGenSymbol')
+
+export class CalculatedValueGen extends Identifier {
+    [isGenSymbol] () {}
+
+    * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+        throw new Error("Abstract method `calculation` called")
     }
 }
 
