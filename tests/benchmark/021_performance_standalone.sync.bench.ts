@@ -1,4 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { CalculatedValueSync } from "../../src/primitives/Identifier.js"
 
 declare const window : any
 
@@ -19,39 +20,48 @@ const bench1 = () => {
             boxes.push(graph.variableId(i, 1))
         }
         else if (i <= 10) {
-            boxes.push(graph.identifierId(i, function* () {
-                const input = [
-                    yield boxes[0],
-                    yield boxes[1],
-                    yield boxes[2],
-                    yield boxes[3]
-                ]
+            boxes.push(graph.addIdentifier(CalculatedValueSync.new({
+                calculation : function (context) {
+                    const input = [
+                        context.read(boxes[0]),
+                        context.read(boxes[1]),
+                        context.read(boxes[2]),
+                        context.read(boxes[3])
+                    ]
 
-                return input.reduce((sum, op) => sum + op, 0)
-            }, i))
+                    return input.reduce((sum, op) => sum + op, 0)
+                },
+                calculationContext : i
+            })))
         }
         else if (i % 2 == 0) {
-            boxes.push(graph.identifierId(i, function* () {
-                const input = [
-                    yield boxes[this - 1],
-                    yield boxes[this - 2],
-                    yield boxes[this - 3],
-                    yield boxes[this - 4]
-                ]
+            boxes.push(graph.addIdentifier(CalculatedValueSync.new({
+                calculation : function (context) {
+                    const input = [
+                        context.read(boxes[this - 1]),
+                        context.read(boxes[this - 2]),
+                        context.read(boxes[this - 3]),
+                        context.read(boxes[this - 4])
+                    ]
 
-                return input.reduce((sum, op) => (sum + op) % 10000, 0)
-            }, i))
+                    return input.reduce((sum, op) => (sum + op) % 10000, 0)
+                },
+                calculationContext : i
+            })))
         } else {
-            boxes.push(graph.identifierId(i, function* () {
-                const input = [
-                    yield boxes[this - 1],
-                    yield boxes[this - 2],
-                    yield boxes[this - 3],
-                    yield boxes[this - 4]
-                ]
+            boxes.push(graph.addIdentifier(CalculatedValueSync.new({
+                calculation : function (context) {
+                    const input = [
+                        context.read(boxes[this - 1]),
+                        context.read(boxes[this - 2]),
+                        context.read(boxes[this - 3]),
+                        context.read(boxes[this - 4])
+                    ]
 
-                return input.reduce((sum, op) => (sum - op) % 10000, 0)
-            }, i))
+                    return input.reduce((sum, op) => (sum - op) % 10000, 0)
+                },
+                calculationContext : i
+            })))
         }
     }
 
@@ -64,7 +74,7 @@ const bench1 = () => {
 
     graph.propagate()
 
-    // console.profileEnd()
+    // console.profileEnd('Propagate #0')
     console.timeEnd("Calc #0")
 
     console.log("Result #0: ", graph.read(boxes[ boxes.length - 1 ]))
