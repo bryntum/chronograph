@@ -3,7 +3,7 @@ import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 declare const window : any
 
 const bench1 = () => {
-    const graph : ChronoGraph   = window.graph = MinimalChronoGraph.new()
+    const graph : ChronoGraph   = window.graph = MinimalChronoGraph.new({ historyLimit : 5 })
 
     // should not use too big value, because otherwise, the benchmark
     // becomes memory-bound and we want to measure CPU consumption
@@ -14,12 +14,16 @@ const bench1 = () => {
     console.time("Build graph")
     // console.profile('Build graph')
 
+    let count       = 0
+
     for (let i = 0; i < atomNum; i++) {
         if (i <= 3) {
             boxes.push(graph.variableId(i, 1))
         }
         else if (i <= 10) {
             boxes.push(graph.identifierId(i, function* () {
+                count++
+
                 const input = [
                     yield boxes[0],
                     yield boxes[1],
@@ -32,6 +36,8 @@ const bench1 = () => {
         }
         else if (i % 2 == 0) {
             boxes.push(graph.identifierId(i, function* () {
+                count++
+
                 const input = [
                     yield boxes[this - 1],
                     yield boxes[this - 2],
@@ -43,6 +49,8 @@ const bench1 = () => {
             }, i))
         } else {
             boxes.push(graph.identifierId(i, function* () {
+                count++
+
                 const input = [
                     yield boxes[this - 1],
                     yield boxes[this - 2],
@@ -85,6 +93,8 @@ const bench1 = () => {
     console.timeEnd("Calc #1")
 
     console.log("Result #1: ", graph.read(boxes[ boxes.length - 1 ]))
+
+    console.log("Total count: ", count)
 
 
     // //--------------------------

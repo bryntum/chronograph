@@ -12,6 +12,8 @@ const bench1 = () => {
 
     let boxes       = []
 
+    let count       = 0
+
     console.time("Build graph")
     // console.profile('Build graph')
 
@@ -22,6 +24,8 @@ const bench1 = () => {
         else if (i <= 10) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (context) {
+                    count++
+
                     const input = [
                         context.read(boxes[0]),
                         context.read(boxes[1]),
@@ -37,6 +41,8 @@ const bench1 = () => {
         else if (i % 2 == 0) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (context) {
+                    count++
+
                     const input = [
                         context.read(boxes[this - 1]),
                         context.read(boxes[this - 2]),
@@ -51,6 +57,8 @@ const bench1 = () => {
         } else {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (context) {
+                    count++
+
                     const input = [
                         context.read(boxes[this - 1]),
                         context.read(boxes[this - 2]),
@@ -84,7 +92,7 @@ const bench1 = () => {
     console.time("Calc #1")
     // console.profile('Propagate #1')
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 100; i++) {
         graph.write(boxes[ 0 ], i)
         // graph.write(boxes[ 1 ], 2) // only few atoms changes
 
@@ -95,6 +103,8 @@ const bench1 = () => {
     console.timeEnd("Calc #1")
 
     console.log("Result #1: ", graph.read(boxes[ boxes.length - 1 ]))
+
+    console.log("Total count: ", count)
 
 
     // //--------------------------
