@@ -1,15 +1,17 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { WalkableForwardNode, WalkForwardContext } from "../graph/Node.js"
 import { Identifier } from "../primitives/Identifier.js"
 import { LazyQuarkMarker } from "./CalculationCore.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Quark = <T extends AnyConstructor<WalkableForwardNode>>(base : T) =>
+export const Quark = <T extends AnyConstructor<object>>(base : T) =>
 
 class Quark extends base {
     NodeT                   : Quark
+    LabelT                  : any
 
+    // we may not need this property in the quark itself, since its always presence in the context of the quark
+    // (like the key of the map)
     identifier              : Identifier
 
     outgoingByLabel         : WeakMap<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>   = new WeakMap()
@@ -19,26 +21,6 @@ class Quark extends base {
 
     hasValue () : boolean {
         return this.value !== undefined
-    }
-
-
-    hasEdgeTo (toNode : this[ 'NodeT' ]) : boolean {
-        throw new Error("Not implemented")
-    }
-
-
-    getLabelTo (toNode : this[ 'NodeT' ]) : this[ 'LabelT' ] {
-        throw new Error("Not implemented")
-    }
-
-
-    removeEdgeTo (toNode : this[ 'NodeT' ]) {
-        throw new Error("Not implemented")
-    }
-
-
-    forEachOutgoing (context : WalkForwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
-        throw new Error("Not implemented")
     }
 
 
@@ -72,8 +54,16 @@ export type Quark = Mixin<typeof Quark>
 export interface QuarkI extends Quark {}
 
 
-export class MinimalQuark extends Quark(WalkableForwardNode(Base)) {
+export class MinimalQuark extends Quark(Base) {
     NodeT               : Quark
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ImpureQuark extends MinimalQuark {
+    proposedArgs        : any[]
+
+    usedProposed        : boolean   = false
 }
 
 
@@ -84,11 +74,6 @@ export class TombstoneQuark extends MinimalQuark {
 
     addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
         throw new Error("Can not add edges from tombstone node")
-    }
-
-
-    addEdgeFrom (fromNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
-        throw new Error("Can not add edges to tombstone node")
     }
 
 
