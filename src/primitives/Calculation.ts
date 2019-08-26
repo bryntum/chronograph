@@ -194,7 +194,7 @@ export function runSyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function runAsyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
+export async function runAsyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
     onEffect    : (effect : YieldT) => Promise<any>,
     func        : CalculationGenFunction<ResultT, YieldT, ArgsT>,
     args        : ArgsT,
@@ -206,5 +206,5 @@ export function runAsyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
         calculationContext  : scope
     })
 
-    return calculation.runAsyncWithEffect(onEffect, ...args)
+    return await calculation.runAsyncWithEffect(onEffect, ...args)
 }

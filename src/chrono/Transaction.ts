@@ -5,7 +5,7 @@ import { runAsyncWithEffect, runSyncWithEffect } from "../primitives/Calculation
 import { Identifier, ImpureCalculatedValueGen, Variable } from "../primitives/Identifier.js"
 import { lazyProperty } from "../util/Helper.js"
 import { getTransitionClass, LazyQuarkMarker, PendingQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
-import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
+import { ImpureQuark, MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
@@ -157,11 +157,16 @@ class Transaction extends base {
 
 
     call (calculatedValue : ImpureCalculatedValueGen, args : any[]) {
+        if (this.isClosed) throw new Error("Can not 'call' to closed transaction")
+
+        const variableQuark     = ImpureQuark.new({ identifier : calculatedValue, proposedArgs : args })
+
+        this.touch(calculatedValue, variableQuark)
     }
 
 
     write (variable : Variable, value : any) {
-        if (this.isClosed) throw new Error("Can not write to open transaction")
+        if (this.isClosed) throw new Error("Can not 'write' to closed transaction")
 
         const variableQuark     = MinimalQuark.new({ identifier : variable, value : value })
 
@@ -243,7 +248,7 @@ class Transaction extends base {
 
         const candidate = this.candidate
 
-        runAsyncWithEffect<[ QuarkTransition[] ], any, any>(
+        await runAsyncWithEffect<[ QuarkTransition[] ], any, any>(
             this.onEffectAsync,
             this.calculateTransitionsStackGen,
             [ this.stackGen ],
