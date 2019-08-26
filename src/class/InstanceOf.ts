@@ -1,6 +1,8 @@
 import { AnyConstructor, AnyFunction } from "./Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+
+// TODO switch to decorator?
 export const instanceOf = <T extends AnyConstructor<object>>(base : AnyFunction<T>) : AnyFunction<T> => {
 
     const symbol        = Symbol(base.name)
