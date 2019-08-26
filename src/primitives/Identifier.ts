@@ -53,6 +53,18 @@ export const isGenSymbol  = Symbol('isGenSymbol')
 export class CalculatedValueGen extends Identifier {
     [isGenSymbol] () {}
 
+    * calculation () : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+        throw new Error("Abstract method `calculation` called")
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const isImpureGenSymbol  = Symbol('isImpureGenSymbol')
+
+export class ImpureCalculatedValueGen extends Identifier {
+    [isImpureGenSymbol] () {}
+
     * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
         throw new Error("Abstract method `calculation` called")
     }

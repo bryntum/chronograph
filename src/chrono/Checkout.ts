@@ -1,7 +1,7 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationGenFunction } from "../primitives/Calculation.js"
-import { CalculatedValueGen, Identifier, Variable } from "../primitives/Identifier.js"
+import { CalculatedValueGen, Identifier, ImpureCalculatedValueGen, Variable } from "../primitives/Identifier.js"
 import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
 import { getTransitionClass, LazyQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
 import { MinimalQuark } from "./Quark.js"
@@ -199,6 +199,11 @@ class Checkout extends base {
         this.touch(identifier)
 
         return identifier
+    }
+
+
+    call (calculatedValue : ImpureCalculatedValueGen, ...args : any[]) {
+        return this.activeTransaction.call(calculatedValue, args)
     }
 
 

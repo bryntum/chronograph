@@ -2,7 +2,7 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { map } from "../collection/Iterator.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { runAsyncWithEffect, runSyncWithEffect } from "../primitives/Calculation.js"
-import { Identifier, Variable } from "../primitives/Identifier.js"
+import { Identifier, ImpureCalculatedValueGen, Variable } from "../primitives/Identifier.js"
 import { lazyProperty } from "../util/Helper.js"
 import { getTransitionClass, LazyQuarkMarker, PendingQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
 import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
@@ -153,6 +153,10 @@ class Transaction extends base {
         if (!currentTransitionQuark.hasValue) throw new Error('todo')
 
         return currentTransitionQuark.value
+    }
+
+
+    call (calculatedValue : ImpureCalculatedValueGen, args : any[]) {
     }
 
 

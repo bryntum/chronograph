@@ -92,7 +92,7 @@ const bench1 = () => {
     console.time("Calc #1")
     // console.profile('Propagate #1')
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 1000; i++) {
         graph.write(boxes[ 0 ], i)
         // graph.write(boxes[ 1 ], 2) // only few atoms changes
 
