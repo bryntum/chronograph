@@ -163,7 +163,7 @@ class Checkout extends base {
     }
 
 
-    addIdentifier (identifier : Identifier) : Identifier {
+    addIdentifier<T extends Identifier> (identifier : T) : T {
         this.touch(identifier)
 
         return identifier
