@@ -3,7 +3,7 @@ import { Box } from "./Box.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type CalculationIterator<ResultT = any, YieldT = any> = IterableIterator<YieldT | ResultT>
+export type CalculationIterator<ResultT = any, YieldT = any> = Generator<YieldT, ResultT, any>
 
 
 //---------------------------------------------------------------------------------------------------------------------

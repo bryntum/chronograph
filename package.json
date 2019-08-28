@@ -22,8 +22,8 @@
   },
   "devDependencies": {
     "typedoc": "^0.14.2",
-    "@types/node": "^10.12.10",
-    "typescript": "^3.5.2",
+    "@types/node": "^12.7.2",
+    "typescript": "^3.6.1-rc",
     "siesta-lite": "^5.2.2",
     "tslint": "^5.16.0",
     "regenerator-runtime": "^0.13.1",

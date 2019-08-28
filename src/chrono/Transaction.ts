@@ -335,7 +335,7 @@ class Transaction extends base {
     // }
 
 
-    * calculateTransitionsStackGen (stack : QuarkTransition[]) : IterableIterator<any> {
+    * calculateTransitionsStackGen (stack : QuarkTransition[]) : Generator<any, void, any> {
         const { transitions, checkout, candidate, dimension } = this
 
         while (stack.length) {
