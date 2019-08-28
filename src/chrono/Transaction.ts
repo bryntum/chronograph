@@ -62,14 +62,14 @@ export const ProposedValue          = (impureIdentifier : ImpureCalculatedValueG
 }
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export const CurrentProposedValueSymbol     = Symbol('CurrentProposedValueSymbol')
-
-export type CurrentProposedValueEffect      = [ typeof BuiltInEffectSymbol, typeof CurrentProposedValueSymbol, ImpureCalculatedValueGen ]
-
-export const CurrentProposedValue           = (impureIdentifier : ImpureCalculatedValueGen) : BuiltInEffect => {
-    return [ BuiltInEffectSymbol, CurrentProposedValueSymbol, impureIdentifier ]
-}
+// //---------------------------------------------------------------------------------------------------------------------
+// export const CurrentProposedValueSymbol     = Symbol('CurrentProposedValueSymbol')
+//
+// export type CurrentProposedValueEffect      = [ typeof BuiltInEffectSymbol, typeof CurrentProposedValueSymbol, ImpureCalculatedValueGen ]
+//
+// export const CurrentProposedValue           = (impureIdentifier : ImpureCalculatedValueGen) : BuiltInEffect => {
+//     return [ BuiltInEffectSymbol, CurrentProposedValueSymbol, impureIdentifier ]
+// }
 
 
 
@@ -313,20 +313,20 @@ class Transaction extends base {
     }
 
 
-    [CurrentProposedValueSymbol] (effect : CurrentProposedValueEffect, quark : Quark) {
-        const identifier : ImpureCalculatedValueGen = effect[ 2 ]
-
-        const userInputQuark    = this.candidate.proposed.get(identifier)
-
-        if (userInputQuark) {
-            userInputQuark.addEdgeTo(quark, this.candidate)
-
-            return userInputQuark.value[ 0 ]
-
-        } else {
-            return undefined
-        }
-    }
+    // [CurrentProposedValueSymbol] (effect : CurrentProposedValueEffect, quark : Quark) {
+    //     const identifier : ImpureCalculatedValueGen = effect[ 2 ]
+    //
+    //     const userInputQuark    = this.candidate.proposed.get(identifier)
+    //
+    //     if (userInputQuark) {
+    //         userInputQuark.addEdgeTo(quark, this.candidate)
+    //
+    //         return userInputQuark.value[ 0 ]
+    //
+    //     } else {
+    //         return undefined
+    //     }
+    // }
 
 
     * calculateTransitionsStackGen (stack : QuarkTransition[]) : IterableIterator<any> {
