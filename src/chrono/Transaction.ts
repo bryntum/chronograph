@@ -122,9 +122,7 @@ class Transaction extends base {
 
 
     get dimension () : Revision[] {
-        return lazyProperty<this, 'dimension'>(
-            this, '_dimension', () => Array.from(this.baseRevision.thisAndAllPrevious())
-        )
+        return lazyProperty(this, 'dimension', () => Array.from(this.baseRevision.thisAndAllPrevious()))
     }
 
 
