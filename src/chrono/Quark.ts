@@ -1,20 +1,19 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier } from "./Identifier.js"
-import { LazyQuarkMarker } from "./CalculationCore.js"
+import { LazyQuarkMarker } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Quark = <T extends AnyConstructor<object>>(base : T) =>
 
 class Quark extends base {
-    NodeT                   : Quark
     LabelT                  : any
 
     // we may not need this property in the quark itself, since it always presence in the context of the quark
     // (like the key of the map)
     identifier              : Identifier
 
-    outgoingByLabel         : WeakMap<this[ 'LabelT' ], Set<this[ 'NodeT' ]>>   = new WeakMap()
+    outgoingByLabel         : WeakMap<this[ 'LabelT' ], Set<Quark>>   = new WeakMap()
 
     value                   : any
 
@@ -24,7 +23,7 @@ class Quark extends base {
     }
 
 
-    forEachOutgoingInDimension (latest : Map<Identifier, Quark | LazyQuarkMarker>, dimensions : this[ 'LabelT' ][], func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
+    forEachOutgoingInDimension (latest : Map<Identifier, Quark | LazyQuarkMarker>, dimensions : this[ 'LabelT' ][], func : (label : this[ 'LabelT' ], node : Quark) => any) {
         for (let i = 0; i < dimensions.length; i++) {
             const dimension             = dimensions[ i ]
 
@@ -37,7 +36,7 @@ class Quark extends base {
     }
 
 
-    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null) {
+    addEdgeTo (toNode : Quark, label : this[ 'LabelT' ] = null) {
         let dimension           = this.outgoingByLabel.get(label)
 
         if (!dimension) {
@@ -54,9 +53,7 @@ export type Quark = Mixin<typeof Quark>
 export interface QuarkI extends Quark {}
 
 
-export class MinimalQuark extends Quark(Base) {
-    NodeT               : Quark
-}
+export class MinimalQuark extends Quark(Base) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -71,10 +68,8 @@ export class UserInputQuark extends MinimalQuark {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class TombstoneQuark extends MinimalQuark {
-    NodeT               : TombstoneQuark
 
-
-    addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
+    addEdgeTo (toNode : Quark, label : this[ 'LabelT' ] = null) {
         throw new Error("Can not add edges from tombstone node")
     }
 

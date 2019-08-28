@@ -3,9 +3,9 @@ import { concat } from "../collection/Iterator.js"
 import { CalculationGenFunction } from "../primitives/Calculation.js"
 import { CalculatedValueGen, Identifier, ImpureCalculatedValueGen, Variable } from "./Identifier.js"
 import { clearLazyProperty, copyMapInto, lazyProperty } from "../util/Helpers.js"
-import { getTransitionClass, LazyQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
+import { getTransitionClass, QuarkTransition } from "./QuarkTransition.js"
 import { MinimalQuark } from "./Quark.js"
-import { Revision } from "./Revision.js"
+import { LazyQuarkMarker, QuarkEntry, Revision, Scope } from "./Revision.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 
 

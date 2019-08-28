@@ -4,9 +4,9 @@ import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { runAsyncWithEffect, runSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, ImpureCalculatedValueGen, Variable } from "./Identifier.js"
 import { lazyProperty } from "../util/Helpers.js"
-import { getTransitionClass, LazyQuarkMarker, PendingQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
+import { getTransitionClass, QuarkTransition } from "./QuarkTransition.js"
 import { UserInputQuark, MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
-import { MinimalRevision, Revision } from "./Revision.js"
+import { LazyQuarkMarker, MinimalRevision, PendingQuarkMarker, QuarkEntry, Revision, Scope } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -25,24 +25,33 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Quark, Lab
     walkDimension   : Revision[] = []
 
 
-    forEachNext (node : Quark, func : (label : Label, node : Quark) => any) {
-        node.forEachOutgoingInDimension(this.checkout, this.walkDimension, (label : Label, node : Quark) => {
-            const identifier    = node.identifier
+    collectNext (node : Quark, toVisit : WalkStep<Quark>[]) {
+        for (let i = 0; i < this.walkDimension.length; i++) {
+            const dimension             = this.walkDimension[ i ]
 
-            let transition      = this.transitions.get(identifier)
+            const outgoingOfDimension   = node.outgoingByLabel.get(dimension)
 
-            if (!transition) {
-                const current   = identifier.lazy ? LazyQuarkMarker : PendingQuarkMarker
+            if (outgoingOfDimension)
+                for (const outgoingNode of outgoingOfDimension) {
+                    const identifier    = outgoingNode.identifier
 
-                transition      = getTransitionClass(identifier).new({ identifier, previous : node, current, edgesFlow : 0 })
+                    if (outgoingNode === this.checkout.get(identifier)) {
+                        let transition      = this.transitions.get(identifier)
 
-                this.transitions.set(identifier, transition)
-            }
+                        if (!transition) {
+                            const current   = identifier.lazy ? LazyQuarkMarker : PendingQuarkMarker
 
-            transition.edgesFlow++
+                            transition      = getTransitionClass(identifier).new({ identifier, previous : outgoingNode, current, edgesFlow : 0 })
 
-            func(label, node)
-        })
+                            this.transitions.set(identifier, transition)
+                        }
+
+                        transition.edgesFlow++
+
+                        toVisit.push({ node : outgoingNode, from : node, label : undefined })
+                    }
+                }
+        }
     }
 }
 
@@ -113,9 +122,6 @@ class Transaction extends base {
                 if (!quark.identifier.lazy) this.stackGen.push(this.transitions.get(quark.identifier))
             }
         })
-
-        // init internal state of the walk context, we'll use `continueFrom` afterwards
-        this.walkContext.startFrom([])
 
         if (!this.candidate) this.candidate = MinimalRevision.new({ previous : this.baseRevision })
     }

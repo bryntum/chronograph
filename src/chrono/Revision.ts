@@ -1,12 +1,23 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { reverse, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier, ImpureCalculatedValueGen } from "./Identifier.js"
-import { QuarkEntry, Scope } from "./CalculationCore.js"
-import { UserInputQuark } from "./Quark.js"
+import { Quark, UserInputQuark } from "./Quark.js"
 
 // Revision should be turned into Node (WalkableBackward possibly) and all Revisions will form a Graph
 
 let ID : number = 0
+
+//---------------------------------------------------------------------------------------------------------------------
+export const LazyQuarkMarker    = Symbol('LazyQuarkMarker')
+export type LazyQuarkMarker     = typeof LazyQuarkMarker
+
+export const PendingQuarkMarker = Symbol('PendingQuarkMarker')
+export type PendingQuarkMarker  = typeof PendingQuarkMarker
+
+//---------------------------------------------------------------------------------------------------------------------
+export type QuarkEntry = Quark | LazyQuarkMarker
+export type Scope = Map<Identifier, QuarkEntry>
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Revision = <T extends AnyConstructor<Base>>(base : T) =>

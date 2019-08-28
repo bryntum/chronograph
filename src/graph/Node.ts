@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { WalkContext } from "./WalkDepth.js"
+import { WalkContext, WalkStep } from "./WalkDepth.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface WalkableForward<Label = any> {
@@ -15,8 +15,9 @@ export interface WalkableBackward<Label = any> {
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardContext<Label = any> extends WalkContext<WalkableForward, Label> {
 
-    forEachNext (node : WalkableForward, func : (label : Label, node : WalkableForward) => any) {
-        node.forEachOutgoing(this, func)
+    collectNext (sourceNode : WalkableForward, toVisit : WalkStep<WalkableForward>[]) {
+        // suboptimal
+        sourceNode.forEachOutgoing(this, (label : Label, outgoingNode : WalkableForward) => toVisit.push({ node : outgoingNode, from : sourceNode, label : label }))
     }
 }
 
@@ -24,8 +25,9 @@ export class WalkForwardContext<Label = any> extends WalkContext<WalkableForward
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkBackwardContext<Label = any> extends WalkContext<WalkableBackward> {
 
-    forEachNext (node : WalkableBackward, func : (label, node : WalkableBackward) => any) {
-        node.forEachIncoming(this, func)
+    collectNext (sourceNode : WalkableBackward, toVisit : WalkStep<WalkableBackward>[]) {
+        // suboptimal
+        sourceNode.forEachIncoming(this, (label : Label, outgoingNode : WalkableBackward) => toVisit.push({ node : outgoingNode, from : sourceNode, label : label }))
     }
 }
 
@@ -37,7 +39,7 @@ class WalkableForwardNode extends base implements WalkableForward {
     LabelT          : any
     NodeT           : WalkableForwardNode
 
-    outgoing?       : Map<this[ 'NodeT' ], this[ 'LabelT' ]>
+    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>
 
 
     hasEdgeTo (toNode : this[ 'NodeT' ]) : boolean {
