@@ -1,6 +1,6 @@
 import { Base } from "../class/Mixin.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { CalculationIterator } from "./Calculation.js"
+import { CalculationIterator } from "../primitives/Calculation.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { reverse, uniqueOnly } from "../collection/Iterator.js"
-import { Identifier, ImpureCalculatedValueGen } from "../primitives/Identifier.js"
+import { Identifier, ImpureCalculatedValueGen } from "./Identifier.js"
 import { QuarkEntry, Scope } from "./CalculationCore.js"
 import { UserInputQuark } from "./Quark.js"
 

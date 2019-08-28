@@ -1,5 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueSync } from "../../src/primitives/Identifier.js"
+import { CalculatedValueSync } from "../../src/chrono/Identifier.js"
 
 declare const StartTest : any
 

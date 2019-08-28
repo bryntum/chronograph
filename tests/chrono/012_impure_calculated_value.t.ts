@@ -1,7 +1,7 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { ProposedValue } from "../../src/chrono/Transaction.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
-import { ImpureCalculatedValueGen } from "../../src/primitives/Identifier.js"
+import { ImpureCalculatedValueGen } from "../../src/chrono/Identifier.js"
 
 declare const StartTest : any
 

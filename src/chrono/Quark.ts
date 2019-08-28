@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { Identifier } from "../primitives/Identifier.js"
+import { Identifier } from "./Identifier.js"
 import { LazyQuarkMarker } from "./CalculationCore.js"
 
 
