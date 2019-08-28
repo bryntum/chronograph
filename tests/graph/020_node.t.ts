@@ -1,9 +1,10 @@
 import { MinimalNode, WalkForwardContext } from "../../src/graph/Node.js"
-import { HasId } from "../../src/util/HasId.js"
 
 declare const StartTest : any
 
-class WalkerNode extends HasId(MinimalNode) {}
+class WalkerNode extends MinimalNode {
+    id          : number
+}
 
 
 StartTest(t => {

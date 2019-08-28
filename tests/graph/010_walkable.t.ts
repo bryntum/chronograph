@@ -1,14 +1,15 @@
 import { Base } from "../../src/class/Mixin.js"
 import { WalkableBackward, WalkableBackwardNode, WalkableForwardNode, WalkBackwardContext, WalkForwardContext } from "../../src/graph/Node.js"
-import { HasId } from "../../src/util/HasId.js"
 
 declare const StartTest : any
 
-class WalkerForwardNode extends HasId(WalkableForwardNode(Base)) {
+class WalkerForwardNode extends WalkableForwardNode(Base) {
+    id              : number
     NodeT           : WalkableForwardNode
     outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 }
-class WalkerBackwardNode extends HasId(WalkableBackwardNode(Base)) {
+class WalkerBackwardNode extends WalkableBackwardNode(Base) {
+    id              : number
     NodeT           : WalkableBackwardNode
     incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 }
