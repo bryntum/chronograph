@@ -11,18 +11,32 @@ export const typeOf = (value : any) : string => Object.prototype.toString.call(v
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function lazyProperty <T extends object, Property extends keyof T> (target : T, storage : string | symbol, builder : () => T[ Property ]) : T[ Property ] {
-    if (target[ storage ] !== undefined) return target[ storage ]
+export const defineProperty = <T extends object, S extends keyof T>(target : T, property : S, value : T[ S ]) : T[ S ] => {
+    Object.defineProperty(target, property, { value })
 
-    return target[ storage ] = builder()
+    return value
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function clearLazyProperty (target : object, storage : string | symbol) : any {
-    const value         = target[ storage ]
+const Storage   = Symbol('Storage')
 
-    target[ storage ]   = undefined
+export function lazyProperty <T extends object, Property extends keyof T> (target : T, property : Property, builder : () => T[ Property ]) : T[ Property ] {
+    if (!target[ Storage ]) Object.defineProperty(target, Storage, { value : {}, enumerable : false })
+
+    if (target[ Storage ][ property ] !== undefined) return target[ Storage ][ property ]
+
+    return target[ Storage ][ property ] = builder()
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export function clearLazyProperty <T extends object, Property extends keyof T> (target : T, property : Property) : T[ Property ] {
+    if (!target[ Storage ]) Object.defineProperty(target, Storage, { value : {}, enumerable : false })
+
+    const value         = target[ Storage ][ property ]
+
+    target[ Storage ][ property ] = undefined
 
     return value
 }

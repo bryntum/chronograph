@@ -9,7 +9,7 @@ export class Identifier extends Base {
 
     ArgsT               : any[]
     YieldT              : any
-    ResultT             : any
+    ValueT              : any
 
     calculationContext  : any
 
@@ -17,7 +17,7 @@ export class Identifier extends Base {
     lazy                : boolean
 
 
-    equality (v1 : this[ 'ResultT' ], v2 : this[ 'ResultT' ]) : boolean {
+    equality (v1 : this[ 'ValueT' ], v2 : this[ 'ValueT' ]) : boolean {
         return v1 === v2
     }
 
@@ -43,7 +43,7 @@ export const isSyncSymbol  = Symbol('isSyncSymbol')
 export class CalculatedValueSync extends Identifier {
     [isSyncSymbol] () {}
 
-    calculation (context : any) : this[ 'ResultT' ] {
+    calculation (context : any) : this[ 'ValueT' ] {
         throw new Error("Abstract method `calculation` called")
     }
 }
@@ -55,7 +55,7 @@ export const isGenSymbol  = Symbol('isGenSymbol')
 export class CalculatedValueGen extends Identifier {
     [isGenSymbol] () {}
 
-    * calculation () : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+    * calculation () : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
         throw new Error("Abstract method `calculation` called")
     }
 }
@@ -68,7 +68,7 @@ export class ImpureCalculatedValueGen extends Identifier {
     [isGenSymbol] () {}
     [isImpureGenSymbol] () {}
 
-    * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
+    * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
         throw new Error("Abstract method `calculation` called")
     }
 }

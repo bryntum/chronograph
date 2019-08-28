@@ -110,7 +110,7 @@ class Checkout extends base {
 
 
     get followingRevision () : Map<Revision, Revision> {
-        return lazyProperty<this, 'followingRevision'>(this, '_followingRevision', () => {
+        return lazyProperty(this, 'followingRevision', () => {
             const revisions     = Array.from(this.topRevision.thisAndAllPrevious())
 
             const entries : [ Revision, Revision ][]    = []
@@ -124,8 +124,8 @@ class Checkout extends base {
 
 
     get activeTransaction () : Transaction {
-        return lazyProperty<this, 'activeTransaction'>(
-            this, '_activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision, checkout : this.checkout })
+        return lazyProperty(
+            this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision, checkout : this.checkout })
         )
     }
 
@@ -166,8 +166,8 @@ class Checkout extends base {
 
         this.markAndSweep()
 
-        clearLazyProperty(this, '_followingRevision')
-        clearLazyProperty(this, '_activeTransaction')
+        clearLazyProperty(this, 'followingRevision')
+        clearLazyProperty(this, 'activeTransaction')
     }
 
 
@@ -285,7 +285,7 @@ class Checkout extends base {
         // TODO switch `checkout` to lazy attribute to avoid costly `buildLatest` call if user just plays with undo/redo buttons
         this.checkout           = previous.buildLatest()
 
-        clearLazyProperty(this, '_activeTransaction')
+        clearLazyProperty(this, 'activeTransaction')
 
         return true
     }
@@ -301,7 +301,7 @@ class Checkout extends base {
         this.baseRevision       = nextRevision
         this.checkout           = copyMapInto(nextRevision.scope, this.checkout)
 
-        clearLazyProperty(this, '_activeTransaction')
+        clearLazyProperty(this, 'activeTransaction')
 
         return true
     }
