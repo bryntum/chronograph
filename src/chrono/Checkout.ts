@@ -2,7 +2,7 @@ import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js
 import { concat } from "../collection/Iterator.js"
 import { CalculationGenFunction } from "../primitives/Calculation.js"
 import { CalculatedValueGen, Identifier, ImpureCalculatedValueGen, Variable } from "../primitives/Identifier.js"
-import { clearLazyProperty, lazyProperty } from "../util/Helper.js"
+import { clearLazyProperty, copyMapInto, lazyProperty } from "../util/Helpers.js"
 import { getTransitionClass, LazyQuarkMarker, QuarkEntry, QuarkTransition, Scope } from "./CalculationCore.js"
 import { MinimalQuark } from "./Quark.js"
 import { Revision } from "./Revision.js"
@@ -86,16 +86,20 @@ class Checkout extends base {
 
         // we can only shred revision if its being reference maximum 1 time (from the current Checkout instance)
         if (previous.referenceCount <= 1) {
-            this.includeRevisionToCheckout(previous.scope, revision)
+            copyMapInto(revision.scope, previous.scope)
+            copyMapInto(revision.proposed, previous.proposed)
 
             revision.scope          = previous.scope
+            revision.proposed       = previous.proposed
 
             // make sure the previous revision won't be used inconsistently
             previous.scope          = null
+            previous.proposed       = null
         }
         // otherwise, we have to copy from it, and keep it intact
         else {
             revision.scope          = new Map(concat(previous.scope.entries(), revision.scope.entries()))
+            revision.proposed       = new Map(concat(previous.proposed.entries(), revision.proposed.entries()))
 
             previous.referenceCount--
         }
@@ -134,9 +138,21 @@ class Checkout extends base {
 
 
     propagate () {
-        const activeTransaction : Transaction = clearLazyProperty(this, '_activeTransaction')
+        const nextRevision      = this.activeTransaction.propagate()
 
-        const nextRevision      = activeTransaction.propagate()
+        this.adoptNextRevision(nextRevision)
+    }
+
+
+    async propagateAsync () {
+        const nextRevision      = await this.activeTransaction.propagateAsync()
+
+        this.adoptNextRevision(nextRevision)
+    }
+
+
+    adoptNextRevision (nextRevision : Revision) {
+        if (nextRevision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
 
         // dereference all revisions
         for (const [ revision, isReachable ] of this.eachReachableRevision()) {
@@ -146,11 +162,12 @@ class Checkout extends base {
         }
 
         this.baseRevision       = this.topRevision = nextRevision
-        this.checkout           = this.includeRevisionToCheckout(this.checkout, nextRevision)
+        copyMapInto(nextRevision.scope, this.checkout)
 
         this.markAndSweep()
 
         clearLazyProperty(this, '_followingRevision')
+        clearLazyProperty(this, '_activeTransaction')
     }
 
 
@@ -282,22 +299,12 @@ class Checkout extends base {
         const nextRevision      = this.followingRevision.get(baseRevision)
 
         this.baseRevision       = nextRevision
-        this.checkout           = this.includeRevisionToCheckout(this.checkout, nextRevision)
+        this.checkout           = copyMapInto(nextRevision.scope, this.checkout)
 
         clearLazyProperty(this, '_activeTransaction')
 
         return true
     }
-
-
-    includeRevisionToCheckout (checkout : Scope, revision : Revision) : Scope {
-        for (const [ identifier, quark ] of revision.scope) {
-            checkout.set(identifier, quark)
-        }
-
-        return checkout
-    }
-
 }
 
 export type Checkout = Mixin<typeof Checkout>

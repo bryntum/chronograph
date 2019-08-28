@@ -10,7 +10,7 @@ class Quark extends base {
     NodeT                   : Quark
     LabelT                  : any
 
-    // we may not need this property in the quark itself, since its always presence in the context of the quark
+    // we may not need this property in the quark itself, since it always presence in the context of the quark
     // (like the key of the map)
     identifier              : Identifier
 
@@ -60,10 +60,12 @@ export class MinimalQuark extends Quark(Base) {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ImpureQuark extends MinimalQuark {
-    proposedArgs        : any[]
+let GEN = 0
 
-    usedProposed        : boolean   = false
+export class UserInputQuark extends MinimalQuark {
+    value               : any[]
+
+    generation          : number    = GEN++
 }
 
 

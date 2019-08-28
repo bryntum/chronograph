@@ -1,9 +1,10 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { reverse, uniqueOnly } from "../collection/Iterator.js"
-import { Identifier } from "../primitives/Identifier.js"
+import { Identifier, ImpureCalculatedValueGen } from "../primitives/Identifier.js"
 import { QuarkEntry, Scope } from "./CalculationCore.js"
+import { UserInputQuark } from "./Quark.js"
 
-// Revision should be turned into Node and all Revisions will form a Graph
+// Revision should be turned into Node (WalkableBackward possibly) and all Revisions will form a Graph
 
 let ID : number = 0
 
@@ -15,7 +16,8 @@ class Revision extends base {
 
     previous                : Revision
 
-    scope                   : Scope     = new Map()
+    scope                   : Scope                                             = new Map()
+    proposed                : Map<ImpureCalculatedValueGen, UserInputQuark>     = new Map()
 
     reachableCount          : number    = 0
     referenceCount          : number    = 0
@@ -42,6 +44,30 @@ class Revision extends base {
         if (latest) return latest
 
         return this.getPreviousQuarkFor(identifier)
+    }
+
+
+    getPreviousProposedQuarkFor (identifier : ImpureCalculatedValueGen) : UserInputQuark {
+        let previous    = this.previous
+
+        while (previous) {
+            const quark = previous.proposed.get(identifier)
+
+            if (quark) return quark
+
+            previous    = previous.previous
+        }
+
+        return null
+    }
+
+
+    getLatestProposedQuarkFor (identifier : ImpureCalculatedValueGen) : UserInputQuark {
+        const latest        = this.proposed.get(identifier)
+
+        if (latest) return latest
+
+        return this.getPreviousProposedQuarkFor(identifier)
     }
 
 

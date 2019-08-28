@@ -27,3 +27,19 @@ export function clearLazyProperty (target : object, storage : string | symbol) :
     return value
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export const prototypeValue = (value : any) : PropertyDecorator => {
+
+    return function (target : object, propertyKey : string | symbol) : void {
+        target[ propertyKey ] = value
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const copyMapInto = <K, V>(sourceMap : Map<K, V>, targetMap : Map<K, V>) : Map<K, V> => {
+    for (const [ key, value ] of sourceMap) targetMap.set(key, value)
+
+    return targetMap
+}

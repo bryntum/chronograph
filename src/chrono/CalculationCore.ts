@@ -2,8 +2,7 @@ import { AnyFunction, Base } from "../class/Mixin.js"
 import { Box } from "../primitives/Box.js"
 import { CalculationGen, CalculationGenFunction, CalculationSync } from "../primitives/Calculation.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, isGenSymbol, Variable } from "../primitives/Identifier.js"
-import { MinimalQuark, Quark } from "./Quark.js"
-import { Revision } from "./Revision.js"
+import { Quark } from "./Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

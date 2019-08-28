@@ -1,4 +1,5 @@
 import { Base } from "../class/Mixin.js"
+import { prototypeValue } from "../util/Helpers.js"
 import { CalculationIterator } from "./Calculation.js"
 
 
@@ -12,7 +13,8 @@ export class Identifier extends Base {
 
     calculationContext  : any
 
-    lazy                : boolean       = false
+    @prototypeValue(false)
+    lazy                : boolean
 
 
     equality (v1 : this[ 'ResultT' ], v2 : this[ 'ResultT' ]) : boolean {
@@ -63,6 +65,7 @@ export class CalculatedValueGen extends Identifier {
 export const isImpureGenSymbol  = Symbol('isImpureGenSymbol')
 
 export class ImpureCalculatedValueGen extends Identifier {
+    [isGenSymbol] () {}
     [isImpureGenSymbol] () {}
 
     * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ResultT' ], this[ 'YieldT' ]> {
