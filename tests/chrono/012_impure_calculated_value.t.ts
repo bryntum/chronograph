@@ -1,5 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { ProposedValue } from "../../src/chrono/Transaction.js"
+import { ProposedValue, Transaction } from "../../src/chrono/Transaction.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { ImpureCalculatedValueGen } from "../../src/chrono/Identifier.js"
 
@@ -51,15 +51,45 @@ StartTest(t => {
     //     const var1      = graph.variableId('variable', 100)
     //
     //     const var2      = graph.addIdentifier(ImpureCalculatedValueGen.new({
+    //         validate (Yield : Transaction, proposedValue : any) : CalculationIterator<number> {
+    //             const max : number      = yield var1
+    //
+    //             return proposedValue <= max ? proposedValue : max
+    //         },
+    //
     //         * calculation () : CalculationIterator<number> {
-    //             let proposedValue : number      = yield CurrentProposedValue(var2)
+    //             const dispatching = yield dispatcher
     //
-    //             if (proposedValue === undefined) {
-    //                 yield NotChanged()
+    //             if (dispatching === 'recalculate') {
+    //
     //             }
+    //             else if (dispatching === 'use_user_input_or_keep_unchanged') {
+    //                 return UseProposedOrKeepUnchanged()
+    //             }
+    //         },
     //
-    //             return proposedValue
-    //         }
+    //
+    //         * calculation () : CalculationIterator<number> {
+    //             const dispatching = yield dispatcher
+    //
+    //             if (dispatching === 'recalculate') {
+    //
+    //             }
+    //             else if (dispatching === 'use_user_input_or_keep_unchanged') {
+    //                 return yield* this.validation()
+    //             }
+    //         },
+    //
+    //
+    //         * validation () : CalculationIterator<number> {
+    //             let proposedValue : number      = yield TransientProposedValue()
+    //
+    //             const max : number      = yield var1
+    //
+    //             return proposedValue <= max ? proposedValue : max
+    //         },
+    //
+    //
     //     }))
     //
     //     graph.call(var2, 18)
