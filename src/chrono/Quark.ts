@@ -1,5 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { Identifier } from "./Identifier.js"
+import { prototypeValue } from "../util/Helpers.js"
+import { Identifier, ImpureCalculatedValueGen } from "./Identifier.js"
 import { LazyQuarkMarker } from "./Revision.js"
 
 
@@ -63,6 +64,16 @@ export class UserInputQuark extends MinimalQuark {
     value               : any[]
 
     generation          : number    = GEN++
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ImpureCalculatedQuark extends MinimalQuark {
+    identifier          : ImpureCalculatedValueGen
+
+    // TODO move to transition
+    @prototypeValue(false)
+    usedProposed        : boolean
 }
 
 

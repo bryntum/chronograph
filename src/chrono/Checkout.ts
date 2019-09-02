@@ -76,7 +76,7 @@ class Checkout extends base {
         unreachableRevisions.unshift(lastReferencedRevision)
 
         for (let i = unreachableRevisions.length - 1; i >= 1 && unreachableRevisions[ i ].reachableCount === 0; i--) {
-            this.compactRevisions(unreachableRevisions[ i - 1 ], unreachableRevisions[ i ])
+            // this.compactRevisions(unreachableRevisions[ i - 1 ], unreachableRevisions[ i ])
         }
     }
 

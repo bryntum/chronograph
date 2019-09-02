@@ -33,6 +33,8 @@ class Revision extends base {
     reachableCount          : number    = 0
     referenceCount          : number    = 0
 
+    selfDependentQuarks     : Quark[]   = []
+
 
     getPreviousQuarkFor (identifier : Identifier) : QuarkEntry {
         let previous    = this.previous

@@ -5,7 +5,7 @@ import { runAsyncWithEffect, runSyncWithEffect } from "../primitives/Calculation
 import { Identifier, ImpureCalculatedValueGen, Variable } from "./Identifier.js"
 import { lazyProperty } from "../util/Helpers.js"
 import { getTransitionClass, QuarkTransition } from "./QuarkTransition.js"
-import { UserInputQuark, MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
+import { UserInputQuark, MinimalQuark, Quark, TombstoneQuark, ImpureCalculatedQuark } from "./Quark.js"
 import { LazyQuarkMarker, MinimalRevision, PendingQuarkMarker, QuarkEntry, Revision, Scope } from "./Revision.js"
 
 
@@ -66,19 +66,19 @@ export const ProposedValueSymbol    = Symbol('ProposedValueSymbol')
 
 export type ProposedValueEffect     = [ typeof BuiltInEffectSymbol, typeof ProposedValueSymbol, ImpureCalculatedValueGen ]
 
-export const ProposedValue          = (impureIdentifier : ImpureCalculatedValueGen) : BuiltInEffect => {
+export const ProposedValue          = (impureIdentifier : ImpureCalculatedValueGen) : ProposedValueEffect => {
     return [ BuiltInEffectSymbol, ProposedValueSymbol, impureIdentifier ]
 }
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export const CurrentProposedValueSymbol     = Symbol('CurrentProposedValueSymbol')
-//
-// export type CurrentProposedValueEffect      = [ typeof BuiltInEffectSymbol, typeof CurrentProposedValueSymbol, ImpureCalculatedValueGen ]
-//
-// export const CurrentProposedValue           = (impureIdentifier : ImpureCalculatedValueGen) : BuiltInEffect => {
-//     return [ BuiltInEffectSymbol, CurrentProposedValueSymbol, impureIdentifier ]
-// }
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedOrCurrentValueSymbol     = Symbol('ProposedOrCurrentValueSymbol')
+
+export type ProposedOrCurrentValueEffect      = [ typeof BuiltInEffectSymbol, typeof ProposedOrCurrentValueSymbol ]
+
+export const ProposedOrCurrentValue           = () : ProposedOrCurrentValueEffect => {
+    return [ BuiltInEffectSymbol, ProposedOrCurrentValueSymbol ]
+}
 
 
 
@@ -188,6 +188,7 @@ class Transaction extends base {
     }
 
 
+    // TODO handle write to already dirty
     call (calculatedValue : ImpureCalculatedValueGen, args : any[]) {
         if (this.isClosed) throw new Error("Can not 'call' to closed transaction")
 
@@ -201,6 +202,7 @@ class Transaction extends base {
     }
 
 
+    // TODO handle write to already dirty
     write (variable : Variable, value : any) {
         if (this.isClosed) throw new Error("Can not 'write' to closed transaction")
 
@@ -210,8 +212,8 @@ class Transaction extends base {
     }
 
 
+    // TODO handle write to already dirty
     touch (identifier : Identifier, currentQuark : QuarkEntry | PendingQuarkMarker = identifier.lazy ? LazyQuarkMarker : PendingQuarkMarker) {
-        // TODO handle write to already dirty ???
         if (this.transitions.has(identifier)) return
 
         const previous      = this.checkout.get(identifier)
@@ -270,6 +272,8 @@ class Transaction extends base {
 
         const candidate = this.candidate
 
+        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+
         runSyncWithEffect<[ QuarkTransition[] ], any, any>(
             this.onEffectSync,
             this.calculateTransitionsStackGen,
@@ -290,6 +294,8 @@ class Transaction extends base {
 
         const candidate = this.candidate
 
+        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+
         await runAsyncWithEffect<[ QuarkTransition[] ], any, any>(
             this.onEffectAsync,
             this.calculateTransitionsStackGen,
@@ -303,13 +309,13 @@ class Transaction extends base {
     }
 
 
-    [ProposedValueSymbol] (effect : ProposedValueEffect, quark : Quark) {
+    [ProposedValueSymbol] (effect : ProposedValueEffect, transition : QuarkTransition) {
         const identifier : ImpureCalculatedValueGen = effect[ 2 ]
 
         const userInputQuark    = this.candidate.getLatestProposedQuarkFor(identifier)
 
         if (userInputQuark) {
-            userInputQuark.addEdgeTo(quark, this.candidate)
+            userInputQuark.addEdgeTo(transition.current as Quark, this.candidate)
 
             return userInputQuark.value[ 0 ]
 
@@ -319,20 +325,23 @@ class Transaction extends base {
     }
 
 
-    // [CurrentProposedValueSymbol] (effect : CurrentProposedValueEffect, quark : Quark) {
-    //     const identifier : ImpureCalculatedValueGen = effect[ 2 ]
-    //
-    //     const userInputQuark    = this.candidate.proposed.get(identifier)
-    //
-    //     if (userInputQuark) {
-    //         userInputQuark.addEdgeTo(quark, this.candidate)
-    //
-    //         return userInputQuark.value[ 0 ]
-    //
-    //     } else {
-    //         return undefined
-    //     }
-    // }
+    [ProposedOrCurrentValueSymbol] (effect : ProposedOrCurrentValueEffect, transition : QuarkTransition) {
+        const quark                                 = transition.current as ImpureCalculatedQuark
+        const identifier : ImpureCalculatedValueGen = quark.identifier as ImpureCalculatedValueGen
+
+        quark.usedProposed      = true
+
+        const userInputQuark    = this.candidate.proposed.get(identifier)
+
+        if (userInputQuark) {
+            userInputQuark.addEdgeTo(quark, this.candidate)
+
+            return userInputQuark.value[ 0 ]
+
+        } else {
+            return (this.baseRevision.getLatestQuarkFor(identifier) as Quark).value
+        }
+    }
 
 
     * calculateTransitionsStackGen (stack : QuarkTransition[]) : Generator<any, void, any> {
@@ -381,6 +390,11 @@ class Transaction extends base {
 
                     const previousQuark             = transition.previous
 
+                    // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
+                    // and only if that is missing - with previous
+                    // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
+                    let ignoreSelfDependency : boolean = false
+
                     if (previousQuark && previousQuark !== LazyQuarkMarker && quark.identifier.equality(value, previousQuark.value)) {
                         // in case the new value is equal to previous, we still need to consider the case
                         // that the incoming dependencies of this identifier has changed (even that the value has not)
@@ -389,6 +403,21 @@ class Transaction extends base {
                         previousQuark.forEachOutgoingInDimension(checkout, dimension, (label : any, quark : Quark) => {
                             transitions.get(quark.identifier).edgesFlow--
                         })
+
+                        ignoreSelfDependency        = true
+                    }
+
+                    if (quark.identifier instanceof ImpureCalculatedValueGen) {
+                        const castedQuark = quark as ImpureCalculatedQuark
+
+                        // TODO - if there's no 'previousQuark', compare with proposed value
+                        if (!previousQuark && castedQuark.usedProposed) {
+                            if (castedQuark.identifier.equality(value, this.candidate.getLatestProposedQuarkFor(castedQuark.identifier).value[ 0 ] )) ignoreSelfDependency = true
+                        }
+
+                        if (castedQuark.usedProposed && !ignoreSelfDependency) {
+                            this.candidate.selfDependentQuarks.push(quark)
+                        }
                     }
 
                     stack.pop()
@@ -435,7 +464,7 @@ class Transaction extends base {
                     }
                 }
                 else if (value && value[ 0 ] === BuiltInEffectSymbol) {
-                    const effectResult          = this[ value[ 1 ] ](value, quark)
+                    const effectResult          = this[ value[ 1 ] ](value, transition)
 
                     iterationResult             = transition.continueCalculation(effectResult)
                 }
