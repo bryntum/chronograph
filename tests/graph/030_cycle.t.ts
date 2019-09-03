@@ -10,10 +10,10 @@ class WalkerNode extends MinimalNode {
 StartTest(t => {
 
     t.it('Cycle detection #000', t => {
-        const node1     = WalkerNode.new({ id : 1 })
+        const node1     = WalkerNode.new({ name : 1 })
         node1.addEdgeTo(node1)
 
-        const node2     = WalkerNode.new({ id : 2 })
+        const node2     = WalkerNode.new({ name : 2 })
         node2.addEdgeTo(node2)
 
         node1.addEdgeTo(node2)
@@ -23,7 +23,7 @@ StartTest(t => {
 
         WalkForwardContext.new({
             onNode : (node : WalkerNode) => {
-                walkPath.push(node.id)
+                walkPath.push(node.name)
             },
 
             onCycle : (node : WalkerNode, stack : WalkStep<WalkerNode>[]) : OnCycleAction => {
@@ -40,10 +40,10 @@ StartTest(t => {
 
 
     t.it('Cycle detection #00', t => {
-        const node1     = WalkerNode.new({ id : 1 })
+        const node1     = WalkerNode.new({ name : 1 })
         node1.addEdgeTo(node1)
 
-        const node2     = WalkerNode.new({ id : 2 })
+        const node2     = WalkerNode.new({ name : 2 })
         node2.addEdgeTo(node2)
 
         node1.addEdgeTo(node2)
@@ -63,7 +63,7 @@ StartTest(t => {
 
 
     t.it('Cycle detection #0', t => {
-        const node1     = WalkerNode.new({ id : 1 })
+        const node1     = WalkerNode.new({ name : 1 })
 
         node1.addEdgeTo(node1)
 
@@ -82,8 +82,8 @@ StartTest(t => {
 
 
     t.it('Cycle detection #1', t => {
-        const node1     = WalkerNode.new({ id : 1 })
-        const node2     = WalkerNode.new({ id : 2 })
+        const node1     = WalkerNode.new({ name : 1 })
+        const node2     = WalkerNode.new({ name : 2 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node1)
@@ -103,11 +103,11 @@ StartTest(t => {
 
 
     t.it('Cycle detection #2', t => {
-        const node1     = WalkerNode.new({ id : 1 })
-        const node2     = WalkerNode.new({ id : 2 })
-        const node3     = WalkerNode.new({ id : 3 })
-        const node4     = WalkerNode.new({ id : 4 })
-        const node5     = WalkerNode.new({ id : 5 })
+        const node1     = WalkerNode.new({ name : 1 })
+        const node2     = WalkerNode.new({ name : 2 })
+        const node3     = WalkerNode.new({ name : 3 })
+        const node4     = WalkerNode.new({ name : 4 })
+        const node5     = WalkerNode.new({ name : 5 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node3)
@@ -130,17 +130,17 @@ StartTest(t => {
 
 
     t.it('Cycle detection #3', t => {
-        const node1     = WalkerNode.new({ id : 1 })
-        const node2     = WalkerNode.new({ id : 2 })
-        const node3     = WalkerNode.new({ id : 3 })
-        const node4     = WalkerNode.new({ id : 4 })
-        const node5     = WalkerNode.new({ id : 5 })
-        const node6     = WalkerNode.new({ id : 6 })
-        const node7     = WalkerNode.new({ id : 7 })
-        const node8     = WalkerNode.new({ id : 8 })
-        const node9     = WalkerNode.new({ id : 9 })
-        const node10    = WalkerNode.new({ id : 10 })
-        const node11    = WalkerNode.new({ id : 11 })
+        const node1     = WalkerNode.new({ name : 1 })
+        const node2     = WalkerNode.new({ name : 2 })
+        const node3     = WalkerNode.new({ name : 3 })
+        const node4     = WalkerNode.new({ name : 4 })
+        const node5     = WalkerNode.new({ name : 5 })
+        const node6     = WalkerNode.new({ name : 6 })
+        const node7     = WalkerNode.new({ name : 7 })
+        const node8     = WalkerNode.new({ name : 8 })
+        const node9     = WalkerNode.new({ name : 9 })
+        const node10    = WalkerNode.new({ name : 10 })
+        const node11    = WalkerNode.new({ name : 11 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node3)
@@ -175,9 +175,9 @@ StartTest(t => {
 
 
     t.it('Resume on cycle #1', t => {
-        const node1     = WalkerNode.new({ id : 1 })
-        const node2     = WalkerNode.new({ id : 2 })
-        const node3     = WalkerNode.new({ id : 3 })
+        const node1     = WalkerNode.new({ name : 1 })
+        const node2     = WalkerNode.new({ name : 2 })
+        const node3     = WalkerNode.new({ name : 3 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node3)
@@ -199,9 +199,9 @@ StartTest(t => {
 
 
     t.it('Resume on cycle #2', t => {
-        const node1     = WalkerNode.new({ id : 1 })
-        const node2     = WalkerNode.new({ id : 2 })
-        const node3     = WalkerNode.new({ id : 3 })
+        const node1     = WalkerNode.new({ name : 1 })
+        const node2     = WalkerNode.new({ name : 2 })
+        const node3     = WalkerNode.new({ name : 3 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node1)

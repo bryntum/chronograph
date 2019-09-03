@@ -17,7 +17,6 @@ export type VisitInfo = { visitedAt : number, visitedTopologically : boolean }
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkContext<Walkable, Label = any> extends Base {
-
     visited         : Map<Walkable, VisitInfo>      = new Map()
 
     toVisit         : WalkStep<Walkable>[]          = []
@@ -53,8 +52,26 @@ export class WalkContext<Walkable, Label = any> extends Base {
     }
 
 
-    collectNext (node : Walkable, toVisit : WalkStep<Walkable>[]) {
+    collectNext (node : Walkable, toVisit : WalkStep<Walkable>[], visitInfo : VisitInfo) {
         throw new Error("Abstract method called")
+    }
+
+
+    getVisitedInfo (node : Walkable) : VisitInfo {
+        return this.visited.get(node)
+    }
+
+
+    setVisitedInfo (node : Walkable, visitedAt : number, visitedTopologically : boolean, info : VisitInfo) : VisitInfo {
+        if (!info) {
+            info                        = { visitedAt, visitedTopologically }
+            this.visited.set(node, info)
+        } else {
+            info.visitedAt              = visitedAt
+            info.visitedTopologically   = visitedTopologically
+        }
+
+        return info
     }
 
 
@@ -70,21 +87,18 @@ export class WalkContext<Walkable, Label = any> extends Base {
         while (depth = toVisit.length) {
             const node              = toVisit[ depth - 1 ].node
 
-            const visitedInfo       = visited.get(node)
+            const visitedInfo       = this.getVisitedInfo(node)
 
             if (visitedInfo && visitedInfo.visitedTopologically) {
                 toVisit.pop()
                 continue
             }
 
-            if (visitedInfo) {
-                // repeating entry to the node
-                const visitedAtDepth    = visitedInfo.visitedAt
-
+            if (visitedInfo && visitedInfo.visitedAt !== -1) {
                 // it is valid to find itself "visited", but only if visited at the current depth
                 // (which indicates stack unwinding)
                 // if the node has been visited at earlier depth - its a cycle
-                if (visitedAtDepth < depth) {
+                if (visitedInfo.visitedAt < depth) {
                     // ONLY resume if explicitly returned `Resume`, cancel in all other cases (undefined, etc)
                     if (this.onCycle(node, toVisit) !== OnCycleAction.Resume) break
                 } else {
@@ -99,20 +113,18 @@ export class WalkContext<Walkable, Label = any> extends Base {
                 if (this.onNode(node, toVisit[ depth - 1 ]) === false) break
 
                 // first entry to the node
-                const visitedInfo       = { visitedAt : depth, visitedTopologically : false }
-
-                visited.set(node, visitedInfo)
+                const visitedInfo2      = this.setVisitedInfo(node, depth, false, visitedInfo)
 
                 const lengthBefore      = toVisit.length
 
-                this.collectNext(node, toVisit)
+                this.collectNext(node, toVisit, visitedInfo2)
 
                 // if there's no outgoing edges, node is at topological position
                 // it would be enough to just continue the `while` loop and the `onTopologicalNode`
                 // would happen on next iteration, but with this "inlining" we save one call to `visited.get()`
                 // at the cost of length comparison
                 if (toVisit.length === lengthBefore) {
-                    visitedInfo.visitedTopologically = true
+                    visitedInfo2.visitedTopologically = true
 
                     this.onTopologicalNode(node)
 

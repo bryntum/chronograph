@@ -1,20 +1,29 @@
-import { Base } from "../class/Mixin.js"
+import { AnyConstructor, Base, MixinConstructor } from "../class/Mixin.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { CalculationIterator } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationIterator } from "../primitives/Calculation.js"
+import { MinimalQuark, Quark, QuarkConstructor } from "./Quark.js"
+import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
+import { MinimalTransaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Identifier extends Base {
-    id                  : any
+    name                : any
 
-    ArgsT               : any[]
+    ArgsT               : [ CalculationContext<this[ 'YieldT' ]> ]
     YieldT              : any
     ValueT              : any
 
-    calculationContext  : any
+    context             : any
 
     @prototypeValue(false)
     lazy                : boolean
+
+    @prototypeValue(MinimalQuark)
+    quarkClass          : QuarkConstructor
+
+    @prototypeValue(QuarkTransitionSync)
+    transitionClass     : MixinConstructor<typeof QuarkTransition>
 
 
     equality (v1 : this[ 'ValueT' ], v2 : this[ 'ValueT' ]) : boolean {
@@ -30,46 +39,38 @@ export class Identifier extends Base {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Variable extends Identifier {
+    YieldT              : never
 
-    calculation (...args : this[ 'ArgsT' ]) : any {
+    calculation (...args : this[ 'ArgsT' ]) : unknown {
         throw new Error("The 'calculation' method of the variables should not be called for optimization purposes. Instead the value should be set directly to quark")
     }
 }
 
-
-//---------------------------------------------------------------------------------------------------------------------
-export const isSyncSymbol  = Symbol('isSyncSymbol')
+//
+// //---------------------------------------------------------------------------------------------------------------------
+// // export const isSyncSymbol  = Symbol('isSyncSymbol')
 
 export class CalculatedValueSync extends Identifier {
-    [isSyncSymbol] () {}
 
-    calculation (context : any) : this[ 'ValueT' ] {
+    @prototypeValue(QuarkTransitionSync)
+    transitionClass     : MixinConstructor<typeof QuarkTransition>
+
+    calculation (context : CalculationContext<this[ 'YieldT' ]>) : this[ 'ValueT' ] {
         throw new Error("Abstract method `calculation` called")
     }
 }
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export const isGenSymbol  = Symbol('isGenSymbol')
+// //---------------------------------------------------------------------------------------------------------------------
+// // export const isGenSymbol  = Symbol('isGenSymbol')
 
 export class CalculatedValueGen extends Identifier {
-    [isGenSymbol] () {}
+    // [isGenSymbol] () {}
 
-    * calculation () : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
+    @prototypeValue(QuarkTransitionGen)
+    transitionClass     : MixinConstructor<typeof QuarkTransition>
+
+    * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
         throw new Error("Abstract method `calculation` called")
     }
 }
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const isImpureGenSymbol  = Symbol('isImpureGenSymbol')
-
-export class ImpureCalculatedValueGen extends Identifier {
-    [isGenSymbol] () {}
-    [isImpureGenSymbol] () {}
-
-    * calculation (...args : this[ 'ArgsT' ]) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
-        throw new Error("Abstract method `calculation` called")
-    }
-}
-

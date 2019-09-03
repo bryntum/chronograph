@@ -22,24 +22,24 @@ const edges = <T extends WalkableForwardNode | WalkableBackward>(...nodes : T[])
 StartTest(t => {
 
     t.it('Minimal walk forward', t => {
-        const node5     = WalkerForwardNode.new({ id : 5, outgoing : edges<WalkableForwardNode>() })
+        const node5     = WalkerForwardNode.new({ name : 5, outgoing : edges<WalkableForwardNode>() })
 
-        const node3     = WalkerForwardNode.new({ id : 3, outgoing : edges(node5) })
-        const node4     = WalkerForwardNode.new({ id : 4, outgoing : edges(node3) })
-        const node2     = WalkerForwardNode.new({ id : 2, outgoing : edges(node3, node4) })
+        const node3     = WalkerForwardNode.new({ name : 3, outgoing : edges(node5) })
+        const node4     = WalkerForwardNode.new({ name : 4, outgoing : edges(node3) })
+        const node2     = WalkerForwardNode.new({ name : 2, outgoing : edges(node3, node4) })
 
-        const node1     = WalkerForwardNode.new({ id : 1, outgoing : edges(node2) })
+        const node1     = WalkerForwardNode.new({ name : 1, outgoing : edges(node2) })
 
         const walkPath  = []
         const topoPath  = []
 
         WalkForwardContext.new({
             onNode : (node : WalkerForwardNode) => {
-                walkPath.push(node.id)
+                walkPath.push(node.name)
             },
 
             onTopologicalNode : (node : WalkerForwardNode) => {
-                topoPath.push(node.id)
+                topoPath.push(node.name)
             }
         }).startFrom([ node1 ])
 
@@ -50,9 +50,9 @@ StartTest(t => {
 
 
     t.it('Walk with cycle forward', t => {
-        const node1     = WalkerForwardNode.new({ id : 1 })
-        const node2     = WalkerForwardNode.new({ id : 2 })
-        const node3     = WalkerForwardNode.new({ id : 3 })
+        const node1     = WalkerForwardNode.new({ name : 1 })
+        const node2     = WalkerForwardNode.new({ name : 2 })
+        const node3     = WalkerForwardNode.new({ name : 3 })
 
         node1.addEdgeTo(node2)
         node2.addEdgeTo(node3)
@@ -64,7 +64,7 @@ StartTest(t => {
 
         WalkForwardContext.new({
             onNode : (node : WalkerForwardNode) => {
-                walkPath.push(node.id)
+                walkPath.push(node.name)
             },
 
             onCycle : (node : WalkerForwardNode) : any => {
@@ -81,22 +81,22 @@ StartTest(t => {
 
 
     t.it('Minimal walk backward', t => {
-        const node1     = WalkerBackwardNode.new({ id : 1, incoming : edges() })
-        const node2     = WalkerBackwardNode.new({ id : 2, incoming : edges(node1) })
-        const node4     = WalkerBackwardNode.new({ id : 4, incoming : edges(node2) })
-        const node3     = WalkerBackwardNode.new({ id : 3, incoming : edges(node2, node4) })
-        const node5     = WalkerBackwardNode.new({ id : 5, incoming : edges(node3) })
+        const node1     = WalkerBackwardNode.new({ name : 1, incoming : edges() })
+        const node2     = WalkerBackwardNode.new({ name : 2, incoming : edges(node1) })
+        const node4     = WalkerBackwardNode.new({ name : 4, incoming : edges(node2) })
+        const node3     = WalkerBackwardNode.new({ name : 3, incoming : edges(node2, node4) })
+        const node5     = WalkerBackwardNode.new({ name : 5, incoming : edges(node3) })
 
         const walkPath  = []
         const topoPath  = []
 
         WalkBackwardContext.new({
             onNode : (node : WalkerBackwardNode) => {
-                walkPath.push(node.id)
+                walkPath.push(node.name)
             },
 
             onTopologicalNode : (node : WalkerBackwardNode) => {
-                topoPath.push(node.id)
+                topoPath.push(node.name)
             }
         }).startFrom([ node5 ])
 
@@ -106,9 +106,9 @@ StartTest(t => {
 
 
     t.it('Walk with cycle backward', t => {
-        const node1     = WalkerBackwardNode.new({ id : 1 })
-        const node2     = WalkerBackwardNode.new({ id : 2 })
-        const node3     = WalkerBackwardNode.new({ id : 3 })
+        const node1     = WalkerBackwardNode.new({ name : 1 })
+        const node2     = WalkerBackwardNode.new({ name : 2 })
+        const node3     = WalkerBackwardNode.new({ name : 3 })
 
         node1.addEdgeFrom(node2)
         node2.addEdgeFrom(node3)
@@ -120,7 +120,7 @@ StartTest(t => {
 
         WalkBackwardContext.new({
             onNode : (node : WalkerBackwardNode) => {
-                walkPath.push(node.id)
+                walkPath.push(node.name)
             },
 
             onCycle : (node : WalkerBackwardNode) : any => {

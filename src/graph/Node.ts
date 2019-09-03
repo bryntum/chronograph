@@ -16,7 +16,6 @@ export interface WalkableBackward<Label = any> {
 export class WalkForwardContext<Label = any> extends WalkContext<WalkableForward, Label> {
 
     collectNext (sourceNode : WalkableForward, toVisit : WalkStep<WalkableForward>[]) {
-        // suboptimal
         sourceNode.forEachOutgoing(this, (label : Label, outgoingNode : WalkableForward) => toVisit.push({ node : outgoingNode, from : sourceNode, label : label }))
     }
 }
@@ -26,7 +25,6 @@ export class WalkForwardContext<Label = any> extends WalkContext<WalkableForward
 export class WalkBackwardContext<Label = any> extends WalkContext<WalkableBackward> {
 
     collectNext (sourceNode : WalkableBackward, toVisit : WalkStep<WalkableBackward>[]) {
-        // suboptimal
         sourceNode.forEachIncoming(this, (label : Label, outgoingNode : WalkableBackward) => toVisit.push({ node : outgoingNode, from : sourceNode, label : label }))
     }
 }

@@ -1,56 +1,45 @@
-import { AnyFunction, Base } from "../class/Mixin.js"
-import { Box } from "../primitives/Box.js"
-import { CalculationGen, CalculationGenFunction, CalculationSync } from "../primitives/Calculation.js"
-import { CalculatedValueGen, CalculatedValueSync, Identifier, isGenSymbol, Variable } from "./Identifier.js"
-import { PendingQuarkMarker, QuarkEntry } from "./Revision.js"
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { VisitInfo } from "../graph/WalkDepth.js"
+import { CalculationContext, CalculationGen, CalculationSync, GenericCalculation } from "../primitives/Calculation.js"
+import { prototypeValue } from "../util/Helpers.js"
+import { Identifier } from "./Identifier.js"
+import { Quark, QuarkI } from "./Quark.js"
+import { QuarkEntry } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class QuarkTransitionGen extends CalculationGen(Box(Base)) {
-    identifier      : Variable | CalculatedValueGen
+export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculation<any, any, [ CalculationContext<any> ]>>>(base : T) => {
 
-    previous        : QuarkEntry
-    // TODO switch to lazy property instead of `PendingQuarkMarker`?
-    current         : QuarkEntry | PendingQuarkMarker
+    class QuarkTransition extends base implements VisitInfo {
+        identifier      : Identifier
 
-    edgesFlow       : number
+        previous        : QuarkEntry
+        // current         : QuarkEntry
+
+        edgesFlow       : number
+
+        visitedAt               : number
+        visitedTopologically    : boolean
 
 
-    get calculation () : CalculationGenFunction {
-        return this.identifier.calculation
+        get calculation () : this[ 'identifier' ][ 'calculation' ] {
+            return this.identifier.calculation
+        }
+
+
+        get context () : this[ 'identifier' ][ 'context' ] {
+            return this.identifier.context
+        }
     }
 
-
-    get calculationContext () : any {
-        return this.identifier.calculationContext
-    }
+    return QuarkTransition
 }
 
-//---------------------------------------------------------------------------------------------------------------------
-export class QuarkTransitionSync extends CalculationSync(Box(Base)) {
-    identifier      : Variable | CalculatedValueSync
-
-    previous        : QuarkEntry
-    // TODO switch to lazy property instead of `PendingQuarkMarker`?
-    current         : QuarkEntry | PendingQuarkMarker
-
-    edgesFlow       : number
-
-
-    get calculation () : AnyFunction {
-        return this.identifier.calculation
-    }
-
-
-    get calculationContext () : any {
-        return this.identifier.calculationContext
-    }
-}
-
-export type QuarkTransition = QuarkTransitionGen | QuarkTransitionSync
+export type QuarkTransition = Mixin<typeof QuarkTransition>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const getTransitionClass = (identifier : Identifier) : typeof QuarkTransitionSync | typeof QuarkTransitionGen => {
-    return identifier[ isGenSymbol ] ? QuarkTransitionGen : QuarkTransitionSync
-}
+export class QuarkTransitionGen extends QuarkTransition(CalculationGen(Base)) {}
+
+//---------------------------------------------------------------------------------------------------------------------
+export class QuarkTransitionSync extends QuarkTransition(CalculationSync(Base)) {}

@@ -3,23 +3,51 @@ import { Box } from "./Box.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type CalculationIterator<ResultT = any, YieldT = any> = Generator<YieldT, ResultT, any>
+export type CalculationContext<YieldT> = (effect : YieldT) => unknown
+
+//---------------------------------------------------------------------------------------------------------------------
+export type CalculationFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
+    (...args : ArgsT) => unknown
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type CalculationGenFunction<ResultT = any, YieldT = any, ArgsT extends any[] = any[]> = (...args : ArgsT) => CalculationIterator<ResultT, YieldT>
+export type CalculationIterator<ResultT, YieldT> = Generator<YieldT, ResultT, unknown>
+
+export type CalculationGenFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
+    (...args : ArgsT) => CalculationIterator<ResultT, YieldT>
+
+export type CalculationSyncFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
+    (...args : ArgsT) => ResultT
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const CalculationGen = <T extends AnyConstructor<Box>>(base : T) =>
+export interface GenericCalculation<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> extends Box<ResultT> {
+    context                 : any
 
-class CalculationGen extends base {
-    ArgsT               : any[]
-    YieldT              : any
+    calculation             : CalculationFunction<ResultT, YieldT, ArgsT>
 
-    calculationContext  : any
+    iterationResult         : IteratorResult<ResultT>
 
-    iterator            : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]>
+    isCalculationStarted ()     : boolean
+    isCalculationCompleted ()   : boolean
+
+    startCalculation (...args : ArgsT)      : IteratorResult<any>
+    continueCalculation (value : unknown)   : IteratorResult<any>
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const CalculationGen = <
+    T extends AnyConstructor<object>,
+    ResultT = any,
+    YieldT = any,
+    ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
+>(base : T) =>
+
+class CalculationGen extends base implements GenericCalculation<ResultT, YieldT, ArgsT> {
+    context             : any
+
+    iterator            : CalculationIterator<ResultT, YieldT>
 
     iterationResult     : IteratorResult<any>
 
@@ -34,35 +62,35 @@ class CalculationGen extends base {
     }
 
 
-    get value () : this[ 'ValueT' ] {
+    get value () : ResultT {
         return this.iterationResult && this.iterationResult.done ? this.iterationResult.value : undefined
     }
 
 
-    startCalculation (...args : this[ 'ArgsT' ]) : IteratorResult<any> {
-        const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.calculationContext || this, ...args)
+    hasValue () : boolean {
+        return this.value !== undefined
+    }
+
+
+    startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
+        const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.context || this, onEffect, ...args)
 
         return this.iterationResult = iterator.next()
     }
 
 
-    continueCalculation (value : this[ 'YieldT' ]) : IteratorResult<any> {
+    continueCalculation (value : unknown) : IteratorResult<any> {
         return this.iterationResult = this.iterator.next(value)
     }
 
 
-    * calculation (...args : this[ 'ArgsT' ]) : this[ 'iterator' ] {
+    * calculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : this[ 'iterator' ] {
         throw new Error("Abstract method `calculation` called")
     }
 
 
-    runSync (...args : this[ 'ArgsT' ]) : this[ 'ValueT' ] {
-        return this.runSyncWithEffect(x => x)
-    }
-
-
-    runSyncWithEffect (onEffect : (effect : this[ 'YieldT' ]) => any, ...args : this[ 'ArgsT' ]) : this[ 'ValueT' ] {
-        this.startCalculation(...args)
+    runSyncWithEffect (onEffect : CalculationContext<YieldT>, ...args : any[]) : ResultT {
+        this.startCalculation(onEffect, ...args)
 
         while (!this.isCalculationCompleted()) {
             this.continueCalculation(onEffect(this.iterationResult.value))
@@ -75,8 +103,8 @@ class CalculationGen extends base {
     }
 
 
-    async runAsyncWithEffect (onEffect : (effect : this[ 'YieldT' ]) => Promise<any>, ...args : this[ 'ArgsT' ]) : Promise<this[ 'ValueT' ]> {
-        this.startCalculation(...args)
+    async runAsyncWithEffect (onEffect : CalculationContext<YieldT>, ...args : any[]) : Promise<ResultT> {
+        this.startCalculation(onEffect, ...args)
 
         while (!this.isCalculationCompleted()) {
             this.continueCalculation(await onEffect(this.iterationResult.value))
@@ -92,17 +120,19 @@ class CalculationGen extends base {
 export type CalculationGen = Mixin<typeof CalculationGen>
 
 
-export class MinimalCalculationGen extends CalculationGen(Box(Base)) {}
+export class MinimalCalculationGen extends CalculationGen(Base) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const CalculationSync = <T extends AnyConstructor<Box>>(base : T) =>
+export const CalculationSync = <
+    T extends AnyConstructor<object>,
+    ResultT = any,
+    YieldT = any,
+    ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
+>(base : T) =>
 
-class CalculationSync extends base {
-    ArgsT               : any[]
-    YieldT              : any
-
-    calculationContext  : any
+class CalculationGen extends base implements GenericCalculation<ResultT, YieldT, ArgsT> {
+    context             : any
 
     iterationResult     : IteratorResult<any>
 
@@ -117,68 +147,54 @@ class CalculationSync extends base {
     }
 
 
-    get value () : this[ 'ValueT' ] {
+    get value () : ResultT {
         return this.iterationResult && this.iterationResult.done ? this.iterationResult.value : undefined
     }
 
 
-    startCalculation (...args : this[ 'ArgsT' ]) : IteratorResult<any> {
-        return this.iterationResult = { done : true, value : this.calculation.call(this.calculationContext || this, ...args) }
+    hasValue () : boolean {
+        return this.value !== undefined
     }
 
 
-    continueCalculation (value : this[ 'YieldT' ]) : IteratorResult<any> {
+    startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
+        return this.iterationResult = {
+            done    : true,
+            value   : this.calculation.call(this.context || this, onEffect, ...args)
+        }
+    }
+
+
+    continueCalculation (value : unknown) : IteratorResult<any> {
         throw new Error("Can not continue synchronous calculation")
     }
 
 
-    calculation (...args : this[ 'ArgsT' ]) : any {
+    calculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : any {
         throw new Error("Abstract method `calculation` called")
     }
 
 
-    // runSync (...args : this[ 'ArgsT' ]) : this[ 'ValueT' ] {
-    //     return this.runSyncWithEffect(x => x)
-    // }
-    //
-    //
-    // runSyncWithEffect (onEffect : (effect : this[ 'YieldT' ]) => any, ...args : this[ 'ArgsT' ]) : this[ 'ValueT' ] {
-    //     this.startCalculation(...args)
-    //
-    //     while (!this.isCalculationCompleted()) {
-    //         this.continueCalculation(onEffect(this.iterationResult.value))
-    //     }
-    //
-    //     // help to garbage collector
-    //     this.iterator               = undefined
-    //
-    //     return this.value
-    // }
-    //
-    //
-    // async runAsyncWithEffect (onEffect : (effect : this[ 'YieldT' ]) => Promise<any>, ...args : this[ 'ArgsT' ]) : Promise<this[ 'ValueT' ]> {
-    //     this.startCalculation(...args)
-    //
-    //     while (!this.isCalculationCompleted()) {
-    //         this.continueCalculation(await onEffect(this.iterationResult.value))
-    //     }
-    //
-    //     // help to garbage collector
-    //     this.iterator               = undefined
-    //
-    //     return this.value
-    // }
+    runSyncWithEffect (onEffect : CalculationContext<YieldT>, ...args : any[]) : ResultT {
+        this.startCalculation(onEffect, ...args)
+
+        return this.value
+    }
+
+
+    async runAsyncWithEffect (onEffect : CalculationContext<YieldT>, ...args : any[]) : Promise<ResultT> {
+        throw new Error('Can not run synchronous calculation asynchronously')
+    }
 }
 
 export type CalculationSync = Mixin<typeof CalculationSync>
 
 
-export class MinimalCalculationSync extends CalculationSync(Box(Base)) {}
+export class MinimalCalculationSync extends CalculationSync(Base) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function runSyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
-    onEffect    : (effect : YieldT) => any,
+export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> (
     func        : CalculationGenFunction<ResultT, YieldT, ArgsT>,
     args        : ArgsT,
     scope?      : any
@@ -186,16 +202,15 @@ export function runSyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
 {
     const calculation       = MinimalCalculationGen.new({
         calculation         : func,
-        calculationContext  : scope
+        context             : scope
     })
 
-    return calculation.runSyncWithEffect(onEffect, ...args)
+    return calculation.runSyncWithEffect(...args as [ CalculationContext<YieldT>, ...any[] ])
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export async function runAsyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
-    onEffect    : (effect : YieldT) => Promise<any>,
+export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> (
     func        : CalculationGenFunction<ResultT, YieldT, ArgsT>,
     args        : ArgsT,
     scope?      : any
@@ -203,8 +218,8 @@ export async function runAsyncWithEffect<ArgsT extends any[], YieldT, ResultT> (
 {
     const calculation       = MinimalCalculationGen.new({
         calculation         : func,
-        calculationContext  : scope
+        context             : scope
     })
 
-    return await calculation.runAsyncWithEffect(onEffect, ...args)
+    return await calculation.runAsyncWithEffect(...args as [ CalculationContext<YieldT>, ...any[] ])
 }

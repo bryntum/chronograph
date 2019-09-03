@@ -12,18 +12,18 @@ StartTest(t => {
         const var2                  = graph.variableId('var2', 1)
 
         const ident1                = graph.addIdentifier(CalculatedValueGen.new({
-            id              : 'ident1',
+            name            : 'ident1',
             lazy            : true,
             calculation     : function * () {
-                return (yield var1) + (yield var2)
+                return ((yield var1) as number) + ((yield var2) as number)
             }
         }))
 
         const ident2                = graph.addIdentifier(CalculatedValueGen.new({
-            id              : 'ident2',
+            name            : 'ident2',
             lazy            : true,
             calculation     : function * () {
-                return (yield ident1) + 1
+                return ((yield ident1) as number) + 1
             }
         }))
 

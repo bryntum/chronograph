@@ -1,21 +1,6 @@
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
-
-
 //---------------------------------------------------------------------------------------------------------------------
-export const Box = <T extends AnyConstructor<object>>(base : T) =>
+export interface Box<V = any> {
+    readonly value : V
 
-class Box extends base {
-    ValueT      : any
-
-
-    get value () : this[ 'ValueT' ] {
-        return this.valueOf()
-    }
-
-
-    hasValue () : boolean {
-        return this.value !== undefined
-    }
+    hasValue () : boolean
 }
-
-export type Box = Mixin<typeof Box>

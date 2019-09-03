@@ -7,44 +7,6 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('ProposedValue - persistent', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
-
-        const max       = graph.variableId('variable', 100)
-
-        const var1      = graph.addIdentifier(ImpureCalculatedValueGen.new({
-            * calculation () : CalculationIterator<number> {
-                let proposedValue : number      = yield ProposedValue(var1)
-
-                const maxValue : number         = yield max
-
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
-
-        graph.call(var1, 18)
-
-        graph.propagate()
-
-        t.is(graph.read(var1), 18, 'Correct value')
-
-        //------------------
-        graph.call(var1, 180)
-
-        graph.propagate()
-
-        t.is(graph.read(var1), 100, 'Correct value')
-
-
-        //------------------
-        graph.write(max, 1000)
-
-        graph.propagate()
-
-        t.is(graph.read(var1), 180, 'Correct value')
-    })
-
-
     t.it('ProposedOrCurrentValue - transient', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 

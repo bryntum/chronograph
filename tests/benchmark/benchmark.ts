@@ -3,11 +3,11 @@ import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 declare const window : any
 
 const bench1 = () => {
-    const graph : ChronoGraph   = window.graph = MinimalChronoGraph.new({ historyLimit : 5 })
+    const graph : ChronoGraph   = window.graph = MinimalChronoGraph.new(/*{ historyLimit : 5 }*/)
 
     // should not use too big value, because otherwise, the benchmark
     // becomes memory-bound and we want to measure CPU consumption
-    let atomNum     = 1400
+    let atomNum     = 100000
 
     let boxes       = []
 
@@ -29,7 +29,9 @@ const bench1 = () => {
                     yield boxes[1],
                     yield boxes[2],
                     yield boxes[3]
-                ]
+                ] as number[]
+
+                if (isNaN(input.reduce((sum, op) => sum + op, 0))) debugger
 
                 return input.reduce((sum, op) => sum + op, 0)
             }, i))
@@ -43,7 +45,9 @@ const bench1 = () => {
                     yield boxes[this - 2],
                     yield boxes[this - 3],
                     yield boxes[this - 4]
-                ]
+                ] as number[]
+
+                if (isNaN(input.reduce((sum, op) => sum + op, 0))) debugger
 
                 return input.reduce((sum, op) => (sum + op) % 10000, 0)
             }, i))
@@ -56,7 +60,9 @@ const bench1 = () => {
                     yield boxes[this - 2],
                     yield boxes[this - 3],
                     yield boxes[this - 4]
-                ]
+                ] as number[]
+
+                if (isNaN(input.reduce((sum, op) => sum + op, 0))) debugger
 
                 return input.reduce((sum, op) => (sum - op) % 10000, 0)
             }, i))
@@ -82,7 +88,7 @@ const bench1 = () => {
     console.time("Calc #1")
     // console.profile('Propagate #1')
 
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 1; i++) {
         graph.write(boxes[ 0 ], i)
         // graph.write(boxes[ 1 ], 2) // only few atoms changes
 

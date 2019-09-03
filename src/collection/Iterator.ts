@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------------------------------------------------
-export function* map<Element, Result> (iterator : IterableIterator<Element>, func : (el : Element, index : number) => Result) : IterableIterator<Result> {
+export function* map<Element, Result> (iterator : Iterable<Element>, func : (el : Element, index : number) => Result) : Iterable<Result> {
     let i   = 0
 
     for (const el of iterator) yield func(el, i++)
@@ -7,7 +7,7 @@ export function* map<Element, Result> (iterator : IterableIterator<Element>, fun
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function reduce<Element, Result> (iterator : IterableIterator<Element>, func : (acc : Result, el : Element, index : number) => Result, initialAcc : Result) : Result {
+export function reduce<Element, Result> (iterator : Iterable<Element>, func : (acc : Result, el : Element, index : number) => Result, initialAcc : Result) : Result {
     let i   = 0
 
     let acc : Result        = initialAcc
@@ -22,7 +22,7 @@ export function reduce<Element, Result> (iterator : IterableIterator<Element>, f
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function* uniqueOnly<Element> (iterator : IterableIterator<Element>) : IterableIterator<Element> {
+export function* uniqueOnly<Element> (iterator : Iterable<Element>) : Iterable<Element> {
     const seen      = new Set<Element>()
 
     for (const el of iterator) {
@@ -36,7 +36,7 @@ export function* uniqueOnly<Element> (iterator : IterableIterator<Element>) : It
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function* reverse<Element> (iterator : IterableIterator<Element>) : IterableIterator<Element> {
+export function* reverse<Element> (iterator : Iterable<Element>) : Iterable<Element> {
     const all       = Array.from(iterator)
 
     for (let i = all.length - 1; i >= 0; i--) yield all[ i ]
@@ -44,7 +44,7 @@ export function* reverse<Element> (iterator : IterableIterator<Element>) : Itera
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function* takeWhile<Element> (iterator : IterableIterator<Element>, func : (el : Element, index : number) => boolean) : IterableIterator<Element> {
+export function* takeWhile<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : Iterable<Element> {
     let i   = 0
 
     for (const el of iterator) {
@@ -57,7 +57,7 @@ export function* takeWhile<Element> (iterator : IterableIterator<Element>, func 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function* takeUntilIncluding<Element> (iterator : IterableIterator<Element>, func : (el : Element, index : number) => boolean) : IterableIterator<Element> {
+export function* takeUntilIncluding<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : Iterable<Element> {
     let i   = 0
 
     for (const el of iterator) {
@@ -69,7 +69,7 @@ export function* takeUntilIncluding<Element> (iterator : IterableIterator<Elemen
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function* takeUntilExcluding<Element> (iterator : IterableIterator<Element>, func : (el : Element, index : number) => boolean) : IterableIterator<Element> {
+export function* takeUntilExcluding<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : Iterable<Element> {
     let i   = 0
 
     for (const el of iterator) {
@@ -81,7 +81,7 @@ export function* takeUntilExcluding<Element> (iterator : IterableIterator<Elemen
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function* concat<Element> (...iterators : IterableIterator<Element>[]) : IterableIterator<Element> {
+export function* concat<Element> (...iterators : Iterable<Element>[]) : Iterable<Element> {
     for (let i = 0; i < iterators.length; i++) yield* iterators[ i ]
 }
 
@@ -89,15 +89,15 @@ export function* concat<Element> (...iterators : IterableIterator<Element>[]) : 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ChainedIterator<T> {
-    iterator        : IterableIterator<T>
+    iterator        : Iterable<T>
 
 
-    static new (iterator : IterableIterator<any>) {
+    static new (iterator : Iterable<any>) {
         return new ChainedIterator(iterator)
     }
 
 
-    constructor (iterator : IterableIterator<T>) {
+    constructor (iterator : Iterable<T>) {
         this.iterator       = iterator
     }
 

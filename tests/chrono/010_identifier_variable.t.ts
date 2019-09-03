@@ -5,7 +5,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Observe variable', async t => {
+    t.iit('Observe variable', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var1      = graph.variable(0)
@@ -25,7 +25,7 @@ StartTest(t => {
     })
 
 
-    t.it('Observe generator calculation result', async t => {
+    t.iit('Observe generator calculation result', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const iden1     = graph.identifier(function * () {
@@ -53,7 +53,7 @@ StartTest(t => {
     })
 
 
-    t.it('Observe variable in generator calculation', async t => {
+    t.iit('Observe variable in generator calculation', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var1      = graph.variableId('variable', 0)
@@ -101,18 +101,18 @@ StartTest(t => {
     })
 
 
-    t.it('Observe calculation in generator calculation', async t => {
+    t.iit('Observe calculation in generator calculation', async t => {
         const graph : ChronoGraph = MinimalChronoGraph.new()
 
         const var1      = graph.variable(0)
         const var2      = graph.variable(1)
 
         const iden1     = graph.identifier(function* () {
-            return (yield var1) + (yield var2)
+            return ((yield var1) as number) + ((yield var2) as number)
         })
 
         const iden2     = graph.identifier(function* () {
-            return (yield iden1) + 1
+            return ((yield iden1) as number) + 1
         })
 
 
