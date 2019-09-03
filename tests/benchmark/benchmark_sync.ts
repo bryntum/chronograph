@@ -8,7 +8,7 @@ const bench1 = () => {
 
     // should not use too big value, because otherwise, the benchmark
     // becomes memory-bound and we want to measure CPU consumption
-    let atomNum     = 1400
+    let atomNum     = 1300
 
     let boxes       = []
 
@@ -35,7 +35,7 @@ const bench1 = () => {
 
                     return input.reduce((sum, op) => sum + op, 0)
                 },
-                calculationContext : i
+                context : i
             })))
         }
         else if (i % 2 == 0) {
@@ -52,7 +52,7 @@ const bench1 = () => {
 
                     return input.reduce((sum, op) => (sum + op) % 10000, 0)
                 },
-                calculationContext : i
+                context : i
             })))
         } else {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
@@ -68,7 +68,7 @@ const bench1 = () => {
 
                     return input.reduce((sum, op) => (sum - op) % 10000, 0)
                 },
-                calculationContext : i
+                context : i
             })))
         }
     }

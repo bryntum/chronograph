@@ -7,7 +7,7 @@ const bench1 = () => {
 
     // should not use too big value, because otherwise, the benchmark
     // becomes memory-bound and we want to measure CPU consumption
-    let atomNum     = 100000
+    let atomNum     = 1400
 
     let boxes       = []
 
@@ -86,16 +86,16 @@ const bench1 = () => {
 
     //--------------------------
     console.time("Calc #1")
-    // console.profile('Propagate #1')
+    console.profile('Propagate #1')
 
-    for (let i = 0; i < 1; i++) {
+    for (let i = 0; i < 1000; i++) {
         graph.write(boxes[ 0 ], i)
         // graph.write(boxes[ 1 ], 2) // only few atoms changes
 
         graph.propagate()
     }
 
-    // console.profileEnd('Propagate #1')
+    console.profileEnd('Propagate #1')
     console.timeEnd("Calc #1")
 
     console.log("Result #1: ", graph.read(boxes[ boxes.length - 1 ]))

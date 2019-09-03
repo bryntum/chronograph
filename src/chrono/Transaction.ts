@@ -149,53 +149,35 @@ class Transaction extends base {
 
 
     read (identifier : Identifier) : any {
-        // let transition      = this.transitions.get(identifier)
-        //
-        // // `stackSync` is always empty, except when the synchronous "batch" is being processed
-        // const activeStack   = this.stackSync.length > 0 ? this.stackSync : this.stackGen
-        // const activeQuark   = activeStack[ activeStack.length - 1 ].current as Quark
-        //
-        // if (transition) {
-        //     const current   = transition.current
-        //
-        //     if (current && current !== PendingQuarkMarker && current !== LazyQuarkMarker && current.hasValue()) {
-        //         current.addEdgeTo(activeQuark, this.candidate)
-        //
-        //         return current.value
-        //     }
-        // } else {
-        //     const latest    = this.baseRevision.getLatestEntryFor(identifier)
-        //
-        //     if (latest === LazyQuarkMarker) {
-        //         transition  = getTransitionClass(identifier).new({ previous : latest, current : MinimalQuark.new({ identifier }), edgesFlow : 1e9 })
-        //
-        //         this.transitions.set(identifier, transition)
-        //     } else {
-        //         latest.addEdgeTo(activeQuark, this.candidate)
-        //
-        //         return latest.value
-        //     }
-        // }
-        //
-        // const current   = transition.current
-        //
-        // let currentTransitionQuark : Quark
-        //
-        // if (current === PendingQuarkMarker || current === LazyQuarkMarker)
-        //     currentTransitionQuark  = transition.current = MinimalQuark.new({ identifier })
-        // else
-        //     currentTransitionQuark  = current
-        //
-        // // the `currentTransitionQuark` is being used as part of the `currentQuark` calculation (is being read from it)
-        // currentTransitionQuark.addEdgeTo(activeQuark, this.candidate)
-        //
-        // this.stackSync.push(transition)
-        //
-        // this.calculateTransitionsStackSync(this.stackSync, this.onEffectSync)
-        //
-        // if (!currentTransitionQuark.hasValue) throw new Error('todo')
-        //
-        // return currentTransitionQuark.value
+        let entry           = this.entries.get(identifier)
+
+        // `stackSync` is always empty, except when the synchronous "batch" is being processed
+        const activeStack   = this.stackSync.length > 0 ? this.stackSync : this.stackGen
+        const activeEntry   = activeStack[ activeStack.length - 1 ]
+
+        if (!entry) {
+            const latestEntry       = this.baseRevision.getLatestEntryFor(identifier)
+
+            if (!latestEntry) throw new Error(`Unknown identifier ${identifier}`)
+
+            entry                   = QuarkEntry.new({ identifier, quark : latestEntry.quark, outgoing : new Set() })
+
+            this.entries.set(identifier, entry)
+        }
+
+        entry.getOutgoing().add(activeEntry)
+
+        if (entry.quark && entry.quark.hasValue()) {
+            return entry.quark.value
+        }
+
+        this.stackSync.push(entry)
+
+        this.calculateTransitionsStackSync(this.onEffectSync, this.stackSync)
+
+        if (!entry.quark || !entry.quark.hasValue()) throw new Error('Should not happen')
+
+        return entry.quark.value
     }
 
 
@@ -528,113 +510,191 @@ class Transaction extends base {
 
 
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
-    // calculateTransitionsStackSync (stack : QuarkTransition[], onEffect : SyncEffectHandler) {
-    //     const { transitions, checkout, candidate, dimension } = this
-    //
-    //     while (stack.length) {
-    //         const transition        = stack[ stack.length - 1 ]
-    //         const identifier        = transition.identifier
-    //
-    //         if (transition.edgesFlow == 0) {
-    //             transition.edgesFlow--
-    //
-    //             transitions.delete(identifier)
-    //
-    //             const previousQuark = transition.previous
-    //
-    //             if (previousQuark !== LazyQuarkMarker) {
-    //                 previousQuark.forEachOutgoingInDimension(checkout, dimension, (label : any, quark : Quark) => {
-    //                     transitions.get(quark.identifier).edgesFlow--
-    //                 })
-    //             }
-    //
-    //             stack.pop()
-    //             continue
-    //         }
-    //
-    //         let quark : Quark
-    //
-    //         if (transition.current === PendingQuarkMarker) {
-    //             quark               = transition.current = MinimalQuark.new({ identifier })
-    //         } else
-    //             quark               = transition.current as Quark
-    //
-    //         if (quark.hasValue() || transition.edgesFlow < 0) {
-    //             stack.pop()
-    //             continue
-    //         }
-    //
-    //         let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this)
-    //
-    //         do {
-    //             const value         = iterationResult.value
-    //
-    //             if (iterationResult.done) {
-    //                 quark.value                     = value
-    //
-    //                 const previousQuark             = transition.previous
-    //
-    //                 if (previousQuark && previousQuark !== LazyQuarkMarker && quark.identifier.equality(value, previousQuark.value)) {
-    //                     // in case the new value is equal to previous, we still need to consider the case
-    //                     // that the incoming dependencies of this identifier has changed (even that the value has not)
-    //                     // TODO write test for this case, need to test the identifiers, that depends on such idents (copy outgoing edges from previous?)
-    //
-    //                     previousQuark.forEachOutgoingInDimension(checkout, dimension, (label : any, quark : Quark) => {
-    //                         transitions.get(quark.identifier).edgesFlow--
-    //                     })
-    //                 }
-    //
-    //                 stack.pop()
-    //                 break
-    //             }
-    //             else if (value instanceof Identifier) {
-    //                 let requestedTransition     = transitions.get(value)
-    //
-    //                 let requestedQuark          = requestedTransition ? requestedTransition.current : checkout.get(value)
-    //
-    //                 if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
-    //
-    //                 if (requestedQuark === PendingQuarkMarker) {
-    //                     requestedQuark          = requestedTransition.current = MinimalQuark.new({ identifier : value })
-    //                 }
-    //                 else
-    //                     if (requestedQuark === LazyQuarkMarker) {
-    //                         requestedQuark      = MinimalQuark.new({ identifier : value })
-    //
-    //                         if (requestedTransition) {
-    //                             requestedTransition.current = requestedQuark
-    //                         } else {
-    //                             requestedTransition = getTransitionClass(value).new({ identifier : value, previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 })
-    //
-    //                             transitions.set(value, requestedTransition)
-    //                         }
-    //                     }
-    //
-    //                 requestedQuark.addEdgeTo(quark, candidate)
-    //
-    //                 if (!requestedTransition || requestedQuark.hasValue()) {
-    //                     iterationResult         = transition.continueCalculation(requestedQuark.value)
-    //                 }
-    //                 else if (!requestedTransition.isCalculationStarted()) {
-    //                     stack.push(requestedTransition)
-    //
-    //                     break
-    //                 }
-    //                 else {
-    //                     throw new Error("cycle")
-    //                     // cycle - the requested quark has started calculation (means it was encountered in this loop before)
-    //                     // but the calculation did not complete yet (even that requested quark is calculated before the current)
-    //                     // yield GraphCycleDetectedEffect.new()
-    //                 }
-    //             }
-    //             else {
-    //                 // bypass the unrecognized effect to the outer context
-    //                 iterationResult             = transition.continueCalculation(onEffect(value))
-    //             }
-    //
-    //         } while (true)
-    //     }
-    // }
+    calculateTransitionsStackSync (context : CalculationContext<any>, stack : QuarkEntry[]) {
+        const { entries, candidate } = this
+
+        while (stack.length) {
+            const entry             = stack[ stack.length - 1 ]
+            const identifier        = entry.identifier
+            const transition        = entry.transition
+
+            // all entries in the stack must have transition already
+            if (transition.edgesFlow == 0) {
+                transition.edgesFlow--
+
+                entries.delete(identifier)
+
+                const previousEntry = transition.previous
+
+                if (previousEntry && previousEntry.quark && previousEntry.outgoing) {
+                    for (const previousOutgoingEntry of previousEntry.outgoing) {
+                        const entry     = entries.get(previousOutgoingEntry.identifier)
+
+                        if (entry) entry.transition.edgesFlow--
+                    }
+                }
+
+                stack.pop()
+                continue
+            }
+
+            const quark : Quark   = entry.quark
+
+            // if (entry.quark === PendingQuarkMarker) {
+            //     quark               = transition.current = MinimalQuark.new({ identifier })
+            // } else
+            //     quark               = transition.current as Quark
+
+            if (quark && quark.hasValue() || transition.edgesFlow < 0) {
+                stack.pop()
+                continue
+            }
+
+            let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this)
+
+            do {
+                const value         = iterationResult.value
+
+                if (transition.isCalculationCompleted()) {
+                    entry.getQuark().value          = value
+
+                    const previousEntry             = transition.previous
+
+                    // // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
+                    // // and only if that is missing - with previous
+                    // // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
+                    // let ignoreSelfDependency : boolean = false
+
+                    if (previousEntry && previousEntry.quark && previousEntry.quark.hasValue() && previousEntry.outgoing && identifier.equality(value, previousEntry.quark.value)) {
+                        // in case the new value is equal to previous, we still need to consider the case
+                        // that the incoming dependencies of this identifier has changed (even that the value has not)
+                        // TODO write test for this case, need to test the identifiers, that depends on such idents (copy outgoing edges from previous?)
+
+                        for (const previousOutgoingEntry of previousEntry.outgoing) {
+                            const entry = entries.get(previousOutgoingEntry.identifier)
+
+                            if (entry) entry.transition.edgesFlow--
+                        }
+
+                        // ignoreSelfDependency        = true
+                    }
+
+                    // if (quark.identifier instanceof ImpureCalculatedValueGen) {
+                    //     const castedQuark = quark as ImpureCalculatedQuark
+                    //
+                    //     // TODO - if there's no 'previousQuark', compare with proposed value
+                    //     if (!previousQuark && castedQuark.usedProposed) {
+                    //         if (castedQuark.identifier.equality(value, this.candidate.getLatestProposedQuarkFor(castedQuark.identifier).value[ 0 ] )) ignoreSelfDependency = true
+                    //     }
+                    //
+                    //     if (castedQuark.usedProposed && !ignoreSelfDependency) {
+                    //         this.candidate.selfDependentQuarks.push(quark)
+                    //     }
+                    // }
+
+                    stack.pop()
+                    break
+                }
+                else if (value instanceof Identifier) {
+                    let requestedEntry : QuarkEntry             = entries.get(value)
+
+                    if (!requestedEntry) {
+                        const previousEntry = this.baseRevision.getLatestEntryFor(value)
+
+                        if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
+
+                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark, outgoing : new Set() })
+
+                        entries.set(value, requestedEntry)
+                    }
+
+                    let requestedTransition : QuarkTransition   = requestedEntry.transition
+                    let requestedQuark : Quark                  = requestedEntry.quark
+
+                    requestedEntry.getOutgoing().add(entry)
+
+                    if (!requestedTransition) {
+                        // no transition - "shadowing" entry from the previous revision
+
+                        if (!requestedQuark || !requestedQuark.hasValue()) {
+                            // lazy entry from previous revision
+                            stack.push(requestedEntry)
+
+                            requestedEntry.getTransition().edgesFlow = 1e9
+
+                            break
+                        } else {
+                            // already calculated entry from previous revision
+                            iterationResult         = transition.continueCalculation(requestedQuark.value)
+                        }
+                    }
+                    else {
+                        if (/*requestedTransition.isCalculationCompleted() || */requestedQuark && requestedQuark.hasValue()) {
+                            iterationResult         = transition.continueCalculation(requestedQuark.value)
+                        }
+                        else if (!requestedTransition.isCalculationStarted()) {
+                            stack.push(requestedEntry)
+
+                            break
+                        }
+                        else {
+                            throw new Error("cycle")
+                            // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                            // but the calculation did not complete yet (even that requested quark is calculated before the current)
+                            // yield GraphCycleDetectedEffect.new()
+                        }
+                    }
+
+                    // let requestedQuark          = requestedTransition ? requestedTransition.current : checkout.get(value)
+                    //
+                    // if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
+                    //
+                    // if (requestedQuark === PendingQuarkMarker) {
+                    //     requestedQuark          = requestedTransition.current = MinimalQuark.new({ identifier : value })
+                    // }
+                    // else
+                    //     if (requestedQuark === LazyQuarkMarker) {
+                    //         requestedQuark      = MinimalQuark.new({ identifier : value })
+                    //
+                    //         if (requestedTransition) {
+                    //             requestedTransition.current = requestedQuark
+                    //         } else {
+                    //             requestedTransition = getTransitionClass(value).new({ identifier : value, previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 })
+                    //
+                    //             transitions.set(value, requestedTransition)
+                    //         }
+                    //     }
+                    //
+                    // requestedQuark.addEdgeTo(quark, candidate)
+                    //
+                    // if (!requestedTransition || requestedQuark.hasValue()) {
+                    //     iterationResult         = transition.continueCalculation(requestedQuark.value)
+                    // }
+                    // else if (!requestedTransition.isCalculationStarted()) {
+                    //     stack.push(requestedEntry)
+                    //
+                    //     break
+                    // }
+                    // else {
+                    //     throw new Error("cycle")
+                    //     // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                    //     // but the calculation did not complete yet (even that requested quark is calculated before the current)
+                    //     // yield GraphCycleDetectedEffect.new()
+                    // }
+                }
+                // else if (value && value[ 0 ] === BuiltInEffectSymbol) {
+                //     const effectResult          = this[ value[ 1 ] ](value, transition)
+                //
+                //     iterationResult             = transition.continueCalculation(effectResult)
+                // }
+                else {
+                    // bypass the unrecognized effect to the outer context
+                    iterationResult             = transition.continueCalculation(context(value))
+                }
+
+            } while (true)
+        }
+    }
 }
 
 export type Transaction = Mixin<typeof Transaction>

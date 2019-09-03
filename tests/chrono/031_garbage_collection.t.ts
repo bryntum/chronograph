@@ -48,7 +48,7 @@ StartTest(t => {
 
         const var2      = graph.addIdentifier(CalculatedValueGen.new({
             * calculation () : CalculationIterator<number> {
-                const value : number         = yield var1
+                const value : number         = (yield var1) as number
 
                 return value + 1
             }

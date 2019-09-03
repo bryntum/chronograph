@@ -3,7 +3,7 @@ import { Box } from "./Box.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type CalculationContext<YieldT> = (effect : YieldT) => unknown
+export type CalculationContext<YieldT> = (effect : YieldT) => any
 
 //---------------------------------------------------------------------------------------------------------------------
 export type CalculationFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
@@ -11,7 +11,7 @@ export type CalculationFunction<ResultT, YieldT, ArgsT extends [ CalculationCont
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type CalculationIterator<ResultT, YieldT> = Generator<YieldT, ResultT, unknown>
+export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, ResultT, any>
 
 export type CalculationGenFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
     (...args : ArgsT) => CalculationIterator<ResultT, YieldT>
