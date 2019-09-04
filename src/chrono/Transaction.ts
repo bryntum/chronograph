@@ -57,7 +57,9 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Identifier
         if (!entry.outgoing) return
 
         for (const outgoingEntry of entry.outgoing) {
-            const identifier    = outgoingEntry.quark.identifier
+            const identifier                    = outgoingEntry.quark.identifier
+
+            if (outgoingEntry.quark !== this.baseRevision.getLatestEntryFor(identifier).quark) continue
 
             let entry : QuarkEntry              = this.visited.get(identifier)
 
