@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { MinimalRevision, Revision } from "./Revision.js"
 import { Checkout } from "./Checkout.js"
+import { MinimalRevision, Revision } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

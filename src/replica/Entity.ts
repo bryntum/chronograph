@@ -1,9 +1,7 @@
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { CalculationIterator } from "../primitives/Calculation.js"
 import { Entity as EntityData } from "../schema/Entity.js"
 import { Field, Name } from "../schema/Field.js"
 import { defineProperty } from "../util/Helpers.js"
-import { EntityQuark, EntityQuarkI, MinimalEntityQuark } from "./Identifier.js"
 
 
 const isEntityMarker      = Symbol('isEntity')

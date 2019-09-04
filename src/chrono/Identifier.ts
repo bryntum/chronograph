@@ -1,9 +1,8 @@
-import { AnyConstructor, Base, MixinConstructor } from "../class/Mixin.js"
-import { prototypeValue } from "../util/Helpers.js"
+import { Base, MixinConstructor } from "../class/Mixin.js"
 import { CalculationContext, CalculationIterator } from "../primitives/Calculation.js"
-import { MinimalQuark, Quark, QuarkConstructor } from "./Quark.js"
+import { prototypeValue } from "../util/Helpers.js"
+import { MinimalQuark, QuarkConstructor } from "./Quark.js"
 import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
-import { MinimalTransaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

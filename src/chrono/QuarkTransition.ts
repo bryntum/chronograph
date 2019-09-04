@@ -1,9 +1,7 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { VisitInfo } from "../graph/WalkDepth.js"
 import { CalculationContext, CalculationGen, CalculationSync, GenericCalculation } from "../primitives/Calculation.js"
-import { prototypeValue } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
-import { Quark, QuarkI } from "./Quark.js"
 import { QuarkEntry } from "./Revision.js"
 
 

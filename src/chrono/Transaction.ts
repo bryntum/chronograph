@@ -1,9 +1,8 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { map } from "../collection/Iterator.js"
 import { OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "./Identifier.js"
-import { MinimalQuark, Quark, TombstoneQuark } from "./Quark.js"
+import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
 import { MinimalRevision, QuarkEntry, Revision } from "./Revision.js"
 

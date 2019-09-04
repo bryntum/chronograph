@@ -4,8 +4,7 @@ import { CalculationContext, CalculationGenFunction } from "../primitives/Calcul
 import { clearLazyProperty, copyMapInto, lazyProperty } from "../util/Helpers.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { MinimalQuark } from "./Quark.js"
-import { QuarkTransition } from "./QuarkTransition.js"
-import { QuarkEntry, Revision, Scope } from "./Revision.js"
+import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
 
 
