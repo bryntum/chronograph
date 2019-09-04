@@ -4,12 +4,6 @@ import { Identifier } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export const LazyQuarkMarker    = Symbol('LazyQuarkMarker')
-// export type LazyQuarkMarker     = typeof LazyQuarkMarker
-//
-// export const PendingQuarkMarker = Symbol('PendingQuarkMarker')
-// export type PendingQuarkMarker  = typeof PendingQuarkMarker
 
 //---------------------------------------------------------------------------------------------------------------------
 export class QuarkEntry extends Base {
@@ -57,12 +51,12 @@ export type Scope = Map<Identifier, QuarkEntry>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-let ID : number = 0
+let COUNTER : number = 0
 
 export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Revision extends base {
-    name                    : string    = 'revision-' + (ID++)
+    name                    : string    = 'revision-' + (COUNTER++)
 
     previous                : Revision
 
@@ -74,113 +68,29 @@ class Revision extends base {
     selfDependentQuarks     : Quark[]   = []
 
 
-    // forEachOutgoingInDimension (entry : QuarkEntry, func : (node : QuarkEntry) => any) {
-    //     // const entry             = this.baseRevision.getLatestQuarkFor(node)
-    //     //
-    //     // // newly created identifier
-    //     // if (!entry) return
-    //     //
-    //     // visitInfo.previous      = entry
-    //     //
-    //     // for (const outgoingEntry of entry.outgoing) {
-    //     //     const identifier    = outgoingEntry.quark.identifier
-    //     //
-    //     //     let entry : QuarkEntry              = this.visited.get(identifier)
-    //     //
-    //     //     if (!entry) {
-    //     //         const transition                = identifier.transitionClass.new({ identifier, previous : null, current : null, edgesFlow : 0, visitedAt : -1, visitedTopologically : false })
-    //     //
-    //     //         entry                           = QuarkEntry.new({ quark : null, outgoing : null, transition })
-    //     //
-    //     //         this.visited.set(identifier, entry)
-    //     //     }
-    //     //
-    //     //     entry.transition.edgesFlow++
-    //     //
-    //     //     toVisit.push({ node : identifier, from : node, label : undefined })
-    //     // }
-    // }
-    //
-    //
-    // addEdgeTo (fromNode : Quark, toNode : Quark) {
-    //     // let entry               = this.scope.get(fromNode.identifier)
-    //     //
-    //     // if (!entry) {
-    //     //     entry               = new QuarkEntry()
-    //     //     this.scope.set(fromNode.identifier, entry)
-    //     //
-    //     //     entry.quark         = fromNode
-    //     // }
-    //     //
-    //     // entry.add(toNode)
-    // }
+    getLatestEntryFor (identifier : Identifier) : QuarkEntry {
+        let revision : Revision = this
 
+        while (revision) {
+            const entry = revision.scope.get(identifier)
 
-    getPreviousEntryFor (identifier : Identifier) : QuarkEntry {
-        let previous    = this.previous
+            if (entry) return entry
 
-        while (previous) {
-            const quark = previous.scope.get(identifier)
-
-            if (quark) return quark
-
-            previous    = previous.previous
+            revision    = revision.previous
         }
 
         return null
     }
 
 
-    getLatestEntryFor (identifier : Identifier) : QuarkEntry {
-        const latest        = this.scope.get(identifier)
+    * previousAxis () : Generator<Revision> {
+        let revision : Revision = this
 
-        if (latest) return latest
+        while (revision) {
+            yield revision
 
-        return this.getPreviousEntryFor(identifier)
-    }
-
-
-    * thisAndAllPrevious () : Iterable<Revision> {
-        yield this
-
-        yield* this.allPrevious()
-    }
-
-
-    * allPrevious () : Iterable<Revision> {
-        let previous    = this.previous
-
-        while (previous) {
-            yield previous
-
-            previous    = previous.previous
+            revision    = revision.previous
         }
-    }
-
-
-    // this includes Tombstones currently
-    allIdentifiersDeep () : Iterable<Identifier> {
-        const me        = this
-
-        return uniqueOnly(function * () {
-            for (const revision of me.thisAndAllPrevious()) {
-                yield* revision.scope.keys()
-            }
-        }())
-    }
-
-
-    buildLatest () : Scope {
-        const me        = this
-
-        const entries   = function * () : Iterable<[ Identifier, QuarkEntry ]> {
-
-            for (const revision of reverse(me.thisAndAllPrevious())) {
-                yield* revision.scope
-            }
-        }
-
-        return new Map(entries())
     }
 }
 

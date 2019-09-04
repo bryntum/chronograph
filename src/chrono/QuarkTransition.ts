@@ -12,7 +12,6 @@ export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculati
         identifier      : Identifier
 
         previous        : QuarkEntry
-        // current         : QuarkEntry
 
         edgesFlow       : number
 

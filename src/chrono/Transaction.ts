@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
-import { CalculationContext, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
+import { CalculationContext, runGeneratorAsyncWithEffect, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
@@ -264,26 +264,25 @@ class Transaction extends base {
     }
 
 
-    // async propagateAsync () : Promise<Revision> {
-    //     if (this.isClosed) throw new Error('Can not propagate closed revision')
-    //
-    //     this.isClosed   = true
-    //
-    //     const candidate = this.candidate
-    //
-    //     for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
-    //
-    //     await runAsyncWithEffect<[ QuarkTransition[] ], any, any>(
-    //         this.onEffectAsync,
-    //         this.calculateTransitionsStackGen,
-    //         [ this.stackGen ],
-    //         this
-    //     )
-    //
-    //     this.populateCandidateScopeFromTransitions(candidate, this.transitions)
-    //
-    //     return candidate
-    // }
+    async propagateAsync () : Promise<Revision> {
+        if (this.isClosed) throw new Error('Can not propagate closed revision')
+
+        this.isClosed   = true
+
+        const candidate = this.candidate
+
+        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+
+        await runGeneratorAsyncWithEffect<any, any, [ CalculationContext<any>, QuarkEntry[] ]>(
+            this.calculateTransitionsStackGen,
+            [ this.onEffectAsync, this.stackGen ],
+            this
+        )
+
+        this.populateCandidateScopeFromTransitions(candidate, this.entries)
+
+        return candidate
+    }
 
 
     // [ProposedValueSymbol] (effect : ProposedValueEffect, transition : QuarkTransition) {
@@ -350,11 +349,6 @@ class Transaction extends base {
             }
 
             const quark : Quark   = entry.quark
-
-            // if (entry.quark === PendingQuarkMarker) {
-            //     quark               = transition.current = MinimalQuark.new({ identifier })
-            // } else
-            //     quark               = transition.current as Quark
 
             if (quark && quark.hasValue() || transition.edgesFlow < 0) {
                 stack.pop()
@@ -455,43 +449,6 @@ class Transaction extends base {
                             // yield GraphCycleDetectedEffect.new()
                         }
                     }
-
-                    // let requestedQuark          = requestedTransition ? requestedTransition.current : checkout.get(value)
-                    //
-                    // if (!requestedQuark) throw new Error(`Unknown identifier ${value}`)
-                    //
-                    // if (requestedQuark === PendingQuarkMarker) {
-                    //     requestedQuark          = requestedTransition.current = MinimalQuark.new({ identifier : value })
-                    // }
-                    // else
-                    //     if (requestedQuark === LazyQuarkMarker) {
-                    //         requestedQuark      = MinimalQuark.new({ identifier : value })
-                    //
-                    //         if (requestedTransition) {
-                    //             requestedTransition.current = requestedQuark
-                    //         } else {
-                    //             requestedTransition = getTransitionClass(value).new({ identifier : value, previous : LazyQuarkMarker, current : requestedQuark, edgesFlow : 1e9 })
-                    //
-                    //             transitions.set(value, requestedTransition)
-                    //         }
-                    //     }
-                    //
-                    // requestedQuark.addEdgeTo(quark, candidate)
-                    //
-                    // if (!requestedTransition || requestedQuark.hasValue()) {
-                    //     iterationResult         = transition.continueCalculation(requestedQuark.value)
-                    // }
-                    // else if (!requestedTransition.isCalculationStarted()) {
-                    //     stack.push(requestedEntry)
-                    //
-                    //     break
-                    // }
-                    // else {
-                    //     throw new Error("cycle")
-                    //     // cycle - the requested quark has started calculation (means it was encountered in this loop before)
-                    //     // but the calculation did not complete yet (even that requested quark is calculated before the current)
-                    //     // yield GraphCycleDetectedEffect.new()
-                    // }
                 }
                 // else if (value && value[ 0 ] === BuiltInEffectSymbol) {
                 //     const effectResult          = this[ value[ 1 ] ](value, transition)

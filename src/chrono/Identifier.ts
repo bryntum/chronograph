@@ -45,10 +45,7 @@ export class Variable extends Identifier {
     }
 }
 
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// // export const isSyncSymbol  = Symbol('isSyncSymbol')
-
+//---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync extends Identifier {
 
     @prototypeValue(QuarkTransitionSync)
@@ -60,11 +57,8 @@ export class CalculatedValueSync extends Identifier {
 }
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// // export const isGenSymbol  = Symbol('isGenSymbol')
-
+//---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen extends Identifier {
-    // [isGenSymbol] () {}
 
     @prototypeValue(QuarkTransitionGen)
     transitionClass     : MixinConstructor<typeof QuarkTransition>

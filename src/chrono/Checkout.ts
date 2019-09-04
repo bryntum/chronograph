@@ -23,11 +23,6 @@ class Checkout extends base {
     // users supposed to opt-in for undo/redo by increasing this config
     historyLimit            : number        = 1
 
-    // Possibly we don't need the `checkout` and `buildLatest` things at all - its not clear
-    // what performance gain is provided by this caching (and building it is somewhat lengthy operation)
-    // we could just do a series of the lookups on the `previous` axis
-    // checkout                : Scope
-
 
     initialize (...args) {
         super.initialize(...args)
@@ -100,7 +95,7 @@ class Checkout extends base {
         }
 
         // in both cases break the `previous` chain
-        revision.previous       = null
+        revision.previous           = null
     }
 
 
@@ -128,7 +123,7 @@ class Checkout extends base {
     branch () : this {
         const Constructor = this.constructor as CheckoutConstructor
 
-        return Constructor.new({ baseRevision : this.baseRevision/*, checkout : new Map(this.checkout)*/ }) as this
+        return Constructor.new({ baseRevision : this.baseRevision }) as this
     }
 
 
@@ -140,9 +135,9 @@ class Checkout extends base {
 
 
     async propagateAsync () {
-        // const nextRevision      = await this.activeTransaction.propagateAsync()
-        //
-        // this.adoptNextRevision(nextRevision)
+        const nextRevision      = await this.activeTransaction.propagateAsync()
+
+        this.adoptNextRevision(nextRevision)
     }
 
 
@@ -245,23 +240,13 @@ class Checkout extends base {
     calculateLazyIdentifier (identifier : Identifier) : any {
         const quark         = MinimalQuark.new({ identifier })
 
-        // MARKER
-        // this manual preparations of the `transitions` and `stack` properties of the transaction can definitely be improved
-        // possibly the `touch` method of the transaction can be smart and accept additional arguments,
-        // like `deep` (whether to do walk depth), `forceStack` - whether to add identifier to stack even if its lazy)
-        // I don't like when method becomes that smart though
-        const transaction   = MinimalTransaction.new({ baseRevision : this.baseRevision, /*checkout : this.checkout,*/ candidate : this.baseRevision })
+        const transaction   = MinimalTransaction.new({ baseRevision : this.baseRevision, candidate : this.baseRevision })
 
         const entry         = transaction.touch(identifier)
 
         transaction.stackGen   = [ entry ]
-        // EOF MARKER
 
         const revision      = transaction.propagate()
-
-        // transaction.transitions.forEach((transition : QuarkTransition, identifier : Identifier) => {
-        //     this.checkout.set(identifier, transition.current as QuarkEntry)
-        // })
 
         return quark.value
     }
@@ -275,7 +260,6 @@ class Checkout extends base {
 
         this.baseRevision       = previous
         // TODO switch `checkout` to lazy attribute to avoid costly `buildLatest` call if user just plays with undo/redo buttons
-        // this.checkout           = previous.buildLatest()
 
         clearLazyProperty(this, 'activeTransaction')
 
@@ -291,7 +275,6 @@ class Checkout extends base {
         const nextRevision      = this.followingRevision.get(baseRevision)
 
         this.baseRevision       = nextRevision
-        // this.checkout           = copyMapInto(nextRevision.scope, this.checkout)
 
         clearLazyProperty(this, 'activeTransaction')
 
