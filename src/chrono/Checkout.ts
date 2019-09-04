@@ -27,8 +27,6 @@ class Checkout extends base {
     initialize (...args) {
         super.initialize(...args)
 
-        // if (!this.checkout) this.checkout = this.baseRevision.buildLatest()
-
         if (!this.topRevision) this.topRevision = this.baseRevision
 
         this.markAndSweep()
@@ -39,7 +37,7 @@ class Checkout extends base {
         let isBetweenTopBottom      = true
         let counter                 = 0
 
-        for (const revision of this.topRevision.thisAndAllPrevious()) {
+        for (const revision of this.topRevision.previousAxis()) {
             yield [ revision, isBetweenTopBottom || counter < this.historyLimit ]
 
             if (revision === this.baseRevision) {
@@ -101,7 +99,7 @@ class Checkout extends base {
 
     get followingRevision () : Map<Revision, Revision> {
         return lazyProperty(this, 'followingRevision', () => {
-            const revisions     = Array.from(this.topRevision.thisAndAllPrevious())
+            const revisions     = Array.from(this.topRevision.previousAxis())
 
             const entries : [ Revision, Revision ][]    = []
 
@@ -152,7 +150,6 @@ class Checkout extends base {
         }
 
         this.baseRevision       = this.topRevision = nextRevision
-        // copyMapInto(nextRevision.scope, this.checkout)
 
         this.markAndSweep()
 
@@ -209,11 +206,6 @@ class Checkout extends base {
     }
 
 
-    // call (calculatedValue : ImpureCalculatedValueGen, ...args : any[]) {
-    //     return this.activeTransaction.call(calculatedValue, args)
-    // }
-
-
     write (variable : Identifier, value : any) {
         return this.activeTransaction.write(variable, value)
     }
@@ -238,17 +230,15 @@ class Checkout extends base {
 
 
     calculateLazyIdentifier (identifier : Identifier) : any {
-        const quark         = MinimalQuark.new({ identifier })
-
         const transaction   = MinimalTransaction.new({ baseRevision : this.baseRevision, candidate : this.baseRevision })
 
         const entry         = transaction.touch(identifier)
 
         transaction.stackGen   = [ entry ]
 
-        const revision      = transaction.propagate()
+        transaction.propagate()
 
-        return quark.value
+        return entry.quark.value
     }
 
 
@@ -259,8 +249,8 @@ class Checkout extends base {
         if (!previous) return false
 
         this.baseRevision       = previous
-        // TODO switch `checkout` to lazy attribute to avoid costly `buildLatest` call if user just plays with undo/redo buttons
 
+        // note: all unpropagated "writes" are lost
         clearLazyProperty(this, 'activeTransaction')
 
         return true
@@ -276,6 +266,7 @@ class Checkout extends base {
 
         this.baseRevision       = nextRevision
 
+        // note: all unpropagated "writes" are lost
         clearLazyProperty(this, 'activeTransaction')
 
         return true

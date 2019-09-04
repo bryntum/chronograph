@@ -1,7 +1,6 @@
 import { AnyConstructor, AnyFunction } from "./Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-
 // TODO switch to decorator?
 export const instanceOf = <T extends AnyConstructor<object>>(base : AnyFunction<T>) : AnyFunction<T> => {
 
@@ -11,6 +10,7 @@ export const instanceOf = <T extends AnyConstructor<object>>(base : AnyFunction<
         return Boolean(instance && instance[ symbol ])
     }
 
+    // can also return a new function
     return new Proxy(base, {
         get : function (target, property, receiver) {
             return property === Symbol.hasInstance ? isInstanceOf : target[ property ]

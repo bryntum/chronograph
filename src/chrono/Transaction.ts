@@ -180,20 +180,6 @@ class Transaction extends base {
     }
 
 
-    // // TODO handle write to already dirty
-    // call (calculatedValue : Identifier, args : any[]) {
-    //     if (this.isClosed) throw new Error("Can not 'call' to closed transaction")
-    //
-    //     const variableQuark     = UserInputQuark.new({ identifier : calculatedValue, value : args })
-    //
-    //     this.candidate.proposed.set(calculatedValue, variableQuark)
-    //
-    //     const previousProposed  = this.baseRevision.proposed.get(calculatedValue)
-    //
-    //     previousProposed && this.walkContext.continueFrom([ previousProposed ])
-    // }
-
-
     write (identifier : Identifier, value : any) {
         if (this.isClosed) throw new Error("Can not 'write' to closed transaction")
 
@@ -434,7 +420,7 @@ class Transaction extends base {
                         }
                     }
                     else {
-                        if (/*requestedTransition.isCalculationCompleted() || */requestedQuark && requestedQuark.hasValue()) {
+                        if (requestedQuark && requestedQuark.hasValue()) {
                             iterationResult         = transition.continueCalculation(requestedQuark.value)
                         }
                         else if (!requestedTransition.isCalculationStarted()) {
