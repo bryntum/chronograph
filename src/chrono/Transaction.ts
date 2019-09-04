@@ -67,9 +67,13 @@ export class WalkForwardQuarkContext extends WalkContext<Identifier> {
         if (!entry.outgoing) return
 
         for (const outgoingEntry of entry.outgoing) {
-            const identifier    = outgoingEntry.identifier
+            const identifier        = outgoingEntry.identifier
 
-            let entry : Quark              = this.visited.get(identifier)
+            // we need to ignore the edges, pointing to "stale" quarks - quarks, that are overridden
+            // by some other, newer quarks
+            if (outgoingEntry !== this.baseRevision.getLatestEntryFor(identifier)) continue
+
+            let entry : Quark       = this.visited.get(identifier)
 
             if (!entry) {
                 entry                           = identifier.quarkClass.new({ identifier, value : undefined, outgoing : null, transition : null })

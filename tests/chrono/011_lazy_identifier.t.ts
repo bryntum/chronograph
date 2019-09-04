@@ -5,7 +5,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Lazy identifier, generators', async t => {
+    t.iit('Lazy identifier, generators', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var1                  = graph.variableId('var1', 0)
@@ -36,7 +36,7 @@ StartTest(t => {
         t.expect(spy2).toHaveBeenCalled(0)
 
         // ----------------
-        t.is(graph.read(ident1), 1, "Correct result calculated")
+        t.is(graph.read(ident1), 1, "Correct result calculated #1")
 
         t.expect(spy1).toHaveBeenCalled(1)
         t.expect(spy2).toHaveBeenCalled(0)
@@ -45,7 +45,7 @@ StartTest(t => {
         spy1.reset()
         spy2.reset()
 
-        t.is(graph.read(ident2), 2, "Correct result calculated")
+        t.is(graph.read(ident2), 2, "Correct result calculated #2")
 
         t.expect(spy1).toHaveBeenCalled(0)
         t.expect(spy2).toHaveBeenCalled(1)
@@ -54,7 +54,7 @@ StartTest(t => {
         spy1.reset()
         spy2.reset()
 
-        t.is(graph.read(ident2), 2, "Correct result calculated")
+        t.is(graph.read(ident2), 2, "Correct result calculated #3")
 
         t.expect(spy1).toHaveBeenCalled(0)
         t.expect(spy2).toHaveBeenCalled(0)
@@ -70,7 +70,7 @@ StartTest(t => {
         t.expect(spy1).toHaveBeenCalled(0)
         t.expect(spy2).toHaveBeenCalled(0)
 
-        t.is(graph.read(ident2), 3, "Correct result calculated")
+        t.is(graph.read(ident2), 3, "Correct result calculated #4")
 
         t.expect(spy1).toHaveBeenCalled(1)
         t.expect(spy2).toHaveBeenCalled(1)
