@@ -8,7 +8,7 @@ const bench1 = () => {
 
     // should not use too big value, because otherwise, the benchmark
     // becomes memory-bound and we want to measure CPU consumption
-    let atomNum     = 1300
+    let atomNum     = 1400
 
     let boxes       = []
 

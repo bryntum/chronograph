@@ -50,7 +50,7 @@ StartTest(t => {
 
         graph1.propagate()
 
-        t.throwsOk(() => graph1.read(var1), 'Can not read value from the tombstone quark')
+        t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
 
         //--------------
         t.is(graph2.read(var1), 0, 'Other branches not affected by removal')

@@ -1,66 +1,11 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier } from "./Identifier.js"
-import { Quark } from "./Quark.js"
-import { QuarkTransition } from "./QuarkTransition.js"
+import { Quark, Tombstone } from "./Quark.js"
 import { MinimalTransaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class QuarkEntry extends Base {
-    identifier          : Identifier
-
-    quark               : Quark
-    outgoing            : Set<QuarkEntry>
-    transition          : QuarkTransition
-
-    // these 2 are not used for QuarkEntry and are here only to simplify the typings for WalkContext
-    // TODO fix WalkContext typings and remove
-    visitedAt               : number
-    visitedTopologically    : boolean
-
-
-    getTransition () : QuarkTransition {
-        if (this.transition) return this.transition
-
-        return this.transition = this.identifier.transitionClass.new({
-            identifier      : this.identifier,
-
-            previous        : null,
-            edgesFlow       : 0,
-            visitedAt       : -1,
-            visitedTopologically : false
-        })
-    }
-
-
-    getQuark () : Quark {
-        if (this.quark) return this.quark
-
-        return this.quark = this.identifier.quarkClass.new({ identifier : this.identifier })
-    }
-
-
-    getOutgoing () : Set<QuarkEntry> {
-        if (this.outgoing) return this.outgoing
-
-        return this.outgoing = new Set()
-    }
-
-
-    get value () : any {
-        return this.quark ? this.quark.value : undefined
-    }
-
-
-    hasValue () : boolean {
-        return Boolean(this.quark && this.quark.hasValue())
-    }
-
-
-
-}
-
-export type Scope = Map<Identifier, QuarkEntry>
+export type Scope = Map<Identifier, Quark>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -78,10 +23,10 @@ class Revision extends base {
     reachableCount          : number    = 0
     referenceCount          : number    = 0
 
-    selfDependentQuarks     : Quark[]   = []
+    selfDependentQuarks     : Set<Quark>    = new Set()
 
 
-    getLatestEntryFor (identifier : Identifier) : QuarkEntry {
+    getLatestEntryFor (identifier : Identifier) : Quark {
         let revision : Revision = this
 
         while (revision) {
@@ -113,6 +58,8 @@ class Revision extends base {
         if (!latestEntry) throw new Error("Unknown identifier")
 
         if (latestEntry.hasValue()) {
+            if (latestEntry.value === Tombstone) throw new Error("Unknown identifier")
+
             return latestEntry.value
         } else {
             return this.calculateLazyEntry(latestEntry)
@@ -120,7 +67,7 @@ class Revision extends base {
     }
 
 
-    calculateLazyEntry (entry : QuarkEntry) : any {
+    calculateLazyEntry (entry : Quark) : any {
         const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
 
         transaction.entries.set(entry.identifier, entry)
@@ -130,7 +77,7 @@ class Revision extends base {
 
         transaction.propagate()
 
-        return entry.quark.value
+        return entry.value
     }
 
 }
