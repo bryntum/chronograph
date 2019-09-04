@@ -2,6 +2,7 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
+import { MinimalTransaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -44,6 +45,19 @@ export class QuarkEntry extends Base {
 
         return this.outgoing = new Set()
     }
+
+
+    get value () : any {
+        return this.quark ? this.quark.value : undefined
+    }
+
+
+    hasValue () : boolean {
+        return Boolean(this.quark && this.quark.hasValue())
+    }
+
+
+
 }
 
 export type Scope = Map<Identifier, QuarkEntry>
@@ -91,6 +105,34 @@ class Revision extends base {
             revision    = revision.previous
         }
     }
+
+
+    read (identifier : Identifier) : any {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        if (!latestEntry) throw new Error("Unknown identifier")
+
+        if (latestEntry.hasValue()) {
+            return latestEntry.value
+        } else {
+            return this.calculateLazyEntry(latestEntry)
+        }
+    }
+
+
+    calculateLazyEntry (entry : QuarkEntry) : any {
+        const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
+
+        transaction.entries.set(entry.identifier, entry)
+        transaction.stackGen   = [ entry ]
+
+        entry.getTransition().forceCalculation()
+
+        transaction.propagate()
+
+        return entry.quark.value
+    }
+
 }
 
 export type Revision = Mixin<typeof Revision>

@@ -220,28 +220,7 @@ class Checkout extends base {
 
 
     read (identifier : Identifier) : any {
-        const latest    = this.baseRevision.getLatestEntryFor(identifier)
-
-        if (!latest) throw new Error("Unknown identifier")
-
-        if (!latest.quark) {
-            return this.calculateLazyIdentifier(identifier)
-        } else {
-            return latest.quark.value
-        }
-    }
-
-
-    calculateLazyIdentifier (identifier : Identifier) : any {
-        const transaction   = MinimalTransaction.new({ baseRevision : this.baseRevision, candidate : this.baseRevision })
-
-        const entry         = transaction.touch(identifier)
-
-        transaction.stackGen   = [ entry ]
-
-        transaction.propagate()
-
-        return entry.quark.value
+        return this.baseRevision.read(identifier)
     }
 
 

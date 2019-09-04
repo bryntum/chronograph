@@ -292,39 +292,29 @@ class Transaction extends base {
     }
 
 
-    [ProposedOrCurrentSymbol] (effect : Effect, entry : QuarkEntry) {
-        const quark         = entry.getQuark()
+    [ProposedOrCurrentSymbol] (effect : Effect, entry : QuarkEntry) : any {
+        const quark             = entry.getQuark()
 
         quark.usedProposed      = true
 
         const proposedValue     = quark.proposedValue
 
-        if (proposedValue !== undefined) {
-            return proposedValue
+        if (proposedValue !== undefined) return proposedValue
+
+        const baseRevision      = this.baseRevision
+        const identifier        = entry.identifier
+        const latestEntry       = baseRevision.getLatestEntryFor(identifier)
+
+        if (latestEntry === entry) {
+            return baseRevision.previous ? baseRevision.previous.read(identifier) : (() => { debugger })()
         } else {
-            if (entry.transition && entry.transition.previous) {
-                const previousEntry     = entry.transition.previous
-
-                if (previousEntry.quark)
-                    return previousEntry.quark.value
-                else {
-                    const transaction       = MinimalTransaction.new({ baseRevision : this.baseRevision, candidate : this.baseRevision })
-
-                    const lazyEntry         = transaction.touch(entry.identifier)
-
-                    transaction.stackGen    = [ lazyEntry ]
-
-                    transaction.propagate()
-
-                    return lazyEntry.quark.value
-                }
-            }
+            return baseRevision.read(identifier)
         }
     }
 
 
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : QuarkEntry[]) : Generator<any, void, unknown> {
-        const { entries, candidate } = this
+        const { entries } = this
 
         while (stack.length) {
             const entry             = stack[ stack.length - 1 ]
