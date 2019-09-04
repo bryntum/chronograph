@@ -8,34 +8,36 @@ import { QuarkEntry } from "./Revision.js"
 //---------------------------------------------------------------------------------------------------------------------
 export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculation<any, any, [ CalculationContext<any> ]>>>(base : T) => {
 
-    class QuarkTransition extends base implements VisitInfo {
-        current         : QuarkEntry
-        previous        : QuarkEntry
+    class QuarkTransition extends base {
+        // current         : QuarkEntry
+        // previous        : QuarkEntry
+        //
+        // edgesFlow       : number
+        //
+        // visitedAt               : number
+        // visitedTopologically    : boolean
 
-        edgesFlow       : number
 
-        visitedAt               : number
-        visitedTopologically    : boolean
+        identifier          : Identifier
 
-
-        get identifier () : Identifier {
-            return this.current.identifier
-        }
+        // get identifier () : Identifier {
+        //     return this.current.identifier
+        // }
 
 
         get calculation () : this[ 'identifier' ][ 'calculation' ] {
-            return this.current.identifier.calculation
+            return this/*.current*/.identifier.calculation
         }
 
 
         get context () : this[ 'identifier' ][ 'context' ] {
-            return this.current.identifier.context
+            return this/*.current*/.identifier.context
         }
 
 
-        forceCalculation () {
-            this.edgesFlow  = 1e9
-        }
+        // forceCalculation () {
+        //     this.edgesFlow  = 1e9
+        // }
     }
 
     return QuarkTransition

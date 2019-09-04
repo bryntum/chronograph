@@ -1,4 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { VisitInfo } from "../graph/WalkDepth.js"
 import { Identifier } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
@@ -6,7 +7,7 @@ import { MinimalTransaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class QuarkEntry extends Set<QuarkEntry> {
+export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
 
     static new<T extends typeof QuarkEntry> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance      = new this()
@@ -22,23 +23,39 @@ export class QuarkEntry extends Set<QuarkEntry> {
     quark               : Quark
     transition          : QuarkTransition
 
-    // these 2 are not used for QuarkEntry and are here only to simplify the typings for WalkContext
-    // TODO fix WalkContext typings and remove
-    visitedAt               : number
-    visitedTopologically    : boolean
+    previous        : QuarkEntry
+
+    edgesFlow       : number = 0
+
+    visitedAt               : number = -1
+    visitedTopologically    : boolean = false
+
+
+    forceCalculation () {
+        this.edgesFlow  = 1e9
+    }
+
+
+    cleanup (includingQuark : boolean) {
+        this.previous       = undefined
+        this.transition     = undefined
+
+        if (includingQuark) this.quark = undefined
+    }
 
 
     getTransition () : QuarkTransition {
         if (this.transition) return this.transition
 
-        return this.transition = this.identifier.transitionClass.new({
-            current         : this,
-            previous        : null,
-
-            edgesFlow       : 0,
-
-            visitedAt       : -1,
-            visitedTopologically : false
+        return this.identifier.transitionClass.new({
+            identifier      : this.identifier
+            // current         : this,
+            // previous        : null,
+            //
+            // edgesFlow       : 0,
+            //
+            // visitedAt       : -1,
+            // visitedTopologically : false
         })
     }
 
@@ -136,7 +153,7 @@ class Revision extends base {
         transaction.entries.set(entry.identifier, entry)
         transaction.stackGen   = [ entry ]
 
-        entry.getTransition().forceCalculation()
+        entry.forceCalculation()
 
         transaction.propagate()
 
