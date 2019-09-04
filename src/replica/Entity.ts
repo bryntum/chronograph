@@ -170,6 +170,9 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             }
         }
 
+        /**
+         * Indicates if propagation is in progress.
+         */
         isPropagating () {
             return this.getGraph().isPropagating
         }
@@ -195,6 +198,26 @@ export const Entity = <T extends AnyConstructor<object>>(base : T) => {
             return graph && graph.resumePropagate(trigger) || Promise.resolve(PropagationResult.Completed)
         }
 
+        /**
+         * Propagates changes to the dependent atoms. For example:
+         *
+         * ```ts
+         * // double the event duration
+         * event.duration *= 2
+         * // call propagate() to do further recalculations caused by the duration change
+         * await event.propagate()
+         * console.log('Schedule updated')
+         * ```
+         *
+         * @param onEffect Function that should handle occurred propagation conflicts. For example:
+         *
+         * ```ts
+         * // trigger propagation and silently cancel changes in case of any conflict
+         * await project.propagate(() => EffectResolutionResult.Cancel);
+         * ```
+         *
+         * @param dryRun
+         */
         async propagate (onEffect? : EffectResolverFunction, dryRun : (boolean | Function) = false) : Promise<PropagationResult> {
             const graph = this.getGraph()
 
