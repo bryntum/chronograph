@@ -2,8 +2,9 @@ import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueSync } from "../../src/chrono/Identifier.js"
 
 declare const window : any
+declare const performance : any
 
-const bench1 = () => {
+const bench1 = async () => {
     const graph : ChronoGraph   = window.graph = MinimalChronoGraph.new()
 
     // should not use too big value, because otherwise, the benchmark
@@ -89,18 +90,32 @@ const bench1 = () => {
 
 
     //--------------------------
-    console.time("Calc #1")
+    // console.time("Calc #1")
     // console.profile('Propagate #1')
 
-    for (let i = 0; i < 1000; i++) {
-        graph.write(boxes[ 0 ], i)
-        // graph.write(boxes[ 1 ], 2) // only few atoms changes
 
-        graph.propagate()
+    const times = []
+
+    for (let i = 0; i < 20; i++) {
+        await new Promise(resolve => setTimeout(resolve, 10))
+
+        const start     = performance.now()
+
+        for (let i = 0; i < 200; i++) {
+            graph.write(boxes[ 0 ], i)
+            // graph.write(boxes[ 1 ], 2) // only few atoms changes
+
+            graph.propagate()
+        }
+
+        times.push(performance.now() - start)
     }
 
+
     // console.profileEnd('Propagate #1')
-    console.timeEnd("Calc #1")
+    // console.timeEnd("Calc #1")
+
+    console.log("Time #1: ", times.reduce((acc, current) => acc + current, 0) / times.length)
 
     console.log("Result #1: ", graph.read(boxes[ boxes.length - 1 ]))
 
