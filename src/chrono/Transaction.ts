@@ -1,6 +1,7 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
+import { copyMapInto } from "../util/Helpers.js"
 import { Identifier, Variable } from "./Identifier.js"
 import { Quark, Tombstone } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
@@ -15,7 +16,7 @@ export type AsyncEffectHandler = <T>(effect : YieldableValue) => Promise<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class WalkForwardQuarkContext<Label = any> extends WalkContext<Identifier, Label> {
+export class WalkForwardQuarkContext extends WalkContext<Identifier> {
     visited         : Map<Identifier, Quark>
 
     baseRevision    : Revision
@@ -138,7 +139,7 @@ class Transaction extends base {
         this.walkContext    = WalkForwardQuarkContext.new({
             baseRevision    : this.baseRevision,
             // ignore cycles when determining potentially changed atoms
-            onCycle         : (quark : Identifier, stack : WalkStep<Identifier>[]) => OnCycleAction.Resume,
+            onCycle         : (_quark : Identifier, _stack : WalkStep<Identifier>[]) => OnCycleAction.Resume,
 
             onTopologicalNode       : (identifier : Identifier) => {
                 if (!identifier.lazy) this.stackGen.push(this.entries.get(identifier))
@@ -198,6 +199,8 @@ class Transaction extends base {
 
         if (entry.hasValue()) return entry.value
 
+        entry.getTransition().forceCalculation()
+
         this.stackSync.push(entry)
 
         this.calculateTransitionsStackSync(this.onEffectSync, this.stackSync)
@@ -242,17 +245,22 @@ class Transaction extends base {
         if (candidate.scope.size === 0) {
             // in this branch we can overwrite the whole map
             candidate.scope     = entries
-
-            for (const entry of entries.values()) entry.transition = null
         } else {
             // in this branch candidate's scope already has some content - this is the case for calculating lazy values
+            copyMapInto(entries, candidate.scope)
+        }
 
-            // TODO benchmark what is faster (for small maps) - `map.forEach(entry => {})` or `for (const entry of map) {}`
-            entries.forEach((entry : Quark, identifier : Identifier) => {
-                candidate.scope.set(identifier, entry)
+        // its important to clear the transitions, since that reduces garbage collection workload
+        // (improves the `benchmark_sync` significantly)
+        // we do it manually, right after the calculation of every quark completes
+        // so strictly speaking this code is not needed, but, it definitely feels, like
+        // it improves the `benchmark_sync`
+        // perhaps, because all `entries` are accessed sequentially, they are cached in some internal CPU caches
+        for (const entry of entries.values()) {
+            // this code can be uncommented to check if we leak transitions somewhere
+            // if (entry.transition) debugger
 
-                entry.transition    = null
-            })
+            entry.transition = null
         }
     }
 
@@ -352,6 +360,8 @@ class Transaction extends base {
             }
 
             if (!transition || entry.hasValue() || transition.edgesFlow < 0) {
+                // clear the transition for Variables
+                entry.transition    = undefined
                 stack.pop()
                 continue
             }
@@ -364,12 +374,12 @@ class Transaction extends base {
                 if (transition.isCalculationCompleted()) {
                     entry.value                     = value
 
+                    const previousEntry             = transition.previous
+
                     // reduce garbage collection workload
                     transition.quark                = undefined
                     transition.previous             = undefined
                     entry.transition                = undefined
-
-                    const previousEntry             = transition.previous
 
                     // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
                     // and only if that is missing - with previous
@@ -479,6 +489,11 @@ class Transaction extends base {
 
                 const previousEntry = transition.previous
 
+                // reduce garbage collection workload
+                transition.quark    = undefined
+                transition.previous = undefined
+                entry.transition    = undefined
+
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
                         const entry     = entries.get(previousOutgoingEntry.identifier)
@@ -506,12 +521,19 @@ class Transaction extends base {
 
                     const previousEntry             = transition.previous
 
-                    // // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
-                    // // and only if that is missing - with previous
-                    // // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
-                    // let ignoreSelfDependency : boolean = false
+                    // reduce garbage collection workload
+                    transition.quark                = undefined
+                    transition.previous             = undefined
+                    entry.transition                = undefined
 
-                    if (previousEntry && previousEntry.hasValue() && previousEntry.outgoing && identifier.equality(value, previousEntry.value)) {
+                    // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
+                    // and only if that is missing - with previous
+                    // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
+                    let ignoreSelfDependency : boolean = false
+
+                    const sameAsPrevious            = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
+
+                    if (sameAsPrevious && previousEntry.outgoing) {
                         // in case the new value is equal to previous, we still need to consider the case
                         // that the incoming dependencies of this identifier has changed (even that the value has not)
                         // TODO write test for this case, need to test the identifiers, that depends on such idents (copy outgoing edges from previous?)
@@ -521,22 +543,17 @@ class Transaction extends base {
 
                             if (entry) entry.transition.edgesFlow--
                         }
-
-                        // ignoreSelfDependency        = true
                     }
 
-                    // if (quark.identifier instanceof ImpureCalculatedValueGen) {
-                    //     const castedQuark = quark as ImpureCalculatedQuark
-                    //
-                    //     // TODO - if there's no 'previousQuark', compare with proposed value
-                    //     if (!previousQuark && castedQuark.usedProposed) {
-                    //         if (castedQuark.identifier.equality(value, this.candidate.getLatestProposedQuarkFor(castedQuark.identifier).value[ 0 ] )) ignoreSelfDependency = true
-                    //     }
-                    //
-                    //     if (castedQuark.usedProposed && !ignoreSelfDependency) {
-                    //         this.candidate.selfDependentQuarks.push(quark)
-                    //     }
-                    // }
+                    if (entry.usedProposedOrCurrent) {
+                        if (entry.proposedValue !== undefined) {
+                            if (identifier.equality(value, entry.proposedValue)) ignoreSelfDependency = true
+                        } else {
+                            if (sameAsPrevious) ignoreSelfDependency = true
+                        }
+
+                        if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(entry)
+                    }
 
                     stack.pop()
                     break
