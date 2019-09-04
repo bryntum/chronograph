@@ -1,7 +1,7 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationGenFunction } from "../primitives/Calculation.js"
-import { clearLazyProperty, copyMapInto, lazyProperty } from "../util/Helpers.js"
+import { clearLazyProperty, copyMapInto, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
@@ -84,6 +84,7 @@ class Checkout extends base {
         // we can only shred revision if its being reference maximum 1 time (from the current Checkout instance)
         if (previous.referenceCount <= 1) {
             copyMapInto(revision.scope, previous.scope)
+            copySetInto(revision.selfDependentQuarks, previous.selfDependentQuarks)
 
             revision.scope          = previous.scope
 
@@ -92,7 +93,8 @@ class Checkout extends base {
         }
         // otherwise, we have to copy from it, and keep it intact
         else {
-            revision.scope          = new Map(concat(previous.scope.entries(), revision.scope.entries()))
+            revision.scope                  = new Map(concat(previous.scope, revision.scope))
+            revision.selfDependentQuarks    = new Set(concat(previous.selfDependentQuarks, revision.selfDependentQuarks))
 
             previous.referenceCount--
         }

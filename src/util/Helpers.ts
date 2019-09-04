@@ -57,3 +57,11 @@ export const copyMapInto = <K, V>(sourceMap : Map<K, V>, targetMap : Map<K, V>) 
 
     return targetMap
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const copySetInto = <V>(sourceSet : Set<V>, targetSet : Set<V>) : Set<V> => {
+    for (const value of sourceSet) targetSet.add(value)
+
+    return targetSet
+}

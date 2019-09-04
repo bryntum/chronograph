@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier } from "./Identifier.js"
-import { Quark } from "./Quark.js"
+import { Quark, Tombstone } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
 import { MinimalTransaction } from "./Transaction.js"
 
@@ -90,7 +90,7 @@ class Revision extends base {
     reachableCount          : number    = 0
     referenceCount          : number    = 0
 
-    selfDependentQuarks     : Quark[]   = []
+    selfDependentQuarks     : Set<Quark>    = new Set()
 
 
     getLatestEntryFor (identifier : Identifier) : QuarkEntry {
@@ -125,6 +125,8 @@ class Revision extends base {
         if (!latestEntry) throw new Error("Unknown identifier")
 
         if (latestEntry.hasValue()) {
+            if (latestEntry.value === Tombstone) throw new Error("Unknown identifier")
+
             return latestEntry.value
         } else {
             return this.calculateLazyEntry(latestEntry)
