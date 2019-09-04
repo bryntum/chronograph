@@ -3,9 +3,14 @@ import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationGenFunction } from "../primitives/Calculation.js"
 import { clearLazyProperty, copyMapInto, lazyProperty } from "../util/Helpers.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
-import { MinimalQuark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction } from "./Transaction.js"
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export type PropagateArguments = {
+
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -112,9 +117,7 @@ class Checkout extends base {
 
 
     get activeTransaction () : Transaction {
-        return lazyProperty(
-            this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision })
-        )
+        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision }))
     }
 
 

@@ -3,6 +3,7 @@ import { CalculationContext, CalculationIterator } from "../primitives/Calculati
 import { prototypeValue } from "../util/Helpers.js"
 import { MinimalQuark, QuarkConstructor } from "./Quark.js"
 import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
+import { YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -10,7 +11,7 @@ export class Identifier extends Base {
     name                : any
 
     ArgsT               : [ CalculationContext<this[ 'YieldT' ]> ]
-    YieldT              : any
+    YieldT              : YieldableValue
     ValueT              : any
 
     context             : any
@@ -30,7 +31,7 @@ export class Identifier extends Base {
     }
 
 
-    calculation (...args : this[ 'ArgsT' ]) : unknown {
+    calculation (context : CalculationContext<this[ 'YieldT' ]>) : unknown {
         throw new Error("Abstract method `calculation` called")
     }
 }
@@ -40,7 +41,7 @@ export class Identifier extends Base {
 export class Variable extends Identifier {
     YieldT              : never
 
-    calculation (...args : this[ 'ArgsT' ]) : unknown {
+    calculation (context : CalculationContext<this[ 'YieldT' ]>) : unknown {
         throw new Error("The 'calculation' method of the variables should not be called for optimization purposes. Instead the value should be set directly to quark")
     }
 }

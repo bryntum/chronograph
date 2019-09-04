@@ -23,14 +23,14 @@ const bench1 = () => {
         }
         else if (i <= 10) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
-                calculation : function (context) {
+                calculation : function (YIELD) {
                     count++
 
                     const input = [
-                        context.read(boxes[0]),
-                        context.read(boxes[1]),
-                        context.read(boxes[2]),
-                        context.read(boxes[3])
+                        YIELD(boxes[0]),
+                        YIELD(boxes[1]),
+                        YIELD(boxes[2]),
+                        YIELD(boxes[3])
                     ]
 
                     return input.reduce((sum, op) => sum + op, 0)
@@ -40,14 +40,14 @@ const bench1 = () => {
         }
         else if (i % 2 == 0) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
-                calculation : function (context) {
+                calculation : function (YIELD) {
                     count++
 
                     const input = [
-                        context.read(boxes[this - 1]),
-                        context.read(boxes[this - 2]),
-                        context.read(boxes[this - 3]),
-                        context.read(boxes[this - 4])
+                        YIELD(boxes[this - 1]),
+                        YIELD(boxes[this - 2]),
+                        YIELD(boxes[this - 3]),
+                        YIELD(boxes[this - 4])
                     ]
 
                     return input.reduce((sum, op) => (sum + op) % 10000, 0)
@@ -56,14 +56,14 @@ const bench1 = () => {
             })))
         } else {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
-                calculation : function (context) {
+                calculation : function (YIELD) {
                     count++
 
                     const input = [
-                        context.read(boxes[this - 1]),
-                        context.read(boxes[this - 2]),
-                        context.read(boxes[this - 3]),
-                        context.read(boxes[this - 4])
+                        YIELD(boxes[this - 1]),
+                        YIELD(boxes[this - 2]),
+                        YIELD(boxes[this - 3]),
+                        YIELD(boxes[this - 4])
                     ]
 
                     return input.reduce((sum, op) => (sum - op) % 10000, 0)

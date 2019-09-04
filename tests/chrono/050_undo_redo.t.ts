@@ -69,7 +69,7 @@ StartTest(t => {
 
         graph1.propagate()
 
-        t.throwsOk(() => graph1.read(var1), 'Can not read the value from the tombstone quark')
+        t.throwsOk(() => graph1.read(var1), 'Can not read value from the tombstone quark')
 
         //--------------
         graph1.undo()
@@ -79,7 +79,7 @@ StartTest(t => {
         //--------------
         graph1.redo()
 
-        t.throwsOk(() => graph1.read(var1), 'Can not read the value from the tombstone quark')
+        t.throwsOk(() => graph1.read(var1), 'Can not read value from the tombstone quark')
     })
 
 })

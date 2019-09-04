@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, AnyFunction, Base, Mixin } from "../class/Mixin.js"
 import { OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { Identifier, Variable } from "./Identifier.js"
@@ -10,8 +10,8 @@ import { MinimalRevision, QuarkEntry, Revision } from "./Revision.js"
 //---------------------------------------------------------------------------------------------------------------------
 export type NotPromise<T> = T extends Promise<any> ? never : T
 
-export type SyncEffectHandler = <T>(effect : any) => T & NotPromise<T>
-export type AsyncEffectHandler = <T>(effect : any) => Promise<T>
+export type SyncEffectHandler = <T>(effect : YieldableValue) => T & NotPromise<T>
+export type AsyncEffectHandler = <T>(effect : YieldableValue) => Promise<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -50,6 +50,8 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Identifier
         // newly created identifier
         if (!entry) return
 
+        // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
+        // will have the `previous` property populated
         visitInfo.previous      = entry
 
         if (!entry.outgoing) return
@@ -72,31 +74,27 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Identifier
     }
 }
 
-//---------------------------------------------------------------------------------------------------------------------
-// const BuiltInEffectSymbol           = Symbol('EffectSymbol')
-//
-// export type BuiltInEffect           = [ typeof BuiltInEffectSymbol, symbol, ...any[] ]
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const ProposedValueSymbol    = Symbol('ProposedValueSymbol')
-//
-// export type ProposedValueEffect     = [ typeof BuiltInEffectSymbol, typeof ProposedValueSymbol, ImpureCalculatedValueGen ]
-//
-// export const ProposedValue          = (impureIdentifier : ImpureCalculatedValueGen) : ProposedValueEffect => {
-//     return [ BuiltInEffectSymbol, ProposedValueSymbol, impureIdentifier ]
-// }
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const ProposedOrCurrentValueSymbol     = Symbol('ProposedOrCurrentValueSymbol')
-//
-// export type ProposedOrCurrentValueEffect      = [ typeof BuiltInEffectSymbol, typeof ProposedOrCurrentValueSymbol ]
-//
-// export const ProposedOrCurrentValue           = () : ProposedOrCurrentValueEffect => {
-//     return [ BuiltInEffectSymbol, ProposedOrCurrentValueSymbol ]
-// }
 
+//---------------------------------------------------------------------------------------------------------------------
+export class Effect extends Base {
+    handler     : symbol
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedOrCurrentSymbol    = Symbol('ProposedOrCurrentSymbol')
+
+export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurrentSymbol })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const CancelPropagationSymbol    = Symbol('CancelPropagationSymbol')
+
+export const CancelPropagation : Effect = Effect.new({ handler : CancelPropagationSymbol })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export type YieldableValue = Effect | Identifier
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -105,19 +103,24 @@ export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
 class Transaction extends base {
     baseRevision            : Revision
 
-    private isClosed        : boolean                   = false
+    private isClosed        : boolean               = false
 
     walkContext             : WalkForwardQuarkContext
 
     // we use 2 different stacks, because they support various effects
-    stackSync               : QuarkEntry[]         = []
+    stackSync               : QuarkEntry[]          = []
     // the `stackGen` supports async effects notably
-    stackGen                : QuarkEntry[]         = []
+    stackGen                : QuarkEntry[]          = []
 
     candidate               : Revision
 
-    onEffectSync            : SyncEffectHandler         = x => x
-    onEffectAsync           : AsyncEffectHandler        = async x => await x
+    onEffectSync            : SyncEffectHandler
+
+
+    // see the comment for the `onEffectSync`
+    yieldSync (effect : Effect) : any {
+        return this[ effect.handler ](effect, this.getActiveEntry())
+    }
 
 
     initialize (...args) {
@@ -134,6 +137,15 @@ class Transaction extends base {
         })
 
         if (!this.candidate) this.candidate = MinimalRevision.new({ previous : this.baseRevision })
+
+        // the `onEffectSync` should be bound to the `yieldSync` of course, and `yieldSync` should look like:
+        //     yieldSync (effect : YieldableValue) : any {
+        //         if (effect instanceof Identifier) return this.read(effect)
+        //     }
+        // however, the latter consumes more stack frames - every read goes through `yieldSync`
+        // since `read` is the most used effect anyway, we bind `onEffectSync` to `read` and
+        // instead inside of `read` delegate to `yieldSync` for non-identifiers
+        this.onEffectSync   = this.read.bind(this)
     }
 
 
@@ -147,12 +159,21 @@ class Transaction extends base {
     }
 
 
-    read (identifier : Identifier) : any {
-        let entry           = this.entries.get(identifier)
-
+    getActiveEntry () : QuarkEntry {
         // `stackSync` is always empty, except when the synchronous "batch" is being processed
         const activeStack   = this.stackSync.length > 0 ? this.stackSync : this.stackGen
-        const activeEntry   = activeStack[ activeStack.length - 1 ]
+
+        return activeStack[ activeStack.length - 1 ]
+    }
+
+
+    read (identifier : Identifier) : any {
+        // see the comment for the `onEffectSync`
+        if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
+
+        let entry           = this.entries.get(identifier)
+
+        const activeEntry   = this.getActiveEntry()
 
         if (!entry) {
             const latestEntry       = this.baseRevision.getLatestEntryFor(identifier)
@@ -261,7 +282,7 @@ class Transaction extends base {
 
         await runGeneratorAsyncWithEffect<any, any, [ CalculationContext<any>, QuarkEntry[] ]>(
             this.calculateTransitionsStackGen,
-            [ this.onEffectAsync, this.stackGen ],
+            [ this.onEffectSync, this.stackGen ],
             this
         )
 
@@ -271,39 +292,35 @@ class Transaction extends base {
     }
 
 
-    // [ProposedValueSymbol] (effect : ProposedValueEffect, transition : QuarkTransition) {
-    //     const identifier : ImpureCalculatedValueGen = effect[ 2 ]
-    //
-    //     const userInputQuark    = this.candidate.getLatestProposedQuarkFor(identifier)
-    //
-    //     if (userInputQuark) {
-    //         userInputQuark.addEdgeTo(transition.current as Quark, this.candidate)
-    //
-    //         return userInputQuark.value[ 0 ]
-    //
-    //     } else {
-    //         return undefined
-    //     }
-    // }
-    //
-    //
-    // [ProposedOrCurrentValueSymbol] (effect : ProposedOrCurrentValueEffect, transition : QuarkTransition) {
-    //     const quark                                 = transition.current as ImpureCalculatedQuark
-    //     const identifier : ImpureCalculatedValueGen = quark.identifier as ImpureCalculatedValueGen
-    //
-    //     quark.usedProposed      = true
-    //
-    //     const userInputQuark    = this.candidate.proposed.get(identifier)
-    //
-    //     if (userInputQuark) {
-    //         userInputQuark.addEdgeTo(quark, this.candidate)
-    //
-    //         return userInputQuark.value[ 0 ]
-    //
-    //     } else {
-    //         return (this.baseRevision.getLatestEntryFor(identifier) as Quark).value
-    //     }
-    // }
+    [ProposedOrCurrentSymbol] (effect : Effect, entry : QuarkEntry) {
+        const quark         = entry.getQuark()
+
+        quark.usedProposed      = true
+
+        const proposedValue     = quark.proposedValue
+
+        if (proposedValue !== undefined) {
+            return proposedValue
+        } else {
+            if (entry.transition && entry.transition.previous) {
+                const previousEntry     = entry.transition.previous
+
+                if (previousEntry.quark)
+                    return previousEntry.quark.value
+                else {
+                    const transaction       = MinimalTransaction.new({ baseRevision : this.baseRevision, candidate : this.baseRevision })
+
+                    const lazyEntry         = transaction.touch(entry.identifier)
+
+                    transaction.stackGen    = [ lazyEntry ]
+
+                    transaction.propagate()
+
+                    return lazyEntry.quark.value
+                }
+            }
+        }
+    }
 
 
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : QuarkEntry[]) : Generator<any, void, unknown> {
@@ -341,7 +358,7 @@ class Transaction extends base {
                 continue
             }
 
-            let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this)
+            let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this.onEffectSync)
 
             do {
                 const value         = iterationResult.value
@@ -436,11 +453,6 @@ class Transaction extends base {
                         }
                     }
                 }
-                // else if (value && value[ 0 ] === BuiltInEffectSymbol) {
-                //     const effectResult          = this[ value[ 1 ] ](value, transition)
-                //
-                //     iterationResult             = transition.continueCalculation(effectResult)
-                // }
                 else {
                     // bypass the unrecognized effect to the outer context
                     iterationResult             = transition.continueCalculation(yield value)
@@ -492,7 +504,7 @@ class Transaction extends base {
                 continue
             }
 
-            let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this)
+            let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this.onEffectSync)
 
             do {
                 const value         = iterationResult.value

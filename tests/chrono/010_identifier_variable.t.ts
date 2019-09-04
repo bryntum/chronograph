@@ -82,8 +82,8 @@ StartTest(t => {
         const var1      = graph.variable(0)
 
         const iden1     = graph.addIdentifier(CalculatedValueSync.new({
-            calculation : function (context) {
-                return context.read(var1)
+            calculation : function (YIELD) {
+                return YIELD(var1)
             }
         }))
 
@@ -108,11 +108,11 @@ StartTest(t => {
         const var2      = graph.variable(1)
 
         const iden1     = graph.identifier(function* () {
-            return ((yield var1) as number) + ((yield var2) as number)
+            return (yield var1) + (yield var2)
         })
 
         const iden2     = graph.identifier(function* () {
-            return ((yield iden1) as number) + 1
+            return (yield iden1) + 1
         })
 
 
@@ -144,14 +144,14 @@ StartTest(t => {
         const var2      = graph.variable(1)
 
         const iden1     = graph.addIdentifier(CalculatedValueSync.new({
-            calculation : function (context) {
-                return context.read(var1) + context.read(var2)
+            calculation : function (YIELD) {
+                return YIELD(var1) + YIELD(var2)
             }
         }))
 
         const iden2     = graph.addIdentifier(CalculatedValueSync.new({
-            calculation : function (context) {
-                return context.read(iden1) + 1
+            calculation : function (YIELD) {
+                return YIELD(iden1) + 1
             }
         }))
 
@@ -183,8 +183,8 @@ StartTest(t => {
         const var2      = graph.variable(1)
 
         const iden1     = graph.addIdentifier(CalculatedValueSync.new({
-            calculation : function (context) {
-                return context.read(var1) + context.read(var2)
+            calculation : function (YIELD) {
+                return YIELD(var1) + YIELD(var2)
             }
         }))
 
@@ -193,8 +193,8 @@ StartTest(t => {
         })
 
         const iden3     = graph.addIdentifier(CalculatedValueSync.new({
-            calculation : function (context) {
-                return context.read(iden2) + context.read(var1)
+            calculation : function (YIELD) {
+                return YIELD(iden2) + YIELD(var1)
             }
         }))
 
@@ -220,26 +220,4 @@ StartTest(t => {
         t.is(graph.read(iden2), 4, 'Correct value')
         t.is(graph.read(iden3), 5, 'Correct value')
     })
-
-//     t.it('Atom as "current / observed" identity', async t => {
-//         const var1      = Variable.new()
-//
-//         const graph : ChronoGraph   = MinimalChronoGraph.new()
-//
-//         const atom1     = graph.getAtom(var1)
-//
-//         atom1.write(0)
-//         graph.propagate()
-//
-//         t.isDeeply(graph.readSync(var1), 0, 'Correct value')
-//
-//         atom1.write(1)
-//         graph.propagate()
-//
-//         t.isDeeply(atom1.value, 1, 'Correct value')
-//         t.isDeeply(graph.read(var1), 0, 'Correct value')
-//
-//     })
-//
-
 })

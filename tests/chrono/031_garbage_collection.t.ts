@@ -1,7 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueGen, ImpureCalculatedValueGen } from "../../src/chrono/Identifier.js"
-import { MinimalQuark } from "../../src/chrono/Quark.js"
-import { ProposedOrCurrentValue } from "../../src/chrono/Transaction.js"
+import { CalculatedValueGen } from "../../src/chrono/Identifier.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
 declare const StartTest : any

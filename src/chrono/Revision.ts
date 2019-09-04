@@ -1,5 +1,4 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { reverse, uniqueOnly } from "../collection/Iterator.js"
 import { Identifier } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
@@ -14,7 +13,7 @@ export class QuarkEntry extends Base {
     transition          : QuarkTransition
 
     // these 2 are not used for QuarkEntry and are here only to simplify the typings for WalkContext
-    // TODO remove
+    // TODO fix WalkContext typings and remove
     visitedAt               : number
     visitedTopologically    : boolean
 
