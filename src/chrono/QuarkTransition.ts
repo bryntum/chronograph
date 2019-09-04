@@ -2,16 +2,15 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { VisitInfo } from "../graph/WalkDepth.js"
 import { CalculationContext, CalculationGen, CalculationSync, GenericCalculation } from "../primitives/Calculation.js"
 import { Identifier } from "./Identifier.js"
-import { Quark, QuarkI } from "./Quark.js"
+import { QuarkEntry } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculation<any, any, [ CalculationContext<any> ]>>>(base : T) => {
 
     class QuarkTransition extends base implements VisitInfo {
-        quark           : QuarkI
-
-        previous        : QuarkI
+        current         : QuarkEntry
+        previous        : QuarkEntry
 
         edgesFlow       : number
 
@@ -20,17 +19,17 @@ export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculati
 
 
         get identifier () : Identifier {
-            return this.quark.identifier
+            return this.current.identifier
         }
 
 
         get calculation () : this[ 'identifier' ][ 'calculation' ] {
-            return this.quark.identifier.calculation
+            return this.current.identifier.calculation
         }
 
 
         get context () : this[ 'identifier' ][ 'context' ] {
-            return this.quark.identifier.context
+            return this.current.identifier.context
         }
 
 

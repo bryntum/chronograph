@@ -1,6 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { MinimalQuark } from "../../src/chrono/Quark.js"
-import { QuarkTransitionGen } from "../../src/chrono/QuarkTransition.js"
 
 declare const StartTest : any
 
@@ -144,7 +143,7 @@ StartTest(t => {
         graph.propagate()
 
         // ----------------
-        const spy               = t.spyOn(QuarkTransitionGen, 'new')
+        const spy               = t.spyOn(MinimalQuark, 'new')
 
         graph.write(i1, 5)
         graph.write(i2, 5)

@@ -1,25 +1,25 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier } from "./Identifier.js"
-import { Quark, Tombstone } from "./Quark.js"
+import { Quark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
 import { MinimalTransaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class QuarkEntry extends Set<QuarkEntry> {
-    static new (cfg) : QuarkEntry {
-        const instance = new this
 
-        cfg && Object.assign(instance, cfg)
+    static new<T extends typeof QuarkEntry> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
+        const instance      = new this()
 
-        return instance
+        Object.assign(instance, props)
+
+        return instance as InstanceType<T>
     }
 
 
     identifier          : Identifier
 
     quark               : Quark
-    // outgoing            : Set<QuarkEntry>
     transition          : QuarkTransition
 
     // these 2 are not used for QuarkEntry and are here only to simplify the typings for WalkContext
@@ -32,10 +32,11 @@ export class QuarkEntry extends Set<QuarkEntry> {
         if (this.transition) return this.transition
 
         return this.transition = this.identifier.transitionClass.new({
-            identifier      : this.identifier,
-
+            current         : this,
             previous        : null,
+
             edgesFlow       : 0,
+
             visitedAt       : -1,
             visitedTopologically : false
         })
@@ -67,9 +68,6 @@ export class QuarkEntry extends Set<QuarkEntry> {
     hasValue () : boolean {
         return Boolean(this.quark && this.quark.hasValue())
     }
-
-
-
 }
 
 export type Scope = Map<Identifier, QuarkEntry>
@@ -125,8 +123,6 @@ class Revision extends base {
         if (!latestEntry) throw new Error("Unknown identifier")
 
         if (latestEntry.hasValue()) {
-            if (latestEntry.value === Tombstone) throw new Error("Unknown identifier")
-
             return latestEntry.value
         } else {
             return this.calculateLazyEntry(latestEntry)
