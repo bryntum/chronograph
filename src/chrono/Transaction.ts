@@ -21,6 +21,8 @@ export class WalkForwardQuarkContext extends WalkContext<Identifier> {
 
     baseRevision    : Revision
 
+    candidate       : Revision
+
 
     getVisitedInfo (node : Identifier) : VisitInfo {
         const entry     = this.visited.get(node)
@@ -31,7 +33,7 @@ export class WalkForwardQuarkContext extends WalkContext<Identifier> {
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, visitedTopologically : boolean, transition : QuarkTransition) : VisitInfo {
         if (!transition) {
-            const entry     = identifier.quarkClass.new({ identifier, value : undefined, outgoing : null, transition : null })
+            const entry     = identifier.quarkClass.new({ generation : this.candidate.generation, identifier, value : undefined, outgoing : null, transition : null })
 
             this.visited.set(identifier, entry)
 
@@ -72,13 +74,13 @@ export class WalkForwardQuarkContext extends WalkContext<Identifier> {
             const latest            = this.baseRevision.getLatestEntryFor(identifier)
 
             // we need to ignore the edges, pointing to "stale" quarks - quarks, that are overridden
-            // by some other, newer quarks
-            if (outgoingEntry !== latest && !latest.hasValue()) continue
+            // by some other, newer quarks, in the same time, the
+            if (outgoingEntry.generation !== latest.generation) continue
 
             let entry : Quark       = this.visited.get(identifier)
 
             if (!entry) {
-                entry                           = identifier.quarkClass.new({ identifier, value : undefined, outgoing : null, transition : null })
+                entry               = identifier.quarkClass.new({ generation : this.candidate.generation, identifier, value : undefined, outgoing : null, transition : null })
 
                 this.visited.set(identifier, entry)
             }
@@ -142,8 +144,11 @@ class Transaction extends base {
     initialize (...args) {
         super.initialize(...args)
 
+        if (!this.candidate) this.candidate = MinimalRevision.new({ previous : this.baseRevision })
+
         this.walkContext    = WalkForwardQuarkContext.new({
             baseRevision    : this.baseRevision,
+            candidate       : this.candidate,
             // ignore cycles when determining potentially changed atoms
             onCycle         : (_quark : Identifier, _stack : WalkStep<Identifier>[]) => OnCycleAction.Resume,
 
@@ -152,7 +157,7 @@ class Transaction extends base {
             }
         })
 
-        if (!this.candidate) this.candidate = MinimalRevision.new({ previous : this.baseRevision })
+
 
         // the `onEffectSync` should be bound to the `yieldSync` of course, and `yieldSync` should look like:
         //     yieldSync (effect : YieldableValue) : any {
@@ -196,7 +201,7 @@ class Transaction extends base {
 
             if (!latestEntry) throw new Error(`Unknown identifier ${identifier}`)
 
-            entry                   = identifier.quarkClass.new({ identifier, value : latestEntry.value, outgoing : new Set() })
+            entry                   = identifier.quarkClass.new({ generation : this.candidate.generation, identifier, value : latestEntry.value, outgoing : new Set() })
 
             this.entries.set(identifier, entry)
         }
@@ -427,7 +432,7 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = identifier.quarkClass.new({ identifier : value, value : previousEntry.value, outgoing : new Set() })
+                        requestedEntry      = identifier.quarkClass.new({ generation : previousEntry.generation, identifier : value, value : previousEntry.value, outgoing : new Set() })
 
                         entries.set(value, requestedEntry)
                     }
@@ -572,7 +577,7 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = identifier.quarkClass.new({ identifier : value, value : previousEntry.value, outgoing : new Set() })
+                        requestedEntry      = identifier.quarkClass.new({ generation : previousEntry.generation, identifier : value, value : previousEntry.value, outgoing : new Set() })
 
                         entries.set(value, requestedEntry)
                     }

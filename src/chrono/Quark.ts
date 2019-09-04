@@ -7,6 +7,8 @@ import { QuarkTransition } from "./QuarkTransition.js"
 export const Quark = <T extends AnyConstructor<Base>>(base : T) => {
 
     class Quark extends base {
+        generation          : number
+
         identifier          : Identifier
 
         value               : any

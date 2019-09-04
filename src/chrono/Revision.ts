@@ -14,7 +14,9 @@ let COUNTER : number = 0
 export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Revision extends base {
-    name                    : string    = 'revision-' + (COUNTER++)
+    generation              : number    = COUNTER++
+
+    name                    : string    = 'revision-' + this.generation
 
     previous                : Revision
 
