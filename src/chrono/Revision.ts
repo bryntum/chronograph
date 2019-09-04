@@ -6,11 +6,20 @@ import { MinimalTransaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class QuarkEntry extends Base {
+export class QuarkEntry extends Set<QuarkEntry> {
+    static new (cfg) : QuarkEntry {
+        const instance = new this
+
+        cfg && Object.assign(instance, cfg)
+
+        return instance
+    }
+
+
     identifier          : Identifier
 
     quark               : Quark
-    outgoing            : Set<QuarkEntry>
+    // outgoing            : Set<QuarkEntry>
     transition          : QuarkTransition
 
     // these 2 are not used for QuarkEntry and are here only to simplify the typings for WalkContext
@@ -40,10 +49,13 @@ export class QuarkEntry extends Base {
     }
 
 
-    getOutgoing () : Set<QuarkEntry> {
-        if (this.outgoing) return this.outgoing
+    get outgoing () : Set<QuarkEntry> {
+        return this
+    }
 
-        return this.outgoing = new Set()
+
+    getOutgoing () : Set<QuarkEntry> {
+        return this
     }
 
 

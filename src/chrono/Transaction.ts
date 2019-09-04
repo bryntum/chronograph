@@ -30,7 +30,7 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Identifier
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, visitedTopologically : boolean, transition : QuarkTransition) : VisitInfo {
         if (!transition) {
-            const entry     = QuarkEntry.new({ identifier, quark : null, outgoing : null, transition : null })
+            const entry     = QuarkEntry.new({ identifier, quark : null, transition : null })
 
             this.visited.set(identifier, entry)
 
@@ -62,7 +62,7 @@ export class WalkForwardQuarkContext<Label = any> extends WalkContext<Identifier
             let entry : QuarkEntry              = this.visited.get(identifier)
 
             if (!entry) {
-                entry                           = QuarkEntry.new({ identifier, quark : null, outgoing : null, transition : null })
+                entry                           = QuarkEntry.new({ identifier, quark : null, transition : null })
 
                 this.visited.set(identifier, entry)
             }
@@ -180,7 +180,7 @@ class Transaction extends base {
 
             if (!latestEntry) throw new Error(`Unknown identifier ${identifier}`)
 
-            entry                   = QuarkEntry.new({ identifier, quark : latestEntry.quark, outgoing : new Set() })
+            entry                   = QuarkEntry.new({ identifier, quark : latestEntry.quark })
 
             this.entries.set(identifier, entry)
         }
@@ -401,7 +401,7 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark, outgoing : new Set() })
+                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark })
 
                         entries.set(value, requestedEntry)
                     }
@@ -547,7 +547,7 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark, outgoing : new Set() })
+                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark })
 
                         entries.set(value, requestedEntry)
                     }
