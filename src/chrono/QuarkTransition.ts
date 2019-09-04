@@ -27,6 +27,11 @@ export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculati
         get context () : this[ 'identifier' ][ 'context' ] {
             return this.identifier.context
         }
+
+
+        forceCalculation () {
+            this.edgesFlow  = 1e9
+        }
     }
 
     return QuarkTransition

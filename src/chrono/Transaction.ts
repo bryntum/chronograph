@@ -197,7 +197,7 @@ class Transaction extends base {
 
         const entry                 = this.entries.get(identifier)
 
-        entry.getTransition().edgesFlow  = 1e9
+        entry.getTransition().forceCalculation()
 
         return entry
     }
@@ -411,7 +411,7 @@ class Transaction extends base {
                             // lazy entry from previous revision
                             stack.push(requestedEntry)
 
-                            requestedEntry.getTransition().edgesFlow = 1e9
+                            requestedEntry.getTransition().forceCalculation()
 
                             break
                         } else {
@@ -562,7 +562,7 @@ class Transaction extends base {
                             // lazy entry from previous revision
                             stack.push(requestedEntry)
 
-                            requestedEntry.getTransition().edgesFlow = 1e9
+                            requestedEntry.getTransition().forceCalculation()
 
                             break
                         } else {
