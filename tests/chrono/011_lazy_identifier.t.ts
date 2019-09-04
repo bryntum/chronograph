@@ -5,7 +5,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.iit('Lazy identifier, generators', async t => {
+    t.it('Lazy identifier, generators', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var1                  = graph.variableId('var1', 0)
@@ -146,5 +146,53 @@ StartTest(t => {
         t.expect(spy1).toHaveBeenCalled(1)
         t.expect(spy2).toHaveBeenCalled(1)
     })
+
+
+    t.iit('Should not use stale deep history', async t => {
+        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1            = graph1.variableId('i1', 0)
+        const i2            = graph1.variableId('i2', 1)
+        const dispatcher    = graph1.variableId('dispatcher', i1)
+
+        const c1            = graph1.addIdentifier(CalculatedValueGen.new({
+            name            : 'c1',
+            lazy            : true,
+            calculation     : function * () {
+                return (yield (yield dispatcher)) + 1
+            }
+        }))
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
+
+        // ----------------
+        const c1Spy         = t.spyOn(c1, 'calculation')
+
+        graph1.write(dispatcher, i2)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Original branch not affected")
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+
+        // ----------------
+        c1Spy.reset()
+
+        graph1.write(i1, 10)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, i2, 2 ], "Correct result calculated")
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+    })
+
 
 })
