@@ -88,13 +88,9 @@ export function* concat<Element> (...iterators : Iterable<Element>[]) : Iterable
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ChainedIterator<T> {
+// just a chained syntax sugar class
+export class ChainedIteratorClass<T> {
     iterator        : Iterable<T>
-
-
-    static new (iterator : Iterable<any>) {
-        return new ChainedIterator(iterator)
-    }
 
 
     constructor (iterator : Iterable<T>) {
@@ -102,8 +98,8 @@ export class ChainedIterator<T> {
     }
 
 
-    map<Result> (func : (el : T, index : number) => Result) : ChainedIterator<Result> {
-        return new ChainedIterator(map(this.iterator, func))
+    map<Result> (func : (el : T, index : number) => Result) : ChainedIteratorClass<Result> {
+        return new ChainedIteratorClass(map(this.iterator, func))
     }
 
 
@@ -112,13 +108,13 @@ export class ChainedIterator<T> {
     }
 
 
-    uniqueOnly () : ChainedIterator<T> {
-        return new ChainedIterator(uniqueOnly(this.iterator))
+    uniqueOnly () : ChainedIteratorClass<T> {
+        return new ChainedIteratorClass(uniqueOnly(this.iterator))
     }
 
 
-    takeWhile (func : (el : T, index : number) => boolean) : ChainedIterator<T> {
-        return new ChainedIterator(takeWhile(this.iterator, func))
+    takeWhile (func : (el : T, index : number) => boolean) : ChainedIteratorClass<T> {
+        return new ChainedIteratorClass(takeWhile(this.iterator, func))
     }
 
 
@@ -126,3 +122,5 @@ export class ChainedIterator<T> {
         yield* this.iterator
     }
 }
+
+export const ChainedIterator = <T>(iterator : Iterable<T>) => new ChainedIteratorClass<T>(iterator)

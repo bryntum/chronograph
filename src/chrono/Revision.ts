@@ -20,7 +20,7 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
 
     identifier          : Identifier
 
-    quark               : Quark
+    quark               : InstanceType<this[ 'identifier' ][ 'quarkClass']>
     transition          : QuarkTransition
 
     previous        : QuarkEntry
@@ -63,7 +63,7 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
     getQuark () : Quark {
         if (this.quark) return this.quark
 
-        return this.quark = this.identifier.quarkClass.new({ identifier : this.identifier })
+        return this.quark = this.identifier.quarkClass.new({ identifier : this.identifier }) as InstanceType<this[ 'identifier' ][ 'quarkClass']>
     }
 
 

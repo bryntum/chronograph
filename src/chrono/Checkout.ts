@@ -23,10 +23,10 @@ class Checkout extends base {
     // the revision to follow to, when performing `redo` operation
     topRevision             : Revision
 
-    // how many revisions (including the `baseRevision`) to keep in memory for undo operation
-    // minimal value is 1 (the `baseRevision` itself only, no undo/redo)
+    // how many revisions (except the `baseRevision`) to keep in memory for undo operation
+    // minimal value is 0 (the `baseRevision` only, no undo/redo)
     // users supposed to opt-in for undo/redo by increasing this config
-    historyLimit            : number        = 1
+    historyLimit            : number        = 0
 
 
     initialize (...args) {
@@ -47,7 +47,6 @@ class Checkout extends base {
 
             if (revision === this.baseRevision) {
                 isBetweenTopBottom = false
-                counter++
             } else {
                 if (!isBetweenTopBottom) counter++
             }
@@ -172,8 +171,10 @@ class Checkout extends base {
     }
 
 
-    addIdentifier<T extends Identifier> (identifier : T) : T {
+    addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
         this.touch(identifier)
+
+        if (proposedValue !== undefined) identifier.write(this, proposedValue, ...args)
 
         return identifier
     }
@@ -202,6 +203,11 @@ class Checkout extends base {
     }
 
 
+    hasIdentifier (identifier : Identifier) : boolean {
+        return Boolean(this.baseRevision.getLatestEntryFor(identifier))
+    }
+
+
     identifierId (name : any, calculation : CalculationGenFunction<any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
         const identifier    = CalculatedValueGen.new({ calculation, context, name })
 
@@ -211,18 +217,25 @@ class Checkout extends base {
     }
 
 
-    write (variable : Identifier, value : any) {
-        return this.activeTransaction.write(variable, value)
+    write (identifier : Identifier, proposedValue : any, ...args : any[]) {
+        identifier.write(this, proposedValue, ...args)
     }
 
 
     touch (identifier : Identifier) {
-        return this.activeTransaction.touch(identifier)
+        this.activeTransaction.touch(identifier)
     }
 
 
     read (identifier : Identifier) : any {
         return this.baseRevision.read(identifier)
+    }
+
+
+    acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
+        if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
+
+        return this.activeTransaction.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
     }
 
 

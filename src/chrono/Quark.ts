@@ -3,6 +3,7 @@ import { prototypeValue } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export const Quark = <T extends AnyConstructor<Base>>(base : T) => {
 
     class Quark extends base {
@@ -13,6 +14,7 @@ export const Quark = <T extends AnyConstructor<Base>>(base : T) => {
 
         @prototypeValue(false)
         usedProposedOrCurrent : boolean
+
 
         hasValue () : boolean {
             return this.value !== undefined

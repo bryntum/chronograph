@@ -1,6 +1,14 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Box } from "./Box.js"
 
+// export type Context = typeof ContextSync | typeof ContextGen
+// export const ContextSync = Symbol('SyncContext')
+// export const ContextGen = Symbol('SyncContext')
+//
+// export type Contexts = {
+//     [ContextGen] : boolean,
+//     [ContextSync] : string
+// }
 
 //---------------------------------------------------------------------------------------------------------------------
 export type CalculationContext<YieldT> = (effect : YieldT) => any

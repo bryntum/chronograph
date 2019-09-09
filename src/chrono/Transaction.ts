@@ -92,7 +92,7 @@ export class Effect extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ProposedOrCurrentSymbol    = Symbol('ProposedOrCurrentSymbol')
+const ProposedOrCurrentSymbol    = Symbol('ProposedOrCurrentSymbol')
 
 export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurrentSymbol })
 
@@ -113,7 +113,7 @@ export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
 class Transaction extends base {
     baseRevision            : Revision
 
-    private isClosed        : boolean               = false
+    isClosed                : boolean               = false
 
     walkContext             : WalkForwardQuarkContext
 
@@ -125,12 +125,6 @@ class Transaction extends base {
     candidate               : Revision
 
     onEffectSync            : SyncEffectHandler
-
-
-    // see the comment for the `onEffectSync`
-    yieldSync (effect : Effect) : any {
-        return this[ effect.handler ](effect, this.getActiveEntry())
-    }
 
 
     initialize (...args) {
@@ -177,6 +171,18 @@ class Transaction extends base {
     }
 
 
+    // async yieldAsync (effect : Effect) : Promise<any> {
+    //     return this[ effect.handler ](effect, this.getActiveEntry())
+    // }
+
+
+    // see the comment for the `onEffectSync`
+    yieldSync (effect : Effect) : any {
+        return this[ effect.handler ](effect, this.getActiveEntry())
+    }
+
+
+    // TODO merge into `yieldSync` ??
     read (identifier : Identifier) : any {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
@@ -211,16 +217,20 @@ class Transaction extends base {
     }
 
 
-    write (identifier : Identifier, value : any) {
-        if (this.isClosed) throw new Error("Can not 'write' to closed transaction")
-
-        const entry                 = this.touch(identifier)
-
-        const quarkClass            = identifier.quarkClass
-
-        entry.quark                 =
-            identifier instanceof Variable ? quarkClass.new({ identifier : identifier, value : value }) : quarkClass.new({ identifier : identifier, proposedValue : value })
-    }
+    // write (identifier : Identifier, value : any) {
+    //     if (this.isClosed) throw new Error("Can not 'write' to closed transaction")
+    //
+    //     identifier.write(this, value)
+    //
+    //     const entry                 = this.touch(identifier)
+    //
+    //     const quark                 = entry.getQuark()
+    //
+    //     if (identifier instanceof Variable)
+    //         quark.value             = value
+    //     else
+    //         quark.proposedValue     = value
+    // }
 
 
     touch (identifier : Identifier) : QuarkEntry {
@@ -269,8 +279,11 @@ class Transaction extends base {
             //     entry.transition    = null
             // })
 
-            copyMapInto(entries, candidate.scope)
-            for (const entry of entries.values()) entry.transition = null
+            for (const [ identifier, entry ] of entries) {
+                candidate.scope.set(identifier, entry)
+
+                entry.transition = null
+            }
         }
     }
 
@@ -317,8 +330,8 @@ class Transaction extends base {
     }
 
 
-    [ProposedOrCurrentSymbol] (effect : Effect, entry : QuarkEntry) : any {
-        const quark             = entry.getQuark()
+    [ProposedOrCurrentSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
+        const quark             = activeEntry.getQuark()
 
         quark.usedProposedOrCurrent      = true
 
@@ -327,13 +340,13 @@ class Transaction extends base {
         if (proposedValue !== undefined) return proposedValue
 
         const baseRevision      = this.baseRevision
-        const identifier        = entry.identifier
+        const identifier        = activeEntry.identifier
         const latestEntry       = baseRevision.getLatestEntryFor(identifier)
 
-        if (latestEntry === entry) {
+        if (latestEntry === activeEntry) {
             return baseRevision.previous ? baseRevision.previous.read(identifier) : undefined
         } else {
-            return baseRevision.read(identifier)
+            return latestEntry ? baseRevision.read(identifier) : null
         }
     }
 

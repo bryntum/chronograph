@@ -7,8 +7,8 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it('Should garbage collect unneeded revisions', async t => {
-        // explicitly set that we only keep one revision in memory - the most latest one
-        const graph : ChronoGraph       = MinimalChronoGraph.new({ historyLimit : 1 })
+        // explicitly set that we don't track history
+        const graph : ChronoGraph       = MinimalChronoGraph.new({ historyLimit : 0 })
 
         const box1      = graph.variable(0)
         const box2      = graph.variable(0)
@@ -38,7 +38,8 @@ StartTest(t => {
 
 
     t.it('Garbage collecting should keep data dependencies', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        // explicitly set that we don't track history
+        const graph : ChronoGraph   = MinimalChronoGraph.new({ historyLimit : 0 })
 
         const var0      = graph.variableId('var0', 1)
 
