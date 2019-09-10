@@ -46,14 +46,6 @@ project.start(
             'chrono-userland/032_cycle_dispatcher.t.js'
         ]
     },
-    {
-        group       : 'Benchmarks',
-
-        items       : [
-            'benchmark/010_graph_population.bench.js',
-            'benchmark/020_performance.bench.js'
-        ]
-    },
     // {
     //     group       : 'replica',
     //

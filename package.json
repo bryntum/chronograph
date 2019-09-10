@@ -27,6 +27,7 @@
     "siesta-lite": "^5.2.2",
     "tslint": "^5.16.0",
     "regenerator-runtime": "^0.13.1",
-    "core-js": "^2.6.5"
+    "core-js": "^2.6.5",
+    "mobx": "^5.13.0"
   }
 }

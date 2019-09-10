@@ -1,9 +1,17 @@
 <!DOCTYPE HTML>
 <html>
-    <head>
-        <script type="module" src="benchmark_sync.js"></script>
-    </head>
+<head>
+<script type="module">
 
-    <body>
-    </body>
+    import {benchmarkDeepChanges, benchmarkShallowChanges, deepGraphSync} from "./data.js"
+
+    // benchmarkDeepChanges(deepGraphSync, 1300)
+    benchmarkShallowChanges(deepGraphSync, 1300)
+
+
+</script>
+</head>
+
+<body>
+</body>
 </html>
