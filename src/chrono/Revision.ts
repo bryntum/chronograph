@@ -47,7 +47,7 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
     getTransition () : QuarkTransition {
         if (this.transition) return this.transition
 
-        return this.identifier.transitionClass.new({
+        return this.transition = this.identifier.transitionClass.new({
             identifier      : this.identifier
             // current         : this,
             // previous        : null,

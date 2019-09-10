@@ -11,8 +11,8 @@ import { MinimalRevision, QuarkEntry, Revision } from "./Revision.js"
 //---------------------------------------------------------------------------------------------------------------------
 export type NotPromise<T> = T extends Promise<any> ? never : T
 
-export type SyncEffectHandler = <T>(effect : YieldableValue) => T & NotPromise<T>
-export type AsyncEffectHandler = <T>(effect : YieldableValue) => Promise<T>
+export type SyncEffectHandler = <T extends any>(effect : YieldableValue) => T & NotPromise<T>
+export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Promise<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -400,11 +400,11 @@ class Transaction extends base {
                 const value         = iterationResult.value
 
                 if (transition.isCalculationCompleted()) {
-                    const quark     = entry.getQuark()
+                    const quark         = entry.getQuark()
 
-                    quark.value          = value
+                    quark.value         = value
 
-                    const previousEntry             = entry.previous
+                    const previousEntry = entry.previous
 
                     // reduce garbage collection workload
                     entry.cleanup(false)
@@ -414,7 +414,7 @@ class Transaction extends base {
                     // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
                     let ignoreSelfDependency : boolean = false
 
-                    const sameAsPrevious            = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
+                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
 
                     if (sameAsPrevious && previousEntry.outgoing) {
                         // in case the new value is equal to previous, we still need to consider the case
@@ -499,8 +499,6 @@ class Transaction extends base {
                 }
 
             } while (true)
-
-            if (!transition.isCalculationCompleted()) entry.transition = transition
         }
     }
 
@@ -650,8 +648,6 @@ class Transaction extends base {
                 }
 
             } while (true)
-
-            if (!transition.isCalculationCompleted()) entry.transition = transition
         }
     }
 }
