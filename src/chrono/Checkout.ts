@@ -136,6 +136,13 @@ class Checkout extends base {
     }
 
 
+    propagateSync () {
+        const nextRevision      = this.activeTransaction.propagateSync()
+
+        this.adoptNextRevision(nextRevision)
+    }
+
+
     async propagateAsync () {
         const nextRevision      = await this.activeTransaction.propagateAsync()
 

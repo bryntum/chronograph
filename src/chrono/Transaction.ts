@@ -313,6 +313,24 @@ class Transaction extends base {
     }
 
 
+    // propagation that does not use generators at all
+    propagateSync () : Revision {
+        if (this.isClosed) throw new Error('Can not propagate closed revision')
+
+        this.isClosed   = true
+
+        const candidate = this.candidate
+
+        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+
+        this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen)
+
+        this.populateCandidateScopeFromTransitions(candidate, this.entries)
+
+        return candidate
+    }
+
+
     async propagateAsync () : Promise<Revision> {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 

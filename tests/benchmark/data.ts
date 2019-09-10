@@ -227,7 +227,7 @@ export const benchmarkDeepChanges = async (genFunction : (num : number) => Graph
         for (let j = 0; j < repeatsPerIteration; j++) {
             graph.write(boxes[ 0 ], j)
 
-            graph.propagate()
+            graph.propagateSync()
         }
 
         times.push(performance.now() - start)
