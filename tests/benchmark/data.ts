@@ -7,6 +7,9 @@ declare const performance : any
 
 type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[] }
 
+const iterationsCount : number      = 20
+const repeatsPerIteration : number  = 200
+
 export let count : number = 0
 
 export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult => {
@@ -216,13 +219,13 @@ export const benchmarkDeepChanges = async (genFunction : (num : number) => Graph
 
     const times = []
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < iterationsCount; i++) {
         await new Promise(resolve => setTimeout(resolve, 10))
 
         const start     = performance.now()
 
-        for (let i = 0; i < 200; i++) {
-            graph.write(boxes[ 0 ], i)
+        for (let j = 0; j < repeatsPerIteration; j++) {
+            graph.write(boxes[ 0 ], j)
 
             graph.propagate()
         }
@@ -255,7 +258,7 @@ export const benchmarkMobxDeepChanges = async (atomNum : number = 500000) => {
 
     const times = []
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < iterationsCount; i++) {
         await new Promise(resolve => setTimeout(resolve, 10))
 
         const start     = performance.now()
@@ -293,14 +296,14 @@ export const benchmarkMobxShallowChanges = async (atomNum : number = 500000) => 
 
     const times = []
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < iterationsCount; i++) {
         await new Promise(resolve => setTimeout(resolve, 10))
 
         const start     = performance.now()
 
-        for (let i = 0; i < 200; i++) {
-            boxes[0].set(i)
-            boxes[1].set(15 - i)
+        for (let j = 0; j < repeatsPerIteration; j++) {
+            boxes[0].set(j)
+            boxes[1].set(15 - j)
             boxes[ boxes.length - 1 ].get()
         }
 
@@ -334,14 +337,14 @@ export const benchmarkShallowChanges = async (genFunction : (num : number) => Gr
 
     const times = []
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < iterationsCount; i++) {
         await new Promise(resolve => setTimeout(resolve, 10))
 
         const start     = performance.now()
 
-        for (let i = 0; i < 200; i++) {
-            graph.write(boxes[ 0 ], i)
-            graph.write(boxes[ 1 ], 15 - i)
+        for (let j = 0; j < repeatsPerIteration; j++) {
+            graph.write(boxes[ 0 ], j)
+            graph.write(boxes[ 1 ], 15 - j)
 
             graph.propagate()
         }
