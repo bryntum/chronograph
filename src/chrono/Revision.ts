@@ -25,8 +25,8 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
 
     previous        : QuarkEntry
 
-    edgesFlow       : number = 0
-
+    // placing these initial values to the prototype makes the `benchmark_sync` slower - from ~630ms to ~830
+    edgesFlow               : number = 0
     visitedAt               : number = -1
     visitedTopologically    : boolean = false
 
