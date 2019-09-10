@@ -141,7 +141,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
             boxes.push(observable.box(1))
         }
         else if (i <= 10) {
-            boxes.push(computed(() => {
+            boxes.push(computed(function () {
                 count++
 
                 const input = [
@@ -263,9 +263,11 @@ export const benchmarkMobxDeepChanges = async (atomNum : number = 500000) => {
 
         const start     = performance.now()
 
-        for (let i = 0; i < 200; i++) {
-            boxes[0].set(i)
-            boxes[ boxes.length - 1 ].get()
+        for (let j = 0; j < repeatsPerIteration; j++) {
+            boxes[ 0 ].set(j)
+
+            // seems mobx does not have concept of eager computation, need to manually read all atoms
+            for (let k = 0; k < boxes.length; k++) boxes[ k ].get()
         }
 
         times.push(performance.now() - start)
@@ -304,7 +306,9 @@ export const benchmarkMobxShallowChanges = async (atomNum : number = 500000) => 
         for (let j = 0; j < repeatsPerIteration; j++) {
             boxes[0].set(j)
             boxes[1].set(15 - j)
-            boxes[ boxes.length - 1 ].get()
+
+            // seems mobx does not have concept of eager computation, need to manually read all atoms
+            for (let k = 0; k < boxes.length; k++) boxes[ k ].get()
         }
 
         times.push(performance.now() - start)
