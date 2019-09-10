@@ -32,6 +32,7 @@ project.start(
             'chrono/010_identifier_variable.t.js',
             'chrono/011_lazy_identifier.t.js',
             'chrono/012_impure_calculated_value.t.js',
+            'chrono/013_sync_calculation.t.js',
             'chrono/020_graph_branching.t.js',
             'chrono/030_propagation.t.js',
             'chrono/031_garbage_collection.t.js',
