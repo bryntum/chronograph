@@ -1,8 +1,12 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
-import { CalculationContext, runGeneratorAsyncWithEffect, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
-import { copyMapInto } from "../util/Helpers.js"
-import { Identifier, Variable } from "./Identifier.js"
+import {
+    CalculationContext,
+    runGeneratorAsyncWithEffect,
+    runGeneratorSyncWithEffect,
+    SynchronousCalculationStarted
+} from "../primitives/Calculation.js"
+import { Identifier } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
 import { MinimalRevision, QuarkEntry, Revision } from "./Revision.js"
@@ -211,7 +215,7 @@ class Transaction extends base {
 
         this.calculateTransitionsStackSync(this.onEffectSync, this.stackSync)
 
-        if (!entry.hasValue()) throw new Error('Should not happen')
+        if (!entry.hasValue()) throw new Error('Cycle during synchronous computation')
 
         return entry.value
     }
@@ -493,6 +497,10 @@ class Transaction extends base {
                         }
                     }
                 }
+                else if (value === SynchronousCalculationStarted) {
+                    stack.pop()
+                    break
+                }
                 else {
                     // bypass the unrecognized effect to the outer context
                     iterationResult             = transition.continueCalculation(yield value)
@@ -641,6 +649,10 @@ class Transaction extends base {
                             // yield GraphCycleDetectedEffect.new()
                         }
                     }
+                }
+                else if (value === SynchronousCalculationStarted) {
+                    stack.pop()
+                    break
                 }
                 else {
                     // bypass the unrecognized effect to the outer context

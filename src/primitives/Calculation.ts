@@ -132,6 +132,8 @@ export class MinimalCalculationGen extends CalculationGen(Base) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStarted')
+
 export const CalculationSync = <
     T extends AnyConstructor<object>,
     ResultT = any,
@@ -166,6 +168,8 @@ class CalculationGen extends base implements GenericCalculation<ResultT, YieldT,
 
 
     startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
+        this.iterationResult = { value : SynchronousCalculationStarted }
+
         return this.iterationResult = {
             done    : true,
             value   : this.calculation.call(this.context || this, onEffect, ...args)
