@@ -371,6 +371,8 @@ class Transaction extends base {
 
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
+                        if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+
                         const entry     = entries.get(previousOutgoingEntry.identifier)
 
                         if (entry) entry.edgesFlow--
@@ -420,6 +422,8 @@ class Transaction extends base {
                         // TODO write test for this case, need to test the identifiers, that depends on such idents (copy outgoing edges from previous?)
 
                         for (const previousOutgoingEntry of previousEntry.outgoing) {
+                            if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+
                             const entry = entries.get(previousOutgoingEntry.identifier)
 
                             if (entry) entry.edgesFlow--
