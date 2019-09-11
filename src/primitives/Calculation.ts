@@ -21,10 +21,10 @@ export type CalculationFunction<ResultT, YieldT, ArgsT extends [ CalculationCont
 //---------------------------------------------------------------------------------------------------------------------
 export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, ResultT, any>
 
-export type CalculationGenFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
+export type CalculationFunctionGen<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
     (...args : ArgsT) => CalculationIterator<ResultT, YieldT>
 
-export type CalculationSyncFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
+export type CalculationFunctionSync<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
     (...args : ArgsT) => ResultT
 
 
@@ -207,7 +207,7 @@ export class MinimalCalculationSync extends CalculationSync(Base) {}
 
 //---------------------------------------------------------------------------------------------------------------------
 export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> (
-    func        : CalculationGenFunction<ResultT, YieldT, ArgsT>,
+    func        : CalculationFunctionGen<ResultT, YieldT, ArgsT>,
     args        : ArgsT,
     scope?      : any
 ) : ResultT
@@ -223,7 +223,7 @@ export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends [ Calc
 
 //---------------------------------------------------------------------------------------------------------------------
 export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> (
-    func        : CalculationGenFunction<ResultT, YieldT, ArgsT>,
+    func        : CalculationFunctionGen<ResultT, YieldT, ArgsT>,
     args        : ArgsT,
     scope?      : any
 ) : Promise<ResultT>

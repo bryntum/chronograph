@@ -23,7 +23,9 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
     quark               : InstanceType<this[ 'identifier' ][ 'quarkClass']>
     transition          : QuarkTransition
 
-    previous        : QuarkEntry
+    previous            : QuarkEntry
+
+    sameAsPrevious          : boolean = false
 
     // placing these initial values to the prototype makes the `benchmark_sync` slower - from ~630ms to ~830
     edgesFlow               : number = 0

@@ -1,16 +1,29 @@
-import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
-import { CalculationContext, CalculationGenFunction } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationFunctionGen } from "../primitives/Calculation.js"
 import { clearLazyProperty, copyMapInto, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { Revision } from "./Revision.js"
-import { MinimalTransaction, Transaction } from "./Transaction.js"
+import { MinimalTransaction, Transaction, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type PropagateArguments = {
-
+    observersFirst?     : boolean
 }
+
+
+export class Listener extends Base {
+    handlers            : AnyFunction[]     = []
+
+    trigger (value : any) {
+        for (let i = 0; i < this.handlers.length; i++)
+            this.handlers[ i ](value)
+    }
+}
+
+
+export const ObserverSegment = Symbol('ObserverSegment')
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -27,6 +40,8 @@ class Checkout extends base {
     // minimal value is 0 (the `baseRevision` only, no undo/redo)
     // users supposed to opt-in for undo/redo by increasing this config
     historyLimit            : number        = 0
+
+    listeners               : Map<Identifier, Listener> = new Map()
 
 
     initialize (...args) {
@@ -129,28 +144,28 @@ class Checkout extends base {
     }
 
 
-    propagate () {
-        const nextRevision      = this.activeTransaction.propagate()
+    propagate (args? : PropagateArguments) {
+        const nextRevision      = this.activeTransaction.propagate(args)
 
-        this.adoptNextRevision(nextRevision)
+        return this.finalizePropagation(nextRevision)
     }
 
 
-    propagateSync () {
-        const nextRevision      = this.activeTransaction.propagateSync()
+    propagateSync (args? : PropagateArguments) {
+        const nextRevision      = this.activeTransaction.propagateSync(args)
 
-        this.adoptNextRevision(nextRevision)
+        return this.finalizePropagation(nextRevision)
     }
 
 
-    async propagateAsync () {
-        const nextRevision      = await this.activeTransaction.propagateAsync()
+    async propagateAsync (args? : PropagateArguments) {
+        const nextRevision      = await this.activeTransaction.propagateAsync(args)
 
-        this.adoptNextRevision(nextRevision)
+        return this.finalizePropagation(nextRevision)
     }
 
 
-    adoptNextRevision (nextRevision : Revision) {
+    finalizePropagation (nextRevision : Revision) {
         if (nextRevision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
 
         // dereference all revisions
@@ -160,7 +175,21 @@ class Checkout extends base {
             revision.referenceCount--
         }
 
+        // const previousRevision  = this.baseRevision
+
         this.baseRevision       = this.topRevision = nextRevision
+
+        // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
+        // might be already merged with previous
+        for (const [ identifier, quarkEntry ] of this.baseRevision.scope) {
+            // ignore "shadowing" entries
+            if (quarkEntry.sameAsPrevious || quarkEntry.previous && quarkEntry.quark === quarkEntry.previous.quark) continue
+
+            const listener  = this.listeners.get(identifier)
+
+            // TODO skip quarks with the values, equal to the previous (`sameAsPrevious` flag)
+            if (listener) listener.trigger(quarkEntry.value)
+        }
 
         this.markAndSweep()
 
@@ -187,7 +216,7 @@ class Checkout extends base {
     }
 
 
-    identifier (calculation : CalculationGenFunction<any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
+    identifier (calculation : CalculationFunctionGen<any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
         const identifier    = CalculatedValueGen.new({ calculation, context })
 
         this.touch(identifier)
@@ -215,7 +244,7 @@ class Checkout extends base {
     }
 
 
-    identifierId (name : any, calculation : CalculationGenFunction<any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
+    identifierId (name : any, calculation : CalculationFunctionGen<any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
         const identifier    = CalculatedValueGen.new({ calculation, context, name })
 
         this.touch(identifier)
@@ -243,6 +272,35 @@ class Checkout extends base {
         if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
 
         return this.activeTransaction.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
+    }
+
+
+    observe
+        <Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
+        (observerFunc : CalculationFunctionGen<Result, Yield, ArgsT>, onUpdated : (value : Result) => any)
+    {
+        const identifier    = this.addIdentifier(CalculatedValueGen.new({
+            calculation     : observerFunc as any,
+
+            // this is to be able to extract observer identifiers only
+            segment         : ObserverSegment
+        }))
+
+        return this.addListener(identifier, onUpdated)
+    }
+
+
+    // TODO tie the type of `value` in the `onUpdated` to the `ValueT` in `identifier`
+    addListener (identifier : Identifier, onUpdated : (value : any) => any) {
+        let listener    = this.listeners.get(identifier)
+
+        if (!listener) {
+            listener    = Listener.new()
+
+            this.listeners.set(identifier, listener)
+        }
+
+        listener.handlers.push(onUpdated)
     }
 
 
@@ -278,5 +336,7 @@ class Checkout extends base {
 }
 
 export type Checkout = Mixin<typeof Checkout>
+
+export interface CheckoutI extends Checkout {}
 
 export type CheckoutConstructor = MixinConstructor<typeof Checkout>

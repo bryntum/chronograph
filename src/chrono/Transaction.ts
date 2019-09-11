@@ -6,6 +6,7 @@ import {
     runGeneratorSyncWithEffect,
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
+import { PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
@@ -286,69 +287,53 @@ class Transaction extends base {
             for (const [ identifier, entry ] of entries) {
                 candidate.scope.set(identifier, entry)
 
-                entry.transition = null
+                entry.transition    = undefined
             }
         }
     }
 
 
-    propagate () : Revision {
+    prePropagate () {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
         this.isClosed   = true
 
-        const candidate = this.candidate
-
         for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+    }
 
-        runGeneratorSyncWithEffect<any, any, [ CalculationContext<any>, QuarkEntry[] ]>(
-            this.calculateTransitionsStackGen,
-            [ this.onEffectSync, this.stackGen ],
-            this
-        )
 
-        this.populateCandidateScopeFromTransitions(candidate, this.entries)
+    postPropagate () : Revision {
+        this.populateCandidateScopeFromTransitions(this.candidate, this.entries)
 
-        return candidate
+        return this.candidate
+    }
+
+
+    propagate (args? : PropagateArguments) : Revision {
+        this.prePropagate()
+
+        runGeneratorSyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, this.stackGen ], this)
+
+        return this.postPropagate()
     }
 
 
     // propagation that does not use generators at all
-    propagateSync () : Revision {
-        if (this.isClosed) throw new Error('Can not propagate closed revision')
-
-        this.isClosed   = true
-
-        const candidate = this.candidate
-
-        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+    propagateSync (args? : PropagateArguments) : Revision {
+        this.prePropagate()
 
         this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen)
 
-        this.populateCandidateScopeFromTransitions(candidate, this.entries)
-
-        return candidate
+        return this.postPropagate()
     }
 
 
-    async propagateAsync () : Promise<Revision> {
-        if (this.isClosed) throw new Error('Can not propagate closed revision')
+    async propagateAsync (args? : PropagateArguments) : Promise<Revision> {
+        this.prePropagate()
 
-        this.isClosed   = true
+        await runGeneratorAsyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, this.stackGen ], this)
 
-        const candidate = this.candidate
-
-        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
-
-        await runGeneratorAsyncWithEffect<any, any, [ CalculationContext<any>, QuarkEntry[] ]>(
-            this.calculateTransitionsStackGen,
-            [ this.onEffectSync, this.stackGen ],
-            this
-        )
-
-        this.populateCandidateScopeFromTransitions(candidate, this.entries)
-
-        return candidate
+        return this.postPropagate()
     }
 
 
@@ -388,8 +373,8 @@ class Transaction extends base {
 
                 const previousEntry = entry.previous
 
-                // reduce garbage collection workload
-                entry.cleanup(true)
+                // // reduce garbage collection workload
+                // entry.cleanup(true)
 
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
@@ -408,7 +393,7 @@ class Transaction extends base {
             const quark : Quark   = entry.quark
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                entry.cleanup(false)
+                // entry.cleanup(false)
 
                 stack.pop()
                 continue
@@ -428,8 +413,8 @@ class Transaction extends base {
 
                     const previousEntry = entry.previous
 
-                    // reduce garbage collection workload
-                    entry.cleanup(false)
+                    // // reduce garbage collection workload
+                    // entry.cleanup(false)
 
                     // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
                     // and only if that is missing - with previous
@@ -437,6 +422,8 @@ class Transaction extends base {
                     let ignoreSelfDependency : boolean = false
 
                     const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
+
+                    if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
                         // in case the new value is equal to previous, we still need to consider the case
@@ -473,7 +460,7 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark })
+                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
                     }
@@ -545,8 +532,8 @@ class Transaction extends base {
 
                 const previousEntry = entry.previous
 
-                // reduce garbage collection workload
-                entry.cleanup(true)
+                // // reduce garbage collection workload
+                // entry.cleanup(true)
 
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
@@ -563,7 +550,7 @@ class Transaction extends base {
             const quark : Quark   = entry.quark
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                entry.cleanup(false)
+                // entry.cleanup(false)
 
                 stack.pop()
                 continue
@@ -583,8 +570,8 @@ class Transaction extends base {
 
                     const previousEntry             = entry.previous
 
-                    // reduce garbage collection workload
-                    entry.cleanup(false)
+                    // // reduce garbage collection workload
+                    // entry.cleanup(false)
 
                     // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
                     // and only if that is missing - with previous
@@ -592,6 +579,8 @@ class Transaction extends base {
                     let ignoreSelfDependency : boolean = false
 
                     const sameAsPrevious            = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
+
+                    if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
                         // in case the new value is equal to previous, we still need to consider the case
@@ -626,7 +615,7 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark })
+                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
                     }

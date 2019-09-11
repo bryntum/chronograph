@@ -1,7 +1,7 @@
 import { Base, MixinConstructor } from "../class/Mixin.js"
 import { CalculationContext, CalculationIterator } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { Checkout } from "./Checkout.js"
+import { Checkout, CheckoutI } from "./Checkout.js"
 import { MinimalQuark, QuarkConstructor } from "./Quark.js"
 import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
 import { YieldableValue } from "./Transaction.js"
@@ -16,6 +16,9 @@ export class Identifier extends Base {
     ValueT              : any
 
     context             : any
+
+    segment             : symbol
+    level               : number
 
     @prototypeValue(false)
     lazy                : boolean
@@ -37,7 +40,7 @@ export class Identifier extends Base {
     }
 
 
-    write (graph : Checkout, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    write (graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         const quark         = graph.acquireQuark(this)
 
         quark.proposedValue = proposedValue
