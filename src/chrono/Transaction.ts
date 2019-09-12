@@ -267,12 +267,12 @@ class Transaction extends base {
             // so strictly speaking this code is not needed, but, it definitely feels, like
             // it improves the `benchmark_sync`
             // perhaps, because all `entries` are accessed sequentially, they are cached in some internal CPU caches
-            for (const entry of entries.values()) {
-                // this code can be uncommented to check if we leak transitions somewhere
-                // if (entry.transition) debugger
-
-                entry.transition    = undefined
-            }
+            // for (const entry of entries.values()) {
+            //     // this code can be uncommented to check if we leak transitions somewhere
+            //     // if (entry.transition) debugger
+            //
+            //     entry.transition    = undefined
+            // }
         } else {
             // in this branch candidate's scope already has some content - this is the case for calculating lazy values
 
@@ -287,7 +287,7 @@ class Transaction extends base {
             for (const [ identifier, entry ] of entries) {
                 candidate.scope.set(identifier, entry)
 
-                entry.transition    = undefined
+                // entry.transition    = undefined
             }
         }
     }

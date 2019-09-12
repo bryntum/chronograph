@@ -13,14 +13,14 @@ export type PropagateArguments = {
 }
 
 
-export class Listener extends Base {
-    handlers            : AnyFunction[]     = []
-
-    trigger (value : any) {
-        for (let i = 0; i < this.handlers.length; i++)
-            this.handlers[ i ](value)
-    }
-}
+// export class Listener extends Base {
+//     handlers            : AnyFunction[]     = []
+//
+//     trigger (value : any) {
+//         for (let i = 0; i < this.handlers.length; i++)
+//             this.handlers[ i ](value)
+//     }
+// }
 
 
 export const ObserverSegment = Symbol('ObserverSegment')
@@ -41,7 +41,7 @@ class Checkout extends base {
     // users supposed to opt-in for undo/redo by increasing this config
     historyLimit            : number        = 0
 
-    listeners               : Map<Identifier, Listener> = new Map()
+    // listeners               : Map<Identifier, Listener> = new Map()
 
 
     initialize (...args) {
@@ -182,13 +182,14 @@ class Checkout extends base {
         // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
         // might be already merged with previous
         for (const [ identifier, quarkEntry ] of this.baseRevision.scope) {
-            // ignore "shadowing" entries
-            if (quarkEntry.sameAsPrevious || quarkEntry.previous && quarkEntry.quark === quarkEntry.previous.quark) continue
-
-            const listener  = this.listeners.get(identifier)
-
-            // TODO skip quarks with the values, equal to the previous (`sameAsPrevious` flag)
-            if (listener) listener.trigger(quarkEntry.value)
+            quarkEntry.cleanup(false)
+            // // ignore "shadowing" entries
+            // if (quarkEntry.sameAsPrevious || quarkEntry.previous && quarkEntry.quark === quarkEntry.previous.quark) continue
+            //
+            // const listener  = this.listeners.get(identifier)
+            //
+            // // TODO skip quarks with the values, equal to the previous (`sameAsPrevious` flag)
+            // if (listener) listener.trigger(quarkEntry.value)
         }
 
         this.markAndSweep()
@@ -277,30 +278,32 @@ class Checkout extends base {
 
     observe
         <Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
-        (observerFunc : CalculationFunctionGen<Result, Yield, ArgsT>, onUpdated : (value : Result) => any)
+        (observerFunc : CalculationFunctionGen<Result, Yield, ArgsT>/*, onUpdated : (value : Result) => any*/)
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
             calculation     : observerFunc as any,
+
+            // equality        : () => false,
 
             // this is to be able to extract observer identifiers only
             segment         : ObserverSegment
         }))
 
-        return this.addListener(identifier, onUpdated)
+        // return this.addListener(identifier, onUpdated)
     }
 
 
     // TODO tie the type of `value` in the `onUpdated` to the `ValueT` in `identifier`
     addListener (identifier : Identifier, onUpdated : (value : any) => any) {
-        let listener    = this.listeners.get(identifier)
-
-        if (!listener) {
-            listener    = Listener.new()
-
-            this.listeners.set(identifier, listener)
-        }
-
-        listener.handlers.push(onUpdated)
+        // let listener    = this.listeners.get(identifier)
+        //
+        // if (!listener) {
+        //     listener    = Listener.new()
+        //
+        //     this.listeners.set(identifier, listener)
+        // }
+        //
+        // listener.handlers.push(onUpdated)
     }
 
 
