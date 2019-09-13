@@ -125,7 +125,6 @@ StartTest(t => {
     })
 
 
-
     t.it('Reference with resolver, without bucket', async t => {
         const authors       = new Map<string, Author>()
 
@@ -158,4 +157,55 @@ StartTest(t => {
     })
 
 
+    t.iit('Mutual references with resolvers should work', async t => {
+        const dictionary1       = new Map<string, Entity1>()
+        const dictionary2       = new Map<string, Entity2>()
+
+        class Entity1 extends Entity(Base) {
+            id              : string
+
+            @bucket()
+            referencedFromEntity2       : Set<Entity2>
+
+            @reference({ bucket : 'referencedFromEntity1', resolver : locator => dictionary2.get(locator) })
+            referencingEntity2          : Entity2 | string
+
+            initialize () {
+                super.initialize(...arguments)
+
+                dictionary1.set(this.id, this)
+            }
+        }
+
+        class Entity2 extends Entity(Base) {
+            id              : string
+
+            @bucket()
+            referencedFromEntity1       : Set<Entity2>
+
+            @reference({ bucket : 'referencedFromEntity2', resolver : locator => dictionary1.get(locator) })
+            referencingEntity1          : Entity1 | string
+
+            initialize () {
+                super.initialize(...arguments)
+
+                dictionary2.set(this.id, this)
+            }
+        }
+
+        const replica           = MinimalReplica.new()
+
+        const entity1           = Entity1.new({ id : 'entity1', referencingEntity2 : 'entity2' })
+        const entity2           = Entity2.new({ id : 'entity2', referencingEntity1 : 'entity1' })
+
+        replica.addEntities([ entity1, entity2 ])
+
+        replica.propagate()
+
+        t.isDeeply(entity1.referencingEntity2, entity2, 'Correctly resolved reference')
+        t.isDeeply(entity2.referencingEntity1, entity1, 'Correctly resolved reference')
+
+        t.isDeeply(entity1.referencedFromEntity2, new Set([ entity2 ]), 'Correctly resolved reference')
+        t.isDeeply(entity2.referencedFromEntity1, new Set([ entity1 ]), 'Correctly resolved reference')
+    })
 })

@@ -56,11 +56,9 @@ class ReferenceIdentifier extends base {
 
         const value : Entity    = proposedValue instanceof Entity ? proposedValue as Entity : this.resolve(proposedValue)
 
-        // if (value) {
-        //     this.getBucket(value).addToBucket(yield GetGraph, this.self)
-        //
-        //     if (this.field.intrinsic) yield value.$$
-        // }
+        if (value && this.hasBucket()) {
+            this.getBucket(value).addToBucket(yield GetGraph, this.self)
+        }
 
         return value
     }
@@ -141,9 +139,9 @@ class ReferenceIdentifier extends base {
                 }
             }
 
-            if (proposedValue instanceof Entity) {
-                this.getBucket(proposedValue).addToBucket(graph, this.self)
-            }
+            // if (proposedValue instanceof Entity) {
+            //     this.getBucket(proposedValue).addToBucket(graph, this.self)
+            // }
         }
 
         super.write(graph, proposedValue)

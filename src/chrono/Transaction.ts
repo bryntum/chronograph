@@ -6,7 +6,7 @@ import {
     runGeneratorSyncWithEffect,
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
-import { PropagateArguments } from "./Checkout.js"
+import { Checkout, CheckoutI, PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
@@ -122,6 +122,7 @@ export type YieldableValue = Effect | Identifier
 export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Transaction extends base {
+    checkout                : CheckoutI
     baseRevision            : Revision
 
     isClosed                : boolean               = false
@@ -364,9 +365,9 @@ class Transaction extends base {
     }
 
 
-    // [GraphSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
-    //     return this
-    // }
+    [GraphSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
+        return this.checkout
+    }
 
 
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : QuarkEntry[]) : Generator<any, void, unknown> {

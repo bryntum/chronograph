@@ -133,7 +133,7 @@ class Checkout extends base {
 
 
     get activeTransaction () : Transaction {
-        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision }))
+        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision, checkout : this }))
     }
 
 
@@ -272,7 +272,7 @@ class Checkout extends base {
 
 
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
+        // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
 
         return this.activeTransaction.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
     }
