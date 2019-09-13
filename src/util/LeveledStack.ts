@@ -1,17 +1,20 @@
+import { MAX_SMI } from "./Helpers.js"
+
 // TODO
 // probably we only need the leveling during the initial population of the stack (during the walkDepth)
 // then, during calculations, regular array will be sufficient
+
 
 export class LeveledStack<T extends { level : number }> {
     length          : number            = 0
 
     levels          : T[][]             = []
 
-    currentLevel    : number            = 1e9
+    currentLevel    : number            = MAX_SMI
 
 
     last () {
-        for (let i = this.currentLevel !== 1e9 ? this.currentLevel : 0; i < this.levels.length; i++) {
+        for (let i = this.currentLevel !== MAX_SMI ? this.currentLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
             if (level && level.length > 0) {
@@ -24,7 +27,7 @@ export class LeveledStack<T extends { level : number }> {
 
 
     pop () : T {
-        for (let i = this.currentLevel !== 1e9 ? this.currentLevel : 0; i < this.levels.length; i++) {
+        for (let i = this.currentLevel !== MAX_SMI ? this.currentLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
             if (level && level.length > 0) {

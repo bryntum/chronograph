@@ -34,7 +34,7 @@ export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculati
 
 
         // forceCalculation () {
-        //     this.edgesFlow  = 1e9
+        //     this.edgesFlow  = MAX_SMI
         // }
     }
 

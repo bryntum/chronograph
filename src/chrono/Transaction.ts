@@ -438,7 +438,7 @@ class Transaction extends base {
 
                     const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
 
-                    if (sameAsPrevious) entry.sameAsPrevious    = true
+                    // if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
                         // in case the new value is equal to previous, we still need to consider the case
@@ -597,7 +597,7 @@ class Transaction extends base {
 
                     const sameAsPrevious            = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
 
-                    if (sameAsPrevious) entry.sameAsPrevious    = true
+                    // if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
                         // in case the new value is equal to previous, we still need to consider the case

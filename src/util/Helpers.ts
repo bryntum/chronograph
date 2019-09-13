@@ -1,4 +1,9 @@
 //---------------------------------------------------------------------------------------------------------------------
+// assume 32-bit platform (https://v8.dev/blog/react-cliff)
+export const MIN_SMI = -Math.pow(2, 30)
+export const MAX_SMI = Math.pow(2, 30) - 1
+
+//---------------------------------------------------------------------------------------------------------------------
 export const uppercaseFirst = (str : string) : string => str.slice(0, 1).toUpperCase() + str.slice(1)
 
 
