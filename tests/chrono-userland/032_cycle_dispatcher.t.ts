@@ -56,9 +56,16 @@ class DispatcherIdentifier extends CalculatedValueSync {
 
     quarkClass  : QuarkConstructor  = DispatcherQuark
 
+
     equality (v1 : DispatcherValue, v2 : DispatcherValue) : boolean {
         return dispatcherValueEq(v1, v2)
     }
+
+
+    calculation (YIELD : SyncEffectHandler) : DispatcherValue {
+        return YIELD(ProposedOrCurrent)
+    }
+
 
     log (graph : Checkout, entry : DispatcherLogEntry) {
         const quark         = graph.acquireQuark(this) as DispatcherQuark
@@ -143,13 +150,7 @@ StartTest(t => {
 
 
         preDispatcher          = graph.addIdentifier(DispatcherIdentifier.new({
-            quarkClass  : DispatcherQuark,
-
-            name    : 'preDispatcher',
-
-            calculation (YIELD : SyncEffectHandler) : DispatcherValue {
-                return YIELD(ProposedOrCurrent)
-            }
+            name    : 'preDispatcher'
         }))
 
         postDispatcher = graph.addIdentifier(CalculatedValueGen.new({
