@@ -303,12 +303,28 @@ class Transaction extends base {
     }
 
 
-    prePropagate () {
+    prePropagate (args? : PropagateArguments) : LeveledStack<QuarkEntry> {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
+
+        let stack : LeveledStack<QuarkEntry>
+
+        if (args && args.calculateOnly) {
+            const calculateOnly     = args.calculateOnly
+
+            // TODO should probably calculate the identifiers from `calculateOnly`, PLUS all identifiers
+            // of the lower levels from `this.stackGen`, needs test
+            stack                   = new LeveledStack()
+            stack.levels[ 0 ]       = calculateOnly.map(identifier => this.entries.get(identifier))
+            stack.length            = calculateOnly.length
+
+        } else
+            stack                   = this.stackGen
 
         this.isClosed   = true
 
         for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+
+        return stack
     }
 
 
@@ -320,9 +336,9 @@ class Transaction extends base {
 
 
     propagate (args? : PropagateArguments) : Revision {
-        this.prePropagate()
+        const stack = this.prePropagate(args)
 
-        runGeneratorSyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, this.stackGen ], this)
+        runGeneratorSyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
         return this.postPropagate()
     }
@@ -330,18 +346,18 @@ class Transaction extends base {
 
     // propagation that does not use generators at all
     propagateSync (args? : PropagateArguments) : Revision {
-        this.prePropagate()
+        const stack = this.prePropagate(args)
 
-        this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen)
+        this.calculateTransitionsStackSync(this.onEffectSync, stack)
 
         return this.postPropagate()
     }
 
 
     async propagateAsync (args? : PropagateArguments) : Promise<Revision> {
-        this.prePropagate()
+        const stack = this.prePropagate(args)
 
-        await runGeneratorAsyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, this.stackGen ], this)
+        await runGeneratorAsyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
         return this.postPropagate()
     }

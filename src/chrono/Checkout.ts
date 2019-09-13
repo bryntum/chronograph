@@ -9,7 +9,8 @@ import { MinimalTransaction, Transaction, YieldableValue } from "./Transaction.j
 
 //---------------------------------------------------------------------------------------------------------------------
 export type PropagateArguments = {
-    observersFirst?     : boolean
+    // observersFirst?     : boolean,
+    calculateOnly?      : Identifier[]
 }
 
 
