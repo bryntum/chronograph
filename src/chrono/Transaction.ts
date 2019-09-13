@@ -103,9 +103,15 @@ export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurre
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const CancelPropagationSymbol    = Symbol('CancelPropagationSymbol')
+// export const CancelPropagationSymbol    = Symbol('CancelPropagationSymbol')
+//
+// export const CancelPropagation : Effect = Effect.new({ handler : CancelPropagationSymbol })
 
-export const CancelPropagation : Effect = Effect.new({ handler : CancelPropagationSymbol })
+//---------------------------------------------------------------------------------------------------------------------
+const GraphSymbol    = Symbol('GraphSymbol')
+
+export const GetGraph : Effect = Effect.new({ handler : GraphSymbol })
+
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -356,6 +362,11 @@ class Transaction extends base {
             return latestEntry ? baseRevision.read(identifier) : null
         }
     }
+
+
+    // [GraphSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
+    //     return this
+    // }
 
 
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : QuarkEntry[]) : Generator<any, void, unknown> {

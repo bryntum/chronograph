@@ -1,10 +1,10 @@
-import { Base, MixinConstructor } from "../class/Mixin.js"
+import { Base, MixinConstructor, OnlyPropertiesOfType } from "../class/Mixin.js"
 import { CalculationContext, CalculationIterator } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Checkout, CheckoutI } from "./Checkout.js"
 import { MinimalQuark, QuarkConstructor } from "./Quark.js"
 import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
-import { YieldableValue } from "./Transaction.js"
+import { ProposedOrCurrent, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -40,10 +40,28 @@ export class Identifier extends Base {
     }
 
 
+    read (graph : CheckoutI) : this[ 'ValueT' ] {
+        return graph.read(this)
+    }
+
+
     write (graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         const quark         = graph.acquireQuark(this)
 
         quark.proposedValue = proposedValue
+    }
+
+
+    buildProposedValue (quark : InstanceType<this[ 'quarkClass' ]>) {
+        return quark.proposedValue
+    }
+
+
+    enterGraph (graph : CheckoutI) {
+    }
+
+
+    leaveGraph (graph : CheckoutI) {
     }
 }
 
@@ -70,8 +88,8 @@ export class CalculatedValueSync extends Identifier {
     @prototypeValue(QuarkTransitionSync)
     transitionClass     : MixinConstructor<typeof QuarkTransition>
 
-    calculation (context : CalculationContext<this[ 'YieldT' ]>) : this[ 'ValueT' ] {
-        throw new Error("Abstract method `calculation` called")
+    calculation (YIELD : CalculationContext<this[ 'YieldT' ]>) : this[ 'ValueT' ] {
+        return YIELD(ProposedOrCurrent)
     }
 }
 
@@ -83,6 +101,6 @@ export class CalculatedValueGen extends Identifier {
     transitionClass     : MixinConstructor<typeof QuarkTransition>
 
     * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
-        throw new Error("Abstract method `calculation` called")
+        return yield ProposedOrCurrent
     }
 }

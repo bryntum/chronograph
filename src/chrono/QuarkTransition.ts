@@ -26,12 +26,12 @@ export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculati
 
 
         get calculation () : this[ 'identifier' ][ 'calculation' ] {
-            return this/*.current*/.identifier.calculation
+            return this.identifier.calculation
         }
 
 
         get context () : this[ 'identifier' ][ 'context' ] {
-            return this/*.current*/.identifier.context
+            return this.identifier.context || this.identifier
         }
 
 

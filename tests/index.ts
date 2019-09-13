@@ -48,26 +48,22 @@ project.start(
             'chrono-userland/032_cycle_dispatcher.t.js'
         ]
     },
-    // {
-    //     group       : 'replica',
-    //
-    //     items       : [
-    //         'replica/001_entity.t.js',
-    //         'replica/002_self_atom.t.js',
-    //         'replica/004_continued_atom.t.js',
-    //         'replica/010_replica.t.js',
-    //         'replica/020_relation.t.js',
-    //         'replica/030_reference_resolver.t.js',
-    //         'replica/040_fields_leak.t.js',
-    //         'replica/060_try_propagate.t.js',
-    //         'replica/070_entity_removal.t.js'
-    //     ]
-    // },
-    // {
-    //     group       : 'schema',
-    //
-    //     items       : [
-    //         'schema/010_schema.t.js',
-    //     ]
-    // }
+    {
+        group       : 'replica',
+
+        items       : [
+            'replica/001_entity.t.js',
+            'replica/002_fields.t.js',
+            'replica/010_replica.t.js',
+            'replica/020_reference.t.js',
+            // 'replica/060_try_propagate.t.js',
+        ]
+    },
+    {
+        group       : 'schema',
+
+        items       : [
+            'schema/010_schema.t.js',
+        ]
+    }
 )

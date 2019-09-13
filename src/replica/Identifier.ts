@@ -1,23 +1,27 @@
-import { MinimalQuark, Quark } from "../chrono/Quark.js"
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { Entity as EntityData } from "../schema/Entity.js"
-import { Field as FieldData } from "../schema/Field.js"
+import { CalculatedValueGen, Identifier, Variable } from "../chrono/Identifier.js"
+import { instanceOf } from "../class/InstanceOf.js"
+import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { EntityMeta } from "../schema/EntityMeta.js"
+import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"
 
 
-export interface PartOfEntityQuark {
+export interface PartOfEntityIdentifier {
     self        : Entity
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const FieldQuark = <T extends AnyConstructor<Quark>>(base : T) =>
+export const FieldIdentifier = instanceOf(<T extends AnyConstructor<Identifier>>(base : T) =>
 
-class FieldQuark extends base implements PartOfEntityQuark {
-    field       : FieldData
+class FieldIdentifier extends base implements PartOfEntityIdentifier {
+    field       : Field
 
     self        : Entity
 
+    // temp storage for value for the phase, when identifier is created, but has not joined any graph
+    // is cleared during the 1st join to the graph
+    DATA        : this[ 'ValueT' ]
 
     // put (proposedValue : ChronoValue, ...args) {
     //     return super.put(this.field.converter ? this.field.converter(proposedValue, this.field) : proposedValue, ...args)
@@ -25,33 +29,38 @@ class FieldQuark extends base implements PartOfEntityQuark {
 
 
     toString () : string {
-        return `Field atom [${ this.field.name }] of entity [${ this.self }}]`
+        return `Field identifier [${ this.field.name }] of entity [${ this.self }]`
     }
-}
+})
 
-export type FieldQuark = Mixin<typeof FieldQuark>
+export type FieldIdentifier = Mixin<typeof FieldIdentifier>
+
+export type FieldIdentifierConstructor  = MixinConstructor<typeof FieldIdentifier>
+
+export interface FieldIdentifierI extends FieldIdentifier {}
 
 
-// export class MinimalFieldQuark extends FieldQuark(MinimalChronoAtom) {}
+export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) {}
 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityQuark = <T extends AnyConstructor<Quark>>(base : T) =>
+export const EntityIdentifier = <T extends AnyConstructor<Identifier>>(base : T) =>
 
-class EntityQuark extends base implements PartOfEntityQuark {
-    entity      : EntityData
+class EntityIdentifier extends base implements PartOfEntityIdentifier {
+    entity      : EntityMeta
 
     self        : Entity
 
 
     toString () : string {
-        return `Entity atom [${(this.self as any).id}]`
+        return `Entity identifier [${ this.self }]`
     }
 }
 
-export type EntityQuark = Mixin<typeof EntityQuark>
-export interface EntityQuarkI extends Mixin<typeof EntityQuark> {}
+export type EntityIdentifier = Mixin<typeof EntityIdentifier>
+
+export interface EntityIdentifierI extends EntityIdentifier {}
 
 
-export class MinimalEntityQuark extends EntityQuark(MinimalQuark) {}
+export class MinimalEntityIdentifier extends EntityIdentifier(Identifier) {}

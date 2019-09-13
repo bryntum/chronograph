@@ -1,6 +1,6 @@
 import { Base, MixinConstructor } from "../class/Mixin.js"
 import { ensureEntityOnPrototype } from "../replica/Entity.js"
-import { Entity } from "./Entity.js"
+import { EntityMeta } from "./EntityMeta.js"
 import { Name } from "./Field.js"
 
 
@@ -8,7 +8,7 @@ import { Name } from "./Field.js"
 export class Schema extends Base {
     name                : Name
 
-    entities            : Map<Name, Entity>     = new Map()
+    entities            : Map<Name, EntityMeta>     = new Map()
 
 
     hasEntity (name : Name) : boolean {
@@ -16,12 +16,12 @@ export class Schema extends Base {
     }
 
 
-    getEntity (name : Name) : Entity {
+    getEntity (name : Name) : EntityMeta {
         return this.entities.get(name)
     }
 
 
-    addEntity (entity : Entity) : Entity {
+    addEntity (entity : EntityMeta) : EntityMeta {
         const name      = entity.name
 
         if (!name) throw new Error(`Entity must have a name`)
@@ -37,7 +37,7 @@ export class Schema extends Base {
 
     getEntityDecorator () : ClassDecorator {
         // @ts-ignore : https://github.com/Microsoft/TypeScript/issues/29828
-        return (target : MixinConstructor<typeof Entity>) => {
+        return (target : MixinConstructor<typeof EntityMeta>) => {
             const name      = target.name
             if (!name) throw new Error(`Can't add entity - the target class has no name`)
 

@@ -1,6 +1,6 @@
 import { Base } from "../class/Mixin.js"
-import { prototypeValue } from "../util/Helpers.js"
-import { Entity } from "./Entity.js"
+import { FieldIdentifierConstructor, MinimalFieldIdentifier } from "../replica/Identifier.js"
+import { EntityMeta } from "./EntityMeta.js"
 
 export type Name    = string
 export type Type    = string
@@ -14,16 +14,15 @@ export class Field extends Base {
 
     type                : Type
 
-    entity              : Entity
+    entity              : EntityMeta
 
-    @prototypeValue(true)
-    persistent          : boolean
+    persistent          : boolean   = true
 
 
-    converter (value : any) : this[ 'ValueT' ] {
-        return value
-    }
+    // converter (value : any) : this[ 'ValueT' ] {
+    //     return value
+    // }
 
-    // atomCls             : MixinConstructor<typeof FieldAtom>   = MinimalFieldAtom
+    identifierCls       : FieldIdentifierConstructor  = MinimalFieldIdentifier
 }
 
