@@ -1,4 +1,4 @@
-import { Base, MixinConstructor, OnlyPropertiesOfType } from "../class/Mixin.js"
+import { Base, MixinConstructor } from "../class/Mixin.js"
 import { CalculationContext, CalculationIterator } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Checkout, CheckoutI } from "./Checkout.js"
@@ -18,7 +18,7 @@ export class Identifier extends Base {
     context             : any
 
     segment             : symbol
-    level               : number
+    level               : number    = 0
 
     @prototypeValue(false)
     lazy                : boolean

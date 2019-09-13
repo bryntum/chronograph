@@ -33,6 +33,11 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
     visitedTopologically    : boolean = false
 
 
+    get level () : number {
+        return this.identifier.level
+    }
+
+
     forceCalculation () {
         this.edgesFlow  = 1e9
     }
@@ -153,7 +158,7 @@ class Revision extends base {
         const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
 
         transaction.entries.set(entry.identifier, entry)
-        transaction.stackGen   = [ entry ]
+        transaction.stackGen.push(entry)
 
         entry.forceCalculation()
 

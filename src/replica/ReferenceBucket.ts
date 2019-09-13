@@ -32,6 +32,8 @@ export const bucket : FieldDecorator<typeof MinimalReferenceBucketField> =
 export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifier>>(base : T) =>
 
 class ReferenceBucketIdentifier extends base {
+    level               : number                = 1
+
     ValueT              : Set<Entity>
 
     quarkClass          : QuarkConstructor      = MinimalReferenceBucketQuark

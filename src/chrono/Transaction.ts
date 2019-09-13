@@ -6,6 +6,7 @@ import {
     runGeneratorSyncWithEffect,
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
+import { LeveledStack } from "../util/LeveledStack.js"
 import { Checkout, CheckoutI, PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
@@ -130,9 +131,9 @@ class Transaction extends base {
     walkContext             : WalkForwardQuarkContext
 
     // we use 2 different stacks, because they support various effects
-    stackSync               : QuarkEntry[]          = []
+    stackSync               : LeveledStack<QuarkEntry>  = new LeveledStack()
     // the `stackGen` supports async effects notably
-    stackGen                : QuarkEntry[]          = []
+    stackGen                : LeveledStack<QuarkEntry>  = new LeveledStack()
 
     candidate               : Revision
 
@@ -179,7 +180,7 @@ class Transaction extends base {
         // `stackSync` is always empty, except when the synchronous "batch" is being processed
         const activeStack   = this.stackSync.length > 0 ? this.stackSync : this.stackGen
 
-        return activeStack[ activeStack.length - 1 ]
+        return activeStack.last()
     }
 
 
@@ -212,6 +213,8 @@ class Transaction extends base {
 
             this.entries.set(identifier, entry)
         }
+
+        if (activeEntry.identifier.level > entry.identifier.level) throw new Error('Identifier can not read from higher level identifier')
 
         entry.add(activeEntry)
 
@@ -370,11 +373,11 @@ class Transaction extends base {
     }
 
 
-    * calculateTransitionsStackGen (context : CalculationContext<any>, stack : QuarkEntry[]) : Generator<any, void, unknown> {
+    * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) : Generator<any, void, unknown> {
         const { entries } = this
 
         while (stack.length) {
-            const entry             = stack[ stack.length - 1 ]
+            const entry             = stack.last()
             const identifier        = entry.identifier
 
             // all entries in the stack must have entry already
@@ -465,6 +468,8 @@ class Transaction extends base {
                     break
                 }
                 else if (value instanceof Identifier) {
+                    if (entry.identifier.level > value.level) throw new Error('Identifier can not read from higher level identifier')
+
                     let requestedEntry : QuarkEntry             = entries.get(value)
 
                     if (!requestedEntry) {
@@ -529,11 +534,11 @@ class Transaction extends base {
 
 
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
-    calculateTransitionsStackSync (context : CalculationContext<any>, stack : QuarkEntry[]) {
+    calculateTransitionsStackSync (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) {
         const { entries } = this
 
         while (stack.length) {
-            const entry             = stack[ stack.length - 1 ]
+            const entry             = stack.last()
             const identifier        = entry.identifier
 
             // all entries in the stack must have entry already
