@@ -1,6 +1,6 @@
+import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
-import { observable, computed } from "../../node_modules/mobx/lib/mobx.module.js"
 
 declare const window : any
 declare const performance : any

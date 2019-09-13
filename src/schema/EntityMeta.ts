@@ -1,6 +1,6 @@
 import { AnyConstructor, Base } from "../class/Mixin.js"
 import { Entity } from "../replica/Entity.js"
-import { defineProperty, lazyProperty } from "../util/Helpers.js"
+import { lazyProperty } from "../util/Helpers.js"
 import { Field, Name } from "./Field.js"
 import { Schema } from "./Schema.js"
 

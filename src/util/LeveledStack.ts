@@ -1,30 +1,36 @@
+// TODO
+// probably we only need the leveling during the initial population of the stack (during the walkDepth)
+// then, during calculations, regular array will be sufficient
+
 export class LeveledStack<T extends { level : number }> {
     length          : number            = 0
 
     levels          : T[][]             = []
 
-    // currentLevel    : T[]
+    currentLevel    : number            = 1e9
 
 
     last () {
-        for (let i = 0; i < this.levels.length; i++) {
+        for (let i = this.currentLevel !== 1e9 ? this.currentLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
             if (level && level.length > 0) {
+                this.currentLevel   = i
+
                 return level[ level.length - 1 ]
             }
         }
     }
 
 
-    pop () {
-        for (let i = 0; i < this.levels.length; i++) {
+    pop () : T {
+        for (let i = this.currentLevel !== 1e9 ? this.currentLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
             if (level && level.length > 0) {
-                level.pop()
                 this.length--
-                break
+
+                return level.pop()
             }
         }
     }
@@ -32,6 +38,7 @@ export class LeveledStack<T extends { level : number }> {
 
     push (el : T) {
         const elLevel       = el.level
+
         let level : T[]     = this.levels[ elLevel ]
 
         if (!level) {
@@ -40,8 +47,8 @@ export class LeveledStack<T extends { level : number }> {
 
         level.push(el)
 
-        // this.currentLevel   = level
-
         this.length++
+
+        if (elLevel < this.currentLevel) this.currentLevel = elLevel
     }
 }

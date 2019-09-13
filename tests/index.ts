@@ -33,10 +33,11 @@ project.start(
             'chrono/011_lazy_identifier.t.js',
             'chrono/012_impure_calculated_value.t.js',
             'chrono/013_sync_calculation.t.js',
-            'chrono/015_listeners.t.js',
+            // 'chrono/015_listeners.t.js',
             'chrono/020_graph_branching.t.js',
             'chrono/030_propagation.t.js',
             'chrono/031_garbage_collection.t.js',
+            'chrono/032_propagation_options.t.js',
             'chrono/040_add_remove.t.js',
             'chrono/050_undo_redo.t.js'
         ]
@@ -55,8 +56,7 @@ project.start(
             'replica/001_entity.t.js',
             'replica/002_fields.t.js',
             'replica/010_replica.t.js',
-            'replica/020_reference.t.js',
-            // 'replica/060_try_propagate.t.js',
+            'replica/020_reference.t.js'
         ]
     },
     {

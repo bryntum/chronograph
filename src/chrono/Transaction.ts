@@ -7,7 +7,7 @@ import {
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
 import { LeveledStack } from "../util/LeveledStack.js"
-import { Checkout, CheckoutI, PropagateArguments } from "./Checkout.js"
+import { CheckoutI, PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"

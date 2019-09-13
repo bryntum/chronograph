@@ -1,15 +1,14 @@
 import { CheckoutI } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
-import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
+import { CalculatedValueGen } from "../chrono/Identifier.js"
 import { MinimalQuark, Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { GetGraph, ProposedOrCurrent } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationIterator } from "../primitives/Calculation.js"
 import { Field, Name } from "../schema/Field.js"
-import { defineProperty, isAtomicValue } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
-import { MinimalReferenceBucketQuark, ReferenceBucketIdentifier } from "./ReferenceBucket.js"
+import { ReferenceBucketIdentifier } from "./ReferenceBucket.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ResolverFunc    = (locator : any) => Entity
@@ -51,6 +50,7 @@ class ReferenceIdentifier extends base {
     }
 
 
+    // TODO this can be "simulated" as a delayed `proposedValue` calculation, avoiding a generator call
     * calculation () : CalculationIterator<this[ 'ValueT' ]> {
         const proposedValue     = yield ProposedOrCurrent
 
@@ -76,44 +76,13 @@ class ReferenceIdentifier extends base {
     }
 
 
-    // onEnterGraph (graph : ChronoGraph) {
-    //     const value     = this.get()
-    //
-    //     let resolves    = true
-    //
-    //     if (value !== undefined && isAtomicValue(value)) {
-    //         resolves        = false
-    //
-    //         const resolved  = this.resolve(value)
-    //
-    //         // last point where it is safe to just rewrite own value
-    //         // after `super.onEnterGraph` that will be causing effects outside of atom
-    //         if (!isAtomicValue(resolved)) {
-    //             this.put(resolved)
-    //
-    //             resolves    = true
-    //         }
-    //     }
-    //
-    //     super.onEnterGraph(graph)
-    //
-    //     if (this.get() !== undefined && resolves && this.hasBucket()) {
-    //         const referenceBucket  = this.getBucket(this.get())
-    //
-    //         this.addToBucket(referenceBucket)
-    //     }
-    // }
+    removeFromCurrent (graph : CheckoutI) {
+        if (this.hasBucket()) {
+            const value  = graph.read(this) as Entity
 
-
-    // removeFromCurrent (graph : CheckoutI) {
-    //     if (this.hasBucket()) {
-    //         const value  = graph.read(this) as Entity
-    //
-    //         if (value != null) {
-    //             this.removeFromBucket(graph, this.getBucket(value))
-    //         }
-    //     }
-    // }
+            if (value != null) this.getBucket(value).removeFromBucket(graph, this.self)
+        }
+    }
 
 
     leaveGraph (graph : ChronoGraph) {
@@ -138,40 +107,10 @@ class ReferenceIdentifier extends base {
                     this.getBucket(value).removeFromBucket(graph, this.self)
                 }
             }
-
-            // if (proposedValue instanceof Entity) {
-            //     this.getBucket(proposedValue).addToBucket(graph, this.self)
-            // }
         }
 
         super.write(graph, proposedValue)
     }
-
-
-    // put (nextValue : this[ 'value' ]) {
-    //     const value     = this.value
-    //
-    //     if (this.hasBucket()) {
-    //         // value is not empty and resolved to entity
-    //         if (value != null && !isAtomicValue(value)) {
-    //             this.removeFromBucket(this.getBucket(value))
-    //         }
-    //
-    //         if (nextValue != null) {
-    //             if (isAtomicValue(nextValue)) {
-    //                 const newValue = this.resolve(nextValue)
-    //                 if (newValue != null) {
-    //                     this.addToBucket(this.getBucket(newValue))
-    //                     nextValue = newValue
-    //                 }
-    //             } else {
-    //                 this.addToBucket(this.getBucket(nextValue))
-    //             }
-    //         }
-    //     }
-    //
-    //     super.put(nextValue)
-    // }
 }
 
 export type ReferenceIdentifier = Mixin<typeof ReferenceIdentifier>

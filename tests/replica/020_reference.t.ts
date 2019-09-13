@@ -1,6 +1,5 @@
 import { Base } from "../../src/class/Mixin.js"
-import { CalculationIterator } from "../../src/primitives/Calculation.js"
-import { calculate, Entity, field } from "../../src/replica/Entity.js"
+import { Entity } from "../../src/replica/Entity.js"
 import { reference } from "../../src/replica/Reference.js"
 import { bucket } from "../../src/replica/ReferenceBucket.js"
 import { MinimalReplica } from "../../src/replica/Replica.js"
@@ -151,13 +150,13 @@ StartTest(t => {
         replica.addEntity(markTwain)
         replica.addEntity(tomSoyer)
 
-        await replica.propagate()
+        replica.propagate()
 
         t.is(tomSoyer.writtenBy, markTwain, 'Correctly resolved reference')
     })
 
 
-    t.iit('Mutual references with resolvers should work', async t => {
+    t.it('Mutual references with resolvers should work', async t => {
         const dictionary1       = new Map<string, Entity1>()
         const dictionary2       = new Map<string, Entity2>()
 

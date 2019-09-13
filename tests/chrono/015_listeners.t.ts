@@ -1,4 +1,4 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+export
 
 declare const StartTest : any
 

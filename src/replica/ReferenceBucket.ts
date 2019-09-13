@@ -1,5 +1,4 @@
 import { CheckoutI } from "../chrono/Checkout.js"
-import { Identifier } from "../chrono/Identifier.js"
 import { MinimalQuark, Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { ProposedOrCurrent } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"

@@ -1,14 +1,13 @@
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
-import { Effect, SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
+import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
-import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
-import { EntityIdentifierI, FieldIdentifier, FieldIdentifierI, MinimalEntityIdentifier } from "./Identifier.js"
-import { Replica, ReplicaI } from "./Replica.js"
+import { defineProperty } from "../util/Helpers.js"
+import { EntityIdentifierI, FieldIdentifierI, MinimalEntityIdentifier } from "./Identifier.js"
 
 
 const isEntityMarker      = Symbol('isEntity')
