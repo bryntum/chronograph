@@ -3,15 +3,18 @@
 A reactive computational engine.
 
 
-## Properties
+## Properties common
 
-- Unlimited depth for dependencies
-- Built-in O(1) undo/redo
-- Built-in data branching
+- O(1) undo/redo
+- Data branching
+- Mixed computational unit (constant/calculated value)
 - Cancelable transactions
 - lazy/eager computations
-- Possibility for breadth-first computation
 
+## Properties generator
+
+- Unlimited depth for dependencies
+- Possibility for breadth-first computation
 
 
 ## COPYRIGHT AND LICENSE
