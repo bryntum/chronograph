@@ -1,6 +1,6 @@
 import { CheckoutI } from "../chrono/Checkout.js"
 import { MinimalQuark, Quark, QuarkConstructor } from "../chrono/Quark.js"
-import { ProposedOrCurrent } from "../chrono/Transaction.js"
+import { ProposedOrCurrent, Transaction } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationIterator } from "../primitives/Calculation.js"
 import { Field } from "../schema/Field.js"
@@ -38,25 +38,29 @@ class ReferenceBucketIdentifier extends base {
     quarkClass          : QuarkConstructor      = MinimalReferenceBucketQuark
 
 
-    addToBucket (graph : CheckoutI, entity : Entity) {
-        const quark         = graph.acquireQuark(this) as ReferenceBucketQuark
+    addToBucket (transaction : Transaction, entity : Entity) {
+        const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
 
         if (!quark.newRefs) quark.newRefs = new Set()
 
-        if (!quark.previousValue && graph.hasIdentifier(this)) quark.previousValue = graph.read(this)
-
         quark.newRefs.add(entity)
+
+        const baseRevision  = transaction.baseRevision
+
+        if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
     }
 
 
-    removeFromBucket (graph : CheckoutI, entity : Entity) {
-        const quark         = graph.acquireQuark(this) as ReferenceBucketQuark
+    removeFromBucket (transaction : Transaction, entity : Entity) {
+        const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
 
         if (!quark.oldRefs) quark.oldRefs = new Set()
 
-        if (!quark.previousValue && graph.hasIdentifier(this)) quark.previousValue = graph.read(this)
-
         quark.oldRefs.add(entity)
+
+        const baseRevision  = transaction.baseRevision
+
+        if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
     }
 
 
@@ -84,11 +88,12 @@ class ReferenceBucketQuark extends base {
 
 
     get proposedValue () : Set<Entity> {
-        const newValue : Set<Entity>        = new Set(this.previousValue || undefined)
+        const newValue : Set<Entity>        = new Set(this.previousValue)
+
+        // need to remove the old references first and then add new - to allow re-adding just removed reference
+        if (this.oldRefs) this.oldRefs.forEach(entity => newValue.delete(entity))
 
         if (this.newRefs) this.newRefs.forEach(entity => newValue.add(entity))
-
-        if (this.oldRefs) this.oldRefs.forEach(entity => newValue.delete(entity))
 
         return defineProperty(this, 'proposedValue', newValue)
     }

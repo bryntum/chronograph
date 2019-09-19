@@ -1,8 +1,7 @@
-import { Checkout } from "../../src/chrono/Checkout.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../../src/chrono/Identifier.js"
-import { MinimalQuark, QuarkConstructor } from "../../src/chrono/Quark.js"
-import { ProposedOrCurrent, SyncEffectHandler } from "../../src/chrono/Transaction.js"
+import { MinimalQuark } from "../../src/chrono/Quark.js"
+import { ProposedOrCurrent, SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { defineProperty } from "../../src/util/Helpers.js"
 
@@ -54,7 +53,7 @@ type DispatcherLogEntry = {
 class DispatcherIdentifier extends CalculatedValueSync {
     ValueT      : DispatcherValue
 
-    quarkClass  : QuarkConstructor  = DispatcherQuark
+    quarkClass  : typeof DispatcherQuark  = DispatcherQuark
 
 
     equality (v1 : DispatcherValue, v2 : DispatcherValue) : boolean {
@@ -67,8 +66,8 @@ class DispatcherIdentifier extends CalculatedValueSync {
     }
 
 
-    log (graph : Checkout, entry : DispatcherLogEntry) {
-        const quark         = graph.acquireQuark(this) as DispatcherQuark
+    log (transaction : Transaction, entry : DispatcherLogEntry) {
+        const quark         = transaction.acquireQuark(this)
 
         quark.logEntries.set(entry.fieldType, entry)
     }
@@ -217,10 +216,10 @@ StartTest(t => {
                 }
             },
 
-            write (graph : Checkout, proposedValue : any, keepDuration : boolean) {
+            write (transaction : Transaction, proposedValue : any, keepDuration : boolean) {
                 CalculatedValueGen.prototype.write.call(this, graph, proposedValue)
 
-                preDispatcher.log(graph, {
+                preDispatcher.log(transaction, {
                     fieldType               : FieldType.Start,
                     hasProposedValue        : true,
                     hasPreviousValue        : graph.hasIdentifier(start),
@@ -249,10 +248,10 @@ StartTest(t => {
                 }
             },
 
-            write (graph : Checkout, proposedValue : any, keepDuration : boolean) {
+            write (transaction : Transaction, proposedValue : any, keepDuration : boolean) {
                 CalculatedValueGen.prototype.write.call(this, graph, proposedValue)
 
-                preDispatcher.log(graph, {
+                preDispatcher.log(transaction, {
                     fieldType               : FieldType.End,
                     hasProposedValue        : true,
                     hasPreviousValue        : graph.hasIdentifier(end),
@@ -281,10 +280,10 @@ StartTest(t => {
                 }
             },
 
-            write (graph : Checkout, proposedValue : any, keepStart : boolean) {
+            write (transaction : Transaction, proposedValue : any, keepStart : boolean) {
                 CalculatedValueGen.prototype.write.call(this, graph, proposedValue)
 
-                preDispatcher.log(graph, {
+                preDispatcher.log(transaction, {
                     fieldType               : FieldType.Duration,
                     hasProposedValue        : true,
                     hasPreviousValue        : graph.hasIdentifier(duration),

@@ -134,7 +134,7 @@ class Checkout extends base {
 
 
     get activeTransaction () : Transaction {
-        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision, checkout : this }))
+        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision }))
     }
 
 
@@ -212,7 +212,7 @@ class Checkout extends base {
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
         this.touch(identifier)
 
-        if (proposedValue !== undefined) identifier.write(this, proposedValue, ...args)
+        if (proposedValue !== undefined) identifier.write(this.activeTransaction, proposedValue, ...args)
 
         return identifier
     }
@@ -258,7 +258,7 @@ class Checkout extends base {
 
 
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
-        identifier.write(this, proposedValue, ...args)
+        identifier.write(this.activeTransaction, proposedValue, ...args)
     }
 
 

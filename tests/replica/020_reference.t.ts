@@ -34,6 +34,7 @@ StartTest(t => {
         replica1.addEntity(markTwain)
         replica1.addEntity(tomSoyer)
 
+        //--------------------
         replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
@@ -43,15 +44,81 @@ StartTest(t => {
 
         replica1.addEntity(tomSoyer2)
 
+        //--------------------
         replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
 
         tomSoyer2.writtenBy     = null
 
+        //--------------------
         replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
+
+        //--------------------
+        replica1.removeEntity(tomSoyer)
+
+        replica1.propagate()
+
+        t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
+    })
+
+
+    t.it('Author/Book #2', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity(Base) {
+            @bucket()
+            books           : Set<Book>
+        }
+
+        @entity
+        class Book extends Entity(Base) {
+            @reference({ bucket : 'books' })
+            writtenBy       : Author
+        }
+
+        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+
+        const markTwain         = Author.new()
+        const markTwain2        = Author.new()
+        const tomSoyer          = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntities([ markTwain, markTwain2, tomSoyer ])
+
+        //--------------------
+        replica1.propagate()
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
+        t.isDeeply(markTwain2.books, new Set(), 'Correctly resolved reference')
+        t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
+
+        //--------------------
+        tomSoyer.writtenBy      = markTwain2
+
+        // overwrite previous write
+        tomSoyer.writtenBy      = markTwain
+
+        replica1.propagate()
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
+        t.isDeeply(markTwain2.books, new Set(), 'Correctly resolved reference')
+        t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
+
+        //--------------------
+        tomSoyer.writtenBy      = markTwain2
+
+        // remove modified reference
+        replica1.removeEntity(tomSoyer)
+
+        replica1.propagate()
+
+        t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
+        t.isDeeply(markTwain2.books, new Set(), 'Correctly resolved reference')
     })
 
 

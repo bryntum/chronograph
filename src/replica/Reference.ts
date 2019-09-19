@@ -1,10 +1,9 @@
-import { CheckoutI } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
-import { CalculatedValueGen } from "../chrono/Identifier.js"
+import { CalculatedValueSync } from "../chrono/Identifier.js"
 import { MinimalQuark, Quark, QuarkConstructor } from "../chrono/Quark.js"
-import { GetGraph, ProposedOrCurrent } from "../chrono/Transaction.js"
+import { GetTransaction, ProposedOrCurrent, Transaction, YieldableValue } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { CalculationIterator } from "../primitives/Calculation.js"
+import { CalculationContext } from "../primitives/Calculation.js"
 import { Field, Name } from "../schema/Field.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
@@ -35,14 +34,12 @@ export const reference : FieldDecorator<typeof MinimalReferenceField> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceIdentifier = <T extends AnyConstructor<FieldIdentifier & CalculatedValueGen>>(base : T) =>
+export const ReferenceIdentifier = <T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) =>
 
 class ReferenceIdentifier extends base {
     field           : ReferenceField
 
     ValueT          : Entity
-
-    quarkClass      : QuarkConstructor      = MinimalReferenceQuark
 
 
     hasBucket () : boolean {
@@ -50,15 +47,15 @@ class ReferenceIdentifier extends base {
     }
 
 
-    // TODO this can be "simulated" as a delayed `proposedValue` calculation, avoiding a generator call
-    // OR, reference can be a "sync" identifier
-    * calculation () : CalculationIterator<this[ 'ValueT' ]> {
-        const proposedValue     = yield ProposedOrCurrent
+    calculation (YIELD : CalculationContext<YieldableValue>) : this[ 'ValueT' ] {
+        const proposedValue     = YIELD(ProposedOrCurrent)
 
         const value : Entity    = proposedValue instanceof Entity ? proposedValue as Entity : this.resolve(proposedValue)
 
         if (value && this.hasBucket()) {
-            this.getBucket(value).addToBucket(yield GetGraph, this.self)
+            const transaction : Transaction = YIELD(GetTransaction)
+
+            this.getBucket(value).addToBucket(transaction, this.self)
         }
 
         return value
@@ -77,21 +74,14 @@ class ReferenceIdentifier extends base {
     }
 
 
-    removeFromCurrent (graph : CheckoutI) {
-        if (this.hasBucket()) {
-            const value  = graph.read(this) as Entity
-
-            if (value != null) this.getBucket(value).removeFromBucket(graph, this.self)
-        }
-    }
-
-
     leaveGraph (graph : ChronoGraph) {
         if (this.hasBucket()) {
+            // here we only need to remove from the "previous", "stable" bucket, because
+            // the calculation for the removed reference won't be called - the possible `proposedValue` of reference will be ignored
             const value  = graph.read(this) as Entity
 
             if (value != null) {
-                this.getBucket(value).removeFromBucket(graph, this.self)
+                this.getBucket(value).removeFromBucket(graph.activeTransaction, this.self)
             }
         }
 
@@ -99,49 +89,31 @@ class ReferenceIdentifier extends base {
     }
 
 
-    write (graph : CheckoutI, proposedValue : this[ 'ValueT' ]) {
+    write (transaction : Transaction, proposedValue : this[ 'ValueT' ]) {
         if (this.hasBucket()) {
-            if (graph.hasIdentifier(this)) {
-                const value  = graph.read(this) as Entity
+            const quark                 = transaction.acquireQuarkIfExists(this)
+
+            if (quark) {
+                const proposedValue     = quark.proposedValue
+
+                if (proposedValue instanceof Entity) {
+                    this.getBucket(proposedValue as Entity).removeFromBucket(transaction, this.self)
+                }
+            }
+            else if (transaction.baseRevision.hasIdentifier(this)) {
+                const value  = transaction.baseRevision.read(this) as Entity
 
                 if (value != null) {
-                    this.getBucket(value).removeFromBucket(graph, this.self)
+                    this.getBucket(value).removeFromBucket(transaction, this.self)
                 }
             }
         }
 
-        super.write(graph, proposedValue)
+        super.write(transaction, proposedValue)
     }
 }
 
 export type ReferenceIdentifier = Mixin<typeof ReferenceIdentifier>
 
 
-export class MinimalReferenceIdentifier extends ReferenceIdentifier(FieldIdentifier(CalculatedValueGen)) {}
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const ReferenceQuark = <T extends AnyConstructor<Quark>>(base : T) =>
-
-class ReferenceQuark extends base {
-
-    // set proposedValue (value) {
-    // }
-    //
-    //
-    // get proposedValue () : Set<Entity> {
-    //     const newValue : Set<Entity>        = new Set(this.previousValue || undefined)
-    //
-    //     if (this.newRefs) this.newRefs.forEach(entity => newValue.add(entity))
-    //
-    //     if (this.oldRefs) this.oldRefs.forEach(entity => newValue.delete(entity))
-    //
-    //     return defineProperty(this, 'proposedValue', newValue)
-    // }
-}
-
-export type ReferenceQuark = Mixin<typeof ReferenceQuark>
-
-
-export class MinimalReferenceQuark extends ReferenceQuark(MinimalQuark) {}
+export class MinimalReferenceIdentifier extends ReferenceIdentifier(FieldIdentifier(CalculatedValueSync)) {}

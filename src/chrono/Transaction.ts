@@ -139,9 +139,9 @@ export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurre
 // export const CancelPropagation : Effect = Effect.new({ handler : CancelPropagationSymbol })
 
 //---------------------------------------------------------------------------------------------------------------------
-const GraphSymbol    = Symbol('GraphSymbol')
+const TransactionSymbol    = Symbol('GraphSymbol')
 
-export const GetGraph : Effect = Effect.new({ handler : GraphSymbol })
+export const GetTransaction : Effect = Effect.new({ handler : TransactionSymbol })
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -168,7 +168,6 @@ export type YieldableValue = Effect | Identifier
 export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Transaction extends base {
-    checkout                : CheckoutI
     baseRevision            : Revision
 
     isClosed                : boolean               = false
@@ -291,6 +290,18 @@ class Transaction extends base {
     //     else
     //         quark.proposedValue     = value
     // }
+
+
+    acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
+        return this.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
+    }
+
+
+    acquireQuarkIfExists<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> | undefined {
+        const entry     = this.entries.get(identifier)
+
+        return entry ? entry.quark as InstanceType<T[ 'quarkClass' ]> : undefined
+    }
 
 
     touch (identifier : Identifier) : QuarkEntry {
@@ -429,8 +440,8 @@ class Transaction extends base {
     }
 
 
-    [GraphSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
-        return this.checkout
+    [TransactionSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
+        return this
     }
 
 
@@ -440,7 +451,7 @@ class Transaction extends base {
         this.walkContext.currentEpoch++
 
         // should be `identifier.write(this, ...` to avoid assumption that `activeTransaction` of the `checkout` did not change)
-        effect.writeTarget.write(this.checkout, ...effect.proposedArgs)
+        effect.writeTarget.write(this, ...effect.proposedArgs)
     }
 
 

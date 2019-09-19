@@ -2,7 +2,7 @@ import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { NOT_VISITED, VisitInfo } from "../graph/WalkDepth.js"
 import { MAX_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
-import { Quark } from "./Quark.js"
+import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
 import { MinimalTransaction } from "./Transaction.js"
 
@@ -129,6 +129,13 @@ class Revision extends base {
         }
 
         return null
+    }
+
+
+    hasIdentifier (identifier : Identifier) : boolean {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        return Boolean(latestEntry && (!latestEntry.quark || !(latestEntry.quark instanceof TombstoneQuark)))
     }
 
 

@@ -1,19 +1,19 @@
 import { Base, MixinConstructor } from "../class/Mixin.js"
-import { CalculationContext, CalculationIterator } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationIterator, Context, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Checkout, CheckoutI } from "./Checkout.js"
 import { MinimalQuark, QuarkConstructor } from "./Quark.js"
 import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
-import { ProposedOrCurrent, YieldableValue } from "./Transaction.js"
+import { ProposedOrCurrent, Transaction, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Identifier extends Base {
+export class Identifier<ContextT extends Context = Context, ResultT = any> extends Base {
     name                : any
 
     ArgsT               : any[]
     YieldT              : YieldableValue
-    ValueT              : any
+    ValueT              : ResultT
 
     context             : any
 
@@ -35,7 +35,7 @@ export class Identifier extends Base {
     }
 
 
-    calculation (context : CalculationContext<this[ 'YieldT' ]>) : unknown {
+    calculation (context : CalculationContext<this[ 'YieldT' ]>) : Contexts<ResultT, this[ 'YieldT' ]>[ ContextT ] {
         throw new Error("Abstract method `calculation` called")
     }
 
@@ -45,8 +45,8 @@ export class Identifier extends Base {
     // }
 
 
-    write (graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
-        const quark         = graph.acquireQuark(this)
+    write (transaction : Transaction, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+        const quark         = transaction.acquireQuark(this)
 
         quark.proposedValue = proposedValue
     }
@@ -67,16 +67,16 @@ export class Identifier extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Variable extends Identifier {
+export class Variable<ResultT = any> extends Identifier<typeof ContextSync, ResultT> {
     YieldT              : never
 
-    calculation (context : CalculationContext<this[ 'YieldT' ]>) : unknown {
+    calculation (context : CalculationContext<this[ 'YieldT' ]>) : Contexts<ResultT, this[ 'YieldT' ]>[ typeof ContextSync ] {
         throw new Error("The 'calculation' method of the variables should not be called for optimization purposes. Instead the value should be set directly to quark")
     }
 
 
-    write (graph : Checkout, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
-        const quark         = graph.acquireQuark(this)
+    write (transaction : Transaction, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+        const quark         = transaction.acquireQuark(this)
 
         quark.value         = proposedValue
     }
