@@ -85,7 +85,7 @@ StartTest(t => {
             }
 
 
-            * helperMethod (YIELD, prefix : string) : CalculationIterator<string> {
+            * helperMethod (prefix : string) : CalculationIterator<string> {
                 return prefix + (yield this.$.fullName)
             }
         }

@@ -383,7 +383,7 @@ class Transaction extends base {
     propagate (args? : PropagateArguments) : Revision {
         const stack = this.prePropagate(args)
 
-        runGeneratorSyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
+        runGeneratorSyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
         return this.postPropagate()
     }
@@ -402,7 +402,7 @@ class Transaction extends base {
     async propagateAsync (args? : PropagateArguments) : Promise<Revision> {
         const stack = this.prePropagate(args)
 
-        await runGeneratorAsyncWithEffect(this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
+        await runGeneratorAsyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
         return this.postPropagate()
     }

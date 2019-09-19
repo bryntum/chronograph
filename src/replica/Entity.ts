@@ -210,7 +210,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 throw new Error("Helper methods can not yield effects during computation")
             }
 
-            return runGeneratorSyncWithEffect(this[ methodName ] as S, [ onEffect, ...args ], this)
+            return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as S, args, this)
         }
     }
 

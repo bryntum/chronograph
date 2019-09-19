@@ -1,10 +1,10 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { CalculationContext, CalculationGen, CalculationSync, GenericCalculation } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationGen, CalculationSync, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { Identifier } from "./Identifier.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculation<any, any, [ CalculationContext<any> ]>>>(base : T) => {
+export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculation<Context, any, any, [ CalculationContext<any>, ...any[] ]>>>(base : T) => {
 
     class QuarkTransition extends base {
         // current         : QuarkEntry

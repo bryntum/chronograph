@@ -1,40 +1,39 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Box } from "./Box.js"
 
-// export type Context = typeof ContextSync | typeof ContextGen
-// export const ContextSync = Symbol('SyncContext')
-// export const ContextGen = Symbol('SyncContext')
-//
-// export type Contexts = {
-//     [ContextGen] : boolean,
-//     [ContextSync] : string
-// }
+//---------------------------------------------------------------------------------------------------------------------
+export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, ResultT, any>
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ContextSync    = Symbol('ContextSync')
+export const ContextGen     = Symbol('ContextGen')
+
+export type Context         = typeof ContextSync | typeof ContextGen
+
+export type Contexts<ResultT, YieldT> = {
+    [ContextGen]    : CalculationIterator<ResultT, YieldT>,
+    [ContextSync]   : ResultT
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export type CalculationContext<YieldT> = (effect : YieldT) => any
 
-//---------------------------------------------------------------------------------------------------------------------
-export type CalculationFunction<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
-    (...args : ArgsT) => unknown
+export type CalculationFunction<ContextT extends Context, ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
+    (...args : ArgsT) => Contexts<ResultT, YieldT>[ ContextT ]
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, ResultT, any>
+export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]>
+    extends Box<ResultT>
+{
+    // this is just a scope for the `calculation` function, not related to `CalculationContext` type
+    context                     : any
 
-export type CalculationFunctionGen<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
-    (...args : ArgsT) => CalculationIterator<ResultT, YieldT>
+    calculation                 : CalculationFunction<ContextT, ResultT, YieldT, ArgsT>
 
-export type CalculationFunctionSync<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =
-    (...args : ArgsT) => ResultT
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export interface GenericCalculation<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> extends Box<ResultT> {
-    context                 : any
-
-    calculation             : CalculationFunction<ResultT, YieldT, ArgsT>
-
-    iterationResult         : IteratorResult<ResultT>
+    iterationResult             : IteratorResult<ResultT>
 
     isCalculationStarted ()     : boolean
     isCalculationCompleted ()   : boolean
@@ -52,7 +51,7 @@ export const CalculationGen = <
     ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
 >(base : T) =>
 
-class CalculationGen extends base implements GenericCalculation<ResultT, YieldT, ArgsT> {
+class CalculationGen extends base implements GenericCalculation<typeof ContextGen, ResultT, YieldT, ArgsT> {
     context             : any
 
     iterator            : CalculationIterator<ResultT, YieldT>
@@ -134,6 +133,8 @@ export class MinimalCalculationGen extends CalculationGen(Base) {}
 //---------------------------------------------------------------------------------------------------------------------
 export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStarted')
 
+const calculationStartedConstant : { value : typeof SynchronousCalculationStarted } = { value : SynchronousCalculationStarted }
+
 export const CalculationSync = <
     T extends AnyConstructor<object>,
     ResultT = any,
@@ -141,7 +142,7 @@ export const CalculationSync = <
     ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
 >(base : T) =>
 
-class CalculationGen extends base implements GenericCalculation<ResultT, YieldT, ArgsT> {
+class CalculationGen extends base implements GenericCalculation<typeof ContextSync, ResultT, YieldT, ArgsT> {
     context             : any
 
     iterationResult     : IteratorResult<any>
@@ -168,7 +169,7 @@ class CalculationGen extends base implements GenericCalculation<ResultT, YieldT,
 
 
     startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
-        this.iterationResult = { value : SynchronousCalculationStarted }
+        this.iterationResult = calculationStartedConstant
 
         return this.iterationResult = {
             done    : true,
@@ -182,7 +183,7 @@ class CalculationGen extends base implements GenericCalculation<ResultT, YieldT,
     }
 
 
-    calculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : any {
+    calculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : ResultT {
         throw new Error("Abstract method `calculation` called")
     }
 
@@ -206,32 +207,40 @@ export class MinimalCalculationSync extends CalculationSync(Base) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> (
-    func        : CalculationFunctionGen<ResultT, YieldT, ArgsT>,
+export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends any[]> (
+    effect      : CalculationContext<YieldT>,
+    func        : (...args : ArgsT) => Generator<YieldT, ResultT, any>,
     args        : ArgsT,
     scope?      : any
 ) : ResultT
 {
-    const calculation       = MinimalCalculationGen.new({
-        calculation         : func,
-        context             : scope
-    })
+    const gen       = func.apply(scope || null, args)
 
-    return calculation.runSyncWithEffect(...args as [ CalculationContext<YieldT>, ...any[] ])
+    let iteration   = gen.next()
+
+    while (!iteration.done) {
+        iteration   = gen.next(effect(iteration.value))
+    }
+
+    return iteration.value
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> (
-    func        : CalculationFunctionGen<ResultT, YieldT, ArgsT>,
+export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends any[]> (
+    effect      : CalculationContext<YieldT>,
+    func        : (...args : ArgsT) => Generator<YieldT, ResultT, any>,
     args        : ArgsT,
     scope?      : any
 ) : Promise<ResultT>
 {
-    const calculation       = MinimalCalculationGen.new({
-        calculation         : func,
-        context             : scope
-    })
+    const gen       = func.apply(scope || null, args)
 
-    return await calculation.runAsyncWithEffect(...args as [ CalculationContext<YieldT>, ...any[] ])
+    let iteration   = gen.next()
+
+    while (!iteration.done) {
+        iteration   = gen.next(await effect(iteration.value))
+    }
+
+    return iteration.value
 }

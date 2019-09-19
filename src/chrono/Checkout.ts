@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
-import { CalculationContext, CalculationFunctionGen } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copyMapInto, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { Revision } from "./Revision.js"
@@ -218,7 +218,7 @@ class Checkout extends base {
     }
 
 
-    identifier (calculation : CalculationFunctionGen<any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
+    identifier<ContextT extends Context> (calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
         const identifier    = CalculatedValueGen.new({ calculation, context })
 
         this.touch(identifier)
@@ -248,7 +248,7 @@ class Checkout extends base {
     }
 
 
-    identifierId (name : any, calculation : CalculationFunctionGen<any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
+    identifierId<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
         const identifier    = CalculatedValueGen.new({ calculation, context, name })
 
         this.touch(identifier)
@@ -280,8 +280,8 @@ class Checkout extends base {
 
 
     observe
-        <Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
-        (observerFunc : CalculationFunctionGen<Result, Yield, ArgsT>/*, onUpdated : (value : Result) => any*/)
+        <ContextT extends Context, Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
+        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>/*, onUpdated : (value : Result) => any*/)
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
             // observers are explicitly eager
