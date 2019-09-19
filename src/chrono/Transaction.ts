@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
+import { NOT_VISITED, OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import {
     CalculationContext,
     runGeneratorAsyncWithEffect,
@@ -105,8 +105,8 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             this.visited.set(identifier, transition)
         }
 
-        transition.visitedAt                = visitedAt
-        transition.visitEpoch               = this.currentEpoch
+        transition.visitedAt    = visitedAt
+        transition.visitEpoch   = this.currentEpoch
 
         return transition
     }
@@ -146,7 +146,10 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                 }
 
                 if (entry.visitEpoch < this.currentEpoch) {
-                    // entry.edgesFlow     = 0
+                    entry.visitEpoch    = this.currentEpoch
+                    entry.visitedAt     = NOT_VISITED
+                    entry.edgesFlow     = 0
+
                     // TODO should call something like `entry.transition.cancel()` ?
                     entry.transition    = undefined
                     entry.outgoing.clear()
@@ -168,7 +171,10 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                 if (!entry) throw new Error('Should not happen')
 
                 if (entry.visitEpoch < this.currentEpoch) {
-                    // entry.edgesFlow     = 0
+                    entry.visitEpoch    = this.currentEpoch
+                    entry.visitedAt     = NOT_VISITED
+                    entry.edgesFlow     = 0
+
                     // TODO should call something like `entry.transition.cancel()` ?
                     entry.transition    = undefined
                     entry.outgoing.clear()

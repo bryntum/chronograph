@@ -1,7 +1,7 @@
 import { MAX_SMI } from "./Helpers.js"
 
 // TODO
-// probably we only need the leveling during the initial population of the stack (during the walkDepth)
+// probably we only need the leveling when the populating of the stack (during the walkDepth)
 // then, during calculations, regular array will be sufficient
 
 

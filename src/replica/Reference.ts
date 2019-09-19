@@ -51,6 +51,7 @@ class ReferenceIdentifier extends base {
 
 
     // TODO this can be "simulated" as a delayed `proposedValue` calculation, avoiding a generator call
+    // OR, reference can be a "sync" identifier
     * calculation () : CalculationIterator<this[ 'ValueT' ]> {
         const proposedValue     = yield ProposedOrCurrent
 
