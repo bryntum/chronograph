@@ -284,6 +284,9 @@ class Checkout extends base {
         (observerFunc : CalculationFunctionGen<Result, Yield, ArgsT>/*, onUpdated : (value : Result) => any*/)
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
+            // observers are explicitly eager
+            lazy            : false,
+
             calculation     : observerFunc as any,
 
             // equality        : () => false,

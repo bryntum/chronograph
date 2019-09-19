@@ -14,8 +14,8 @@ A reactive computational engine.
 ## Properties generator
 
 - Unlimited depth for dependencies
+- Possibility to split the whole computation into chunks (requestAnimationFrame) 
 - Possibility for breadth-first computation
-
 
 ## COPYRIGHT AND LICENSE
 

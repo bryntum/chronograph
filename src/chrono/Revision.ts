@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { VisitInfo } from "../graph/WalkDepth.js"
+import { NOT_VISITED, VisitInfo } from "../graph/WalkDepth.js"
 import { MAX_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 import { Quark } from "./Quark.js"
@@ -31,8 +31,8 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
 
     // placing these initial values to the prototype makes the `benchmark_sync` slower - from ~630ms to ~830
     edgesFlow               : number = 0
-    visitedAt               : number = -1
-    visitedTopologically    : boolean = false
+    visitedAt               : number = NOT_VISITED
+    visitEpoch              : number = 0
 
 
     get level () : number {

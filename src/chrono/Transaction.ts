@@ -11,7 +11,7 @@ import { CheckoutI, PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
 import { QuarkTransition } from "./QuarkTransition.js"
-import { MinimalRevision, QuarkEntry, Revision } from "./Revision.js"
+import { MinimalRevision, QuarkEntry, Revision, Scope } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ export class WalkForwardQuarkContext extends WalkContext<Identifier> {
     // }
 
 
-    setVisitedInfo (identifier : Identifier, visitedAt : number, visitedTopologically : boolean, transition : QuarkEntry) : VisitInfo {
+    setVisitedInfo (identifier : Identifier, visitedAt : number, transition : QuarkEntry) : VisitInfo {
         if (!transition) {
             transition      = QuarkEntry.new({ identifier, quark : null, transition : null })
 
@@ -43,7 +43,7 @@ export class WalkForwardQuarkContext extends WalkContext<Identifier> {
         }
 
         transition.visitedAt                = visitedAt
-        transition.visitedTopologically     = visitedTopologically
+        transition.visitEpoch               = this.currentEpoch
 
         return transition
     }
@@ -68,27 +68,121 @@ export class WalkForwardQuarkContext extends WalkContext<Identifier> {
             visitInfo.getQuark().proposedValue   = entry.value
         }
 
-        if (!entry.outgoing) return
+        if (entry.outgoing) {
+            for (const outgoingEntry of entry.outgoing) {
+                const identifier    = outgoingEntry.identifier
 
-        for (const outgoingEntry of entry.outgoing) {
-            const identifier    = outgoingEntry.identifier
+                if (outgoingEntry.quark !== this.baseRevision.getLatestEntryFor(identifier).quark) continue
 
-            if (outgoingEntry.quark !== this.baseRevision.getLatestEntryFor(identifier).quark) continue
+                let entry : QuarkEntry              = this.visited.get(identifier)
 
-            let entry : QuarkEntry              = this.visited.get(identifier)
+                if (!entry) {
+                    entry                           = QuarkEntry.new({ identifier, quark : null, transition : null })
 
-            if (!entry) {
-                entry                           = QuarkEntry.new({ identifier, quark : null, transition : null })
+                    this.visited.set(identifier, entry)
+                }
 
-                this.visited.set(identifier, entry)
+                entry.edgesFlow++
+
+                toVisit.push({ node : identifier, from : node, label : undefined })
             }
-
-            entry.edgesFlow++
-
-            toVisit.push({ node : identifier, from : node, label : undefined })
         }
     }
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
+    visited         : Map<Identifier, QuarkEntry>
+
+    baseRevision    : Revision
+
+
+    setVisitedInfo (identifier : Identifier, visitedAt : number, transition : QuarkEntry) : VisitInfo {
+        if (!transition) {
+            transition      = QuarkEntry.new({ identifier, quark : null, transition : null })
+
+            this.visited.set(identifier, transition)
+        }
+
+        transition.visitedAt                = visitedAt
+        transition.visitEpoch               = this.currentEpoch
+
+        return transition
+    }
+
+
+    collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : QuarkEntry) {
+        const entry             = this.baseRevision.getLatestEntryFor(node)
+
+        // newly created identifier
+        if (!entry) return
+
+        // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
+        // will have the `previous` property populated
+        visitInfo.previous      = entry
+
+        if (node.lazy && entry.quark && entry.quark.usedProposedOrCurrent) {
+            // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
+            // from the previous revision
+            // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
+            // so general consideration is - the revision should contain ALL information needed to calculate it
+            // alternatively, this could be done during the `populateCandidateScopeFromTransitions`
+            visitInfo.getQuark().proposedValue   = entry.value
+        }
+
+        if (entry.outgoing) {
+            for (const outgoingEntry of entry.outgoing) {
+                const identifier    = outgoingEntry.identifier
+
+                if (outgoingEntry.quark !== this.baseRevision.getLatestEntryFor(identifier).quark) continue
+
+                let entry : QuarkEntry              = this.visited.get(identifier)
+
+                if (!entry) {
+                    entry                           = QuarkEntry.new({ identifier, quark : null, transition : null })
+
+                    this.visited.set(identifier, entry)
+                }
+
+                if (entry.visitEpoch < this.currentEpoch) {
+                    // entry.edgesFlow     = 0
+                    // TODO should call something like `entry.transition.cancel()` ?
+                    entry.transition    = undefined
+                    entry.outgoing.clear()
+                    if (entry.quark) entry.quark.value = undefined
+                }
+
+                entry.edgesFlow++
+
+                toVisit.push({ node : identifier, from : node, label : undefined })
+            }
+        }
+
+        if (visitInfo.outgoing) {
+            for (const outgoingEntry of visitInfo.outgoing) {
+                const identifier    = outgoingEntry.identifier
+
+                let entry : QuarkEntry              = this.visited.get(identifier)
+
+                if (!entry) throw new Error('Should not happen')
+
+                if (entry.visitEpoch < this.currentEpoch) {
+                    // entry.edgesFlow     = 0
+                    // TODO should call something like `entry.transition.cancel()` ?
+                    entry.transition    = undefined
+                    entry.outgoing.clear()
+                    if (entry.quark) entry.quark.value = undefined
+                }
+
+                entry.edgesFlow++
+
+                toVisit.push({ node : identifier, from : node, label : undefined })
+            }
+        }
+    }
+}
+
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -114,6 +208,21 @@ const GraphSymbol    = Symbol('GraphSymbol')
 export const GetGraph : Effect = Effect.new({ handler : GraphSymbol })
 
 
+//---------------------------------------------------------------------------------------------------------------------
+const WriteSymbol    = Symbol('WriteSymbol')
+
+export class WriteEffect extends Effect {
+    handler         : symbol    = WriteSymbol
+
+    writeTarget     : Identifier
+    proposedArgs    : [ any, ...any[] ]
+}
+
+
+export const Write = (writeTarget : Identifier, proposedValue : any, ...proposedArgs : any[]) : WriteEffect =>
+    WriteEffect.new({ writeTarget, proposedArgs : [ proposedValue, ...proposedArgs ] })
+
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export type YieldableValue = Effect | Identifier
@@ -128,7 +237,7 @@ class Transaction extends base {
 
     isClosed                : boolean               = false
 
-    walkContext             : WalkForwardQuarkContext
+    walkContext             : WalkForwardOverwriteContext
 
     // we use 2 different stacks, because they support various effects
     stackSync               : LeveledStack<QuarkEntry>  = new LeveledStack()
@@ -143,7 +252,7 @@ class Transaction extends base {
     initialize (...args) {
         super.initialize(...args)
 
-        this.walkContext    = WalkForwardQuarkContext.new({
+        this.walkContext    = WalkForwardOverwriteContext.new({
             baseRevision    : this.baseRevision,
             // ignore cycles when determining potentially changed atoms
             onCycle         : (quark : Identifier, stack : WalkStep<Identifier>[]) => OnCycleAction.Resume,
@@ -214,7 +323,7 @@ class Transaction extends base {
             this.entries.set(identifier, entry)
         }
 
-        if (activeEntry.identifier.level > entry.identifier.level) throw new Error('Identifier can not read from higher level identifier')
+        if (activeEntry.identifier.level < entry.identifier.level) throw new Error('Identifier can not read from higher level identifier')
 
         entry.add(activeEntry)
 
@@ -389,6 +498,14 @@ class Transaction extends base {
     }
 
 
+    [WriteSymbol] (effect : WriteEffect, activeEntry : QuarkEntry) : any {
+        this.walkContext.currentEpoch++
+
+        // should be `identifier.write(this, ...` to avoid assumption that `activeTransaction` of the `checkout` did not change)
+        effect.writeTarget.write(this.checkout, ...effect.proposedArgs)
+    }
+
+
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) : Generator<any, void, unknown> {
         const { entries } = this
 
@@ -432,12 +549,19 @@ class Transaction extends base {
 
             const transition        = entry.getTransition()
 
+            const startedAtEpoch    = entry.visitEpoch
+
             let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this.onEffectSync)
 
             do {
                 const value         = iterationResult.value
 
                 if (transition.isCalculationCompleted()) {
+                    if (entry.visitEpoch !== startedAtEpoch) {
+                        stack.pop()
+                        break
+                    }
+
                     const quark         = entry.getQuark()
 
                     quark.value         = value
@@ -705,5 +829,7 @@ class Transaction extends base {
 }
 
 export type Transaction = Mixin<typeof Transaction>
+
+export interface TransactionI extends Transaction {}
 
 export class MinimalTransaction extends Transaction(Base) {}

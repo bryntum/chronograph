@@ -34,6 +34,7 @@ project.start(
             'chrono/012_impure_calculated_value.t.js',
             'chrono/013_sync_calculation.t.js',
             // 'chrono/015_listeners.t.js',
+            'chrono/016_recursion.t.js',
             'chrono/020_graph_branching.t.js',
             'chrono/030_propagation.t.js',
             'chrono/031_garbage_collection.t.js',

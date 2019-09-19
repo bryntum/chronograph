@@ -40,9 +40,9 @@ export class Identifier extends Base {
     }
 
 
-    read (graph : CheckoutI) : this[ 'ValueT' ] {
-        return graph.read(this)
-    }
+    // read (graph : CheckoutI) : this[ 'ValueT' ] {
+    //     return graph.read(this)
+    // }
 
 
     write (graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
@@ -52,9 +52,9 @@ export class Identifier extends Base {
     }
 
 
-    buildProposedValue (quark : InstanceType<this[ 'quarkClass' ]>) {
-        return quark.proposedValue
-    }
+    // buildProposedValue (quark : InstanceType<this[ 'quarkClass' ]>) {
+    //     return quark.proposedValue
+    // }
 
 
     enterGraph (graph : CheckoutI) {

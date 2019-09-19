@@ -12,7 +12,14 @@ export const WalkSource = Symbol('WalkSource')
 //---------------------------------------------------------------------------------------------------------------------
 export type WalkStep<Walkable, Label = any> = { node : Walkable, from : Walkable | typeof WalkSource, label : Label }
 
-export type VisitInfo = { visitedAt : number, visitedTopologically : boolean }
+
+export const NOT_VISITED                = -1
+export const VISITED_TOPOLOGICALLY      = -2
+
+export type VisitInfo = {
+    visitEpoch              : number,
+    visitedAt               : number
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -20,6 +27,8 @@ export class WalkContext<Walkable, Label = any> extends Base {
     visited         : Map<Walkable, VisitInfo>      = new Map()
 
     toVisit         : WalkStep<Walkable>[]          = []
+
+    currentEpoch    : number                        = 0
 
 
     startFrom (sourceNodes : Walkable[]) {
@@ -62,13 +71,13 @@ export class WalkContext<Walkable, Label = any> extends Base {
     }
 
 
-    setVisitedInfo (node : Walkable, visitedAt : number, visitedTopologically : boolean, info : VisitInfo) : VisitInfo {
+    setVisitedInfo (node : Walkable, visitedAt : number, info : VisitInfo) : VisitInfo {
         if (!info) {
-            info                        = { visitedAt, visitedTopologically }
+            info                        = { visitedAt, visitEpoch : this.currentEpoch }
             this.visited.set(node, info)
         } else {
             info.visitedAt              = visitedAt
-            info.visitedTopologically   = visitedTopologically
+            info.visitEpoch             = this.currentEpoch
         }
 
         return info
@@ -79,9 +88,6 @@ export class WalkContext<Walkable, Label = any> extends Base {
         const visited               = this.visited
         const toVisit               = this.toVisit
 
-        // edge case
-        if (toVisit.length === 0) return
-
         let depth
 
         while (depth = toVisit.length) {
@@ -89,12 +95,12 @@ export class WalkContext<Walkable, Label = any> extends Base {
 
             const visitedInfo       = this.getVisitedInfo(node)
 
-            if (visitedInfo && visitedInfo.visitedTopologically) {
+            if (visitedInfo && visitedInfo.visitedAt === VISITED_TOPOLOGICALLY && visitedInfo.visitEpoch === this.currentEpoch) {
                 toVisit.pop()
                 continue
             }
 
-            if (visitedInfo && visitedInfo.visitedAt !== -1) {
+            if (visitedInfo && visitedInfo.visitEpoch === this.currentEpoch && visitedInfo.visitedAt !== NOT_VISITED) {
                 // it is valid to find itself "visited", but only if visited at the current depth
                 // (which indicates stack unwinding)
                 // if the node has been visited at earlier depth - its a cycle
@@ -102,7 +108,7 @@ export class WalkContext<Walkable, Label = any> extends Base {
                     // ONLY resume if explicitly returned `Resume`, cancel in all other cases (undefined, etc)
                     if (this.onCycle(node, toVisit) !== OnCycleAction.Resume) break
                 } else {
-                    visitedInfo.visitedTopologically = true
+                    visitedInfo.visitedAt = VISITED_TOPOLOGICALLY
 
                     this.onTopologicalNode(node)
                 }
@@ -113,7 +119,7 @@ export class WalkContext<Walkable, Label = any> extends Base {
                 if (this.onNode(node, toVisit[ depth - 1 ]) === false) break
 
                 // first entry to the node
-                const visitedInfo2      = this.setVisitedInfo(node, depth, false, visitedInfo)
+                const visitedInfo2      = this.setVisitedInfo(node, depth, visitedInfo)
 
                 const lengthBefore      = toVisit.length
 
@@ -124,7 +130,7 @@ export class WalkContext<Walkable, Label = any> extends Base {
                 // would happen on next iteration, but with this "inlining" we save one call to `visited.get()`
                 // at the cost of length comparison
                 if (toVisit.length === lengthBefore) {
-                    visitedInfo2.visitedTopologically = true
+                    visitedInfo2.visitedAt = VISITED_TOPOLOGICALLY
 
                     this.onTopologicalNode(node)
 
