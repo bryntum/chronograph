@@ -2,6 +2,7 @@ import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync } from "../chrono/Identifier.js"
 import { MinimalQuark, Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { GetTransaction, ProposedOrCurrent, Transaction, YieldableValue } from "../chrono/Transaction.js"
+import { isInstanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationContext } from "../primitives/Calculation.js"
 import { Field, Name } from "../schema/Field.js"
@@ -50,7 +51,7 @@ class ReferenceIdentifier extends base {
     calculation (YIELD : CalculationContext<YieldableValue>) : this[ 'ValueT' ] {
         const proposedValue     = YIELD(ProposedOrCurrent)
 
-        const value : Entity    = proposedValue instanceof Entity ? proposedValue as Entity : this.resolve(proposedValue)
+        const value : Entity | null = isInstanceOf(proposedValue, Entity) ? proposedValue : this.resolve(proposedValue)
 
         if (value && this.hasBucket()) {
             const transaction : Transaction = YIELD(GetTransaction)
@@ -62,7 +63,7 @@ class ReferenceIdentifier extends base {
     }
 
 
-    resolve (locator : any) : Entity {
+    resolve (locator : any) : Entity | null {
         const resolver  = this.field.resolver
 
         return resolver ? resolver.call(this.self, locator) : null
@@ -96,8 +97,8 @@ class ReferenceIdentifier extends base {
             if (quark) {
                 const proposedValue     = quark.proposedValue
 
-                if (proposedValue instanceof Entity) {
-                    this.getBucket(proposedValue as Entity).removeFromBucket(transaction, this.self)
+                if (isInstanceOf(proposedValue, Entity)) {
+                    this.getBucket(proposedValue).removeFromBucket(transaction, this.self)
                 }
             }
             else if (transaction.baseRevision.hasIdentifier(this)) {
