@@ -1,4 +1,4 @@
-import { AnyConstructor, AnyFunction } from "./Mixin.js"
+import { AnyConstructor, AnyFunction, Mixin } from "./Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 // we want the return type to match the type of the argument
@@ -7,19 +7,27 @@ import { AnyConstructor, AnyFunction } from "./Mixin.js"
 // the mixins wrapped with such declaration loses the type of return value
 // because of this we apply some trickery to the argument type
 
+const MixinIdentity  = Symbol('MixinIdentity')
+
+const isInstanceOfStatic  = function (instance) : boolean {
+    return Boolean(instance && instance[ this[ MixinIdentity ] ])
+}
+
+
 export const instanceOf = <T>(arg : T) : T => {
     const mixin         = arg as unknown as AnyFunction<AnyConstructor<object>>
 
     const symbol        = Symbol(mixin.name)
 
-    const isInstanceOf  = function (instance) : boolean {
-        return Boolean(instance && instance[ symbol ])
-    }
-
-    // can also return a new function?
+    // seems one can not assign a new value for the `Symbol.hasInstance` property of the function
+    // so we have to return proxy to intercept
     return new Proxy(mixin, {
         get : function (target, property, receiver) {
-            return property === Symbol.hasInstance ? isInstanceOf : target[ property ]
+            if (property === Symbol.hasInstance) return isInstanceOfStatic
+
+            if (property === MixinIdentity) return symbol
+
+            return target[ property ]
         },
 
         apply : function (target, context, args) {
@@ -30,4 +38,11 @@ export const instanceOf = <T>(arg : T) : T => {
             return extendedClass
         }
     }) as any
+}
+
+
+export const isInstanceOf = <T extends any>(instance : any, func : T)
+    : instance is (T extends AnyFunction<infer Z> ? (Z extends AnyConstructor<infer X> ? X : unknown) : unknown) =>
+{
+    return Boolean(instance && instance[ func[ MixinIdentity ] ])
 }
