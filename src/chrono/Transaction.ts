@@ -22,76 +22,6 @@ export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Pro
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class WalkForwardQuarkContext extends WalkContext<Identifier> {
-    visited         : Map<Identifier, QuarkEntry>
-
-    baseRevision    : Revision
-
-
-    // getVisitedInfo (node : Identifier) : VisitInfo {
-    //     const entry     = this.visited.get(node)
-    //
-    //     return entry ? entry.getTransition() : undefined
-    // }
-
-
-    setVisitedInfo (identifier : Identifier, visitedAt : number, transition : QuarkEntry) : VisitInfo {
-        if (!transition) {
-            transition      = QuarkEntry.new({ identifier, quark : null, transition : null })
-
-            this.visited.set(identifier, transition)
-        }
-
-        transition.visitedAt                = visitedAt
-        transition.visitEpoch               = this.currentEpoch
-
-        return transition
-    }
-
-
-    collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : QuarkEntry) {
-        const entry             = this.baseRevision.getLatestEntryFor(node)
-
-        // newly created identifier
-        if (!entry) return
-
-        // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
-        // will have the `previous` property populated
-        visitInfo.previous      = entry
-
-        if (node.lazy && entry.quark && entry.quark.usedProposedOrCurrent) {
-            // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
-            // from the previous revision
-            // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
-            // so general consideration is - the revision should contain ALL information needed to calculate it
-            // alternatively, this could be done during the `populateCandidateScopeFromTransitions`
-            visitInfo.getQuark().proposedValue   = entry.value
-        }
-
-        if (entry.outgoing) {
-            for (const outgoingEntry of entry.outgoing) {
-                const identifier    = outgoingEntry.identifier
-
-                if (outgoingEntry.quark !== this.baseRevision.getLatestEntryFor(identifier).quark) continue
-
-                let entry : QuarkEntry              = this.visited.get(identifier)
-
-                if (!entry) {
-                    entry                           = QuarkEntry.new({ identifier, quark : null, transition : null })
-
-                    this.visited.set(identifier, entry)
-                }
-
-                entry.edgesFlow++
-
-                toVisit.push({ node : identifier, from : node, label : undefined })
-            }
-        }
-    }
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     visited         : Map<Identifier, QuarkEntry>
 
@@ -505,6 +435,8 @@ class Transaction extends base {
 
 
     [WriteSymbol] (effect : WriteEffect, activeEntry : QuarkEntry) : any {
+        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+
         this.walkContext.currentEpoch++
 
         // should be `identifier.write(this, ...` to avoid assumption that `activeTransaction` of the `checkout` did not change)
