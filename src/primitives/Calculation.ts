@@ -169,6 +169,7 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextSy
 
 
     startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
+        // this assignment allows other code to observe, that calculation has started
         this.iterationResult = calculationStartedConstant
 
         return this.iterationResult = {
