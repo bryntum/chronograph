@@ -7,21 +7,8 @@ import { Identifier } from "./Identifier.js"
 export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculation<Context, any, any, [ CalculationContext<any>, ...any[] ]>>>(base : T) => {
 
     class QuarkTransition extends base {
-        // current         : QuarkEntry
-        // previous        : QuarkEntry
-        //
-        // edgesFlow       : number
-        //
-        // visitedAt               : number
-        // visitedTopologically    : boolean
-
 
         identifier          : Identifier
-
-        // get identifier () : Identifier {
-        //     return this.current.identifier
-        // }
-
 
         get calculation () : this[ 'identifier' ][ 'calculation' ] {
             return this.identifier.calculation
@@ -31,11 +18,6 @@ export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculati
         get context () : this[ 'identifier' ][ 'context' ] {
             return this.identifier.context || this.identifier
         }
-
-
-        // forceCalculation () {
-        //     this.edgesFlow  = MAX_SMI
-        // }
     }
 
     return QuarkTransition

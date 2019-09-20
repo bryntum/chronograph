@@ -10,8 +10,9 @@ import { LeveledStack } from "../util/LeveledStack.js"
 import { CheckoutI, PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
 import { Quark, TombstoneQuark } from "./Quark.js"
+import { QuarkEntry } from "./QuarkEntry.js"
 import { QuarkTransition } from "./QuarkTransition.js"
-import { MinimalRevision, QuarkEntry, Revision, Scope } from "./Revision.js"
+import { MinimalRevision, Revision, Scope } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
