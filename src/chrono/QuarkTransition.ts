@@ -8,7 +8,7 @@ export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculati
 
     class QuarkTransition extends base {
 
-        identifier          : Identifier
+        identifier          : Identifier    = null
 
         get calculation () : this[ 'identifier' ][ 'calculation' ] {
             return this.identifier.calculation

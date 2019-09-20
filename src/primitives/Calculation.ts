@@ -54,9 +54,9 @@ export const CalculationGen = <
 class CalculationGen extends base implements GenericCalculation<typeof ContextGen, ResultT, YieldT, ArgsT> {
     context             : any
 
-    iterator            : CalculationIterator<ResultT, YieldT>
+    iterator            : CalculationIterator<ResultT, YieldT>  = null
 
-    iterationResult     : IteratorResult<any>
+    iterationResult     : IteratorResult<any>                   = null
 
 
     isCalculationStarted () : boolean {
@@ -145,7 +145,7 @@ export const CalculationSync = <
 class CalculationGen extends base implements GenericCalculation<typeof ContextSync, ResultT, YieldT, ArgsT> {
     context             : any
 
-    iterationResult     : IteratorResult<any>
+    iterationResult     : IteratorResult<any>       = null
 
 
     isCalculationStarted () : boolean {

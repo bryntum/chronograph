@@ -7,13 +7,12 @@ import { Identifier } from "./Identifier.js"
 export const Quark = <T extends AnyConstructor<Base>>(base : T) => {
 
     class Quark extends base {
-        identifier          : Identifier
+        identifier          : Identifier    = null
 
-        value               : any
-        proposedValue       : any
+        value               : any           = undefined
+        proposedValue       : any           = undefined
 
-        @prototypeValue(false)
-        usedProposedOrCurrent : boolean
+        usedProposedOrCurrent : boolean     = false
 
 
         hasValue () : boolean {

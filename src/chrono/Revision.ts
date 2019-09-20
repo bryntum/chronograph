@@ -16,7 +16,7 @@ export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 class Revision extends base {
     name                    : string    = 'revision-' + (COUNTER++)
 
-    previous                : Revision
+    previous                : Revision  = null
 
     scope                   : Scope     = new Map()
 

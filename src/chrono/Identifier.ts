@@ -9,19 +9,18 @@ import { ProposedOrCurrent, Transaction, YieldableValue } from "./Transaction.js
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Identifier<ContextT extends Context = Context, ResultT = any> extends Base {
-    name                : any
+    name                : any       = null
 
     ArgsT               : any[]
     YieldT              : YieldableValue
     ValueT              : ResultT
 
-    context             : any
+    context             : any       = null
 
     segment             : symbol
     level               : number    = 0
 
-    @prototypeValue(false)
-    lazy                : boolean
+    lazy                : boolean   = false
 
     @prototypeValue(MinimalQuark)
     quarkClass          : QuarkConstructor

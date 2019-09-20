@@ -17,12 +17,12 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
     }
 
 
-    identifier      : Identifier
+    identifier      : Identifier        = null
 
-    quark           : InstanceType<this[ 'identifier' ][ 'quarkClass']>
-    transition      : QuarkTransition
+    quark           : InstanceType<this[ 'identifier' ][ 'quarkClass']> = null
+    transition      : QuarkTransition   = null
 
-    previous        : QuarkEntry
+    previous        : QuarkEntry        = null
 
     // used by the listeners facility which is under question
     // sameAsPrevious          : boolean = false

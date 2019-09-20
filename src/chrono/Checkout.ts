@@ -32,10 +32,10 @@ export const Checkout = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Checkout extends base {
     // the revision currently being "checked out"
-    baseRevision            : Revision
+    baseRevision            : Revision      = null
 
     // the revision to follow to, when performing `redo` operation
-    topRevision             : Revision
+    topRevision             : Revision      = null
 
     // how many revisions (except the `baseRevision`) to keep in memory for undo operation
     // minimal value is 0 (the `baseRevision` only, no undo/redo)
