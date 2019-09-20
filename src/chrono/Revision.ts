@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier } from "./Identifier.js"
-import { Quark, TombstoneQuark } from "./Quark.js"
+import { Quark, TombStone } from "./Quark.js"
 import { QuarkEntry } from "./QuarkEntry.js"
 import { MinimalTransaction } from "./Transaction.js"
 
@@ -44,7 +44,7 @@ class Revision extends base {
     hasIdentifier (identifier : Identifier) : boolean {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
-        return Boolean(latestEntry && (!latestEntry.quark || !(latestEntry.quark instanceof TombstoneQuark)))
+        return Boolean(latestEntry && (!latestEntry.origin || !(latestEntry.origin.value !== TombStone)))
     }
 
 
@@ -65,7 +65,7 @@ class Revision extends base {
         if (!latestEntry) throw new Error("Unknown identifier")
 
         if (latestEntry.hasValue()) {
-            return latestEntry.value
+            return latestEntry.getValue()
         } else {
             return this.calculateLazyEntry(latestEntry)
         }
@@ -82,7 +82,7 @@ class Revision extends base {
 
         transaction.propagate()
 
-        return entry.quark.value
+        return entry.origin.value
     }
 
 }

@@ -1,4 +1,6 @@
+import { Base } from "../class/Mixin.js"
 import { NOT_VISITED, VisitInfo } from "../graph/WalkDepth.js"
+import { CalculationGen, CalculationSync } from "../primitives/Calculation.js"
 import { MAX_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 import { Quark } from "./Quark.js"
@@ -6,7 +8,7 @@ import { QuarkTransition } from "./QuarkTransition.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
+export class QuarkEntry extends QuarkTransition(CalculationSync(Set)) implements VisitInfo, Quark {
 
     static new<T extends typeof QuarkEntry> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance = new this()
@@ -16,13 +18,16 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
         return instance as InstanceType<T>
     }
 
-
     identifier      : Identifier        = null
 
-    quark           : InstanceType<this[ 'identifier' ][ 'quarkClass']> = null
-    transition      : QuarkTransition   = null
+    // quark state
+    value                   : any       = undefined
+    proposedValue           : any       = undefined
+    usedProposedOrCurrent   : boolean   = false
+    // eof quark state
 
     previous        : QuarkEntry        = null
+    origin          : QuarkEntry        = null
 
     // used by the listeners facility which is under question
     // sameAsPrevious          : boolean = false
@@ -44,33 +49,37 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
 
 
     cleanup (includingQuark : boolean) {
-        this.previous       = undefined
-        this.transition     = undefined
+        this.previous           = null
+        this.iterationResult    = null
+        // this.iterator           = null
 
-        if (includingQuark) this.quark = undefined
+        if (includingQuark) this.origin = null
     }
 
 
-    getTransition () : QuarkTransition {
-        if (this.transition) return this.transition
+    // transition      : QuarkTransition
 
-        return this.transition = this.identifier.transitionClass.new({
-            identifier: this.identifier
-            // current         : this,
-            // previous        : null,
-            //
-            // edgesFlow       : 0,
-            //
-            // visitedAt       : -1,
-            // visitedTopologically : false
-        })
+    get transition () : QuarkTransition {
+        return this
+    }
+    // set transition (value : QuarkTransition) {
+    // }
+
+
+    getTransition () : QuarkTransition {
+        return this
+    }
+
+
+    hasTransition () : boolean {
+        return Boolean(this.iterationResult)
     }
 
 
     getQuark () : Quark {
-        if (this.quark) return this.quark
+        if (this.origin) return this.origin
 
-        return this.quark = this.identifier.quarkClass.new({identifier: this.identifier}) as InstanceType<this[ 'identifier' ][ 'quarkClass']>
+        return this.origin = this
     }
 
 
@@ -84,12 +93,12 @@ export class QuarkEntry extends Set<QuarkEntry> implements VisitInfo {
     }
 
 
-    get value () : any {
-        return this.quark ? this.quark.value : undefined
+    getValue () : any {
+        return this.origin ? this.origin.value : undefined
     }
 
 
     hasValue () : boolean {
-        return Boolean(this.quark && this.quark.hasValue())
+        return Boolean(this.origin && this.origin.value !== undefined)
     }
 }

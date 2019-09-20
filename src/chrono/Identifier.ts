@@ -1,8 +1,8 @@
-import { Base, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, Base, MixinConstructor } from "../class/Mixin.js"
 import { CalculationContext, CalculationIterator, Context, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { Checkout, CheckoutI } from "./Checkout.js"
-import { MinimalQuark, QuarkConstructor } from "./Quark.js"
+import { CheckoutI } from "./Checkout.js"
+import { Quark } from "./Quark.js"
 import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
 import { ProposedOrCurrent, Transaction, YieldableValue } from "./Transaction.js"
 
@@ -22,8 +22,8 @@ export class Identifier<ContextT extends Context = Context, ResultT = any> exten
 
     lazy                : boolean   = false
 
-    @prototypeValue(MinimalQuark)
-    quarkClass          : QuarkConstructor
+    // @prototypeValue(MinimalQuark)
+    quarkClass          : AnyConstructor<Quark>
 
     @prototypeValue(QuarkTransitionSync)
     transitionClass     : MixinConstructor<typeof QuarkTransition>

@@ -4,7 +4,7 @@ import { Identifier } from "./Identifier.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const QuarkTransition = <T extends AnyConstructor<Base & GenericCalculation<Context, any, any, [ CalculationContext<any>, ...any[] ]>>>(base : T) => {
+export const QuarkTransition = <T extends AnyConstructor<GenericCalculation<Context, any, any, [ CalculationContext<any>, ...any[] ]>>>(base : T) => {
 
     class QuarkTransition extends base {
 

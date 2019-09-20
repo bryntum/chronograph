@@ -7,12 +7,12 @@ import {
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
 import { LeveledStack } from "../util/LeveledStack.js"
-import { CheckoutI, PropagateArguments } from "./Checkout.js"
+import { PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
-import { Quark, TombstoneQuark } from "./Quark.js"
+import { Quark, TombStone } from "./Quark.js"
 import { QuarkEntry } from "./QuarkEntry.js"
 import { QuarkTransition } from "./QuarkTransition.js"
-import { MinimalRevision, Revision, Scope } from "./Revision.js"
+import { MinimalRevision, Revision } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, transition : QuarkEntry) : VisitInfo {
         if (!transition) {
-            transition      = QuarkEntry.new({ identifier, quark : null, transition : null })
+            transition      = QuarkEntry.new({ identifier })
 
             this.visited.set(identifier, transition)
         }
@@ -53,25 +53,25 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
         // will have the `previous` property populated
         visitInfo.previous      = entry
 
-        if (node.lazy && entry.quark && entry.quark.usedProposedOrCurrent) {
+        if (node.lazy && entry.origin && entry.origin.usedProposedOrCurrent) {
             // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
             // from the previous revision
             // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
             // so general consideration is - the revision should contain ALL information needed to calculate it
             // alternatively, this could be done during the `populateCandidateScopeFromTransitions`
-            visitInfo.getQuark().proposedValue   = entry.value
+            visitInfo.getQuark().proposedValue   = entry.origin.value
         }
 
         if (entry.outgoing) {
             for (const outgoingEntry of entry.outgoing) {
                 const identifier    = outgoingEntry.identifier
 
-                if (outgoingEntry.quark !== this.baseRevision.getLatestEntryFor(identifier).quark) continue
+                if (outgoingEntry.origin !== this.baseRevision.getLatestEntryFor(identifier).origin) continue
 
                 let entry : QuarkEntry              = this.visited.get(identifier)
 
                 if (!entry) {
-                    entry                           = QuarkEntry.new({ identifier, quark : null, transition : null })
+                    entry                           = QuarkEntry.new({ identifier })
 
                     this.visited.set(identifier, entry)
                 }
@@ -82,9 +82,9 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                     entry.edgesFlow     = 0
 
                     // TODO should call something like `entry.transition.cancel()` ?
-                    entry.transition    = undefined
-                    entry.outgoing.clear()
-                    if (entry.quark) entry.quark.value = undefined
+                    // entry.transition    = undefined
+                    if (entry.outgoing) entry.outgoing.clear()
+                    if (entry.origin) entry.origin.value = undefined
                 }
 
                 entry.edgesFlow++
@@ -107,9 +107,9 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                     entry.edgesFlow     = 0
 
                     // TODO should call something like `entry.transition.cancel()` ?
-                    entry.transition    = undefined
-                    entry.outgoing.clear()
-                    if (entry.quark) entry.quark.value = undefined
+                    // entry.transition    = undefined
+                    if (entry.outgoing) entry.outgoing.clear()
+                    if (entry.origin) entry.origin.value = undefined
                 }
 
                 entry.edgesFlow++
@@ -254,16 +254,16 @@ class Transaction extends base {
 
             if (!latestEntry) throw new Error(`Unknown identifier ${identifier}`)
 
-            entry                   = QuarkEntry.new({ identifier, quark : latestEntry.quark })
+            entry                   = QuarkEntry.new({ identifier, origin : latestEntry.origin })
 
             this.entries.set(identifier, entry)
         }
 
         if (activeEntry.identifier.level < entry.identifier.level) throw new Error('Identifier can not read from higher level identifier')
 
-        entry.add(activeEntry)
+        entry.getOutgoing().add(activeEntry)
 
-        if (entry.hasValue()) return entry.value
+        if (entry.hasValue()) return entry.getValue()
 
         entry.forceCalculation()
 
@@ -273,7 +273,7 @@ class Transaction extends base {
 
         if (!entry.hasValue()) throw new Error('Cycle during synchronous computation')
 
-        return entry.value
+        return entry.getValue()
     }
 
 
@@ -301,7 +301,7 @@ class Transaction extends base {
     acquireQuarkIfExists<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> | undefined {
         const entry     = this.entries.get(identifier)
 
-        return entry ? entry.quark as InstanceType<T[ 'quarkClass' ]> : undefined
+        return entry ? entry.origin as InstanceType<T[ 'quarkClass' ]> : undefined
     }
 
 
@@ -319,7 +319,7 @@ class Transaction extends base {
     removeIdentifier (identifier : Identifier) {
         const entry                 = this.touch(identifier)
 
-        entry.quark                 = TombstoneQuark.new({ identifier })
+        entry.getQuark().value      = TombStone//TombstoneQuark.new({ identifier })
     }
 
 
@@ -472,7 +472,7 @@ class Transaction extends base {
                 const previousEntry = entry.previous
 
                 // // reduce garbage collection workload
-                // entry.cleanup(true)
+                entry.cleanup(true)
 
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
@@ -488,10 +488,10 @@ class Transaction extends base {
                 continue
             }
 
-            const quark : Quark   = entry.quark
+            const quark : Quark   = entry.origin
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                // entry.cleanup(false)
+                entry.cleanup(false)
 
                 stack.pop()
                 continue
@@ -519,7 +519,7 @@ class Transaction extends base {
                     const previousEntry = entry.previous
 
                     // // reduce garbage collection workload
-                    // entry.cleanup(false)
+                    entry.cleanup(false)
 
                     // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
                     // and only if that is missing - with previous
@@ -567,17 +567,17 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark, previous : previousEntry })
+                        requestedEntry      = QuarkEntry.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
                     }
 
                     let requestedTransition : QuarkTransition   = requestedEntry.transition
-                    let requestedQuark : Quark                  = requestedEntry.quark
+                    let requestedQuark : Quark                  = requestedEntry.origin
 
-                    requestedEntry.add(entry)
+                    requestedEntry.getOutgoing().add(entry)
 
-                    if (!requestedTransition) {
+                    if (!requestedEntry.hasTransition()) {
                         // no transition - "shadowing" entry from the previous revision
 
                         if (!requestedQuark || !requestedQuark.hasValue()) {
@@ -640,10 +640,12 @@ class Transaction extends base {
                 const previousEntry = entry.previous
 
                 // // reduce garbage collection workload
-                // entry.cleanup(true)
+                entry.cleanup(true)
 
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
+                        if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+
                         const entry     = entries.get(previousOutgoingEntry.identifier)
 
                         if (entry) entry.edgesFlow--
@@ -654,10 +656,10 @@ class Transaction extends base {
                 continue
             }
 
-            const quark : Quark   = entry.quark
+            const quark : Quark   = entry.origin
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                // entry.cleanup(false)
+                entry.cleanup(false)
 
                 stack.pop()
                 continue
@@ -665,27 +667,34 @@ class Transaction extends base {
 
             const transition        = entry.getTransition()
 
+            const startedAtEpoch    = entry.visitEpoch
+
             let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this.onEffectSync)
 
             do {
                 const value         = iterationResult.value
 
                 if (transition.isCalculationCompleted()) {
-                    const quark     = entry.getQuark()
+                    if (entry.visitEpoch !== startedAtEpoch) {
+                        stack.pop()
+                        break
+                    }
 
-                    quark.value          = value
+                    const quark         = entry.getQuark()
 
-                    const previousEntry             = entry.previous
+                    quark.value         = value
+
+                    const previousEntry = entry.previous
 
                     // // reduce garbage collection workload
-                    // entry.cleanup(false)
+                    entry.cleanup(false)
 
                     // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
                     // and only if that is missing - with previous
                     // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
                     let ignoreSelfDependency : boolean = false
 
-                    const sameAsPrevious            = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
+                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
 
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
@@ -695,6 +704,8 @@ class Transaction extends base {
                         // TODO write test for this case, need to test the identifiers, that depends on such idents (copy outgoing edges from previous?)
 
                         for (const previousOutgoingEntry of previousEntry.outgoing) {
+                            if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+
                             const entry = entries.get(previousOutgoingEntry.identifier)
 
                             if (entry) entry.edgesFlow--
@@ -715,6 +726,8 @@ class Transaction extends base {
                     break
                 }
                 else if (value instanceof Identifier) {
+                    if (entry.identifier.level > value.level) throw new Error('Identifier can not read from higher level identifier')
+
                     let requestedEntry : QuarkEntry             = entries.get(value)
 
                     if (!requestedEntry) {
@@ -722,17 +735,17 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, quark : previousEntry.quark, previous : previousEntry })
+                        requestedEntry      = QuarkEntry.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
                     }
 
                     let requestedTransition : QuarkTransition   = requestedEntry.transition
-                    let requestedQuark : Quark                  = requestedEntry.quark
+                    let requestedQuark : Quark                  = requestedEntry.origin
 
-                    requestedEntry.add(entry)
+                    requestedEntry.getOutgoing().add(entry)
 
-                    if (!requestedTransition) {
+                    if (!requestedEntry.hasTransition()) {
                         // no transition - "shadowing" entry from the previous revision
 
                         if (!requestedQuark || !requestedQuark.hasValue()) {

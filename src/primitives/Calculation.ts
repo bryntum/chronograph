@@ -26,7 +26,7 @@ export type CalculationFunction<ContextT extends Context, ResultT, YieldT, ArgsT
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]>
-    extends Box<ResultT>
+    // extends Box<ResultT>
 {
     // this is just a scope for the `calculation` function, not related to `CalculationContext` type
     context                     : any
@@ -40,6 +40,8 @@ export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, A
 
     startCalculation (...args : ArgsT)      : IteratorResult<any>
     continueCalculation (value : unknown)   : IteratorResult<any>
+
+    readonly result             : ResultT
 }
 
 
@@ -69,13 +71,13 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
     }
 
 
-    get value () : ResultT {
+    get result () : ResultT {
         return this.iterationResult && this.iterationResult.done ? this.iterationResult.value : undefined
     }
 
 
     hasValue () : boolean {
-        return this.value !== undefined
+        return this.result !== undefined
     }
 
 
@@ -106,7 +108,7 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
         // help to garbage collector
         this.iterator               = undefined
 
-        return this.value
+        return this.result
     }
 
 
@@ -120,7 +122,7 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
         // help to garbage collector
         this.iterator               = undefined
 
-        return this.value
+        return this.result
     }
 }
 
@@ -158,13 +160,13 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextSy
     }
 
 
-    get value () : ResultT {
+    get result () : ResultT {
         return this.iterationResult && this.iterationResult.done ? this.iterationResult.value : undefined
     }
 
 
     hasValue () : boolean {
-        return this.value !== undefined
+        return this.result !== undefined
     }
 
 
@@ -192,7 +194,7 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextSy
     runSyncWithEffect (onEffect : CalculationContext<YieldT>, ...args : any[]) : ResultT {
         this.startCalculation(onEffect, ...args)
 
-        return this.value
+        return this.result
     }
 
 
