@@ -5,17 +5,18 @@ import { CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
 declare const window : any
 declare const performance : any
 
-type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[] }
+export type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[], counter : number }
 
-const iterationsCount : number      = 20
-const repeatsPerIteration : number  = 200
+const iterationsCount : number      = 8
+const repeatsPerIteration : number  = 1
 
-export let count : number = 0
 
 export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult => {
     const graph : ChronoGraph   = MinimalChronoGraph.new()
 
     let boxes       = []
+
+    const res       = { graph, boxes, counter : 0 }
 
     for (let i = 0; i < atomNum; i++) {
         if (i <= 3) {
@@ -23,7 +24,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
         }
         else if (i <= 10) {
             boxes.push(graph.identifierId(i, function* (YIELD) {
-                count++
+                res.counter++
 
                 const input : number[] = [
                     yield boxes[0],
@@ -37,7 +38,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
         }
         else if (i % 2 == 0) {
             boxes.push(graph.identifierId(i, function* (YIELD) {
-                count++
+                res.counter++
 
                 const input : number[] = [
                     yield boxes[this - 1],
@@ -50,7 +51,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
             }, i))
         } else {
             boxes.push(graph.identifierId(i, function* (YIELD) {
-                count++
+                res.counter++
 
                 const input : number[] = [
                     yield boxes[this - 1],
@@ -64,7 +65,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
         }
     }
 
-    return { graph, boxes }
+    return res
 }
 
 
@@ -73,6 +74,8 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
 
     let boxes       = []
 
+    const res       = { graph, boxes, counter : 0 }
+
     for (let i = 0; i < atomNum; i++) {
         if (i <= 3) {
             boxes.push(graph.variableId(i, 1))
@@ -80,7 +83,7 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         else if (i <= 10) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (YIELD) {
-                    count++
+                    res.counter++
 
                     const input : number[] = [
                         YIELD(boxes[0]),
@@ -97,7 +100,7 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         else if (i % 2 == 0) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (YIELD) {
-                    count++
+                    res.counter++
 
                     const input : number[] = [
                         YIELD(boxes[this - 1]),
@@ -113,7 +116,7 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         } else {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (YIELD) {
-                    count++
+                    res.counter++
 
                     const input : number[] = [
                         YIELD(boxes[this - 1]),
@@ -129,12 +132,14 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         }
     }
 
-    return { graph, boxes }
+    return res
 }
 
 
 export const mobxGraph = (atomNum : number = 1000) => {
     let boxes       = []
+
+    const res       = { boxes, counter : 0 }
 
     for (let i = 0; i < atomNum; i++) {
         if (i <= 3) {
@@ -142,7 +147,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
         }
         else if (i <= 10) {
             boxes.push(computed(function () {
-                count++
+                res.counter++
 
                 const input = [
                     boxes[0].get(),
@@ -156,7 +161,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
         }
         else if (i % 2 == 0) {
             boxes.push(computed(function () {
-                count++
+                res.counter++
 
                 const input = [
                     boxes[this - 1].get(),
@@ -170,7 +175,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
 
         } else {
             boxes.push(computed(function () {
-                count++
+                res.counter++
 
                 const input = [
                     boxes[this - 1].get(),
@@ -184,7 +189,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
         }
     }
 
-    return boxes
+    return res
 }
 
 
@@ -225,13 +230,15 @@ export const benchmarkDeepChanges = async (genFunction : (num : number) => Graph
         const start     = performance.now()
 
         for (let j = 0; j < repeatsPerIteration; j++) {
-            graph.write(boxes[ 0 ], j)
+            graph.write(boxes[ 0 ], i + j)
 
             graph.propagateSync()
         }
 
         times.push(performance.now() - start)
     }
+
+    console.log(times)
 
     // console.profileEnd('Propagate #1')
     console.timeEnd("Calculate")
