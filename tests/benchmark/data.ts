@@ -2,14 +2,7 @@ import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
 
-declare const window : any
-declare const performance : any
-
 export type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[], counter : number }
-
-const iterationsCount : number      = 8
-const repeatsPerIteration : number  = 1
-
 
 export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult => {
     const graph : ChronoGraph   = MinimalChronoGraph.new()
@@ -135,8 +128,11 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
     return res
 }
 
+export type MobxBox = { get : () => number, set : (v : number) => any }
 
-export const mobxGraph = (atomNum : number = 1000) => {
+export type MobxGraphGenerationResult  = { boxes : MobxBox[], counter : number }
+
+export const mobxGraph = (atomNum : number = 1000) : MobxGraphGenerationResult => {
     let boxes       = []
 
     const res       = { boxes, counter : 0 }
@@ -190,185 +186,4 @@ export const mobxGraph = (atomNum : number = 1000) => {
     }
 
     return res
-}
-
-
-
-export const benchmarkGraphPopulation = async (genFunction : (num : number) => GraphGenerationResult, atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const { graph, boxes }  = genFunction(atomNum)
-
-    window.graph    = graph
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-}
-
-
-export const benchmarkDeepChanges = async (genFunction : (num : number) => GraphGenerationResult, atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const { graph, boxes }  = genFunction(atomNum)
-
-    window.graph    = graph
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            graph.write(boxes[ 0 ], i + j)
-
-            graph.propagateSync()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-    console.log(times)
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", graph.read(boxes[ boxes.length - 1 ]))
-    console.log("Total count: ", count)
-}
-
-
-export const benchmarkMobxDeepChanges = async (atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const boxes = mobxGraph(atomNum)
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            boxes[ 0 ].set(j)
-
-            // seems mobx does not have concept of eager computation, need to manually read all atoms
-            for (let k = 0; k < boxes.length; k++) boxes[ k ].get()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", boxes[ boxes.length - 1 ].get())
-    console.log("Total count: ", count)
-}
-
-
-export const benchmarkMobxShallowChanges = async (atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const boxes = mobxGraph(atomNum)
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            boxes[0].set(j)
-            boxes[1].set(15 - j)
-
-            // seems mobx does not have concept of eager computation, need to manually read all atoms
-            for (let k = 0; k < boxes.length; k++) boxes[ k ].get()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", boxes[ boxes.length - 1 ].get())
-    console.log("Total count: ", count)
-}
-
-
-export const benchmarkShallowChanges = async (genFunction : (num : number) => GraphGenerationResult, atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const { graph, boxes }  = genFunction(atomNum)
-
-    window.graph    = graph
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            graph.write(boxes[ 0 ], j)
-            graph.write(boxes[ 1 ], 15 - j)
-
-            graph.propagate()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", graph.read(boxes[ boxes.length - 1 ]))
-    console.log("Total count: ", count)
 }

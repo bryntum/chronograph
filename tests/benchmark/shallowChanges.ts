@@ -6,7 +6,7 @@ type PostBenchInfo = {
     result          : number
 }
 
-class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchInfo> {
+class ShallowChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : GraphGenerationResult) : PostBenchInfo {
         const { graph, boxes } = state
@@ -27,13 +27,14 @@ class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchI
         const { graph, boxes } = setup
 
         graph.write(boxes[ 0 ], iteration + cycle)
+        graph.write(boxes[ 1 ], 15 - (iteration + cycle))
 
         graph.propagateSync()
     }
 }
 
 
-class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo> {
+class ShallowChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : MobxGraphGenerationResult) : PostBenchInfo {
         const { boxes } = state
@@ -54,6 +55,7 @@ class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo
         const { boxes } = setup
 
         boxes[ 0 ].set(iteration + cycle)
+        boxes[ 1 ].set(15 - (iteration + cycle))
 
         // seems mobx does not have concept of eager computation, need to manually read all atoms
         for (let k = 0; k < boxes.length; k++) boxes[ k ].get()
@@ -61,8 +63,8 @@ class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo
 }
 
 
-export const deepChangesGen = DeepChangesChronoGraph.new({
-    name        : 'Deep graph changes - generators',
+export const shallowChangesGen = ShallowChangesChronoGraph.new({
+    name        : 'Shallow graph changes - generators',
 
     setup       : () => {
         return deepGraphGen(1300)
@@ -70,16 +72,16 @@ export const deepChangesGen = DeepChangesChronoGraph.new({
 })
 
 
-export const deepChangesSync = DeepChangesChronoGraph.new({
-    name        : 'Deep graph changes - synchronous',
+export const shallowChangesSync = ShallowChangesChronoGraph.new({
+    name        : 'Shallow graph changes - generators',
 
     setup       : () => {
         return deepGraphSync(1300)
     }
 })
 
-export const deepChangesMobx = DeepChangesMobx.new({
-    name        : 'Deep graph changes - Mobx',
+export const shallowChangesMobx = ShallowChangesMobx.new({
+    name        : 'Shallow graph changes - Mobx',
 
     setup       : () => {
         return mobxGraph(1300)
@@ -88,10 +90,7 @@ export const deepChangesMobx = DeepChangesMobx.new({
 
 
 export const runAll = async () => {
-    const runInfo   = await deepChangesGen.measureTillMaxTime()
-
-    console.log(runInfo)
-
-    await deepChangesSync.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
-    await deepChangesMobx.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+    await shallowChangesGen.measureTillRelativeMoe()
+    await shallowChangesSync.measureTillRelativeMoe()
+    await shallowChangesMobx.measureTillRelativeMoe()
 }

@@ -4,26 +4,55 @@ const performance : { now : () => number }  = globalThis.performance || Date
 
 //---------------------------------------------------------------------------------------------------------------------
 export type RunInfo<InfoT> = {
+    samples             : number[]
+
     cyclesCount         : number,
 
+    deviation           : number
     averageCycleTime    : number
-    sigma               : number
-
-    log                 : number[]
+    marginOfError       : number
+    relativeMoe         : number
 
     info                : InfoT
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-const average   = (array : number[]) : number => array.reduce((acc, current) => acc + current, 0) / array.length
+const average   = (samples : number[]) : number => samples.reduce((acc, current) => acc + current, 0) / samples.length
 
-const unbiasedSampleVariance  = (array : number[]) : number => {
-    const mean      = average(array)
-    const usv       = array.reduce((acc, current) => acc + (current - mean) * (current - mean), 0)
+const unbiasedSampleVariance  = (samples : number[]) : number => {
+    const mean      = average(samples)
+    const usv       = samples.reduce((acc, current) => acc + (current - mean) * (current - mean), 0)
 
-    return usv / (array.length - 1)
+    return usv / (samples.length - 1)
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+/**
+ * T-Distribution two-tailed critical values for 95% confidence
+ * http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm
+ */
+const studentDist95 : Map<number, number> = new Map([
+    [ 1, 12.706 ], [ 2, 4.303 ], [ 3, 3.182 ], [ 4, 2.776 ], [ 5, 2.571 ], [ 6, 2.447 ],
+    [ 7, 2.365 ], [ 8, 2.306 ], [ 9, 2.262 ], [ 10, 2.228 ], [ 11, 2.201 ], [ 12, 2.179 ],
+    [ 13, 2.16 ], [ 14, 2.145 ], [ 15, 2.131 ], [ 16, 2.12 ], [ 17, 2.11 ], [ 18, 2.101 ],
+    [ 19, 2.093 ], [ 20, 2.086 ], [ 21, 2.08 ], [ 22, 2.074 ], [ 23, 2.069 ], [ 24, 2.064 ],
+    [ 25, 2.06 ], [ 26, 2.056 ], [ 27, 2.052 ], [ 28, 2.048 ], [ 29, 2.045 ], [ 30, 2.042 ],
+    [ Infinity, 1.96 ]
+])
+
+const getStudentCriticalValue = (size : number) : number => size <= 30 ? studentDist95.get(size) : studentDist95.get(Infinity)
+
+// const maxRelErrDist95 : Map<number, number> = new Map([
+//     [ 3, 1.41 ], [ 4, 1.69 ], [ 5, 1.87 ], [ 6, 2.00 ],
+//     [ 7, 2.09 ], [ 8, 2.17 ], [ 9, 2.24 ], [ 10, 2.29 ],
+//     [ 11, 2.34 ], [ 12, 2.39 ], [ 13, 2.43 ], [ 14, 2.46 ],
+//     [ 15, 2.49 ], [ 16, 2.52 ], [ 17, 2.55 ], [ 18, 2.58 ],
+//     [ 19, 2.60 ], [ 20, 2.62 ], [ 21, 2.64 ], [ 22, 2.66 ],
+//     [ 23, 2.68 ], [ 24, 2.70 ], [ 25, 2.72 ],
+//     [ Infinity, 2.72 ]
+// ])
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -33,12 +62,16 @@ const format        = num => fmt.format(num)
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Benchmark<StateT, InfoT> extends Base {
-    name                : string    = 'Noname benchmark'
+    name                    : string    = 'Noname benchmark'
 
-    plannedMaxTime          : number    = 5000
+    // planned relative margin of error
+    plannedRelMoe           : number    = 0.05
+    plannedMaxTime          : number    = 7000
     plannedCalibrationTime  : number    = 500
 
     coolDownTimeout         : number    = 10
+
+    // filterExceptionValues   : boolean   = false
 
 
     setup () : StateT {
@@ -60,24 +93,82 @@ export class Benchmark<StateT, InfoT> extends Base {
     }
 
 
-    async run () : Promise<RunInfo<InfoT>> {
-        const state : StateT  = this.setup()
-
-        //------------------
+    calibrate (plannedCalibrationTime : number, state : StateT) : { cyclesCount : number, elapsed : number } {
         const start                 = performance.now()
         let cyclesCount : number    = 0
         let elapsed : number
 
-        while ((elapsed = performance.now() - start) < this.plannedCalibrationTime) {
+        while ((elapsed = performance.now() - start) < plannedCalibrationTime) {
             this.cycle(0, cyclesCount++, state)
         }
 
-        const iterationsCount       = Math.ceil(this.plannedMaxTime / elapsed)
+        return { cyclesCount, elapsed }
+    }
 
-        const times                 = []
 
-        //------------------
-        for (let i = 1; i <= iterationsCount; i++) {
+    getRunInfo (samples : number[], cyclesCount : number, state : StateT) : RunInfo<InfoT> {
+        // note, that in the `samples` we have samples for iterations time, not cycles
+        // cycleTime = iterationTime / cyclesCount
+        const averageCycleTime      = average(samples) / cyclesCount
+
+        // D[c * X] = c^2 * D[X]
+        const deviation             = Math.sqrt(unbiasedSampleVariance(samples) / (cyclesCount * cyclesCount))
+
+        const marginOfError         = deviation / Math.sqrt(samples.length) * getStudentCriticalValue(samples.length)
+
+        return {
+            samples,
+            cyclesCount,
+            averageCycleTime,
+            deviation,
+            marginOfError,
+            relativeMoe             : marginOfError / averageCycleTime,
+            info                    : this.gatherInfo(state)
+        }
+    }
+
+
+    getRelativeMoe (samples : number[], cyclesCount : number) : number {
+        if (samples.length <= 1) return Infinity
+
+        const averageCycleTime      = average(samples) / cyclesCount
+        const deviation             = Math.sqrt(unbiasedSampleVariance(samples) / (cyclesCount * cyclesCount))
+
+        return deviation / Math.sqrt(samples.length) * getStudentCriticalValue(samples.length) / averageCycleTime
+    }
+
+
+    async runTillMaxTime (maxTime : number = this.plannedMaxTime) : Promise<RunInfo<InfoT>> {
+        const state : StateT  = this.setup()
+
+        const { cyclesCount } = this.calibrate(this.plannedCalibrationTime, state)
+
+        return this.runWhile(true, state, cyclesCount, (samples, i, elapsed) => i < 2 || elapsed < maxTime)
+    }
+
+
+    async runTillRelativeMoe (relMoe : number = this.plannedRelMoe) : Promise<RunInfo<InfoT>> {
+        const state : StateT  = this.setup()
+
+        const { cyclesCount } = this.calibrate(this.plannedCalibrationTime, state)
+
+        return this.runWhile(true, state, cyclesCount, (samples, i, elapsed) => this.getRelativeMoe(samples, cyclesCount) > relMoe)
+    }
+
+
+    async runFixed (cyclesCount : number, iterationsCount : number) : Promise<RunInfo<InfoT>> {
+        return this.runWhile(false, this.setup(), cyclesCount, (samples, i, elapsed) => i <= iterationsCount)
+    }
+
+
+    async runWhile (calibrationDone : boolean, state : StateT, cyclesCount : number, condition : (samples : number[], iteration : number, elapsed : number) => boolean) : Promise<RunInfo<InfoT>> {
+        const samples               = []
+
+        let globalStart             = performance.now()
+
+        let i                       = calibrationDone ? 1 : 0
+
+        while (condition(samples, i, performance.now() - globalStart)) {
             if (this.coolDownTimeout > 0) await new Promise(resolve => setTimeout(resolve, this.coolDownTimeout))
 
             const start     = performance.now()
@@ -86,31 +177,46 @@ export class Benchmark<StateT, InfoT> extends Base {
                 this.cycle(i, c, state)
             }
 
-            times.push(performance.now() - start)
+            samples.push(performance.now() - start)
+
+            i++
         }
 
-        console.log(times)
-
-        return {
-            log                     : times,
-            cyclesCount             : cyclesCount,
-
-            // cycleTime = iterationTime / cyclesCount
-            averageCycleTime        : average(times) / cyclesCount,
-            // D[c * X] = c^2 * D[X]
-            sigma                   : Math.sqrt(unbiasedSampleVariance(times) / (cyclesCount * cyclesCount)),
-
-            info                    : this.gatherInfo(state)
-        }
+        return this.getRunInfo(samples, cyclesCount, state)
     }
 
 
-    async measure () {
-        const runInfo       = await this.run()
-
-        console.log(`${this.name} => ${format(runInfo.averageCycleTime)} ± ${format(2 * runInfo.sigma)}ms per cycle (95% confidence), cool down = ${this.coolDownTimeout}ms`)
+    report (runInfo : RunInfo<InfoT>) {
+        console.log(`${this.name} => ${format(runInfo.averageCycleTime)} ± ${format(runInfo.marginOfError)}ms per cycle (95% confidence), cool down = ${this.coolDownTimeout}ms`)
 
         if (runInfo.info) console.log(this.stringifyInfo(runInfo.info))
+    }
+
+
+    async measureTillRelativeMoe () : Promise<RunInfo<InfoT>> {
+        const runInfo       = await this.runTillRelativeMoe()
+
+        this.report(runInfo)
+
+        return runInfo
+    }
+
+
+    async measureFixed (cyclesCount : number, iterationsCount : number) : Promise<RunInfo<InfoT>> {
+        const runInfo       = await this.runFixed(cyclesCount, iterationsCount)
+
+        this.report(runInfo)
+
+        return runInfo
+    }
+
+
+    async measureTillMaxTime () : Promise<RunInfo<InfoT>> {
+        const runInfo       = await this.runTillMaxTime()
+
+        this.report(runInfo)
+
+        return runInfo
     }
 }
 
