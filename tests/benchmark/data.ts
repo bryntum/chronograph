@@ -2,20 +2,14 @@ import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
 
-declare const window : any
-declare const performance : any
-
-type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[] }
-
-const iterationsCount : number      = 20
-const repeatsPerIteration : number  = 200
-
-export let count : number = 0
+export type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[], counter : number }
 
 export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult => {
     const graph : ChronoGraph   = MinimalChronoGraph.new()
 
     let boxes       = []
+
+    const res       = { graph, boxes, counter : 0 }
 
     for (let i = 0; i < atomNum; i++) {
         if (i <= 3) {
@@ -23,7 +17,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
         }
         else if (i <= 10) {
             boxes.push(graph.identifierId(i, function* (YIELD) {
-                count++
+                res.counter++
 
                 const input : number[] = [
                     yield boxes[0],
@@ -37,7 +31,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
         }
         else if (i % 2 == 0) {
             boxes.push(graph.identifierId(i, function* (YIELD) {
-                count++
+                res.counter++
 
                 const input : number[] = [
                     yield boxes[this - 1],
@@ -50,7 +44,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
             }, i))
         } else {
             boxes.push(graph.identifierId(i, function* (YIELD) {
-                count++
+                res.counter++
 
                 const input : number[] = [
                     yield boxes[this - 1],
@@ -64,7 +58,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
         }
     }
 
-    return { graph, boxes }
+    return res
 }
 
 
@@ -73,6 +67,8 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
 
     let boxes       = []
 
+    const res       = { graph, boxes, counter : 0 }
+
     for (let i = 0; i < atomNum; i++) {
         if (i <= 3) {
             boxes.push(graph.variableId(i, 1))
@@ -80,7 +76,7 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         else if (i <= 10) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (YIELD) {
-                    count++
+                    res.counter++
 
                     const input : number[] = [
                         YIELD(boxes[0]),
@@ -97,7 +93,7 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         else if (i % 2 == 0) {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (YIELD) {
-                    count++
+                    res.counter++
 
                     const input : number[] = [
                         YIELD(boxes[this - 1]),
@@ -113,7 +109,7 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         } else {
             boxes.push(graph.addIdentifier(CalculatedValueSync.new({
                 calculation : function (YIELD) {
-                    count++
+                    res.counter++
 
                     const input : number[] = [
                         YIELD(boxes[this - 1]),
@@ -129,12 +125,17 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
         }
     }
 
-    return { graph, boxes }
+    return res
 }
 
+export type MobxBox = { get : () => number, set : (v : number) => any }
 
-export const mobxGraph = (atomNum : number = 1000) => {
+export type MobxGraphGenerationResult  = { boxes : MobxBox[], counter : number }
+
+export const mobxGraph = (atomNum : number = 1000) : MobxGraphGenerationResult => {
     let boxes       = []
+
+    const res       = { boxes, counter : 0 }
 
     for (let i = 0; i < atomNum; i++) {
         if (i <= 3) {
@@ -142,7 +143,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
         }
         else if (i <= 10) {
             boxes.push(computed(function () {
-                count++
+                res.counter++
 
                 const input = [
                     boxes[0].get(),
@@ -156,7 +157,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
         }
         else if (i % 2 == 0) {
             boxes.push(computed(function () {
-                count++
+                res.counter++
 
                 const input = [
                     boxes[this - 1].get(),
@@ -170,7 +171,7 @@ export const mobxGraph = (atomNum : number = 1000) => {
 
         } else {
             boxes.push(computed(function () {
-                count++
+                res.counter++
 
                 const input = [
                     boxes[this - 1].get(),
@@ -184,184 +185,5 @@ export const mobxGraph = (atomNum : number = 1000) => {
         }
     }
 
-    return boxes
-}
-
-
-
-export const benchmarkGraphPopulation = async (genFunction : (num : number) => GraphGenerationResult, atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const { graph, boxes }  = genFunction(atomNum)
-
-    window.graph    = graph
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-}
-
-
-export const benchmarkDeepChanges = async (genFunction : (num : number) => GraphGenerationResult, atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const { graph, boxes }  = genFunction(atomNum)
-
-    window.graph    = graph
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            graph.write(boxes[ 0 ], j)
-
-            graph.propagateSync()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", graph.read(boxes[ boxes.length - 1 ]))
-    console.log("Total count: ", count)
-}
-
-
-export const benchmarkMobxDeepChanges = async (atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const boxes = mobxGraph(atomNum)
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            boxes[ 0 ].set(j)
-
-            // seems mobx does not have concept of eager computation, need to manually read all atoms
-            for (let k = 0; k < boxes.length; k++) boxes[ k ].get()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", boxes[ boxes.length - 1 ].get())
-    console.log("Total count: ", count)
-}
-
-
-export const benchmarkMobxShallowChanges = async (atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const boxes = mobxGraph(atomNum)
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            boxes[0].set(j)
-            boxes[1].set(15 - j)
-
-            // seems mobx does not have concept of eager computation, need to manually read all atoms
-            for (let k = 0; k < boxes.length; k++) boxes[ k ].get()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", boxes[ boxes.length - 1 ].get())
-    console.log("Total count: ", count)
-}
-
-
-export const benchmarkShallowChanges = async (genFunction : (num : number) => GraphGenerationResult, atomNum : number = 500000) => {
-    console.time("Build graph")
-    // console.profile('Build graph')
-
-    const { graph, boxes }  = genFunction(atomNum)
-
-    window.graph    = graph
-
-    // // console.profileEnd()
-    console.timeEnd("Build graph")
-
-    //--------------------------
-    console.time("Calculate")
-    // console.profile('Propagate #1')
-
-    const times = []
-
-    for (let i = 0; i < iterationsCount; i++) {
-        await new Promise(resolve => setTimeout(resolve, 10))
-
-        const start     = performance.now()
-
-        for (let j = 0; j < repeatsPerIteration; j++) {
-            graph.write(boxes[ 0 ], j)
-            graph.write(boxes[ 1 ], 15 - j)
-
-            graph.propagate()
-        }
-
-        times.push(performance.now() - start)
-    }
-
-
-    // console.profileEnd('Propagate #1')
-    console.timeEnd("Calculate")
-
-    console.log("Average iteration time: ", times.reduce((acc, current) => acc + current, 0) / times.length)
-
-    console.log("Result: ", graph.read(boxes[ boxes.length - 1 ]))
-    console.log("Total count: ", count)
+    return res
 }
