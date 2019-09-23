@@ -530,17 +530,16 @@ class Transaction extends base {
 
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
-                    if (sameAsPrevious && previousEntry.outgoing) {
-                        // in case the new value is equal to previous, we still need to consider the case
-                        // that the incoming dependencies of this identifier has changed (even that the value has not)
-                        // TODO write test for this case, need to test the identifiers, that depends on such idents (copy outgoing edges from previous?)
-
+                    if (sameAsPrevious) {
                         for (const previousOutgoingEntry of previousEntry.outgoing) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                            const entry = entries.get(previousOutgoingEntry.identifier)
+                            // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
+                            entry.outgoing.add(previousOutgoingEntry)
 
-                            if (entry) entry.edgesFlow--
+                            const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+
+                            if (outgoingEntry) outgoingEntry.edgesFlow--
                         }
                     }
 
@@ -689,15 +688,16 @@ class Transaction extends base {
 
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
-                    if (sameAsPrevious && previousEntry.outgoing) {
-                        // in case the new value is equal to previous, we still need to consider the case
-                        // that the incoming dependencies of this identifier has changed (even that the value has not)
-                        // TODO write test for this case, need to test the identifiers, that depends on such idents (copy outgoing edges from previous?)
-
+                    if (sameAsPrevious) {
                         for (const previousOutgoingEntry of previousEntry.outgoing) {
-                            const entry = entries.get(previousOutgoingEntry.identifier)
+                            if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                            if (entry) entry.edgesFlow--
+                            // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
+                            entry.outgoing.add(previousOutgoingEntry)
+
+                            const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+
+                            if (outgoingEntry) outgoingEntry.edgesFlow--
                         }
                     }
 

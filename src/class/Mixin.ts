@@ -48,6 +48,10 @@ export type MixinConstructor<T extends AnyFunction> =
     T extends AnyFunction<infer M> ? (M extends AnyConstructor<Base> ? M & BaseConstructor : M) : ReturnType<T>
 
 
+//---------------------------------------------------------------------------------------------------------------------
+// very rough typing for a mixin function
+export type MixinFunction = (base : AnyConstructor) => AnyConstructor
+
 // //---------------------------------------------------------------------------------------------------------------------
 // type FilterFlags<Base, Condition> = {
 //     [Key in keyof Base] : Base[Key] extends Condition ? Key : never

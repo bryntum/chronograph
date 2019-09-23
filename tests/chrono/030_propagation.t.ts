@@ -190,4 +190,73 @@ StartTest(t => {
         t.is(graph.read(atom2), 3, "Correct result calculated for atom2")
         t.is(graph.read(atom3), 4, "Correct result calculated for atom3")
     })
+
+
+    t.iit('Should preserve dependencies from eliminated entries', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1        = graph.variableId('i1', 0)
+        const i2        = graph.variableId('i2', 10)
+
+        const c1        = graph.identifierId('c1', function* () {
+            return (yield i1) + (yield i2)
+        })
+
+        const c2        = graph.identifierId('c2', function* () {
+            return (yield c1) + 1
+        })
+
+        const c3        = graph.identifierId('c3', function* () {
+            return (yield c1) + 2
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2, c3 ]
+
+        const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10, 11, 12 ], "Correct result calculated")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 5)
+        graph.write(i2, 5)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 11, 12 ], "Correct result calculated")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 0, 0 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 3)
+        graph.write(i2, 7)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 7, 10, 11, 12 ], "Correct result calculated")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 0, 0 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 7)
+        graph.write(i2, 7)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 7, 7, 14, 15, 16 ], "Correct result calculated")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1 ][ index ]))
+
+
+    })
 })
