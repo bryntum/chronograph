@@ -1,11 +1,13 @@
 import { Benchmark } from "../../src/benchmark/Benchmark.js"
 import { deepGraphGen, deepGraphSync, GraphGenerationResult, mobxGraph, MobxGraphGenerationResult } from "./data.js"
 
+//---------------------------------------------------------------------------------------------------------------------
 type PostBenchInfo = {
     totalCount      : number
     result          : number
 }
 
+//---------------------------------------------------------------------------------------------------------------------
 class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : GraphGenerationResult) : PostBenchInfo {
@@ -33,6 +35,7 @@ class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchI
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
 class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : MobxGraphGenerationResult) : PostBenchInfo {
@@ -61,7 +64,8 @@ class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo
 }
 
 
-export const deepChangesGen = DeepChangesChronoGraph.new({
+//---------------------------------------------------------------------------------------------------------------------
+export const deepChangesGenSmall = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - generators',
 
     setup       : () => {
@@ -70,7 +74,7 @@ export const deepChangesGen = DeepChangesChronoGraph.new({
 })
 
 
-export const deepChangesSync = DeepChangesChronoGraph.new({
+export const deepChangesSyncSmall = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - synchronous',
 
     setup       : () => {
@@ -78,7 +82,7 @@ export const deepChangesSync = DeepChangesChronoGraph.new({
     }
 })
 
-export const deepChangesMobx = DeepChangesMobx.new({
+export const deepChangesMobxSmall = DeepChangesMobx.new({
     name        : 'Deep graph changes - Mobx',
 
     setup       : () => {
@@ -86,12 +90,22 @@ export const deepChangesMobx = DeepChangesMobx.new({
     }
 })
 
+//---------------------------------------------------------------------------------------------------------------------
+export const deepChangesGenBig = DeepChangesChronoGraph.new({
+    name        : 'Deep graph changes - generators big',
 
-export const runAll = async () => {
-    const runInfo   = await deepChangesGen.measureTillMaxTime()
+    setup       : () => {
+        return deepGraphGen(100000)
+    }
+})
 
-    console.log(runInfo)
 
-    await deepChangesSync.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
-    await deepChangesMobx.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+
+export const runAllDeepChanges = async () => {
+    const runInfo   = await deepChangesGenSmall.measureTillMaxTime()
+
+    await deepChangesSyncSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+    await deepChangesMobxSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+
+    await deepChangesGenBig.measureTillRelativeMoe()
 }

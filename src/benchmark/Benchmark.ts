@@ -66,6 +66,8 @@ export class Benchmark<StateT, InfoT> extends Base {
 
     // planned relative margin of error
     plannedRelMoe           : number    = 0.05
+
+    plannedMinTime          : number    = 3000
     plannedMaxTime          : number    = 7000
     plannedCalibrationTime  : number    = 500
 
@@ -152,7 +154,10 @@ export class Benchmark<StateT, InfoT> extends Base {
 
         const { cyclesCount } = this.calibrate(this.plannedCalibrationTime, state)
 
-        return this.runWhile(true, state, cyclesCount, (samples, i, elapsed) => this.getRelativeMoe(samples, cyclesCount) > relMoe)
+        return this.runWhile(
+            true, state, cyclesCount,
+            (samples, i, elapsed) => this.getRelativeMoe(samples, cyclesCount) > relMoe || elapsed < this.plannedMinTime
+        )
     }
 
 
@@ -190,10 +195,26 @@ export class Benchmark<StateT, InfoT> extends Base {
         console.log(`${this.name} => ${format(runInfo.averageCycleTime)} ± ${format(runInfo.marginOfError)}ms per cycle (95% confidence), cool down = ${this.coolDownTimeout}ms`)
 
         if (runInfo.info) console.log(this.stringifyInfo(runInfo.info))
+
+        console.log(runInfo.samples)
+    }
+
+
+    async clearGarbage () {
+        if (globalThis.gc) {
+            globalThis.gc()
+            await new Promise(resolve => setTimeout(resolve, 30))
+            globalThis.gc()
+            await new Promise(resolve => setTimeout(resolve, 30))
+            globalThis.gc()
+            await new Promise(resolve => setTimeout(resolve, 30))
+        }
     }
 
 
     async measureTillRelativeMoe () : Promise<RunInfo<InfoT>> {
+        this.clearGarbage()
+
         const runInfo       = await this.runTillRelativeMoe()
 
         this.report(runInfo)
@@ -203,6 +224,8 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     async measureFixed (cyclesCount : number, iterationsCount : number) : Promise<RunInfo<InfoT>> {
+        this.clearGarbage()
+
         const runInfo       = await this.runFixed(cyclesCount, iterationsCount)
 
         this.report(runInfo)
@@ -212,6 +235,8 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     async measureTillMaxTime () : Promise<RunInfo<InfoT>> {
+        this.clearGarbage()
+
         const runInfo       = await this.runTillMaxTime()
 
         this.report(runInfo)

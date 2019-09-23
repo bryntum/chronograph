@@ -1,11 +1,13 @@
 import { Benchmark } from "../../src/benchmark/Benchmark.js"
 import { deepGraphGen, deepGraphSync, GraphGenerationResult, mobxGraph, MobxGraphGenerationResult } from "./data.js"
 
+//---------------------------------------------------------------------------------------------------------------------
 type PostBenchInfo = {
     totalCount      : number
     result          : number
 }
 
+//---------------------------------------------------------------------------------------------------------------------
 class ShallowChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : GraphGenerationResult) : PostBenchInfo {
@@ -34,6 +36,7 @@ class ShallowChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBen
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
 class ShallowChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : MobxGraphGenerationResult) : PostBenchInfo {
@@ -62,7 +65,7 @@ class ShallowChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchI
     }
 }
 
-
+//---------------------------------------------------------------------------------------------------------------------
 export const shallowChangesGen = ShallowChangesChronoGraph.new({
     name        : 'Shallow graph changes - generators',
 
@@ -73,7 +76,7 @@ export const shallowChangesGen = ShallowChangesChronoGraph.new({
 
 
 export const shallowChangesSync = ShallowChangesChronoGraph.new({
-    name        : 'Shallow graph changes - generators',
+    name        : 'Shallow graph changes - synchronous',
 
     setup       : () => {
         return deepGraphSync(1300)
@@ -89,8 +92,22 @@ export const shallowChangesMobx = ShallowChangesMobx.new({
 })
 
 
-export const runAll = async () => {
-    await shallowChangesGen.measureTillRelativeMoe()
-    await shallowChangesSync.measureTillRelativeMoe()
-    await shallowChangesMobx.measureTillRelativeMoe()
+//---------------------------------------------------------------------------------------------------------------------
+export const shallowChangesGenBig = ShallowChangesChronoGraph.new({
+    name        : 'Shallow graph changes - generators big',
+
+    setup       : () => {
+        return deepGraphGen(100000)
+    }
+})
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const runAllShallowChanges = async () => {
+    const runInfo   = await shallowChangesGen.measureTillMaxTime()
+
+    await shallowChangesSync.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+    await shallowChangesMobx.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+
+    await shallowChangesGenBig.measureTillMaxTime()
 }

@@ -1,5 +1,5 @@
 import { Benchmark } from "../../src/benchmark/Benchmark.js"
-import { deepGraphGen, deepGraphSync } from "./data.js"
+import { deepGraphGen, deepGraphSync, mobxGraph } from "./data.js"
 
 
 export const graphPopulationGen = Benchmark.new({
@@ -18,3 +18,20 @@ export const graphPopulationSync = Benchmark.new({
         deepGraphSync(100000)
     }
 })
+
+
+export const graphPopulationMobx = Benchmark.new({
+    name        : 'Graph population - Mobx',
+
+    cycle       : (iteration : number, cycle : number, setup : any) => {
+        mobxGraph(100000)
+    }
+})
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const runAllGraphPopulation = async () => {
+    await graphPopulationGen.measureTillRelativeMoe()
+    await graphPopulationSync.measureTillRelativeMoe()
+    await graphPopulationMobx.measureTillRelativeMoe()
+}
