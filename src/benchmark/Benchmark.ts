@@ -192,11 +192,11 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     report (runInfo : RunInfo<InfoT>) {
-        console.log(`${this.name} => ${format(runInfo.averageCycleTime)} ± ${format(runInfo.marginOfError)}ms per cycle (95% confidence), cool down = ${this.coolDownTimeout}ms`)
+        // console.log(`${this.name} => ${format(runInfo.averageCycleTime)} ± ${format(runInfo.marginOfError)}ms per cycle (95% confidence), cool down = ${this.coolDownTimeout}ms`)
+        //
+        // if (runInfo.info) console.log(this.stringifyInfo(runInfo.info))
 
-        if (runInfo.info) console.log(this.stringifyInfo(runInfo.info))
-
-        console.log(runInfo.samples)
+        console.log(`${this.name},${format(runInfo.averageCycleTime)},${format(runInfo.marginOfError)}`)
     }
 
 

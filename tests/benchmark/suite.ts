@@ -3,9 +3,9 @@ import { runAllGraphPopulation } from "./graphPopulation.js"
 import { runAllShallowChanges } from "./shallowChanges.js"
 
 export const runAll = async () => {
-    // await runAllDeepChanges()
+    await runAllDeepChanges()
     await runAllShallowChanges()
-    // await runAllGraphPopulation()
+    await runAllGraphPopulation()
 }
 
 runAll()
