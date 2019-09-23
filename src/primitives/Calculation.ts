@@ -41,6 +41,8 @@ export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, A
     startCalculation (...args : ArgsT)      : IteratorResult<any>
     continueCalculation (value : unknown)   : IteratorResult<any>
 
+    cleanupCalculation () : any
+
     readonly result             : ResultT
 }
 
@@ -90,6 +92,12 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
 
     continueCalculation (value : unknown) : IteratorResult<any> {
         return this.iterationResult = this.iterator.next(value)
+    }
+
+
+    cleanupCalculation () {
+        this.iterationResult        = undefined
+        this.iterator               = undefined
     }
 
 
@@ -183,6 +191,11 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextSy
 
     continueCalculation (value : unknown) : IteratorResult<any> {
         throw new Error("Can not continue synchronous calculation")
+    }
+
+
+    cleanupCalculation () {
+        this.iterationResult        = undefined
     }
 
 

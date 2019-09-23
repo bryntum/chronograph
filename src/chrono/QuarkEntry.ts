@@ -1,14 +1,14 @@
-import { Base } from "../class/Mixin.js"
-import { NOT_VISITED, VisitInfo } from "../graph/WalkDepth.js"
-import { CalculationGen, CalculationSync } from "../primitives/Calculation.js"
+import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { NOT_VISITED } from "../graph/WalkDepth.js"
+import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 import { Quark } from "./Quark.js"
-import { QuarkTransition } from "./QuarkTransition.js"
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export class QuarkEntry extends QuarkTransition(CalculationSync(Set)) implements VisitInfo, Quark {
+export const QuarkEntry = <T extends AnyConstructor<Set<QuarkEntryI> & GenericCalculation<Context, any, any, [ CalculationContext<any>, ...any[] ]>>>(base : T) =>
+
+class QuarkEntry extends base {
 
     static new<T extends typeof QuarkEntry> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance = new this()
@@ -26,13 +26,12 @@ export class QuarkEntry extends QuarkTransition(CalculationSync(Set)) implements
     usedProposedOrCurrent   : boolean   = false
     // eof quark state
 
-    previous        : QuarkEntry        = null
-    origin          : QuarkEntry        = null
+    previous        : QuarkEntryI       = null
+    origin          : QuarkEntryI       = null
 
     // used by the listeners facility which is under question
     // sameAsPrevious          : boolean = false
 
-    // placing these initial values to the prototype makes the `benchmark_sync` slower - from ~630ms to ~830
     edgesFlow       : number = 0
     visitedAt       : number = NOT_VISITED
     visitEpoch      : number = 0
@@ -43,6 +42,16 @@ export class QuarkEntry extends QuarkTransition(CalculationSync(Set)) implements
     }
 
 
+    get calculation () : this[ 'identifier' ][ 'calculation' ] {
+        return this.identifier.calculation
+    }
+
+
+    get context () : any {
+        return this.identifier.context || this.identifier
+    }
+
+
     forceCalculation () {
         this.edgesFlow = MAX_SMI
     }
@@ -50,45 +59,36 @@ export class QuarkEntry extends QuarkTransition(CalculationSync(Set)) implements
 
     cleanup (includingQuark : boolean) {
         this.previous           = null
-        this.iterationResult    = null
-        // this.iterator           = null
 
         if (includingQuark) this.origin = null
+
+        this.cleanupCalculation()
     }
 
 
-    // transition      : QuarkTransition
-
-    get transition () : QuarkTransition {
-        return this
-    }
-    // set transition (value : QuarkTransition) {
-    // }
-
-
-    getTransition () : QuarkTransition {
-        return this
-    }
-
-
-    hasTransition () : boolean {
+    isTransitioning () : boolean {
         return Boolean(this.iterationResult)
     }
 
 
-    getQuark () : Quark {
+    isShadow () : boolean {
+        return Boolean(this.origin && this.origin !== this)
+    }
+
+
+    getQuark () : QuarkEntry {
         if (this.origin) return this.origin
 
         return this.origin = this
     }
 
 
-    get outgoing () : Set<QuarkEntry> {
+    get outgoing () : Set<QuarkEntryI> {
         return this
     }
 
 
-    getOutgoing () : Set<QuarkEntry> {
+    getOutgoing () : Set<QuarkEntryI> {
         return this
     }
 
@@ -98,7 +98,20 @@ export class QuarkEntry extends QuarkTransition(CalculationSync(Set)) implements
     }
 
 
+    setValue (value : any) {
+        if (this.origin && this.origin !== this) throw new Error('Can not set value to the shadow entry')
+
+        this.getQuark().value = value
+    }
+
+
     hasValue () : boolean {
-        return Boolean(this.origin && this.origin.value !== undefined)
+        return this.getValue() !== undefined
     }
 }
+
+export type QuarkEntry = Mixin<typeof QuarkEntry>
+
+export type QuarkEntryConstructor = MixinConstructor<typeof QuarkEntry>
+
+export interface QuarkEntryI extends QuarkEntry {}

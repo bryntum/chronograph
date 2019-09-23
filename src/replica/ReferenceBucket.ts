@@ -1,8 +1,9 @@
-import { CheckoutI } from "../chrono/Checkout.js"
-import { MinimalQuark, Quark, QuarkConstructor } from "../chrono/Quark.js"
-import { ProposedOrCurrent, Transaction } from "../chrono/Transaction.js"
+import { CalculatedValueGen, CalculatedValueSync } from "../chrono/Identifier.js"
+import { QuarkEntry, QuarkEntryConstructor } from "../chrono/QuarkEntry.js"
+import { ProposedOrCurrent, SyncEffectHandler, Transaction } from "../chrono/Transaction.js"
+import { buildClass } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { CalculationIterator } from "../primitives/Calculation.js"
+import { CalculationIterator, CalculationSync } from "../primitives/Calculation.js"
 import { Field } from "../schema/Field.js"
 import { defineProperty } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
@@ -28,18 +29,18 @@ export const bucket : FieldDecorator<typeof MinimalReferenceBucketField> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifier>>(base : T) =>
+export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) =>
 
 class ReferenceBucketIdentifier extends base {
     level               : number                = 1
 
     ValueT              : Set<Entity>
 
-    quarkClass          : QuarkConstructor      = MinimalReferenceBucketQuark
+    static entryClass   : QuarkEntryConstructor     = buildClass(Set, CalculationSync, QuarkEntry, ReferenceBucketQuarkEntry) as any
 
 
     addToBucket (transaction : Transaction, entity : Entity) {
-        const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
+        const quark         = transaction.acquireQuark(this) as ReferenceBucketQuarkEntry
 
         if (!quark.newRefs) quark.newRefs = new Set()
 
@@ -52,7 +53,7 @@ class ReferenceBucketIdentifier extends base {
 
 
     removeFromBucket (transaction : Transaction, entity : Entity) {
-        const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
+        const quark         = transaction.acquireQuark(this) as ReferenceBucketQuarkEntry
 
         if (!quark.oldRefs) quark.oldRefs = new Set()
 
@@ -62,22 +63,15 @@ class ReferenceBucketIdentifier extends base {
 
         if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
     }
-
-
-    * calculation () : CalculationIterator<this[ 'ValueT' ]> {
-        return yield ProposedOrCurrent
-    }
 }
 
 export type ReferenceBucketIdentifier = Mixin<typeof ReferenceBucketIdentifier>
 
-export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier(MinimalFieldIdentifier) {}
-
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketQuark = <T extends AnyConstructor<Quark>>(base : T) =>
+export const ReferenceBucketQuarkEntry = <T extends AnyConstructor<QuarkEntry>>(base : T) =>
 
-class ReferenceBucketQuark extends base {
+class ReferenceBucketQuarkEntry extends base {
     oldRefs             : Set<Entity>
     newRefs             : Set<Entity>
     previousValue       : Set<Entity>
@@ -99,6 +93,8 @@ class ReferenceBucketQuark extends base {
     }
 }
 
-export type ReferenceBucketQuark = Mixin<typeof ReferenceBucketQuark>
+export type ReferenceBucketQuarkEntry = Mixin<typeof ReferenceBucketQuarkEntry>
 
-export class MinimalReferenceBucketQuark extends ReferenceBucketQuark(MinimalQuark) {}
+
+//---------------------------------------------------------------------------------------------------------------------
+export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier(FieldIdentifier(CalculatedValueSync)) {}

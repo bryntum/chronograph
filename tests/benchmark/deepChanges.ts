@@ -94,6 +94,9 @@ export const deepChangesMobxSmall = DeepChangesMobx.new({
 export const deepChangesGenBig = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - generators big',
 
+    // plannedMaxTime  : 20000,
+    // coolDownTimeout : 150,
+
     setup       : () => {
         return deepGraphGen(100000)
     }
@@ -107,5 +110,5 @@ export const runAllDeepChanges = async () => {
     await deepChangesSyncSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
     await deepChangesMobxSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
 
-    await deepChangesGenBig.measureTillRelativeMoe()
+    await deepChangesGenBig.measureTillMaxTime()
 }

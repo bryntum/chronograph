@@ -56,7 +56,7 @@ const getClassId = (cls : AnyFunction | AnyConstructor) : number => {
 
 const classCache : Map<string, AnyConstructor> = new Map()
 
-export const buildClass = (base : AnyConstructor, ...mixins : MixinFunction[]) : AnyConstructor => {
+export const buildClass = <T extends object>(base : AnyConstructor<T>, ...mixins : MixinFunction[]) : AnyConstructor<T> => {
     const classId   = mixins.reduce(
         (classId : string, mixin : MixinFunction) => classId + '/' + getClassId(mixin),
         String(getClassId(base))
@@ -69,5 +69,5 @@ export const buildClass = (base : AnyConstructor, ...mixins : MixinFunction[]) :
         classCache.set(classId, cls)
     }
 
-    return cls
+    return cls as AnyConstructor<T>
 }

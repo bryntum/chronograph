@@ -1,8 +1,18 @@
+import { buildClass } from "../class/InstanceOf.js"
 import { AnyConstructor, Base, MixinConstructor } from "../class/Mixin.js"
-import { CalculationContext, CalculationIterator, Context, Contexts, ContextSync } from "../primitives/Calculation.js"
+import {
+    CalculationContext,
+    CalculationGen,
+    CalculationIterator,
+    CalculationSync,
+    Context,
+    Contexts,
+    ContextSync
+} from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { CheckoutI } from "./Checkout.js"
 import { Quark } from "./Quark.js"
+import { QuarkEntry, QuarkEntryConstructor } from "./QuarkEntry.js"
 import { QuarkTransition, QuarkTransitionGen, QuarkTransitionSync } from "./QuarkTransition.js"
 import { ProposedOrCurrent, Transaction, YieldableValue } from "./Transaction.js"
 
@@ -23,10 +33,9 @@ export class Identifier<ContextT extends Context = Context, ResultT = any> exten
     lazy                : boolean   = false
 
     // @prototypeValue(MinimalQuark)
-    quarkClass          : AnyConstructor<Quark>
+    quarkClass          : QuarkEntryConstructor
 
-    @prototypeValue(QuarkTransitionSync)
-    transitionClass     : MixinConstructor<typeof QuarkTransition>
+    static entryClass   : QuarkEntryConstructor
 
 
     equality (v1 : this[ 'ValueT' ], v2 : this[ 'ValueT' ]) : boolean {
@@ -69,6 +78,9 @@ export class Identifier<ContextT extends Context = Context, ResultT = any> exten
 export class Variable<ResultT = any> extends Identifier<typeof ContextSync, ResultT> {
     YieldT              : never
 
+    static entryClass   : QuarkEntryConstructor = buildClass(Set, CalculationSync, QuarkEntry) as any
+
+
     calculation (context : CalculationContext<this[ 'YieldT' ]>) : Contexts<ResultT, this[ 'YieldT' ]>[ typeof ContextSync ] {
         throw new Error("The 'calculation' method of the variables should not be called for optimization purposes. Instead the value should be set directly to quark")
     }
@@ -84,8 +96,8 @@ export class Variable<ResultT = any> extends Identifier<typeof ContextSync, Resu
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync extends Identifier {
 
-    @prototypeValue(QuarkTransitionSync)
-    transitionClass     : MixinConstructor<typeof QuarkTransition>
+    static entryClass   : QuarkEntryConstructor = buildClass(Set, CalculationSync, QuarkEntry) as any
+
 
     calculation (YIELD : CalculationContext<this[ 'YieldT' ]>) : this[ 'ValueT' ] {
         return YIELD(ProposedOrCurrent)
@@ -95,9 +107,9 @@ export class CalculatedValueSync extends Identifier {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen extends Identifier {
+    // tslint:disable-next-line
+    static entryClass   : QuarkEntryConstructor = buildClass(Set, CalculationGen, QuarkEntry) as any;
 
-    @prototypeValue(QuarkTransitionGen)
-    transitionClass     : MixinConstructor<typeof QuarkTransition>
 
     * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
         return yield ProposedOrCurrent

@@ -1,6 +1,7 @@
-import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
+import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../chrono/Identifier.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { CalculationSync } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"
@@ -45,7 +46,7 @@ export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityIdentifier = <T extends AnyConstructor<Identifier>>(base : T) =>
+export const EntityIdentifier = <T extends AnyConstructor<CalculatedValueSync>>(base : T) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta
@@ -63,4 +64,4 @@ export type EntityIdentifier = Mixin<typeof EntityIdentifier>
 export interface EntityIdentifierI extends EntityIdentifier {}
 
 
-export class MinimalEntityIdentifier extends EntityIdentifier(Identifier) {}
+export class MinimalEntityIdentifier extends EntityIdentifier(CalculatedValueSync) {}

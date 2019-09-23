@@ -10,7 +10,7 @@ import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
 import { Quark, TombStone } from "./Quark.js"
-import { QuarkEntry } from "./QuarkEntry.js"
+import { QuarkEntry, QuarkEntryConstructor } from "./QuarkEntry.js"
 import { QuarkTransition } from "./QuarkTransition.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
@@ -31,7 +31,8 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, transition : QuarkEntry) : VisitInfo {
         if (!transition) {
-            transition      = QuarkEntry.new({ identifier })
+            //@ts-ignore
+            transition      = identifier.constructor.entryClass.new({ identifier })
 
             this.visited.set(identifier, transition)
         }
@@ -71,7 +72,8 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                 let entry : QuarkEntry              = this.visited.get(identifier)
 
                 if (!entry) {
-                    entry                           = QuarkEntry.new({ identifier })
+                    //@ts-ignore
+                    entry                           = identifier.constructor.entryClass.new({ identifier })
 
                     this.visited.set(identifier, entry)
                 }
@@ -254,7 +256,8 @@ class Transaction extends base {
 
             if (!latestEntry) throw new Error(`Unknown identifier ${identifier}`)
 
-            entry                   = QuarkEntry.new({ identifier, origin : latestEntry.origin })
+            //@ts-ignore
+            entry                   = identifier.constructor.entryClass.new({ identifier, origin : latestEntry.origin })
 
             this.entries.set(identifier, entry)
         }
@@ -497,16 +500,14 @@ class Transaction extends base {
                 continue
             }
 
-            const transition        = entry.getTransition()
-
             const startedAtEpoch    = entry.visitEpoch
 
-            let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this.onEffectSync)
+            let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
 
             do {
                 const value         = iterationResult.value
 
-                if (transition.isCalculationCompleted()) {
+                if (entry.isCalculationCompleted()) {
                     if (entry.visitEpoch !== startedAtEpoch) {
                         stack.pop()
                         break
@@ -566,17 +567,16 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                        requestedEntry      = (identifier.constructor as typeof Identifier).entryClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
                     }
 
-                    let requestedTransition : QuarkTransition   = requestedEntry.transition
                     let requestedQuark : Quark                  = requestedEntry.origin
 
                     requestedEntry.getOutgoing().add(entry)
 
-                    if (!requestedEntry.hasTransition()) {
+                    if (!requestedEntry.isShadow()) {
                         // no transition - "shadowing" entry from the previous revision
 
                         if (!requestedQuark || !requestedQuark.hasValue()) {
@@ -588,14 +588,14 @@ class Transaction extends base {
                             break
                         } else {
                             // already calculated entry from previous revision
-                            iterationResult         = transition.continueCalculation(requestedQuark.value)
+                            iterationResult         = entry.continueCalculation(requestedQuark.value)
                         }
                     }
                     else {
                         if (requestedQuark && requestedQuark.hasValue()) {
-                            iterationResult         = transition.continueCalculation(requestedQuark.value)
+                            iterationResult         = entry.continueCalculation(requestedQuark.value)
                         }
-                        else if (!requestedTransition.isCalculationStarted()) {
+                        else if (!requestedEntry.isCalculationStarted()) {
                             stack.push(requestedEntry)
 
                             break
@@ -614,7 +614,7 @@ class Transaction extends base {
                 }
                 else {
                     // bypass the unrecognized effect to the outer context
-                    iterationResult             = transition.continueCalculation(yield value)
+                    iterationResult             = entry.continueCalculation(yield value)
                 }
 
             } while (true)
@@ -664,16 +664,14 @@ class Transaction extends base {
                 continue
             }
 
-            const transition        = entry.getTransition()
-
             const startedAtEpoch    = entry.visitEpoch
 
-            let iterationResult : IteratorResult<any>   = transition.isCalculationStarted() ? transition.iterationResult : transition.startCalculation(this.onEffectSync)
+            let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
 
             do {
                 const value         = iterationResult.value
 
-                if (transition.isCalculationCompleted()) {
+                if (entry.isCalculationCompleted()) {
                     if (entry.visitEpoch !== startedAtEpoch) {
                         stack.pop()
                         break
@@ -733,17 +731,16 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = QuarkEntry.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                        requestedEntry      = (identifier.constructor as typeof Identifier).entryClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
                     }
 
-                    let requestedTransition : QuarkTransition   = requestedEntry.transition
                     let requestedQuark : Quark                  = requestedEntry.origin
 
                     requestedEntry.getOutgoing().add(entry)
 
-                    if (!requestedEntry.hasTransition()) {
+                    if (!requestedEntry.isShadow()) {
                         // no transition - "shadowing" entry from the previous revision
 
                         if (!requestedQuark || !requestedQuark.hasValue()) {
@@ -755,14 +752,14 @@ class Transaction extends base {
                             break
                         } else {
                             // already calculated entry from previous revision
-                            iterationResult         = transition.continueCalculation(requestedQuark.value)
+                            iterationResult         = entry.continueCalculation(requestedQuark.value)
                         }
                     }
                     else {
                         if (requestedQuark && requestedQuark.hasValue()) {
-                            iterationResult         = transition.continueCalculation(requestedQuark.value)
+                            iterationResult         = entry.continueCalculation(requestedQuark.value)
                         }
-                        else if (!requestedTransition.isCalculationStarted()) {
+                        else if (!requestedEntry.isCalculationStarted()) {
                             stack.push(requestedEntry)
 
                             break
@@ -781,7 +778,7 @@ class Transaction extends base {
                 }
                 else {
                     // bypass the unrecognized effect to the outer context
-                    iterationResult             = transition.continueCalculation(context(value))
+                    iterationResult             = entry.continueCalculation(context(value))
                 }
 
             } while (true)
