@@ -1,6 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier } from "./Identifier.js"
-import { Quark, TombStone } from "./Quark.js"
+import { TombStone } from "./Quark.js"
 import { QuarkEntry } from "./QuarkEntry.js"
 import { MinimalTransaction } from "./Transaction.js"
 
@@ -16,14 +16,14 @@ export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 class Revision extends base {
     name                    : string    = 'revision-' + (COUNTER++)
 
-    previous                : Revision  = null
+    previous                : Revision  = undefined
 
     scope                   : Scope     = new Map()
 
     reachableCount          : number    = 0
     referenceCount          : number    = 0
 
-    selfDependentQuarks     : Set<Quark>    = new Set()
+    selfDependentQuarks     : Set<QuarkEntry>   = new Set()
 
 
     getLatestEntryFor (identifier : Identifier) : QuarkEntry {
@@ -82,7 +82,7 @@ class Revision extends base {
 
         transaction.propagate()
 
-        return entry.origin.value
+        return entry.getValue()
     }
 
 }

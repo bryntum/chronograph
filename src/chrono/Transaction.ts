@@ -9,9 +9,8 @@ import {
 import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import { Identifier } from "./Identifier.js"
-import { Quark, TombStone } from "./Quark.js"
-import { QuarkEntry, QuarkEntryConstructor } from "./QuarkEntry.js"
-import { QuarkTransition } from "./QuarkTransition.js"
+import { TombStone } from "./Quark.js"
+import { QuarkEntry } from "./QuarkEntry.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
@@ -29,18 +28,17 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     baseRevision    : Revision
 
 
-    setVisitedInfo (identifier : Identifier, visitedAt : number, transition : QuarkEntry) : VisitInfo {
-        if (!transition) {
-            //@ts-ignore
-            transition      = identifier.constructor.entryClass.new({ identifier })
+    setVisitedInfo (identifier : Identifier, visitedAt : number, entry : QuarkEntry) : VisitInfo {
+        if (!entry) {
+            entry      = identifier.quarkClass.new({ identifier })
 
-            this.visited.set(identifier, transition)
+            this.visited.set(identifier, entry)
         }
 
-        transition.visitedAt    = visitedAt
-        transition.visitEpoch   = this.currentEpoch
+        entry.visitedAt    = visitedAt
+        entry.visitEpoch   = this.currentEpoch
 
-        return transition
+        return entry
     }
 
 
@@ -72,8 +70,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                 let entry : QuarkEntry              = this.visited.get(identifier)
 
                 if (!entry) {
-                    //@ts-ignore
-                    entry                           = identifier.constructor.entryClass.new({ identifier })
+                    entry                           = identifier.quarkClass.new({ identifier })
 
                     this.visited.set(identifier, entry)
                 }
@@ -83,10 +80,9 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                     entry.visitedAt     = NOT_VISITED
                     entry.edgesFlow     = 0
 
-                    // TODO should call something like `entry.transition.cancel()` ?
-                    // entry.transition    = undefined
+                    entry.cleanupCalculation()
                     if (entry.outgoing) entry.outgoing.clear()
-                    if (entry.origin) entry.origin.value = undefined
+                    if (entry.origin && entry.origin === entry) entry.origin.value = undefined
                 }
 
                 entry.edgesFlow++
@@ -108,10 +104,9 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
                     entry.visitedAt     = NOT_VISITED
                     entry.edgesFlow     = 0
 
-                    // TODO should call something like `entry.transition.cancel()` ?
-                    // entry.transition    = undefined
+                    entry.cleanupCalculation()
                     if (entry.outgoing) entry.outgoing.clear()
-                    if (entry.origin) entry.origin.value = undefined
+                    if (entry.origin && entry.origin === entry) entry.origin.value = undefined
                 }
 
                 entry.edgesFlow++
@@ -127,6 +122,9 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 //---------------------------------------------------------------------------------------------------------------------
 export class Effect extends Base {
     handler     : symbol
+
+    // @prototypeValue(false)
+    // async       : boolean
 }
 
 
@@ -256,8 +254,7 @@ class Transaction extends base {
 
             if (!latestEntry) throw new Error(`Unknown identifier ${identifier}`)
 
-            //@ts-ignore
-            entry                   = identifier.constructor.entryClass.new({ identifier, origin : latestEntry.origin })
+            entry                   = identifier.quarkClass.new({ identifier, origin : latestEntry.origin })
 
             this.entries.set(identifier, entry)
         }
@@ -280,22 +277,6 @@ class Transaction extends base {
     }
 
 
-    // write (identifier : Identifier, value : any) {
-    //     if (this.isClosed) throw new Error("Can not 'write' to closed transaction")
-    //
-    //     identifier.write(this, value)
-    //
-    //     const entry                 = this.touch(identifier)
-    //
-    //     const quark                 = entry.getQuark()
-    //
-    //     if (identifier instanceof Variable)
-    //         quark.value             = value
-    //     else
-    //         quark.proposedValue     = value
-    // }
-
-
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
         return this.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
     }
@@ -304,7 +285,7 @@ class Transaction extends base {
     acquireQuarkIfExists<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> | undefined {
         const entry     = this.entries.get(identifier)
 
-        return entry ? entry.origin as InstanceType<T[ 'quarkClass' ]> : undefined
+        return entry && entry.origin === entry ? entry.origin as InstanceType<T[ 'quarkClass' ]> : undefined
     }
 
 
@@ -322,7 +303,7 @@ class Transaction extends base {
     removeIdentifier (identifier : Identifier) {
         const entry                 = this.touch(identifier)
 
-        entry.getQuark().value      = TombStone//TombstoneQuark.new({ identifier })
+        entry.getQuark().value      = TombStone
     }
 
 
@@ -417,6 +398,7 @@ class Transaction extends base {
     async propagateAsync (args? : PropagateArguments) : Promise<Revision> {
         const stack = this.prePropagate(args)
 
+        // TODO should check the `async` flag of the effect and do not do `await` if not needed
         await runGeneratorAsyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
         return this.postPropagate()
@@ -454,13 +436,12 @@ class Transaction extends base {
 
         this.walkContext.currentEpoch++
 
-        // should be `identifier.write(this, ...` to avoid assumption that `activeTransaction` of the `checkout` did not change)
         effect.writeTarget.write(this, ...effect.proposedArgs)
     }
 
 
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) : Generator<any, void, unknown> {
-        const { entries } = this
+        const entries = this.entries
 
         while (stack.length) {
             const entry             = stack.last()
@@ -475,15 +456,15 @@ class Transaction extends base {
                 const previousEntry = entry.previous
 
                 // // reduce garbage collection workload
-                entry.cleanup(true)
+                entry.cleanup()
 
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
                         if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                        const entry     = entries.get(previousOutgoingEntry.identifier)
+                        const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
 
-                        if (entry) entry.edgesFlow--
+                        if (outgoingEntry) outgoingEntry.edgesFlow--
                     }
                 }
 
@@ -491,10 +472,10 @@ class Transaction extends base {
                 continue
             }
 
-            const quark : Quark   = entry.origin
+            const quark : QuarkEntry   = entry.origin
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                entry.cleanup(false)
+                entry.cleanup()
 
                 stack.pop()
                 continue
@@ -515,12 +496,12 @@ class Transaction extends base {
 
                     const quark         = entry.getQuark()
 
-                    quark.value         = value
+                    entry.setValue(value)
 
                     const previousEntry = entry.previous
 
                     // // reduce garbage collection workload
-                    entry.cleanup(false)
+                    entry.cleanup()
 
                     // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
                     // and only if that is missing - with previous
@@ -531,12 +512,12 @@ class Transaction extends base {
 
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
-                    if (sameAsPrevious) {
+                    if (sameAsPrevious && previousEntry.outgoing) {
                         for (const previousOutgoingEntry of previousEntry.outgoing) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
                             // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.outgoing.add(previousOutgoingEntry)
+                            entry.getOutgoing().add(previousOutgoingEntry)
 
                             const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
@@ -567,37 +548,33 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = (identifier.constructor as typeof Identifier).entryClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                        requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
-                    }
 
-                    let requestedQuark : Quark                  = requestedEntry.origin
+                        if (!previousEntry.origin) requestedEntry.forceCalculation()
+                    }
 
                     requestedEntry.getOutgoing().add(entry)
 
-                    if (!requestedEntry.isShadow()) {
-                        // no transition - "shadowing" entry from the previous revision
+                    //----------------
+                    let requestedQuark : QuarkEntry             = requestedEntry.origin
 
-                        if (!requestedQuark || !requestedQuark.hasValue()) {
-                            // lazy entry from previous revision
-                            stack.push(requestedEntry)
+                    if (requestedQuark && requestedQuark.hasValue()) {
+                        iterationResult         = entry.continueCalculation(requestedQuark.value)
+                    }
+                    else if (requestedEntry.isShadow()) {
+                        // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
+                        // in both cases start new calculation
+                        requestedEntry.origin   = requestedEntry
+                        requestedEntry.forceCalculation()
 
-                            requestedEntry.forceCalculation()
-
-                            break
-                        } else {
-                            // already calculated entry from previous revision
-                            iterationResult         = entry.continueCalculation(requestedQuark.value)
-                        }
+                        stack.push(requestedEntry)
+                        break
                     }
                     else {
-                        if (requestedQuark && requestedQuark.hasValue()) {
-                            iterationResult         = entry.continueCalculation(requestedQuark.value)
-                        }
-                        else if (!requestedEntry.isCalculationStarted()) {
+                        if (!requestedEntry.isCalculationStarted()) {
                             stack.push(requestedEntry)
-
                             break
                         }
                         else {
@@ -607,6 +584,39 @@ class Transaction extends base {
                             // yield GraphCycleDetectedEffect.new()
                         }
                     }
+
+
+                    // if (!requestedEntry.isShadow()) {
+                    //     // no transition - "shadowing" entry from the previous revision
+                    //
+                    //     if (!requestedQuark || !requestedQuark.hasValue()) {
+                    //         // lazy entry from previous revision
+                    //         stack.push(requestedEntry)
+                    //
+                    //         requestedEntry.forceCalculation()
+                    //
+                    //         break
+                    //     } else {
+                    //         // already calculated entry from previous revision
+                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
+                    //     }
+                    // }
+                    // else {
+                    //     if (requestedQuark && requestedQuark.hasValue()) {
+                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
+                    //     }
+                    //     else if (!requestedEntry.isCalculationStarted()) {
+                    //         stack.push(requestedEntry)
+                    //
+                    //         break
+                    //     }
+                    //     else {
+                    //         throw new Error("cycle")
+                    //         // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                    //         // but the calculation did not complete yet (even that requested quark is calculated before the current)
+                    //         // yield GraphCycleDetectedEffect.new()
+                    //     }
+                    // }
                 }
                 else if (value === SynchronousCalculationStarted) {
                     stack.pop()
@@ -615,6 +625,8 @@ class Transaction extends base {
                 else {
                     // bypass the unrecognized effect to the outer context
                     iterationResult             = entry.continueCalculation(yield value)
+
+                    if (iterationResult === undefined) break
                 }
 
             } while (true)
@@ -624,7 +636,7 @@ class Transaction extends base {
 
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) {
-        const { entries } = this
+        const entries = this.entries
 
         while (stack.length) {
             const entry             = stack.last()
@@ -639,15 +651,15 @@ class Transaction extends base {
                 const previousEntry = entry.previous
 
                 // // reduce garbage collection workload
-                entry.cleanup(true)
+                entry.cleanup()
 
                 if (previousEntry && previousEntry.outgoing) {
                     for (const previousOutgoingEntry of previousEntry.outgoing) {
                         if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                        const entry     = entries.get(previousOutgoingEntry.identifier)
+                        const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
 
-                        if (entry) entry.edgesFlow--
+                        if (outgoingEntry) outgoingEntry.edgesFlow--
                     }
                 }
 
@@ -655,10 +667,10 @@ class Transaction extends base {
                 continue
             }
 
-            const quark : Quark   = entry.origin
+            const quark : QuarkEntry   = entry.origin
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                entry.cleanup(false)
+                entry.cleanup()
 
                 stack.pop()
                 continue
@@ -679,12 +691,12 @@ class Transaction extends base {
 
                     const quark         = entry.getQuark()
 
-                    quark.value         = value
+                    entry.setValue(value)
 
                     const previousEntry = entry.previous
 
                     // // reduce garbage collection workload
-                    entry.cleanup(false)
+                    entry.cleanup()
 
                     // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
                     // and only if that is missing - with previous
@@ -695,12 +707,12 @@ class Transaction extends base {
 
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
-                    if (sameAsPrevious) {
+                    if (sameAsPrevious && previousEntry.outgoing) {
                         for (const previousOutgoingEntry of previousEntry.outgoing) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
                             // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.outgoing.add(previousOutgoingEntry)
+                            entry.getOutgoing().add(previousOutgoingEntry)
 
                             const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
@@ -731,37 +743,33 @@ class Transaction extends base {
 
                         if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
 
-                        requestedEntry      = (identifier.constructor as typeof Identifier).entryClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                        requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
                         entries.set(value, requestedEntry)
-                    }
 
-                    let requestedQuark : Quark                  = requestedEntry.origin
+                        if (!previousEntry.origin) requestedEntry.forceCalculation()
+                    }
 
                     requestedEntry.getOutgoing().add(entry)
 
-                    if (!requestedEntry.isShadow()) {
-                        // no transition - "shadowing" entry from the previous revision
+                    //----------------
+                    let requestedQuark : QuarkEntry             = requestedEntry.origin
 
-                        if (!requestedQuark || !requestedQuark.hasValue()) {
-                            // lazy entry from previous revision
-                            stack.push(requestedEntry)
+                    if (requestedQuark && requestedQuark.hasValue()) {
+                        iterationResult         = entry.continueCalculation(requestedQuark.value)
+                    }
+                    else if (requestedEntry.isShadow()) {
+                        // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
+                        // in both cases start new calculation
+                        requestedEntry.origin   = requestedEntry
+                        requestedEntry.forceCalculation()
 
-                            requestedEntry.forceCalculation()
-
-                            break
-                        } else {
-                            // already calculated entry from previous revision
-                            iterationResult         = entry.continueCalculation(requestedQuark.value)
-                        }
+                        stack.push(requestedEntry)
+                        break
                     }
                     else {
-                        if (requestedQuark && requestedQuark.hasValue()) {
-                            iterationResult         = entry.continueCalculation(requestedQuark.value)
-                        }
-                        else if (!requestedEntry.isCalculationStarted()) {
+                        if (!requestedEntry.isCalculationStarted()) {
                             stack.push(requestedEntry)
-
                             break
                         }
                         else {
@@ -771,6 +779,39 @@ class Transaction extends base {
                             // yield GraphCycleDetectedEffect.new()
                         }
                     }
+
+
+                    // if (!requestedEntry.isShadow()) {
+                    //     // no transition - "shadowing" entry from the previous revision
+                    //
+                    //     if (!requestedQuark || !requestedQuark.hasValue()) {
+                    //         // lazy entry from previous revision
+                    //         stack.push(requestedEntry)
+                    //
+                    //         requestedEntry.forceCalculation()
+                    //
+                    //         break
+                    //     } else {
+                    //         // already calculated entry from previous revision
+                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
+                    //     }
+                    // }
+                    // else {
+                    //     if (requestedQuark && requestedQuark.hasValue()) {
+                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
+                    //     }
+                    //     else if (!requestedEntry.isCalculationStarted()) {
+                    //         stack.push(requestedEntry)
+                    //
+                    //         break
+                    //     }
+                    //     else {
+                    //         throw new Error("cycle")
+                    //         // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                    //         // but the calculation did not complete yet (even that requested quark is calculated before the current)
+                    //         // yield GraphCycleDetectedEffect.new()
+                    //     }
+                    // }
                 }
                 else if (value === SynchronousCalculationStarted) {
                     stack.pop()
@@ -779,6 +820,8 @@ class Transaction extends base {
                 else {
                     // bypass the unrecognized effect to the outer context
                     iterationResult             = entry.continueCalculation(context(value))
+
+                    if (iterationResult === undefined) break
                 }
 
             } while (true)

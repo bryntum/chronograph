@@ -1,5 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { Box } from "./Box.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, ResultT, any>
@@ -25,9 +24,7 @@ export type CalculationFunction<ContextT extends Context, ResultT, YieldT, ArgsT
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]>
-    // extends Box<ResultT>
-{
+export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> {
     // this is just a scope for the `calculation` function, not related to `CalculationContext` type
     context                     : any
 
@@ -41,7 +38,7 @@ export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, A
     startCalculation (...args : ArgsT)      : IteratorResult<any>
     continueCalculation (value : unknown)   : IteratorResult<any>
 
-    cleanupCalculation () : any
+    cleanupCalculation ()
 
     readonly result             : ResultT
 }
@@ -58,9 +55,9 @@ export const CalculationGen = <
 class CalculationGen extends base implements GenericCalculation<typeof ContextGen, ResultT, YieldT, ArgsT> {
     context             : any
 
-    iterator            : CalculationIterator<ResultT, YieldT>  = null
+    iterator            : CalculationIterator<ResultT, YieldT>  = undefined
 
-    iterationResult     : IteratorResult<any>                   = null
+    iterationResult     : IteratorResult<any>                   = undefined
 
 
     isCalculationStarted () : boolean {
@@ -78,11 +75,6 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
     }
 
 
-    hasValue () : boolean {
-        return this.result !== undefined
-    }
-
-
     startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
         const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.context || this, onEffect, ...args)
 
@@ -91,6 +83,8 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
 
 
     continueCalculation (value : unknown) : IteratorResult<any> {
+        if (!this.iterator) return
+
         return this.iterationResult = this.iterator.next(value)
     }
 
@@ -137,9 +131,6 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
 export type CalculationGen = Mixin<typeof CalculationGen>
 
 
-export class MinimalCalculationGen extends CalculationGen(Base) {}
-
-
 //---------------------------------------------------------------------------------------------------------------------
 export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStarted')
 
@@ -155,7 +146,7 @@ export const CalculationSync = <
 class CalculationGen extends base implements GenericCalculation<typeof ContextSync, ResultT, YieldT, ArgsT> {
     context             : any
 
-    iterationResult     : IteratorResult<any>       = null
+    iterationResult     : IteratorResult<any>       = undefined
 
 
     isCalculationStarted () : boolean {
@@ -170,11 +161,6 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextSy
 
     get result () : ResultT {
         return this.iterationResult && this.iterationResult.done ? this.iterationResult.value : undefined
-    }
-
-
-    hasValue () : boolean {
-        return this.result !== undefined
     }
 
 
@@ -217,9 +203,6 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextSy
 }
 
 export type CalculationSync = Mixin<typeof CalculationSync>
-
-
-export class MinimalCalculationSync extends CalculationSync(Base) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------

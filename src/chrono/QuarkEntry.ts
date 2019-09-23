@@ -3,10 +3,10 @@ import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
-import { Quark } from "./Quark.js"
+import { YieldableValue } from "./Transaction.js"
 
 
-export const QuarkEntry = <T extends AnyConstructor<Set<QuarkEntryI> & GenericCalculation<Context, any, any, [ CalculationContext<any>, ...any[] ]>>>(base : T) =>
+export const QuarkEntry = <T extends AnyConstructor<Set<any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
 
 class QuarkEntry extends base {
 
@@ -18,7 +18,7 @@ class QuarkEntry extends base {
         return instance as InstanceType<T>
     }
 
-    identifier      : Identifier        = null
+    identifier      : Identifier        = undefined
 
     // quark state
     value                   : any       = undefined
@@ -26,8 +26,8 @@ class QuarkEntry extends base {
     usedProposedOrCurrent   : boolean   = false
     // eof quark state
 
-    previous        : QuarkEntryI       = null
-    origin          : QuarkEntryI       = null
+    previous        : QuarkEntry        = undefined
+    origin          : QuarkEntry        = undefined
 
     // used by the listeners facility which is under question
     // sameAsPrevious          : boolean = false
@@ -57,17 +57,10 @@ class QuarkEntry extends base {
     }
 
 
-    cleanup (includingQuark : boolean) {
+    cleanup () {
         this.previous           = null
 
-        if (includingQuark) this.origin = null
-
         this.cleanupCalculation()
-    }
-
-
-    isTransitioning () : boolean {
-        return Boolean(this.iterationResult)
     }
 
 
@@ -83,13 +76,13 @@ class QuarkEntry extends base {
     }
 
 
-    get outgoing () : Set<QuarkEntryI> {
-        return this
+    get outgoing () : Set<QuarkEntry> {
+        return this as Set<QuarkEntry>
     }
 
 
-    getOutgoing () : Set<QuarkEntryI> {
-        return this
+    getOutgoing () : Set<QuarkEntry> {
+        return this as Set<QuarkEntry>
     }
 
 

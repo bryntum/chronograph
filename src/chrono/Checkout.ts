@@ -183,7 +183,7 @@ class Checkout extends base {
         // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
         // might be already merged with previous
         for (const [ identifier, quarkEntry ] of this.baseRevision.scope) {
-            quarkEntry.cleanup(false)
+            quarkEntry.cleanup()
             // // ignore "shadowing" entries
             // if (quarkEntry.sameAsPrevious || quarkEntry.previous && quarkEntry.quark === quarkEntry.previous.quark) continue
             //

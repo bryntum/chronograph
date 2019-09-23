@@ -50,7 +50,7 @@ StartTest(t => {
     })
 
 
-    t.it('Subtree elimination - gen', async t => {
+    t.iit('Subtree elimination - gen', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var0      = graph.variableId('var0', 0)
