@@ -98,7 +98,15 @@ class Checkout extends base {
 
         // we can only shred revision if its being reference maximum 1 time (from the current Checkout instance)
         if (previous.referenceCount <= 1) {
-            copyMapInto(revision.scope, previous.scope)
+            for (const [ identifier, entry ] of revision.scope) {
+                previous.scope.set(identifier, entry)
+
+                // if entry is shadowing some other entry, then we should clear that entry's outgoing edges
+                // otherwise they'll keep in memory unneeded entries
+                // we need to keep the `origin` entry however
+                if (entry.origin && entry.origin !== entry) entry.origin.clear()
+            }
+
             copySetInto(revision.selfDependentQuarks, previous.selfDependentQuarks)
 
             revision.scope          = previous.scope
@@ -179,6 +187,10 @@ class Checkout extends base {
         // const previousRevision  = this.baseRevision
 
         this.baseRevision       = this.topRevision = nextRevision
+
+        // TODO should iterate over "entries" of transaction, instead of `scope` of revision?
+        // the only case when those are different things is calculating of lazy identifier, where
+        // the "candidate" and "baseRevision" of the transaction are same value
 
         // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
         // might be already merged with previous

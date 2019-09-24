@@ -325,7 +325,7 @@ class Transaction extends base {
 
         this.isClosed   = true
 
-        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark.identifier)
+        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark)
 
         return stack
     }
@@ -333,6 +333,9 @@ class Transaction extends base {
 
     postPropagate () : Revision {
         this.populateCandidateScopeFromTransitions(this.candidate, this.entries)
+
+        // for some reason need to cleanup the `walkContext` manually, otherwise the extra revisions hangs in memory
+        this.walkContext            = undefined
 
         return this.candidate
     }
@@ -500,7 +503,7 @@ class Transaction extends base {
                             if (sameAsPrevious) ignoreSelfDependency = true
                         }
 
-                        if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark)
+                        if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
                     }
 
                     stack.pop()
@@ -674,7 +677,7 @@ class Transaction extends base {
                             if (sameAsPrevious) ignoreSelfDependency = true
                         }
 
-                        if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark)
+                        if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
                     }
 
                     stack.pop()

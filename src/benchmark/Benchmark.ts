@@ -167,6 +167,8 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     async runWhile (calibrationDone : boolean, state : StateT, cyclesCount : number, condition : (samples : number[], iteration : number, elapsed : number) => boolean) : Promise<RunInfo<InfoT>> {
+        // console.profile(this.name)
+
         const samples               = []
 
         let globalStart             = performance.now()
@@ -186,6 +188,9 @@ export class Benchmark<StateT, InfoT> extends Base {
 
             i++
         }
+
+        // console.profileEnd(this.name)
+        // window.BENCH_STATE = state
 
         return this.getRunInfo(samples, cyclesCount, state)
     }
