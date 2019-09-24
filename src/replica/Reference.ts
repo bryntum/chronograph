@@ -1,6 +1,7 @@
+import { GetTransaction, ProposedOrCurrent } from "../chrono/Effect.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync } from "../chrono/Identifier.js"
-import { GetTransaction, ProposedOrCurrent, Transaction, YieldableValue } from "../chrono/Transaction.js"
+import { Transaction, YieldableValue } from "../chrono/Transaction.js"
 import { isInstanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationContext } from "../primitives/Calculation.js"

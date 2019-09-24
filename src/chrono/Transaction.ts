@@ -8,6 +8,7 @@ import {
 } from "../primitives/Calculation.js"
 import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
+import { Effect, ProposedOrCurrentSymbol, TransactionSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol } from "./Effect.js"
 import { Identifier } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { QuarkEntry } from "./QuarkEntry.js"
@@ -116,49 +117,6 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
         }
     }
 }
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class Effect extends Base {
-    handler     : symbol
-
-    // @prototypeValue(false)
-    // async       : boolean
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-const ProposedOrCurrentSymbol    = Symbol('ProposedOrCurrentSymbol')
-
-export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurrentSymbol })
-
-
-//---------------------------------------------------------------------------------------------------------------------
-// export const CancelPropagationSymbol    = Symbol('CancelPropagationSymbol')
-//
-// export const CancelPropagation : Effect = Effect.new({ handler : CancelPropagationSymbol })
-
-//---------------------------------------------------------------------------------------------------------------------
-const TransactionSymbol    = Symbol('GraphSymbol')
-
-export const GetTransaction : Effect = Effect.new({ handler : TransactionSymbol })
-
-
-//---------------------------------------------------------------------------------------------------------------------
-const WriteSymbol    = Symbol('WriteSymbol')
-
-export class WriteEffect extends Effect {
-    handler         : symbol    = WriteSymbol
-
-    writeTarget     : Identifier
-    proposedArgs    : [ any, ...any[] ]
-}
-
-
-export const Write = (writeTarget : Identifier, proposedValue : any, ...proposedArgs : any[]) : WriteEffect =>
-    WriteEffect.new({ writeTarget, proposedArgs : [ proposedValue, ...proposedArgs ] })
-
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -440,6 +398,15 @@ class Transaction extends base {
     }
 
 
+    [WriteSeveralSymbol] (effect : WriteSeveralEffect, activeEntry : QuarkEntry) : any {
+        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+
+        this.walkContext.currentEpoch++
+
+        effect.writes.forEach(writeInfo => writeInfo.identifier.write(this, ...writeInfo.proposedArgs))
+    }
+
+
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) : Generator<any, void, unknown> {
         const entries = this.entries
 
@@ -503,9 +470,6 @@ class Transaction extends base {
                     // // reduce garbage collection workload
                     entry.cleanup()
 
-                    // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
-                    // and only if that is missing - with previous
-                    // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
                     let ignoreSelfDependency : boolean = false
 
                     const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
@@ -584,49 +548,26 @@ class Transaction extends base {
                             // yield GraphCycleDetectedEffect.new()
                         }
                     }
-
-
-                    // if (!requestedEntry.isShadow()) {
-                    //     // no transition - "shadowing" entry from the previous revision
-                    //
-                    //     if (!requestedQuark || !requestedQuark.hasValue()) {
-                    //         // lazy entry from previous revision
-                    //         stack.push(requestedEntry)
-                    //
-                    //         requestedEntry.forceCalculation()
-                    //
-                    //         break
-                    //     } else {
-                    //         // already calculated entry from previous revision
-                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
-                    //     }
-                    // }
-                    // else {
-                    //     if (requestedQuark && requestedQuark.hasValue()) {
-                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
-                    //     }
-                    //     else if (!requestedEntry.isCalculationStarted()) {
-                    //         stack.push(requestedEntry)
-                    //
-                    //         break
-                    //     }
-                    //     else {
-                    //         throw new Error("cycle")
-                    //         // cycle - the requested quark has started calculation (means it was encountered in this loop before)
-                    //         // but the calculation did not complete yet (even that requested quark is calculated before the current)
-                    //         // yield GraphCycleDetectedEffect.new()
-                    //     }
-                    // }
                 }
                 else if (value === SynchronousCalculationStarted) {
+                    // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
+                    // 1) there's a cycle during synchronous computation (we throw exception in `read` method)
+                    // 2) some other computation is reading synchronous computation, that has already started
+                    //    in such case its safe to just unwind the stack
+
                     stack.pop()
                     break
                 }
                 else {
                     // bypass the unrecognized effect to the outer context
-                    iterationResult             = entry.continueCalculation(yield value)
+                    const effectResult          = yield value
 
-                    if (iterationResult === undefined) break
+                    // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
+                    // in such case we can not continue calculation and just exit the inner loop
+                    if (entry.iterationResult)
+                        iterationResult         = entry.continueCalculation(effectResult)
+                    else
+                        break
                 }
 
             } while (true)
@@ -779,49 +720,27 @@ class Transaction extends base {
                             // yield GraphCycleDetectedEffect.new()
                         }
                     }
-
-
-                    // if (!requestedEntry.isShadow()) {
-                    //     // no transition - "shadowing" entry from the previous revision
-                    //
-                    //     if (!requestedQuark || !requestedQuark.hasValue()) {
-                    //         // lazy entry from previous revision
-                    //         stack.push(requestedEntry)
-                    //
-                    //         requestedEntry.forceCalculation()
-                    //
-                    //         break
-                    //     } else {
-                    //         // already calculated entry from previous revision
-                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
-                    //     }
-                    // }
-                    // else {
-                    //     if (requestedQuark && requestedQuark.hasValue()) {
-                    //         iterationResult         = entry.continueCalculation(requestedQuark.value)
-                    //     }
-                    //     else if (!requestedEntry.isCalculationStarted()) {
-                    //         stack.push(requestedEntry)
-                    //
-                    //         break
-                    //     }
-                    //     else {
-                    //         throw new Error("cycle")
-                    //         // cycle - the requested quark has started calculation (means it was encountered in this loop before)
-                    //         // but the calculation did not complete yet (even that requested quark is calculated before the current)
-                    //         // yield GraphCycleDetectedEffect.new()
-                    //     }
-                    // }
                 }
                 else if (value === SynchronousCalculationStarted) {
+                    // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
+                    // 1) there's a cycle during synchronous computation (we throw exception in `read` method)
+                    // 2) some other computation is reading synchronous computation, that has already started
+                    //    in such case its safe to just unwind the stack
+
                     stack.pop()
                     break
                 }
                 else {
                     // bypass the unrecognized effect to the outer context
-                    iterationResult             = entry.continueCalculation(context(value))
+                    const effectResult          = context(value)
 
-                    if (iterationResult === undefined) break
+                    // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
+                    if (entry.iterationResult)
+                        // in such case we can not continue calculation
+                        iterationResult         = entry.continueCalculation(effectResult)
+                    else
+                        // and just exit the inner loop
+                        break
                 }
 
             } while (true)

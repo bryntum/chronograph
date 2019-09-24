@@ -1,5 +1,5 @@
+import { ProposedOrCurrent, Write, WriteSeveral } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { ProposedOrCurrent, Write } from "../../src/chrono/Transaction.js"
 
 declare const StartTest : any
 
@@ -50,7 +50,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Subtree elimination - gen', async t => {
+    t.it('Subtree elimination - gen', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var0      = graph.variableId('var0', 0)
@@ -70,8 +70,10 @@ StartTest(t => {
 
             if (value1 > 5) {
                 // swap the values for `var0` and `var1`
-                yield Write(var0, value1)
-                yield Write(var1, value0)
+                yield WriteSeveral([
+                    { identifier : var0, proposedArgs : [ value1 ] },
+                    { identifier : var1, proposedArgs : [ value0 ] }
+                ])
             }
 
             return yield ProposedOrCurrent

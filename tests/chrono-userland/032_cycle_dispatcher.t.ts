@@ -1,7 +1,8 @@
+import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../../src/chrono/Identifier.js"
 import { QuarkEntry } from "../../src/chrono/QuarkEntry.js"
-import { ProposedOrCurrent, SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
+import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
 import { CalculationIterator, CalculationSync } from "../../src/primitives/Calculation.js"
 import { defineProperty } from "../../src/util/Helpers.js"
 

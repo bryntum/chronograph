@@ -11,8 +11,9 @@ import {
 } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { CheckoutI } from "./Checkout.js"
+import { ProposedOrCurrent } from "./Effect.js"
 import { QuarkEntry, QuarkEntryConstructor } from "./QuarkEntry.js"
-import { ProposedOrCurrent, Transaction, YieldableValue } from "./Transaction.js"
+import { Transaction, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

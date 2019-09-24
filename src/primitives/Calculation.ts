@@ -83,8 +83,6 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
 
 
     continueCalculation (value : unknown) : IteratorResult<any> {
-        if (!this.iterator) return
-
         return this.iterationResult = this.iterator.next(value)
     }
 
