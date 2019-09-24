@@ -7,7 +7,7 @@ import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/C
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
 import { defineProperty } from "../util/Helpers.js"
-import { EntityIdentifierI, FieldIdentifierI, MinimalEntityIdentifier } from "./Identifier.js"
+import { EntityIdentifierI, FieldIdentifier, FieldIdentifierI, MinimalEntityIdentifier } from "./Identifier.js"
 
 
 const isEntityMarker      = Symbol('isEntity')
@@ -120,7 +120,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
             // only the already created identifiers will be added
             for (let i = 0; i < keys.length; i++) {
-                const identifier    = this.$[ keys[ i ] ]
+                const identifier : FieldIdentifier   = this.$[ keys[ i ] ]
 
                 replica.addIdentifier(identifier)
 
@@ -307,7 +307,7 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
     return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
         let calculations        = target.$calculations
 
-        if (!calculations) calculations = target.$calculations = <any> {}
+        if (!calculations) calculations = target.$calculations = {} as any
 
         calculations[ fieldName ]       = propertyKey
     }

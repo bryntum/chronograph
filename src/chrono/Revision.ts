@@ -44,7 +44,7 @@ class Revision extends base {
     hasIdentifier (identifier : Identifier) : boolean {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
-        return Boolean(latestEntry && (!latestEntry.origin || !(latestEntry.origin.value !== TombStone)))
+        return Boolean(latestEntry && latestEntry.getValue() !== TombStone)
     }
 
 
