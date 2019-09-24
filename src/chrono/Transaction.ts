@@ -427,6 +427,8 @@ class Transaction extends base {
     }
 
 
+    // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
+    // it seems that overhead of calling few more functions in such tight loop as this outweights the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) : Generator<any, void, unknown> {
         const entries = this.entries
 
