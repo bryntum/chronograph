@@ -64,8 +64,12 @@ class Revision extends base {
 
         if (!latestEntry) throw new Error("Unknown identifier")
 
-        if (latestEntry.hasValue()) {
-            return latestEntry.getValue()
+        const value         = latestEntry.getValue()
+
+        if (value === TombStone) throw new Error("Unknown identifier")
+
+        if (value !== undefined) {
+            return value
         } else {
             return this.calculateLazyEntry(latestEntry)
         }
