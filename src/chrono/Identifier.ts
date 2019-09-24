@@ -109,3 +109,7 @@ export class CalculatedValueGen extends Identifier {
         return yield ProposedOrCurrent
     }
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const throwUnknownIdentifier = (identifier : Identifier) => { throw new Error(`Unknown identifier ${identifier}`) }

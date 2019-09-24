@@ -76,6 +76,11 @@ class QuarkEntry extends base {
     }
 
 
+    acquireQuark () : QuarkEntry {
+        return this.origin = this
+    }
+
+
     get outgoing () : Set<QuarkEntry> {
         return this as Set<QuarkEntry>
     }

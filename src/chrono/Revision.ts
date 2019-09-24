@@ -1,5 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { Identifier } from "./Identifier.js"
+import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { QuarkEntry } from "./QuarkEntry.js"
 import { MinimalTransaction } from "./Transaction.js"
@@ -62,11 +62,11 @@ class Revision extends base {
     read (identifier : Identifier) : any {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
-        if (!latestEntry) throw new Error("Unknown identifier")
+        if (!latestEntry) throwUnknownIdentifier(identifier)
 
         const value         = latestEntry.getValue()
 
-        if (value === TombStone) throw new Error("Unknown identifier")
+        if (value === TombStone) throwUnknownIdentifier(identifier)
 
         if (value !== undefined) {
             return value

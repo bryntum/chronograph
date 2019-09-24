@@ -1,16 +1,36 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueSync } from "../../src/chrono/Identifier.js"
+import { CalculatedValueSync, Identifier, Variable } from "../../src/chrono/Identifier.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Observe variable', async t => {
+    t.it('Observe unknown identifier', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var1      = graph.variable(0)
 
         t.throwsOk(() => graph.read(var1), 'Unknown identifier')
+    })
+
+
+    t.it('Observe unknown identifier in calculation', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
+
+        const var1      = Variable.new({ name : 'var1' })
+
+        const iden1     = graph.identifier(function * () {
+            yield var1
+        })
+
+        t.throwsOk(() => graph.propagate(), 'Unknown identifier')
+    })
+
+
+    t.it('Observe variable', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
+
+        const var1      = graph.variable(0)
 
         graph.propagate()
 

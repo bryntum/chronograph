@@ -9,7 +9,7 @@ import {
 import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import { Effect, ProposedOrCurrentSymbol, TransactionSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol } from "./Effect.js"
-import { Identifier } from "./Identifier.js"
+import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { QuarkEntry } from "./QuarkEntry.js"
 import { MinimalRevision, Revision } from "./Revision.js"
@@ -203,26 +203,30 @@ class Transaction extends base {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
+        //----------------------
         let entry           = this.entries.get(identifier)
-
-        const activeEntry   = this.getActiveEntry()
 
         if (!entry) {
             const latestEntry       = this.baseRevision.getLatestEntryFor(identifier)
 
-            if (!latestEntry) throw new Error(`Unknown identifier ${identifier}`)
+            if (!latestEntry) throwUnknownIdentifier(identifier)
 
             entry                   = identifier.quarkClass.new({ identifier, origin : latestEntry.origin })
 
             this.entries.set(identifier, entry)
         }
 
+        //----------------------
+        const activeEntry   = this.getActiveEntry()
+
         if (activeEntry.identifier.level < entry.identifier.level) throw new Error('Identifier can not read from higher level identifier')
 
         entry.getOutgoing().add(activeEntry)
 
+        //----------------------
         if (entry.hasValue()) return entry.getValue()
 
+        //----------------------
         entry.forceCalculation()
 
         this.stackSync.push(entry)
@@ -261,7 +265,7 @@ class Transaction extends base {
     removeIdentifier (identifier : Identifier) {
         const entry                 = this.touch(identifier)
 
-        entry.getQuark().value      = TombStone
+        entry.acquireQuark().value  = TombStone
     }
 
 
@@ -510,7 +514,7 @@ class Transaction extends base {
                     if (!requestedEntry) {
                         const previousEntry = this.baseRevision.getLatestEntryFor(value)
 
-                        if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
+                        if (!previousEntry) throwUnknownIdentifier(value)
 
                         requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
@@ -525,6 +529,8 @@ class Transaction extends base {
                     let requestedQuark : QuarkEntry             = requestedEntry.origin
 
                     if (requestedQuark && requestedQuark.hasValue()) {
+                        if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
+
                         iterationResult         = entry.continueCalculation(requestedQuark.value)
                     }
                     else if (requestedEntry.isShadow()) {
@@ -682,7 +688,7 @@ class Transaction extends base {
                     if (!requestedEntry) {
                         const previousEntry = this.baseRevision.getLatestEntryFor(value)
 
-                        if (!previousEntry) throw new Error(`Unknown identifier ${value}`)
+                        if (!previousEntry) throwUnknownIdentifier(value)
 
                         requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
 
