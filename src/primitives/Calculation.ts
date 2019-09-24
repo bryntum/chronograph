@@ -141,7 +141,7 @@ export const CalculationSync = <
     ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
 >(base : T) =>
 
-class CalculationGen extends base implements GenericCalculation<typeof ContextSync, ResultT, YieldT, ArgsT> {
+class CalculationSync extends base implements GenericCalculation<typeof ContextSync, ResultT, YieldT, ArgsT> {
     context             : any
 
     iterationResult     : IteratorResult<any>       = undefined

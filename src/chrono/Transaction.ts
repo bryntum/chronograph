@@ -28,6 +28,8 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
     baseRevision    : Revision
 
+    pushTo          : LeveledStack<QuarkEntry>
+
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, entry : QuarkEntry) : VisitInfo {
         if (!entry) {
@@ -40,6 +42,16 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
         entry.visitEpoch   = this.currentEpoch
 
         return entry
+    }
+
+
+    onTopologicalNode (identifier : Identifier) {
+        if (!identifier.lazy) this.pushTo.push(this.visited.get(identifier))
+    }
+
+
+    onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
+        return OnCycleAction.Resume
     }
 
 
@@ -148,12 +160,13 @@ class Transaction extends base {
 
         this.walkContext    = WalkForwardOverwriteContext.new({
             baseRevision    : this.baseRevision,
-            // ignore cycles when determining potentially changed atoms
-            onCycle         : (quark : Identifier, stack : WalkStep<Identifier>[]) => OnCycleAction.Resume,
-
-            onTopologicalNode       : (identifier : Identifier) => {
-                if (!identifier.lazy) this.stackGen.push(this.entries.get(identifier))
-            }
+            pushTo          : this.stackGen
+            // // ignore cycles when determining potentially changed atoms
+            // onCycle         : (quark : Identifier, stack : WalkStep<Identifier>[]) => OnCycleAction.Resume,
+            //
+            // onTopologicalNode       : (identifier : Identifier) => {
+            //     if (!identifier.lazy) this.stackGen.push(this.entries.get(identifier))
+            // }
         })
 
         if (!this.candidate) this.candidate = MinimalRevision.new({ previous : this.baseRevision })
