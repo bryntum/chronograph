@@ -6,6 +6,7 @@ import { Identifier } from "./Identifier.js"
 import { YieldableValue } from "./Transaction.js"
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export const QuarkEntry = <T extends AnyConstructor<Set<any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
 
 class QuarkEntry extends base {
@@ -113,3 +114,6 @@ export type QuarkEntry = Mixin<typeof QuarkEntry>
 export type QuarkEntryConstructor = MixinConstructor<typeof QuarkEntry>
 
 export interface QuarkEntryI extends QuarkEntry {}
+
+//---------------------------------------------------------------------------------------------------------------------
+export const TombStone = Symbol('Tombstone')

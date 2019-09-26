@@ -10,8 +10,7 @@ import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import { Effect, ProposedOrCurrentSymbol, TransactionSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol } from "./Effect.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
-import { TombStone } from "./Quark.js"
-import { QuarkEntry } from "./QuarkEntry.js"
+import { QuarkEntry, TombStone } from "./QuarkEntry.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 

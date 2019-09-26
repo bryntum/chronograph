@@ -1,7 +1,6 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
-import { TombStone } from "./Quark.js"
-import { QuarkEntry } from "./QuarkEntry.js"
+import { QuarkEntry, TombStone } from "./QuarkEntry.js"
 import { MinimalTransaction } from "./Transaction.js"
 
 
