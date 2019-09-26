@@ -218,12 +218,13 @@ class Transaction extends base {
         //----------------------
         let entry           = this.entries.get(identifier)
 
+        // creating "shadowing" entry, to store the new edges
         if (!entry) {
             const latestEntry       = this.baseRevision.getLatestEntryFor(identifier)
 
             if (!latestEntry) throwUnknownIdentifier(identifier)
 
-            entry                   = identifier.quarkClass.new({ identifier, origin : latestEntry.origin })
+            entry                   = identifier.quarkClass.new({ identifier, origin : latestEntry.origin, previous : latestEntry })
 
             this.entries.set(identifier, entry)
         }
@@ -528,6 +529,7 @@ class Transaction extends base {
 
                     let requestedEntry : Quark             = entries.get(value)
 
+                    // creating "shadowing" entry, to store the new edges
                     if (!requestedEntry) {
                         const previousEntry = this.baseRevision.getLatestEntryFor(value)
 
