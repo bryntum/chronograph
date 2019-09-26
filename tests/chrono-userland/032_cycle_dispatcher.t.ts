@@ -1,7 +1,7 @@
 import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../../src/chrono/Identifier.js"
-import { QuarkEntry } from "../../src/chrono/QuarkEntry.js"
+import { Quark } from "../../src/chrono/Quark.js"
 import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
 import { CalculationIterator, CalculationSync } from "../../src/primitives/Calculation.js"
 import { defineProperty } from "../../src/util/Helpers.js"
@@ -75,7 +75,7 @@ class DispatcherIdentifier extends CalculatedValueSync {
 }
 
 
-class DispatcherQuark extends QuarkEntry(CalculationSync(Set)) {
+class DispatcherQuark extends Quark(CalculationSync(Set)) {
     logEntries          : Map<FieldType, DispatcherLogEntry>   = new Map()
 
 

@@ -1,10 +1,10 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
-import { QuarkEntry, TombStone } from "./QuarkEntry.js"
+import { Quark, TombStone } from "./Quark.js"
 import { MinimalTransaction } from "./Transaction.js"
 
 
-export type Scope = Map<Identifier, QuarkEntry>
+export type Scope = Map<Identifier, Quark>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -25,7 +25,7 @@ class Revision extends base {
     selfDependentQuarks     : Set<Identifier>   = new Set()
 
 
-    getLatestEntryFor (identifier : Identifier) : QuarkEntry {
+    getLatestEntryFor (identifier : Identifier) : Quark {
         let revision : Revision = this
 
         while (revision) {
@@ -75,7 +75,7 @@ class Revision extends base {
     }
 
 
-    calculateLazyEntry (entry : QuarkEntry) : any {
+    calculateLazyEntry (entry : Quark) : any {
         const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
 
         transaction.entries.set(entry.identifier, entry)

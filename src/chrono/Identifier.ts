@@ -12,7 +12,7 @@ import {
 import { prototypeValue } from "../util/Helpers.js"
 import { CheckoutI } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
-import { QuarkEntry, QuarkEntryConstructor } from "./QuarkEntry.js"
+import { Quark, QuarkConstructor } from "./Quark.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
@@ -31,7 +31,7 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
     lazy                : boolean   = false
 
-    quarkClass          : QuarkEntryConstructor
+    quarkClass          : QuarkConstructor
 
 
     equality (v1 : this[ 'ValueT' ], v2 : this[ 'ValueT' ]) : boolean {
@@ -69,8 +69,8 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 export class Variable<ResultT = any> extends Identifier<typeof ContextSync, ResultT> {
     YieldT              : never
 
-    @prototypeValue(buildClass(Set, CalculationSync, QuarkEntry))
-    quarkClass          : QuarkEntryConstructor
+    @prototypeValue(buildClass(Set, CalculationSync, Quark))
+    quarkClass          : QuarkConstructor
 
 
     calculation (context : CalculationContext<this[ 'YieldT' ]>) : ResultT {
@@ -88,8 +88,8 @@ export class Variable<ResultT = any> extends Identifier<typeof ContextSync, Resu
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync extends Identifier {
 
-    @prototypeValue(buildClass(Set, CalculationSync, QuarkEntry))
-    quarkClass          : QuarkEntryConstructor
+    @prototypeValue(buildClass(Set, CalculationSync, Quark))
+    quarkClass          : QuarkConstructor
 
 
     calculation (YIELD : CalculationContext<this[ 'YieldT' ]>) : this[ 'ValueT' ] {
@@ -101,8 +101,8 @@ export class CalculatedValueSync extends Identifier {
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen extends Identifier {
 
-    @prototypeValue(buildClass(Set, CalculationGen, QuarkEntry))
-    quarkClass          : QuarkEntryConstructor
+    @prototypeValue(buildClass(Set, CalculationGen, Quark))
+    quarkClass          : QuarkConstructor
 
 
     * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {

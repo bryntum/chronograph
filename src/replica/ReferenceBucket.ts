@@ -1,5 +1,5 @@
 import { CalculatedValueSync } from "../chrono/Identifier.js"
-import { QuarkEntry, QuarkEntryConstructor } from "../chrono/QuarkEntry.js"
+import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
 import { buildClass } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
@@ -36,8 +36,8 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
 
         ValueT              : Set<Entity>
 
-        @prototypeValue(buildClass(Set, CalculationSync, QuarkEntry, ReferenceBucketQuarkEntry))
-        quarkClass          : QuarkEntryConstructor
+        @prototypeValue(buildClass(Set, CalculationSync, Quark, ReferenceBucketQuarkEntry))
+        quarkClass          : QuarkConstructor
 
 
         addToBucket (transaction : Transaction, entity : Entity) {
@@ -73,7 +73,7 @@ export type ReferenceBucketIdentifier = Mixin<typeof ReferenceBucketIdentifier>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketQuarkEntry = <T extends AnyConstructor<QuarkEntry>>(base : T) =>
+export const ReferenceBucketQuarkEntry = <T extends AnyConstructor<Quark>>(base : T) =>
 
 class ReferenceBucketQuarkEntry extends base {
     oldRefs             : Set<Entity>   = undefined

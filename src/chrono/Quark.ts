@@ -7,11 +7,11 @@ import { YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const QuarkEntry = <T extends AnyConstructor<Set<any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
+export const Quark = <T extends AnyConstructor<Set<any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
 
-class QuarkEntry extends base {
+class Quark extends base {
 
-    static new<T extends typeof QuarkEntry> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
+    static new<T extends typeof Quark> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance = new this()
 
         Object.assign(instance, props)
@@ -27,8 +27,8 @@ class QuarkEntry extends base {
     usedProposedOrCurrent   : boolean   = false
     // eof quark state
 
-    previous        : QuarkEntry        = undefined
-    origin          : QuarkEntry        = undefined
+    previous        : Quark        = undefined
+    origin          : Quark        = undefined
 
     // used by the listeners facility which is under question
     // sameAsPrevious          : boolean = false
@@ -70,25 +70,25 @@ class QuarkEntry extends base {
     }
 
 
-    getQuark () : QuarkEntry {
+    getQuark () : Quark {
         if (this.origin) return this.origin
 
         return this.origin = this
     }
 
 
-    acquireQuark () : QuarkEntry {
+    acquireQuark () : Quark {
         return this.origin = this
     }
 
 
-    get outgoing () : Set<QuarkEntry> {
-        return this as Set<QuarkEntry>
+    get outgoing () : Set<Quark> {
+        return this as Set<Quark>
     }
 
 
-    getOutgoing () : Set<QuarkEntry> {
-        return this as Set<QuarkEntry>
+    getOutgoing () : Set<Quark> {
+        return this as Set<Quark>
     }
 
 
@@ -109,11 +109,11 @@ class QuarkEntry extends base {
     }
 }
 
-export type QuarkEntry = Mixin<typeof QuarkEntry>
+export type Quark = Mixin<typeof Quark>
 
-export type QuarkEntryConstructor = MixinConstructor<typeof QuarkEntry>
+export type QuarkConstructor = MixinConstructor<typeof Quark>
 
-export interface QuarkEntryI extends QuarkEntry {}
+export interface QuarkI extends Quark {}
 
 //---------------------------------------------------------------------------------------------------------------------
 export const TombStone = Symbol('Tombstone')

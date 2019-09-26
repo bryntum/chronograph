@@ -10,7 +10,7 @@ import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import { Effect, ProposedOrCurrentSymbol, TransactionSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol } from "./Effect.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
-import { QuarkEntry, TombStone } from "./QuarkEntry.js"
+import { Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
@@ -23,14 +23,14 @@ export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Pro
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
-    visited         : Map<Identifier, QuarkEntry>
+    visited         : Map<Identifier, Quark>
 
     baseRevision    : Revision
 
-    pushTo          : LeveledStack<QuarkEntry>
+    pushTo          : LeveledStack<Quark>
 
 
-    setVisitedInfo (identifier : Identifier, visitedAt : number, entry : QuarkEntry) : VisitInfo {
+    setVisitedInfo (identifier : Identifier, visitedAt : number, entry : Quark) : VisitInfo {
         if (!entry) {
             entry      = identifier.quarkClass.new({ identifier })
 
@@ -54,7 +54,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     }
 
 
-    collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : QuarkEntry) {
+    collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
         const entry             = this.baseRevision.getLatestEntryFor(node)
 
         // newly created identifier
@@ -79,7 +79,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
                 if (outgoingEntry.origin !== this.baseRevision.getLatestEntryFor(identifier).origin) continue
 
-                let entry : QuarkEntry              = this.visited.get(identifier)
+                let entry : Quark              = this.visited.get(identifier)
 
                 if (!entry) {
                     entry                           = identifier.quarkClass.new({ identifier })
@@ -107,7 +107,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             for (const outgoingEntry of visitInfo.outgoing) {
                 const identifier    = outgoingEntry.identifier
 
-                let entry : QuarkEntry              = this.visited.get(identifier)
+                let entry : Quark              = this.visited.get(identifier)
 
                 if (!entry) throw new Error('Should not happen')
 
@@ -145,9 +145,9 @@ class Transaction extends base {
     walkContext             : WalkForwardOverwriteContext
 
     // we use 2 different stacks, because they support various effects
-    stackSync               : LeveledStack<QuarkEntry>  = new LeveledStack()
+    stackSync               : LeveledStack<Quark>  = new LeveledStack()
     // the `stackGen` supports async effects notably
-    stackGen                : LeveledStack<QuarkEntry>  = new LeveledStack()
+    stackGen                : LeveledStack<Quark>  = new LeveledStack()
 
     candidate               : Revision
 
@@ -181,7 +181,7 @@ class Transaction extends base {
     }
 
 
-    get entries () : Map<Identifier, QuarkEntry> {
+    get entries () : Map<Identifier, Quark> {
         return this.walkContext.visited
     }
 
@@ -191,7 +191,7 @@ class Transaction extends base {
     }
 
 
-    getActiveEntry () : QuarkEntry {
+    getActiveEntry () : Quark {
         // `stackSync` is always empty, except when the synchronous "batch" is being processed
         const activeStack   = this.stackSync.length > 0 ? this.stackSync : this.stackGen
 
@@ -263,7 +263,7 @@ class Transaction extends base {
     }
 
 
-    touch (identifier : Identifier) : QuarkEntry {
+    touch (identifier : Identifier) : Quark {
         this.walkContext.continueFrom([ identifier ])
 
         const entry                 = this.entries.get(identifier)
@@ -281,7 +281,7 @@ class Transaction extends base {
     }
 
 
-    populateCandidateScopeFromTransitions (candidate : Revision, entries : Map<Identifier, QuarkEntry>) {
+    populateCandidateScopeFromTransitions (candidate : Revision, entries : Map<Identifier, Quark>) {
         if (candidate.scope.size === 0) {
             // in this branch we can overwrite the whole map
             candidate.scope     = entries
@@ -318,10 +318,10 @@ class Transaction extends base {
     }
 
 
-    prePropagate (args? : PropagateArguments) : LeveledStack<QuarkEntry> {
+    prePropagate (args? : PropagateArguments) : LeveledStack<Quark> {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
-        let stack : LeveledStack<QuarkEntry>
+        let stack : LeveledStack<Quark>
 
         if (args && args.calculateOnly) {
             const calculateOnly     = args.calculateOnly
@@ -382,7 +382,7 @@ class Transaction extends base {
     }
 
 
-    [ProposedOrCurrentSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
+    [ProposedOrCurrentSymbol] (effect : Effect, activeEntry : Quark) : any {
         const quark             = activeEntry.getQuark()
 
         quark.usedProposedOrCurrent      = true
@@ -403,12 +403,12 @@ class Transaction extends base {
     }
 
 
-    [TransactionSymbol] (effect : Effect, activeEntry : QuarkEntry) : any {
+    [TransactionSymbol] (effect : Effect, activeEntry : Quark) : any {
         return this
     }
 
 
-    [WriteSymbol] (effect : WriteEffect, activeEntry : QuarkEntry) : any {
+    [WriteSymbol] (effect : WriteEffect, activeEntry : Quark) : any {
         if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
 
         this.walkContext.currentEpoch++
@@ -417,7 +417,7 @@ class Transaction extends base {
     }
 
 
-    [WriteSeveralSymbol] (effect : WriteSeveralEffect, activeEntry : QuarkEntry) : any {
+    [WriteSeveralSymbol] (effect : WriteSeveralEffect, activeEntry : Quark) : any {
         if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
 
         this.walkContext.currentEpoch++
@@ -428,7 +428,7 @@ class Transaction extends base {
 
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweights the optimization
-    * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) : Generator<any, void, unknown> {
+    * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<Quark>) : Generator<any, void, unknown> {
         const entries = this.entries
 
         while (stack.length) {
@@ -460,7 +460,7 @@ class Transaction extends base {
                 continue
             }
 
-            const quark : QuarkEntry   = entry.origin
+            const quark : Quark   = entry.origin
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
                 entry.cleanup()
@@ -526,7 +526,7 @@ class Transaction extends base {
                 else if (value instanceof Identifier) {
                     if (entry.identifier.level > value.level) throw new Error('Identifier can not read from higher level identifier')
 
-                    let requestedEntry : QuarkEntry             = entries.get(value)
+                    let requestedEntry : Quark             = entries.get(value)
 
                     if (!requestedEntry) {
                         const previousEntry = this.baseRevision.getLatestEntryFor(value)
@@ -543,7 +543,7 @@ class Transaction extends base {
                     requestedEntry.getOutgoing().add(entry)
 
                     //----------------
-                    let requestedQuark : QuarkEntry             = requestedEntry.origin
+                    let requestedQuark : Quark             = requestedEntry.origin
 
                     if (requestedQuark && requestedQuark.hasValue()) {
                         if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
@@ -599,7 +599,7 @@ class Transaction extends base {
 
 
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
-    calculateTransitionsStackSync (context : CalculationContext<any>, stack : LeveledStack<QuarkEntry>) {
+    calculateTransitionsStackSync (context : CalculationContext<any>, stack : LeveledStack<Quark>) {
         const entries = this.entries
 
         while (stack.length) {
@@ -631,7 +631,7 @@ class Transaction extends base {
                 continue
             }
 
-            const quark : QuarkEntry   = entry.origin
+            const quark : Quark   = entry.origin
 
             if (quark && quark.hasValue() || entry.edgesFlow < 0) {
                 entry.cleanup()
@@ -700,7 +700,7 @@ class Transaction extends base {
                 else if (value instanceof Identifier) {
                     if (entry.identifier.level > value.level) throw new Error('Identifier can not read from higher level identifier')
 
-                    let requestedEntry : QuarkEntry             = entries.get(value)
+                    let requestedEntry : Quark             = entries.get(value)
 
                     if (!requestedEntry) {
                         const previousEntry = this.baseRevision.getLatestEntryFor(value)
@@ -717,7 +717,7 @@ class Transaction extends base {
                     requestedEntry.getOutgoing().add(entry)
 
                     //----------------
-                    let requestedQuark : QuarkEntry             = requestedEntry.origin
+                    let requestedQuark : Quark             = requestedEntry.origin
 
                     if (requestedQuark && requestedQuark.hasValue()) {
                         iterationResult         = entry.continueCalculation(requestedQuark.value)
