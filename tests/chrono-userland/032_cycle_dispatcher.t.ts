@@ -218,7 +218,7 @@ StartTest(t => {
             },
 
             write (transaction : Transaction, proposedValue : any, keepDuration : boolean) {
-                CalculatedValueGen.prototype.write.call(this, graph, proposedValue)
+                CalculatedValueGen.prototype.write.call(this, transaction, proposedValue)
 
                 preDispatcher.log(transaction, {
                     fieldType               : FieldType.Start,
