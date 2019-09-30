@@ -1,7 +1,6 @@
 import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../chrono/Identifier.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { CalculationSync } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"

@@ -9,8 +9,11 @@ import { MinimalTransaction, Transaction, YieldableValue } from "./Transaction.j
 
 //---------------------------------------------------------------------------------------------------------------------
 export type PropagateArguments = {
-    // observersFirst?     : boolean,
     calculateOnly?      : Identifier[]
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+export type PropagateResult = {
 }
 
 
@@ -153,28 +156,28 @@ class Checkout extends base {
     }
 
 
-    propagate (args? : PropagateArguments) {
+    propagate (args? : PropagateArguments) : PropagateResult {
         const nextRevision      = this.activeTransaction.propagate(args)
 
         return this.finalizePropagation(nextRevision)
     }
 
 
-    propagateSync (args? : PropagateArguments) {
+    propagateSync (args? : PropagateArguments) : PropagateResult {
         const nextRevision      = this.activeTransaction.propagateSync(args)
 
         return this.finalizePropagation(nextRevision)
     }
 
 
-    async propagateAsync (args? : PropagateArguments) {
+    async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
         const nextRevision      = await this.activeTransaction.propagateAsync(args)
 
         return this.finalizePropagation(nextRevision)
     }
 
 
-    finalizePropagation (nextRevision : Revision) {
+    finalizePropagation (nextRevision : Revision) : PropagateResult {
         if (nextRevision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
 
         // dereference all revisions
@@ -209,6 +212,8 @@ class Checkout extends base {
 
         clearLazyProperty(this, 'followingRevision')
         clearLazyProperty(this, 'activeTransaction')
+
+        return
     }
 
 

@@ -1,8 +1,9 @@
+import { PropagateResult } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
-import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js"
+import { AllowedNames, AnyConstructor, AnyFunction, Mixin, OnlyPropertiesOfType } from "../class/Mixin.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
@@ -100,13 +101,17 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
-        // forEachFieldAtom<T extends this> (func : (field : MinimalFieldAtom, name : keyof T) => any) {
-        //     const fields        = this.$
-        //
-        //     for (let name in fields) {
-        //         func.call(this, fields[ name ], name)
-        //     }
-        // }
+        forEachFieldAtom<T extends this> (func : (field : FieldIdentifierI, name : keyof T) => any) {
+            const keys  = Object.keys(this.$) as (keyof this)[]
+
+            // only the already created identifiers will be added
+            for (let i = 0; i < keys.length; i++) {
+                const name                          = keys[ i ]
+                const identifier : FieldIdentifier  = this.$[ name ]
+
+                func(identifier, name)
+            }
+        }
 
 
         enterGraph (replica : ChronoGraph) {
@@ -147,16 +152,27 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
             graph.removeIdentifier(this.$$)
         }
 
+
         // isPropagating () {
         //     return this.getGraph().isPropagating
         // }
 
-        async propagate () {
+
+        propagate () : PropagateResult {
             const graph     = this.graph
 
             if (!graph) return
 
             return graph.propagate()
+        }
+
+
+        async propagateAsync () : Promise<PropagateResult> {
+            const graph     = this.graph
+
+            if (!graph) return
+
+            return graph.propagateAsync()
         }
 
 
@@ -201,16 +217,19 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
-        run <Name extends keyof this, S extends AnyFunction & this[ Name ]> (methodName : Name, ...args : Parameters<S>)
-            : ReturnType<S> extends CalculationIterator<infer Res1> ? Res1 : ReturnType<S>
-        {
+        // unfortunately, the better typing:
+        // run <Name extends AllowedNames<this, AnyFunction>> (methodName : Name, ...args : Parameters<this[ Name ]>)
+        //     : ReturnType<this[ Name ]> extends CalculationIterator<infer Res> ? Res : ReturnType<this[ Name ]>
+        // yields "types are exceedingly long and possibly infinite on the application side
+        // TODO file a TS bug report
+        run (methodName : keyof this, ...args : any[]) : any {
             const onEffect : SyncEffectHandler = (effect : YieldableValue) => {
                 if (effect instanceof Identifier) return this.graph.read(effect)
 
                 throw new Error("Helper methods can not yield effects during computation")
             }
 
-            return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as S, args, this)
+            return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as any, args, this)
         }
     }
 
