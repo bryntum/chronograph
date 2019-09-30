@@ -18,11 +18,6 @@ export class Field extends Base {
 
     persistent          : boolean   = true
 
-
-    // converter (value : any) : this[ 'ValueT' ] {
-    //     return value
-    // }
-
     identifierCls       : FieldIdentifierConstructor  = MinimalFieldIdentifier
 }
 
