@@ -9,7 +9,7 @@ import {
 import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import { Effect, ProposedOrCurrentSymbol, TransactionSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol } from "./Effect.js"
-import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
+import { Identifier, NoProposedValue, throwUnknownIdentifier } from "./Identifier.js"
 import { Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
@@ -252,6 +252,11 @@ class Transaction extends base {
     }
 
 
+    write (identifier : Identifier, proposedValue : any, ...args : any[]) {
+        identifier.write.call(identifier.context || identifier, this, proposedValue, ...args)
+    }
+
+
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
         return this.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
     }
@@ -384,13 +389,13 @@ class Transaction extends base {
 
 
     [ProposedOrCurrentSymbol] (effect : Effect, activeEntry : Quark) : any {
-        const quark             = activeEntry.getQuark()
+        const quark             = activeEntry.acquireQuark()
 
         quark.usedProposedOrCurrent      = true
 
-        const proposedValue     = quark.proposedValue
+        const proposedValue     = quark.getProposedValue()
 
-        if (proposedValue !== undefined) return proposedValue
+        if (proposedValue !== NoProposedValue) return proposedValue
 
         const baseRevision      = this.baseRevision
         const identifier        = activeEntry.identifier
@@ -512,7 +517,7 @@ class Transaction extends base {
                     }
 
                     if (quark.usedProposedOrCurrent) {
-                        if (quark.proposedValue !== undefined) {
+                        if (quark.proposedValue !== NoProposedValue) {
                             if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
                         } else {
                             if (sameAsPrevious) ignoreSelfDependency = true
@@ -687,7 +692,7 @@ class Transaction extends base {
                     }
 
                     if (quark.usedProposedOrCurrent) {
-                        if (quark.proposedValue !== undefined) {
+                        if (quark.proposedValue !== NoProposedValue) {
                             if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
                         } else {
                             if (sameAsPrevious) ignoreSelfDependency = true

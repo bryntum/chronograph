@@ -1,5 +1,5 @@
 import { buildClass } from "../class/InstanceOf.js"
-import { Base } from "../class/Mixin.js"
+import { AnyConstructor, Base, BaseConstructor } from "../class/Mixin.js"
 import {
     CalculationContext,
     CalculationGen,
@@ -12,9 +12,11 @@ import {
 import { prototypeValue } from "../util/Helpers.js"
 import { CheckoutI } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
-import { Quark, QuarkConstructor } from "./Quark.js"
+import { Quark, QuarkConstructor, QuarkI } from "./Quark.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
+//---------------------------------------------------------------------------------------------------------------------
+export const NoProposedValue    = Symbol('NoProposedValue')
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Identifier<ContextT extends Context = Context, ValueT = any> extends Base {
@@ -51,9 +53,9 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     }
 
 
-    // buildProposedValue (quark : InstanceType<this[ 'quarkClass' ]>) {
-    //     return quark.proposedValue
-    // }
+    buildProposedValue (quark : InstanceType<this[ 'quarkClass' ]>) : ValueT | typeof NoProposedValue {
+        return NoProposedValue
+    }
 
 
     enterGraph (graph : CheckoutI) {

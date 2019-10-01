@@ -3,11 +3,11 @@ import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
-import { AllowedNames, AnyConstructor, AnyFunction, Mixin, OnlyPropertiesOfType } from "../class/Mixin.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
-import { defineProperty } from "../util/Helpers.js"
+import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
 import { EntityIdentifierI, FieldIdentifier, FieldIdentifierI, MinimalEntityIdentifier } from "./Identifier.js"
 
 
@@ -21,6 +21,8 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         [isEntityMarker] () {}
 
         $calculations   : { [s in keyof this] : string }
+        $writes         : { [s in keyof this] : string }
+        $buildProposed  : { [s in keyof this] : string }
 
         graph           : ChronoGraph
 
@@ -72,31 +74,35 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         createFieldIdentifier (field : Field) : FieldIdentifierI {
             const name                  = field.name
 
-            const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
-
-            let config
-
-            if (calculationFunction) {
-                config                  = {
-                    name                : `${this.$$.name}/${name}`,
-
-                    field               : field,
-
-                    self                : this,
-
-                    calculation         : calculationFunction,
-                    context             : this
-                }
-            } else {
-                config                  = {
-                    name                : `${this.$$.name}/${name}`,
-
-                    field               : field,
-
-                    self                : this
-                }
+            const config : Partial<FieldIdentifierI> = {
+                name                : `${this.$$.name}/${name}`,
+                field               : field,
+                self                : this,
             }
 
+            //------------------
+            const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
+
+            if (calculationFunction) {
+                config.calculation      = calculationFunction
+                config.context          = this
+            }
+
+            //------------------
+            const writeFunction         = this.$writes && this[ this.$writes[ name ] ]
+
+            if (writeFunction) {
+                config.write            = writeFunction
+            }
+
+            //------------------
+            const buildProposedFunction = this.$buildProposed && this[ this.$buildProposed[ name ] ]
+
+            if (buildProposedFunction) {
+                config.buildProposedValue = buildProposedFunction
+            }
+
+            //------------------
             return field.identifierCls.new(config)
         }
 
@@ -297,20 +303,30 @@ export const generic_field : FieldDecorator<typeof Field> =
                 }
             })
 
-            // const getterFnName = `get${ uppercaseFirst(propertyKey) }`
-            // const setterFnName = `set${ uppercaseFirst(propertyKey) }`
-            //
-            // if (!(getterFnName in target)) {
-            //     target[ getterFnName ] = function (...args) : unknown {
-            //         return this.$[ propertyKey ].get(...args)
-            //     }
-            // }
-            //
-            // if (!(setterFnName in target)) {
-            //     target[ setterFnName ] = function (...args) : unknown {
-            //         return this.$[ propertyKey ].set(...args)
-            //     }
-            // }
+            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
+            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
+
+            if (!(getterFnName in target)) {
+                target[ getterFnName ] = function () : any {
+                    if (this.graph) {
+                        return this.graph.read(this.$[ propertyKey ])
+                    } else {
+                        return this.$[ propertyKey ].DATA
+                    }
+                }
+            }
+
+            if (!(setterFnName in target)) {
+                target[ setterFnName ] = function (value : any, ...args) : any {
+                    if (this.graph) {
+                        this.graph.write(this.$[ propertyKey ], value, ...args)
+
+                        return this.graph.propagateAsync()
+                    } else {
+                        this.$[ propertyKey ].DATA = value
+                    }
+                }
+            }
         }
     }
 
@@ -331,3 +347,32 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
         calculations[ fieldName ]       = propertyKey
     }
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const write = function (fieldName : Name) : MethodDecorator {
+
+    // `target` will be a prototype of the class with Entity mixin
+    return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
+        let writes              = target.$writes
+
+        if (!writes) writes = target.$writes = {} as any
+
+        writes[ fieldName ]     = propertyKey
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const build_proposed = function (fieldName : Name) : MethodDecorator {
+
+    // `target` will be a prototype of the class with Entity mixin
+    return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
+        let buildProposed       = target.$buildProposed
+
+        if (!buildProposed) buildProposed = target.$buildProposed = {} as any
+
+        buildProposed[ fieldName ]     = propertyKey
+    }
+}
+

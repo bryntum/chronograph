@@ -275,7 +275,7 @@ class Checkout extends base {
 
 
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
-        identifier.write(this.activeTransaction, proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, this.activeTransaction, proposedValue, ...args)
     }
 
 

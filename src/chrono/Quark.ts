@@ -38,6 +38,13 @@ class Quark extends base {
     visitEpoch      : number = 0
 
 
+    getProposedValue () : any {
+        if (this.proposedValue !== undefined) return this.proposedValue
+
+        return this.proposedValue = this.identifier.buildProposedValue(this)
+    }
+
+
     get level () : number {
         return this.identifier.level
     }

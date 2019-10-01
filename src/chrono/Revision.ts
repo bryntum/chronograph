@@ -47,6 +47,18 @@ class Revision extends base {
     }
 
 
+    // TODO how it relates to lazy identifiers? should those be calculated?
+    readIfExists (identifier : Identifier) : any {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        if (!latestEntry) return undefined
+
+        const value         = latestEntry.getValue()
+
+        return value !== TombStone ? value : undefined
+    }
+
+
     * previousAxis () : Generator<Revision> {
         let revision : Revision = this
 

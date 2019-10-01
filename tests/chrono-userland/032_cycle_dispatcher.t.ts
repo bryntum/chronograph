@@ -72,19 +72,10 @@ class DispatcherIdentifier extends CalculatedValueSync {
 
         quark.logEntries.set(entry.fieldType, entry)
     }
-}
 
 
-class DispatcherQuark extends Quark(CalculationSync(Set)) {
-    logEntries          : Map<FieldType, DispatcherLogEntry>   = new Map()
-
-
-    set proposedValue (value) {
-    }
-
-
-    get proposedValue () : DispatcherValue {
-        const logEntries    = this.logEntries
+    buildProposedValue (quark : DispatcherQuark) {
+        const logEntries    = quark.logEntries
 
         const startEntry    = logEntries.get(FieldType.Start)
         const endEntry      = logEntries.get(FieldType.End)
@@ -118,12 +109,17 @@ class DispatcherQuark extends Quark(CalculationSync(Set)) {
                 endInstruction      = CalculationInstruction.CalculateWithProposedOrCurrentValue
         }
 
-        return defineProperty(this, 'proposedValue', new Map([
+        return new Map([
             [ FieldType.Start, startInstruction ],
             [ FieldType.End, endInstruction ],
             [ FieldType.Duration, durationInstruction ]
-        ]))
+        ])
     }
+}
+
+
+class DispatcherQuark extends Quark(CalculationSync(Set)) {
+    logEntries          : Map<FieldType, DispatcherLogEntry>   = new Map()
 }
 
 
