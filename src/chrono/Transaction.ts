@@ -419,7 +419,9 @@ class Transaction extends base {
 
         this.walkContext.currentEpoch++
 
-        effect.writeTarget.write(this, ...effect.proposedArgs)
+        const writeTo   = effect.writeTarget
+
+        writeTo.write.call(writeTo.context || writeTo, this, ...effect.proposedArgs)
     }
 
 
@@ -428,7 +430,7 @@ class Transaction extends base {
 
         this.walkContext.currentEpoch++
 
-        effect.writes.forEach(writeInfo => writeInfo.identifier.write(this, ...writeInfo.proposedArgs))
+        effect.writes.forEach(writeInfo => writeInfo.identifier.write.call(writeInfo.identifier.context || writeInfo.identifier, this, ...writeInfo.proposedArgs))
     }
 
 
