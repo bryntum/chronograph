@@ -2,7 +2,7 @@ import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copyMapInto, copySetInto, lazyProperty } from "../util/Helpers.js"
-import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
+import { CalculatedValueGen, Identifier, Variable, NoProposedValue } from "./Identifier.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction, YieldableValue } from "./Transaction.js"
 
@@ -294,10 +294,10 @@ class Checkout extends base {
     readDirty (identifier : Identifier) : any {
         const dirtyQuark    = this.activeTransaction.entries.get(identifier)
 
-        if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
+        if (dirtyQuark && dirtyQuark.proposedValue !== undefined && dirtyQuark.proposedValue !== NoProposedValue) {
             return dirtyQuark.proposedValue
         } else
-            return this.baseRevision.read(identifier)
+            return this.baseRevision.readIfExists(identifier)
     }
 
 
