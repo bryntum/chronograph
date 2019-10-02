@@ -664,7 +664,7 @@ class Transaction extends base {
             let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
 
             do {
-                const value         = iterationResult.value
+                const value         = iterationResult.value === undefined ? null : iterationResult.value
 
                 if (entry.isCalculationCompleted()) {
                     if (entry.visitEpoch !== startedAtEpoch) {

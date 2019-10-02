@@ -1,5 +1,5 @@
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueSync, Identifier, Variable } from "../../src/chrono/Identifier.js"
+import { CalculatedValueGen, CalculatedValueSync, Variable } from "../../src/chrono/Identifier.js"
 
 declare const StartTest : any
 
@@ -242,7 +242,7 @@ StartTest(t => {
     })
 
 
-    t.it('Observe calculation in synchronous calculation', async t => {
+    t.it('`undefined` as a result of calculation is converted to `null`', async t => {
         const graph : ChronoGraph = MinimalChronoGraph.new()
 
         const var1      = graph.variable(undefined)
@@ -253,10 +253,17 @@ StartTest(t => {
             }
         }))
 
+        const iden2     = graph.addIdentifier(CalculatedValueGen.new({
+            calculation : function * () {
+                return undefined
+            }
+        }))
+
         graph.propagate()
 
-        t.is(graph.read(var1), null, 'Undefined normalized to `null` in variable')
-        t.is(graph.read(iden1), null, 'Undefined normalized to `null` in identifier')
+        t.isStrict(graph.read(var1), null, 'Undefined normalized to `null` in variable')
+        t.isStrict(graph.read(iden1), null, 'Undefined normalized to `null` in sync identifier')
+        t.isStrict(graph.read(iden2), null, 'Undefined normalized to `null` in gen identifier')
     })
 
 })
