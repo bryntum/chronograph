@@ -286,15 +286,15 @@ export const generic_field : FieldDecorator<typeof Field> =
             )
 
             Object.defineProperty(target, propertyKey, {
-                get     : function () {
+                get     : function (this : Entity) {
                     if (this.graph) {
-                        return this.graph.read(this.$[ propertyKey ])
+                        return this.graph.readDirty(this.$[ propertyKey ])
                     } else {
                         return this.$[ propertyKey ].DATA
                     }
                 },
 
-                set     : function (value : any) {
+                set     : function (this : Entity, value : any) {
                     if (this.graph) {
                         return this.graph.write(this.$[ propertyKey ], value)
                     } else {
@@ -307,9 +307,9 @@ export const generic_field : FieldDecorator<typeof Field> =
             const setterFnName = `set${ uppercaseFirst(propertyKey) }`
 
             if (!(getterFnName in target)) {
-                target[ getterFnName ] = function () : any {
+                target[ getterFnName ] = function (this : Entity) : any {
                     if (this.graph) {
-                        return this.graph.read(this.$[ propertyKey ])
+                        return this.graph.readDirty(this.$[ propertyKey ])
                     } else {
                         return this.$[ propertyKey ].DATA
                     }
@@ -317,7 +317,7 @@ export const generic_field : FieldDecorator<typeof Field> =
             }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (value : any, ...args) : any {
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : any {
                     if (this.graph) {
                         this.graph.write(this.$[ propertyKey ], value, ...args)
 

@@ -275,6 +275,8 @@ class Checkout extends base {
 
 
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
+        if (proposedValue === undefined) proposedValue = null
+
         identifier.write.call(identifier.context || identifier, this.activeTransaction, proposedValue, ...args)
     }
 
@@ -286,6 +288,16 @@ class Checkout extends base {
 
     read (identifier : Identifier) : any {
         return this.baseRevision.read(identifier)
+    }
+
+
+    readDirty (identifier : Identifier) : any {
+        const dirtyQuark    = this.activeTransaction.entries.get(identifier)
+
+        if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
+            return dirtyQuark.proposedValue
+        } else
+            return this.baseRevision.read(identifier)
     }
 
 

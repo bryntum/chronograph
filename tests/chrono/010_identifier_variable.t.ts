@@ -240,4 +240,23 @@ StartTest(t => {
         t.is(graph.read(iden2), 4, 'Correct value')
         t.is(graph.read(iden3), 5, 'Correct value')
     })
+
+
+    t.it('Observe calculation in synchronous calculation', async t => {
+        const graph : ChronoGraph = MinimalChronoGraph.new()
+
+        const var1      = graph.variable(undefined)
+
+        const iden1     = graph.addIdentifier(CalculatedValueSync.new({
+            calculation : function () {
+                return undefined
+            }
+        }))
+
+        graph.propagate()
+
+        t.is(graph.read(var1), null, 'Undefined normalized to `null` in variable')
+        t.is(graph.read(iden1), null, 'Undefined normalized to `null` in identifier')
+    })
+
 })
