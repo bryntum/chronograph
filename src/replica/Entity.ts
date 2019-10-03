@@ -305,6 +305,7 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             const getterFnName = `get${ uppercaseFirst(propertyKey) }`
             const setterFnName = `set${ uppercaseFirst(propertyKey) }`
+            const putterFnName = `put${ uppercaseFirst(propertyKey) }`
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
@@ -322,6 +323,16 @@ export const generic_field : FieldDecorator<typeof Field> =
                         this.graph.write(this.$[ propertyKey ], value, ...args)
 
                         return this.graph.propagateAsync()
+                    } else {
+                        this.$[ propertyKey ].DATA = value
+                    }
+                }
+            }
+
+            if (!(putterFnName in target)) {
+                target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
+                    if (this.graph) {
+                        this.graph.write(this.$[ propertyKey ], value, ...args)
                     } else {
                         this.$[ propertyKey ].DATA = value
                     }

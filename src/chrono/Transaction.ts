@@ -262,6 +262,16 @@ class Transaction extends base {
     }
 
 
+    readDirty (identifier : Identifier) : any {
+        const dirtyQuark    = this.entries.get(identifier)
+
+        if (dirtyQuark && dirtyQuark.proposedValue !== undefined && dirtyQuark.proposedValue !== NoProposedValue) {
+            return dirtyQuark.proposedValue
+        } else
+            return this.baseRevision.readIfExists(identifier)
+    }
+
+
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
         identifier.write.call(identifier.context || identifier, this, proposedValue, ...args)
     }

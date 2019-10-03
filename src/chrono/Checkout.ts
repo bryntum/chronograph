@@ -292,12 +292,7 @@ class Checkout extends base {
 
 
     readDirty (identifier : Identifier) : any {
-        const dirtyQuark    = this.activeTransaction.entries.get(identifier)
-
-        if (dirtyQuark && dirtyQuark.proposedValue !== undefined && dirtyQuark.proposedValue !== NoProposedValue) {
-            return dirtyQuark.proposedValue
-        } else
-            return this.baseRevision.readIfExists(identifier)
+        return this.activeTransaction.readDirty(identifier)
     }
 
 
