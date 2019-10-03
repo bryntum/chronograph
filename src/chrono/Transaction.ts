@@ -552,7 +552,7 @@ class Transaction extends base {
                     break
                 }
                 else if (value instanceof Identifier) {
-                    if (entry.identifier.level > value.level) throw new Error('Identifier can not read from higher level identifier')
+                    if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
                     let requestedEntry : Quark             = entries.get(value)
 

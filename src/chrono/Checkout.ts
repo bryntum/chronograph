@@ -1,8 +1,8 @@
 import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
-import { clearLazyProperty, copyMapInto, copySetInto, lazyProperty } from "../util/Helpers.js"
-import { CalculatedValueGen, Identifier, Variable, NoProposedValue } from "./Identifier.js"
+import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
+import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction, YieldableValue } from "./Transaction.js"
 

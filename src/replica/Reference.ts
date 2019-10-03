@@ -38,6 +38,8 @@ export const reference : FieldDecorator<typeof MinimalReferenceField> =
 export const ReferenceIdentifier = <T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) =>
 
 class ReferenceIdentifier extends base {
+    level           : number                = 0
+
     field           : ReferenceField    = undefined
 
     ValueT          : Entity

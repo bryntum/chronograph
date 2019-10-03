@@ -1,5 +1,5 @@
 import { buildClass } from "../class/InstanceOf.js"
-import { AnyConstructor, Base, BaseConstructor } from "../class/Mixin.js"
+import { Base } from "../class/Mixin.js"
 import {
     CalculationContext,
     CalculationGen,
@@ -12,7 +12,7 @@ import {
 import { prototypeValue } from "../util/Helpers.js"
 import { CheckoutI } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
-import { Quark, QuarkConstructor, QuarkI } from "./Quark.js"
+import { Quark, QuarkConstructor } from "./Quark.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     context             : any       = undefined
 
     segment             : symbol
-    level               : number    = 0
+    level               : number    = 10
 
     lazy                : boolean   = false
 
