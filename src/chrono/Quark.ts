@@ -38,10 +38,10 @@ class Quark extends base {
     visitEpoch      : number = 0
 
 
-    getProposedValue () : any {
+    getProposedValue (transaction /*: TransactionI*/) : any {
         if (this.proposedValue !== undefined) return this.proposedValue
 
-        return this.proposedValue = this.identifier.buildProposedValue(this)
+        return this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, transaction, this)
     }
 
 

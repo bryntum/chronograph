@@ -9,7 +9,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Author/Book', async t => {
+    t.iit('Author/Book', async t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
@@ -37,21 +37,21 @@ StartTest(t => {
         //--------------------
         replica1.propagate()
 
-        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
         t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
 
+        //--------------------
         const tomSoyer2         = Book.new({ writtenBy : markTwain })
 
         replica1.addEntity(tomSoyer2)
 
-        //--------------------
         replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
 
+        //--------------------
         tomSoyer2.writtenBy     = null
 
-        //--------------------
         replica1.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')

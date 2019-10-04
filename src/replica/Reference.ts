@@ -1,4 +1,4 @@
-import { GetTransaction, ProposedOrCurrent } from "../chrono/Effect.js"
+import { GetTransaction, OwnIdentifier, ProposedOrCurrent } from "../chrono/Effect.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync } from "../chrono/Identifier.js"
 import { Transaction, YieldableValue } from "../chrono/Transaction.js"
@@ -52,13 +52,14 @@ class ReferenceIdentifier extends base {
 
     calculation (YIELD : CalculationContext<YieldableValue>) : this[ 'ValueT' ] {
         const proposedValue     = YIELD(ProposedOrCurrent)
+        const me : this         = YIELD(OwnIdentifier)
 
-        const value : Entity | null = isInstanceOf(proposedValue, Entity) ? proposedValue : this.resolve(proposedValue)
+        const value : Entity | null = isInstanceOf(proposedValue, Entity) ? proposedValue : me.resolve(proposedValue)
 
-        if (value && this.hasBucket()) {
+        if (value && me.hasBucket()) {
             const transaction : Transaction = YIELD(GetTransaction)
 
-            this.getBucket(value).addToBucket(transaction, this.self)
+            me.getBucket(value).addToBucket(transaction, me.self)
         }
 
         return value
@@ -92,27 +93,27 @@ class ReferenceIdentifier extends base {
     }
 
 
-    write (transaction : Transaction, proposedValue : this[ 'ValueT' ]) {
-        if (this.hasBucket()) {
-            const quark                 = transaction.acquireQuarkIfExists(this)
+    write (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ]) {
+        const me    = quark.identifier as this
 
-            if (quark) {
+        if (me.hasBucket()) {
+            if (quark.isShadow()) {
                 const proposedValue     = quark.proposedValue
 
                 if (isInstanceOf(proposedValue, Entity)) {
-                    this.getBucket(proposedValue).removeFromBucket(transaction, this.self)
+                    me.getBucket(proposedValue).removeFromBucket(transaction, me.self)
                 }
             }
-            else if (transaction.baseRevision.hasIdentifier(this)) {
-                const value  = transaction.baseRevision.read(this) as Entity
+            else if (transaction.baseRevision.hasIdentifier(me)) {
+                const value  = transaction.baseRevision.read(me) as Entity
 
                 if (value != null) {
-                    this.getBucket(value).removeFromBucket(transaction, this.self)
+                    me.getBucket(value).removeFromBucket(transaction, me.self)
                 }
             }
         }
 
-        super.write(transaction, proposedValue)
+        super.write(transaction, quark, proposedValue)
     }
 }
 

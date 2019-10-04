@@ -74,7 +74,7 @@ class DispatcherIdentifier extends CalculatedValueSync {
     }
 
 
-    buildProposedValue (quark : DispatcherQuark) {
+    buildProposedValue (transaction : Transaction, quark : DispatcherQuark) {
         const logEntries    = quark.logEntries
 
         const startEntry    = logEntries.get(FieldType.Start)
@@ -213,8 +213,8 @@ StartTest(t => {
                 }
             },
 
-            write (transaction : Transaction, proposedValue : any, keepDuration : boolean) {
-                CalculatedValueGen.prototype.write.call(this, transaction, proposedValue)
+            write (transaction : Transaction, quark : Quark, proposedValue : any, keepDuration : boolean) {
+                CalculatedValueGen.prototype.write.call(this, transaction, quark, proposedValue)
 
                 preDispatcher.log(transaction, {
                     fieldType               : FieldType.Start,
@@ -245,8 +245,8 @@ StartTest(t => {
                 }
             },
 
-            write (transaction : Transaction, proposedValue : any, keepDuration : boolean) {
-                CalculatedValueGen.prototype.write.call(this, graph, proposedValue)
+            write (transaction : Transaction, quark : Quark, proposedValue : any, keepDuration : boolean) {
+                CalculatedValueGen.prototype.write.call(this, transaction, quark, proposedValue)
 
                 preDispatcher.log(transaction, {
                     fieldType               : FieldType.End,
@@ -277,8 +277,8 @@ StartTest(t => {
                 }
             },
 
-            write (transaction : Transaction, proposedValue : any, keepStart : boolean) {
-                CalculatedValueGen.prototype.write.call(this, graph, proposedValue)
+            write (transaction : Transaction, quark : Quark, proposedValue : any, keepStart : boolean) {
+                CalculatedValueGen.prototype.write.call(this, transaction, quark, proposedValue)
 
                 preDispatcher.log(transaction, {
                     fieldType               : FieldType.Duration,

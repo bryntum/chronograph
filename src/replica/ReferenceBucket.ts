@@ -64,6 +64,20 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
 
             if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
         }
+
+
+        buildProposedValue (transaction : Transaction, q : InstanceType<this[ 'quarkClass' ]>) : Set<Entity> {
+            const quark     = q as ReferenceBucketQuarkEntry
+
+            const newValue : Set<Entity>        = new Set(quark.previousValue)
+
+            // need to remove the old references first and then add new - to allow re-adding just removed reference
+            if (quark.oldRefs) quark.oldRefs.forEach(entity => newValue.delete(entity))
+
+            if (quark.newRefs) quark.newRefs.forEach(entity => newValue.add(entity))
+
+            return newValue
+        }
     }
 
     return ReferenceBucketIdentifier
@@ -79,22 +93,6 @@ class ReferenceBucketQuarkEntry extends base {
     oldRefs             : Set<Entity>   = undefined
     newRefs             : Set<Entity>   = undefined
     previousValue       : Set<Entity>   = undefined
-
-
-    set proposedValue (value) {
-    }
-
-
-    get proposedValue () : Set<Entity> {
-        const newValue : Set<Entity>        = new Set(this.previousValue)
-
-        // need to remove the old references first and then add new - to allow re-adding just removed reference
-        if (this.oldRefs) this.oldRefs.forEach(entity => newValue.delete(entity))
-
-        if (this.newRefs) this.newRefs.forEach(entity => newValue.add(entity))
-
-        return defineProperty(this, 'proposedValue', newValue)
-    }
 }
 
 export type ReferenceBucketQuarkEntry = Mixin<typeof ReferenceBucketQuarkEntry>

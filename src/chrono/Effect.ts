@@ -8,6 +8,9 @@ export class Effect extends Base {
 
     // @prototypeValue(false)
     // async       : boolean
+
+    // @prototypeValue(false)
+    // impure      : boolean
 }
 
 
@@ -23,9 +26,21 @@ export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurre
 // export const CancelPropagation : Effect = Effect.new({ handler : CancelPropagationSymbol })
 
 //---------------------------------------------------------------------------------------------------------------------
-export const TransactionSymbol    = Symbol('GraphSymbol')
+export const TransactionSymbol    = Symbol('TransactionSymbol')
 
 export const GetTransaction : Effect = Effect.new({ handler : TransactionSymbol })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const OwnQuarkSymbol    = Symbol('OwnQuarkSymbol')
+
+export const OwnQuark : Effect = Effect.new({ handler : OwnQuarkSymbol })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const OwnIdentifierSymbol    = Symbol('OwnIdentifierSymbol')
+
+export const OwnIdentifier : Effect = Effect.new({ handler : OwnIdentifierSymbol })
 
 
 //---------------------------------------------------------------------------------------------------------------------

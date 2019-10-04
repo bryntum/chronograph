@@ -3,6 +3,7 @@ import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
+import { Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction, YieldableValue } from "./Transaction.js"
 
@@ -227,9 +228,9 @@ class Checkout extends base {
 
 
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
-        this.touch(identifier)
+        const quark     = this.touch(identifier).acquireQuark() as InstanceType<T[ 'quarkClass' ]>
 
-        if (proposedValue !== undefined) identifier.write(this.activeTransaction, proposedValue, ...args)
+        if (proposedValue !== undefined) identifier.write(this.activeTransaction, quark, proposedValue, ...args)
 
         return identifier
     }
@@ -277,12 +278,12 @@ class Checkout extends base {
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
         if (proposedValue === undefined) proposedValue = null
 
-        identifier.write.call(identifier.context || identifier, this.activeTransaction, proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, this.activeTransaction, this.activeTransaction.acquireQuark(identifier), proposedValue, ...args)
     }
 
 
-    touch (identifier : Identifier) {
-        this.activeTransaction.touch(identifier)
+    touch (identifier : Identifier) : Quark {
+        return this.activeTransaction.touch(identifier)
     }
 
 

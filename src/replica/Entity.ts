@@ -78,6 +78,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 name                : `${this.$$.name}/${name}`,
                 field               : field,
                 self                : this,
+                context             : this
             }
 
             //------------------
@@ -85,7 +86,6 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
             if (calculationFunction) {
                 config.calculation      = calculationFunction
-                config.context          = this
             }
 
             //------------------

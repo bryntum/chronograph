@@ -46,14 +46,12 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     }
 
 
-    write (transaction : Transaction, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
-        const quark         = transaction.acquireQuark(this)
-
+    write (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         quark.proposedValue = proposedValue
     }
 
 
-    buildProposedValue (quark : InstanceType<this[ 'quarkClass' ]>) : ValueT | typeof NoProposedValue {
+    buildProposedValue (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>) : ValueT | typeof NoProposedValue {
         return NoProposedValue
     }
 
@@ -80,9 +78,7 @@ export class Variable<ResultT = any> extends Identifier<typeof ContextSync, Resu
     }
 
 
-    write (transaction : Transaction, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
-        const quark         = transaction.acquireQuark(this)
-
+    write (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         quark.value         = proposedValue
     }
 }

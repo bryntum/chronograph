@@ -8,7 +8,16 @@ import {
 } from "../primitives/Calculation.js"
 import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
-import { Effect, ProposedOrCurrentSymbol, TransactionSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol } from "./Effect.js"
+import {
+    Effect, OwnIdentifierSymbol,
+    OwnQuarkSymbol,
+    ProposedOrCurrentSymbol,
+    TransactionSymbol,
+    WriteEffect,
+    WriteSeveralEffect,
+    WriteSeveralSymbol,
+    WriteSymbol
+} from "./Effect.js"
 import { Identifier, NoProposedValue, throwUnknownIdentifier } from "./Identifier.js"
 import { Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
@@ -273,7 +282,7 @@ class Transaction extends base {
 
 
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
-        identifier.write.call(identifier.context || identifier, this, proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, this, this.acquireQuark(identifier), proposedValue, ...args)
     }
 
 
@@ -413,7 +422,7 @@ class Transaction extends base {
 
         quark.usedProposedOrCurrent      = true
 
-        const proposedValue     = quark.getProposedValue()
+        const proposedValue     = quark.getProposedValue(this)
 
         if (proposedValue !== NoProposedValue) return proposedValue
 
@@ -434,6 +443,16 @@ class Transaction extends base {
     }
 
 
+    [OwnQuarkSymbol] (effect : Effect, activeEntry : Quark) : any {
+        return activeEntry
+    }
+
+
+    [OwnIdentifierSymbol] (effect : Effect, activeEntry : Quark) : any {
+        return activeEntry.identifier
+    }
+
+
     [WriteSymbol] (effect : WriteEffect, activeEntry : Quark) : any {
         if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
 
@@ -441,7 +460,7 @@ class Transaction extends base {
 
         const writeTo   = effect.writeTarget
 
-        writeTo.write.call(writeTo.context || writeTo, this, ...effect.proposedArgs)
+        writeTo.write.call(writeTo.context || writeTo, this, this.acquireQuark(writeTo), ...effect.proposedArgs)
     }
 
 
@@ -450,7 +469,7 @@ class Transaction extends base {
 
         this.walkContext.currentEpoch++
 
-        effect.writes.forEach(writeInfo => writeInfo.identifier.write.call(writeInfo.identifier.context || writeInfo.identifier, this, ...writeInfo.proposedArgs))
+        effect.writes.forEach(writeInfo => writeInfo.identifier.write.call(writeInfo.identifier.context || writeInfo.identifier, this, this.acquireQuark(writeInfo.identifier), ...writeInfo.proposedArgs))
     }
 
 
