@@ -10,8 +10,8 @@ import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import {
     Effect, OwnIdentifierSymbol,
-    OwnQuarkSymbol,
-    ProposedOrCurrentSymbol,
+    OwnQuarkSymbol, PreviousValueOfEffect, PreviousValueOfSymbol, ProposedArgumentsOfSymbol,
+    ProposedOrCurrentSymbol, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol, throwReadingPastIsNotAllowed,
     TransactionSymbol,
     WriteEffect,
     WriteSeveralEffect,
@@ -73,7 +73,34 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     }
 
 
+    doCollectNext (from : Identifier, identifier : Identifier, toVisit : WalkStep<Identifier>[]) {
+        let entry : Quark   = this.visited.get(identifier)
+
+        if (!entry) {
+            entry           = identifier.quarkClass.new({ identifier })
+
+            this.visited.set(identifier, entry)
+        }
+
+        if (entry.visitEpoch < this.currentEpoch) {
+            entry.visitEpoch    = this.currentEpoch
+            entry.visitedAt     = NOT_VISITED
+            entry.edgesFlow     = 0
+
+            entry.cleanupCalculation()
+            if (entry.outgoing) entry.outgoing.clear()
+            if (entry.origin && entry.origin === entry) entry.origin.value = undefined
+        }
+
+        entry.edgesFlow++
+
+        toVisit.push({ node : identifier, from : from, label : undefined })
+    }
+
+
     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
+        if (node.listeners) node.listeners.forEach(identifier => this.doCollectNext(node, identifier, toVisit))
+
         const entry             = this.baseRevision.getLatestEntryFor(node)
 
         // newly created identifier
@@ -96,29 +123,9 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             for (const outgoingEntry of entry.outgoing) {
                 const identifier    = outgoingEntry.identifier
 
-                if (outgoingEntry.origin !== this.baseRevision.getLatestEntryFor(identifier).origin) continue
-
-                let entry : Quark   = this.visited.get(identifier)
-
-                if (!entry) {
-                    entry           = identifier.quarkClass.new({ identifier })
-
-                    this.visited.set(identifier, entry)
+                if (outgoingEntry.origin === this.baseRevision.getLatestEntryFor(identifier).origin) {
+                    this.doCollectNext(node, identifier, toVisit)
                 }
-
-                if (entry.visitEpoch < this.currentEpoch) {
-                    entry.visitEpoch    = this.currentEpoch
-                    entry.visitedAt     = NOT_VISITED
-                    entry.edgesFlow     = 0
-
-                    entry.cleanupCalculation()
-                    if (entry.outgoing) entry.outgoing.clear()
-                    if (entry.origin && entry.origin === entry) entry.origin.value = undefined
-                }
-
-                entry.edgesFlow++
-
-                toVisit.push({ node : identifier, from : node, label : undefined })
             }
         }
 
@@ -126,23 +133,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             for (const outgoingEntry of visitInfo.outgoing) {
                 const identifier    = outgoingEntry.identifier
 
-                let entry : Quark              = this.visited.get(identifier)
-
-                if (!entry) throw new Error('Should not happen')
-
-                if (entry.visitEpoch < this.currentEpoch) {
-                    entry.visitEpoch    = this.currentEpoch
-                    entry.visitedAt     = NOT_VISITED
-                    entry.edgesFlow     = 0
-
-                    entry.cleanupCalculation()
-                    if (entry.outgoing) entry.outgoing.clear()
-                    if (entry.origin && entry.origin === entry) entry.origin.value = undefined
-                }
-
-                entry.edgesFlow++
-
-                toVisit.push({ node : identifier, from : node, label : undefined })
+                this.doCollectNext(node, identifier, toVisit)
             }
         }
     }
@@ -564,6 +555,56 @@ class Transaction extends base {
         })
     }
 
+
+    readingPastisValid (source : Identifier, listener : Identifier) : boolean {
+        return Boolean(source.listeners && source.listeners.has(listener))
+    }
+
+
+    [PreviousValueOfSymbol] (effect : PreviousValueOfEffect, activeEntry : Quark) : any {
+        const source    = effect.identifier
+        const listener  = activeEntry.identifier
+
+        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+
+        return this.baseRevision.readIfExists(source)
+    }
+
+
+    [ProposedValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
+        const source    = effect.identifier
+        const listener  = activeEntry.identifier
+
+        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+
+        const quark     = this.entries.get(source)
+
+        const proposedValue = quark && !quark.isShadow() ? quark.getProposedValue(this) : undefined
+
+        return proposedValue !== undefined && proposedValue !== NoProposedValue ? proposedValue : undefined
+    }
+
+
+    [ProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
+        const source    = effect.identifier
+        const listener  = activeEntry.identifier
+
+        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+
+        return this.readDirty(source)
+    }
+
+
+    [ProposedArgumentsOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
+        const source    = effect.identifier
+        const listener  = activeEntry.identifier
+
+        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+
+        const quark     = this.entries.get(source)
+
+        return quark && !quark.isShadow() ? quark.proposedArguments : undefined
+    }
 
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweights the optimization

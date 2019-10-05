@@ -25,6 +25,7 @@ export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurre
 //
 // export const CancelPropagation : Effect = Effect.new({ handler : CancelPropagationSymbol })
 
+
 //---------------------------------------------------------------------------------------------------------------------
 export const TransactionSymbol    = Symbol('TransactionSymbol')
 
@@ -72,7 +73,58 @@ export class WriteSeveralEffect extends Effect {
     writes                  : WriteInfo[]
 }
 
-
 export const WriteSeveral = (writes : WriteInfo[]) : WriteSeveralEffect => WriteSeveralEffect.new({ writes })
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export const PreviousValueOfSymbol    = Symbol('PreviousValueOfSymbol')
+
+export class PreviousValueOfEffect extends Effect {
+    handler         : symbol    = PreviousValueOfSymbol
+
+    identifier      : Identifier
+}
+
+export const PreviousValueOf = (identifier : Identifier) : PreviousValueOfEffect => PreviousValueOfEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedValueOfSymbol    = Symbol('ProposedValueOfSymbol')
+
+export class ProposedValueOfEffect extends Effect {
+    handler         : symbol    = ProposedValueOfSymbol
+
+    identifier      : Identifier
+}
+
+export const ProposedValueOf = (identifier : Identifier) : ProposedValueOfEffect => ProposedValueOfEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedOrPreviousValueOfSymbol    = Symbol('ProposedOrPreviousValueOfSymbol')
+
+export class ProposedOrPreviousValueOfEffect extends Effect {
+    handler         : symbol    = ProposedOrPreviousValueOfSymbol
+
+    identifier      : Identifier
+}
+
+export const ProposedOrPreviousValueOf = (identifier : Identifier) : ProposedOrPreviousValueOfEffect => ProposedOrPreviousValueOfEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedArgumentsOfSymbol    = Symbol('ProposedArgumentsOfSymbol')
+
+export class ProposedArgumentsOfEffect extends Effect {
+    handler         : symbol    = ProposedArgumentsOfSymbol
+
+    identifier      : Identifier
+}
+
+export const ProposedArgumentsOf = (identifier : Identifier) : ProposedArgumentsOfEffect => ProposedArgumentsOfEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const throwReadingPastIsNotAllowed = (source : Identifier, listener : Identifier) => {
+    throw new Error(`Identifier ${listener} can not read the past of the identifier ${source} - it is not specified as listener`)
+}

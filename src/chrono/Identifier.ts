@@ -48,15 +48,10 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
 
     write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        const quark         = transaction.acquireQuark(me)
+        const quark                 = transaction.acquireQuark(me)
 
-        quark.proposedValue = proposedValue
-
-        const listeners     = me.listeners
-
-        if (listeners) {
-            for (const listener of listeners) transaction.touch(listener)
-        }
+        quark.proposedValue         = proposedValue
+        quark.proposedArguments     = args.length > 0 ? args : undefined
     }
 
 
@@ -88,9 +83,10 @@ export class Variable<ValueT = any> extends Identifier<typeof ContextSync, Value
 
 
     write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        const quark         = transaction.acquireQuark(me)
+        const quark                 = transaction.acquireQuark(me)
 
-        quark.value         = proposedValue
+        quark.value                 = proposedValue
+        quark.proposedArguments     = args.length > 0 ? args : undefined
     }
 }
 

@@ -16,6 +16,10 @@ export class Field extends Base {
 
     entity              : EntityMeta
 
+    listeners           : Name[]
+
+    equality            : (v1 : any, v2 : any) => boolean
+
     persistent          : boolean   = true
 
     lazy                : boolean   = false

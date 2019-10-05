@@ -35,6 +35,7 @@ project.start(
             'chrono/013_sync_calculation.t.js',
             // 'chrono/015_listeners.t.js',
             'chrono/016_recursion.t.js',
+            'chrono/017_identifier_listener.t.js',
             'chrono/020_graph_branching.t.js',
             'chrono/030_propagation.t.js',
             'chrono/031_garbage_collection.t.js',
@@ -57,7 +58,8 @@ project.start(
             'replica/001_entity.t.js',
             'replica/002_fields.t.js',
             'replica/010_replica.t.js',
-            'replica/020_reference.t.js'
+            'replica/020_reference.t.js',
+            'replica/030_cycle_dispatcher_example.t.js'
         ]
     },
     {

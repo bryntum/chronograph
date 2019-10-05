@@ -1,404 +1,409 @@
-import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
+import { PreviousValueOf, ProposedArgumentsOf, ProposedOrCurrent, ProposedOrPreviousValueOf, ProposedValueOf } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
-import { CalculationIterator } from "../../src/primitives/Calculation.js"
+import { CalculatedValueSync } from "../../src/chrono/Identifier.js"
+import { SyncEffectHandler } from "../../src/chrono/Transaction.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('`ProposedOrCurrent` effect', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+    t.describe('Invalid read', t => {
+        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - PreviousValueOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const max       = graph.variableId('variable', 100)
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    YIELD(PreviousValueOf(source))
+                }
+            }))
 
-        const var1      = graph.addIdentifier(CalculatedValueGen.new({
-            * calculation () : CalculationIterator<number> {
-                const proposedValue : number    = yield ProposedOrCurrent
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+            }))
 
-                const maxValue : number         = yield max
-
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
-
-        const var2      = graph.addIdentifier(CalculatedValueGen.new({
-            listeners       : new Set([ var1 ]),
-
-            * calculation () : CalculationIterator<number> {
-                const proposedValue : number    = yield ProposedOrCurrent
-
-                const maxValue : number         = yield max
-
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
-
-        graph.write(var1, 18)
-
-        graph.propagate()
-
-        t.is(graph.read(var1), 18, 'Correct value')
-
-        //------------------
-        graph.write(var1, 180)
-
-        graph.propagate()
-
-        t.is(graph.read(var1), 100, 'Correct value')
+            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
+        })
 
 
-        //------------------
-        graph.write(max, 1000)
+        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - ProposedValueOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        graph.propagate()
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    YIELD(ProposedValueOf(source))
+                }
+            }))
 
-        t.is(graph.read(var1), 100, 'Correct value')
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+            }))
+
+            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
+        })
 
 
-        //------------------
-        graph.write(max, 50)
+        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - ProposedOrPreviousValueOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        graph.propagate()
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    YIELD(ProposedOrPreviousValueOf(source))
+                }
+            }))
 
-        t.is(graph.read(var1), 50, 'Correct value')
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+            }))
+
+            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
+        })
 
 
-        //------------------
-        graph.write(max, 100)
+        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - ProposedArgumentsOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        graph.propagate()
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    YIELD(ProposedArgumentsOf(source))
+                }
+            }))
 
-        t.is(graph.read(var1), 50, 'Correct value')
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+            }))
+
+            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
+        })
     })
 
 
-    t.it('ProposedOrCurrent - caching, generators', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+    t.describe('Valid read', t => {
 
-        const var0      = graph.variableId('var0', 1)
+        t.it('Should be able to read the past of the identifier which being listened - PreviousValueOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const max       = graph.variableId('max', 100)
+            let result
 
-        const var1      = graph.addIdentifier(CalculatedValueGen.new({
-            * calculation () : CalculationIterator<number> {
-                const proposedValue : number    = yield ProposedOrCurrent
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    return result = YIELD(PreviousValueOf(source))
+                }
+            }))
 
-                const maxValue : number         = yield max
+            const var1          = graph.variable(0)
 
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
+            const sourceMode    = graph.variable('proposed')
 
-        const spy       = t.spyOn(var1, 'calculation')
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+                listeners   : new Set([ listener ]),
 
-        graph.write(var1, 18)
+                calculation (YIELD : SyncEffectHandler) : number {
+                    const mode : string     = YIELD(sourceMode)
 
-        graph.propagate()
+                    if (mode === 'proposed')
+                        return YIELD(ProposedOrCurrent)
+                    else
+                        return YIELD(var1) + 1
+                }
+            }))
 
-        t.expect(spy).toHaveBeenCalled(1)
+            const spy           = t.spyOn(listener, 'calculation')
 
-        t.is(graph.read(var1), 18, 'Regular case')
+            //----------------
+            graph.write(source, 10)
 
-        //------------------
-        spy.reset()
+            graph.propagate()
 
-        graph.write(var0, 2)
+            t.is(graph.read(source), 10, 'Source value correct #1')
+            t.is(graph.read(listener), null, 'Listener value correct #1')
 
-        graph.propagate()
+            t.expect(spy).toHaveBeenCalled(1)
 
-        t.expect(spy).toHaveBeenCalled(0)
+            //----------------
+            spy.reset()
 
-        t.is(graph.read(var1), 18, 'Calculation has not been invoked, because the calculated value is same as proposed')
+            graph.write(sourceMode, 'pure')
 
-        //------------------
-        spy.reset()
+            graph.propagate()
 
-        graph.write(var1, 110)
+            t.is(graph.read(source), 1, 'Source value correct #2')
+            t.isStrict(graph.read(listener), 10, 'Listener value correct #2')
+            t.isStrict(result, 10, 'Listener value correct #2')
 
-        graph.propagate()
+            t.expect(spy).toHaveBeenCalled(1)
 
-        t.expect(spy).toHaveBeenCalled(1)
+            //----------------
+            spy.reset()
 
-        t.is(graph.read(var1), 100, 'Regular case')
+            graph.write(var1, 1)
 
-        //------------------
-        spy.reset()
+            graph.propagate()
 
-        graph.write(var0, 3)
+            t.is(graph.read(source), 2, 'Source value correct #3')
+            t.isStrict(graph.read(listener), 1, 'Listener value correct #2')
+            t.isStrict(result, 1, 'Listener value correct #2')
 
-        graph.propagate()
+            t.expect(spy).toHaveBeenCalled(1)
 
-        t.expect(spy).toHaveBeenCalled(1)
+            //----------------
+            spy.reset()
 
-        t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
+            graph.write(sourceMode, 'proposed')
+            graph.write(source, 14)
 
-        //------------------
-        spy.reset()
+            graph.propagate()
 
-        graph.write(max, 50)
+            t.is(graph.read(source), 14, 'Source value correct #4')
+            t.is(graph.read(listener), 2, 'Listener value correct #4')
 
-        graph.propagate()
+            t.expect(spy).toHaveBeenCalled(1)
+        })
 
-        t.expect(spy).toHaveBeenCalled(1)
 
-        t.is(graph.read(var1), 50, 'Regular case')
+        t.it('Should be able to read the past of the identifier which being listened - ProposedValueOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        //------------------
-        spy.reset()
+            let result
 
-        graph.write(max, 100)
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    return result = YIELD(ProposedValueOf(source))
+                }
+            }))
 
-        graph.propagate()
+            const var1          = graph.variable(0)
 
-        t.expect(spy).toHaveBeenCalled(1)
+            const sourceMode    = graph.variable('proposed')
 
-        t.is(graph.read(var1), 50, 'Regular case')
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+                listeners   : new Set([ listener ]),
+
+                calculation (YIELD : SyncEffectHandler) : number {
+                    const mode : string     = YIELD(sourceMode)
+
+                    if (mode === 'proposed')
+                        return YIELD(ProposedOrCurrent)
+                    else
+                        return YIELD(var1) + 1
+                }
+            }))
+
+            const spy           = t.spyOn(listener, 'calculation')
+
+            //----------------
+            graph.write(source, 10)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 10, 'Source value correct #1')
+            t.is(graph.read(listener), 10, 'Listener value correct #1')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(sourceMode, 'pure')
+
+            graph.propagate()
+
+            t.is(graph.read(source), 1, 'Source value correct #2')
+            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+            t.isStrict(result, undefined, 'Listener value correct #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(var1, 1)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 2, 'Source value correct #3')
+            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+            t.isStrict(result, undefined, 'Listener value correct #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(sourceMode, 'proposed')
+            graph.write(source, 14)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 14, 'Source value correct #4')
+            t.is(graph.read(listener), 14, 'Listener value correct #4')
+
+            t.expect(spy).toHaveBeenCalled(1)
+        })
+
+
+        t.it('Should be able to read the past of the identifier which being listened - ProposedOrPreviousValueOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
+
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    return YIELD(ProposedOrPreviousValueOf(source))
+                }
+            }))
+
+            const var1          = graph.variable(0)
+
+            const sourceMode    = graph.variable('proposed')
+
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+                listeners   : new Set([ listener ]),
+
+                calculation (YIELD : SyncEffectHandler) : number {
+                    const mode : string     = YIELD(sourceMode)
+
+                    if (mode === 'proposed')
+                        return YIELD(ProposedOrCurrent)
+                    else
+                        return YIELD(var1) + 1
+                }
+            }))
+
+            const spy           = t.spyOn(listener, 'calculation')
+
+            //----------------
+            graph.write(source, 10)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 10, 'Source value correct #1')
+            t.is(graph.read(listener), 10, 'Listener value correct #1')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(sourceMode, 'pure')
+
+            graph.propagate()
+
+            t.is(graph.read(source), 1, 'Source value correct #2')
+            t.is(graph.read(listener), 10, 'Listener value correct #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(var1, 1)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 2, 'Source value correct #3')
+            t.is(graph.read(listener), 1, 'Listener value correct #3')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(sourceMode, 'proposed')
+            graph.write(source, 14)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 14, 'Source value correct #4')
+            t.is(graph.read(listener), 14, 'Listener value correct #4')
+
+            t.expect(spy).toHaveBeenCalled(1)
+        })
+
+
+        t.it('Should be able to read the past of the identifier which being listened - ProposedArgumentsOf', async t => {
+            const graph : ChronoGraph   = MinimalChronoGraph.new()
+
+            let result
+
+            const listener      = graph.addIdentifier(CalculatedValueSync.new({
+                calculation (YIELD : SyncEffectHandler) : any {
+                    return result = YIELD(ProposedArgumentsOf(source))
+                }
+            }))
+
+            const var1          = graph.variable(0)
+
+            const sourceMode    = graph.variable('proposed')
+
+            const source        = graph.addIdentifier(CalculatedValueSync.new({
+                listeners   : new Set([ listener ]),
+
+                calculation (YIELD : SyncEffectHandler) : number {
+                    const mode : string     = YIELD(sourceMode)
+
+                    if (mode === 'proposed')
+                        return YIELD(ProposedOrCurrent)
+                    else
+                        return YIELD(var1) + 1
+                }
+            }))
+
+            const spy           = t.spyOn(listener, 'calculation')
+
+            //----------------
+            graph.write(source, 10)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 10, 'Source value correct #1')
+            t.isDeeply(graph.read(listener), null, 'Listener value correct #1')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(source, 11, 1, 2, 3)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 11, 'Source value correct #1.5')
+            t.isDeeply(graph.read(listener), [ 1, 2, 3 ], 'Listener value correct #1.5')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(sourceMode, 'pure')
+
+            graph.propagate()
+
+            t.is(graph.read(source), 1, 'Source value correct #2')
+            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+            t.isStrict(result, undefined, 'Listener value correct #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(var1, 1)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 2, 'Source value correct #3')
+            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+            t.isStrict(result, undefined, 'Listener value correct #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //----------------
+            spy.reset()
+
+            graph.write(sourceMode, 'proposed')
+            graph.write(source, 14)
+
+            graph.propagate()
+
+            t.is(graph.read(source), 14, 'Source value correct #4')
+            t.is(graph.read(listener), null, 'Listener value correct #4')
+
+            t.expect(spy).toHaveBeenCalled(1)
+        })
     })
-
-
-    t.it('ProposedOrCurrent - caching, sync', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
-
-        const var0      = graph.variableId('var0', 1)
-
-        const max       = graph.variableId('max', 100)
-
-        const var1      = graph.addIdentifier(CalculatedValueSync.new({
-            calculation (YIELD) : number {
-                const proposedValue : number    = YIELD(ProposedOrCurrent)
-
-                const maxValue : number         = YIELD(max)
-
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
-
-        const spy       = t.spyOn(var1, 'calculation')
-
-        graph.write(var1, 18)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 18, 'Regular case')
-
-        //------------------
-        spy.reset()
-
-        graph.write(var0, 2)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 18, 'Calculation has not been invoked, because the calculated value is same as proposed')
-
-        //------------------
-        spy.reset()
-
-        graph.write(var1, 110)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 100, 'Regular case')
-
-        //------------------
-        spy.reset()
-
-        graph.write(var0, 3)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
-
-        //------------------
-        spy.reset()
-
-        graph.write(max, 50)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 50, 'Regular case')
-
-        //------------------
-        spy.reset()
-
-        graph.write(max, 100)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 50, 'Regular case')
-    })
-
-
-    t.it('Lazily calculated impure identifier, generators', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
-
-        const var0      = graph.variableId('var0', 1)
-
-        const max       = graph.variableId('max', 100)
-
-        const var1      = graph.addIdentifier(CalculatedValueGen.new({
-            lazy : true,
-
-            * calculation () : CalculationIterator<number> {
-                const proposedValue : number    = yield ProposedOrCurrent
-
-                const maxValue : number         = yield max
-
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
-
-        const spy       = t.spyOn(var1, 'calculation')
-
-        graph.write(var1, 18)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 18, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-        //------------------
-        spy.reset()
-
-        graph.write(var1, 180)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 100, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-
-        //------------------
-        spy.reset()
-
-        graph.write(max, 10)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 10, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-
-        //------------------
-        spy.reset()
-
-        graph.write(max, 100)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        graph.write(max, 101)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 10, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-    })
-
-
-    t.it('Lazily calculated impure identifier, sync', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
-
-        const var0      = graph.variableId('var0', 1)
-
-        const max       = graph.variableId('max', 100)
-
-        const var1      = graph.addIdentifier(CalculatedValueSync.new({
-            lazy : true,
-
-            calculation (YIELD) : number {
-                const proposedValue : number    = YIELD(ProposedOrCurrent)
-
-                const maxValue : number         = YIELD(max)
-
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
-
-        const spy       = t.spyOn(var1, 'calculation')
-
-        graph.write(var1, 18)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 18, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-        //------------------
-        spy.reset()
-
-        graph.write(var1, 180)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 100, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-
-        //------------------
-        spy.reset()
-
-        graph.write(max, 10)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 10, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-
-
-        //------------------
-        spy.reset()
-
-        graph.write(max, 100)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        graph.write(max, 101)
-
-        graph.propagate()
-
-        t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 10, 'Correct value')
-
-        t.expect(spy).toHaveBeenCalled(1)
-    })
-
-
 })

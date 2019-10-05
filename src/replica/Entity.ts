@@ -44,6 +44,10 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 $[ name ]   = this.createFieldIdentifier(field)
             })
 
+            this.$entity.forEachField((field, name) => {
+                if (field.listeners) $[ name ].listeners = new Set(field.listeners.map(name => $[ name ]))
+            })
+
             return defineProperty(this as any, '$', $)
         }
 
@@ -83,25 +87,22 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
             }
 
             //------------------
+            if (field.equality) config.equality = field.equality
+
+            //------------------
             const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
 
-            if (calculationFunction) {
-                config.calculation      = calculationFunction
-            }
+            if (calculationFunction) config.calculation = calculationFunction
 
             //------------------
             const writeFunction         = this.$writes && this[ this.$writes[ name ] ]
 
-            if (writeFunction) {
-                config.write            = writeFunction
-            }
+            if (writeFunction) config.write = writeFunction
 
             //------------------
             const buildProposedFunction = this.$buildProposed && this[ this.$buildProposed[ name ] ]
 
-            if (buildProposedFunction) {
-                config.buildProposedValue = buildProposedFunction
-            }
+            if (buildProposedFunction) config.buildProposedValue = buildProposedFunction
 
             //------------------
             return field.identifierCls.new(config)
