@@ -150,6 +150,93 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+// export class WalkForwardRevisionContext extends WalkContext<Identifier> {
+//
+//     baseRevision    : Revision
+//
+//
+//     onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
+//         return OnCycleAction.Resume
+//     }
+//
+//
+//     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
+//         const entry             = this.baseRevision.getLatestEntryFor(node)
+//
+//         // newly created identifier
+//         if (!entry) return
+//
+//         // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
+//         // will have the `previous` property populated
+//         visitInfo.previous      = entry
+//
+//         if (node.lazy && entry.origin && entry.origin.usedProposedOrCurrent) {
+//             // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
+//             // from the previous revision
+//             // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
+//             // so general consideration is - the revision should contain ALL information needed to calculate it
+//             // alternatively, this could be done during the `populateCandidateScopeFromTransitions`
+//             visitInfo.getQuark().proposedValue   = entry.origin.value
+//         }
+//
+//         if (entry.outgoing) {
+//             for (const outgoingEntry of entry.outgoing) {
+//                 const identifier    = outgoingEntry.identifier
+//
+//                 if (outgoingEntry.origin !== this.baseRevision.getLatestEntryFor(identifier).origin) continue
+//
+//                 let entry : Quark   = this.visited.get(identifier)
+//
+//                 if (!entry) {
+//                     entry           = identifier.quarkClass.new({ identifier })
+//
+//                     this.visited.set(identifier, entry)
+//                 }
+//
+//                 if (entry.visitEpoch < this.currentEpoch) {
+//                     entry.visitEpoch    = this.currentEpoch
+//                     entry.visitedAt     = NOT_VISITED
+//                     entry.edgesFlow     = 0
+//
+//                     entry.cleanupCalculation()
+//                     if (entry.outgoing) entry.outgoing.clear()
+//                     if (entry.origin && entry.origin === entry) entry.origin.value = undefined
+//                 }
+//
+//                 entry.edgesFlow++
+//
+//                 toVisit.push({ node : identifier, from : node, label : undefined })
+//             }
+//         }
+//
+//         if (visitInfo.outgoing) {
+//             for (const outgoingEntry of visitInfo.outgoing) {
+//                 const identifier    = outgoingEntry.identifier
+//
+//                 let entry : Quark              = this.visited.get(identifier)
+//
+//                 if (!entry) throw new Error('Should not happen')
+//
+//                 if (entry.visitEpoch < this.currentEpoch) {
+//                     entry.visitEpoch    = this.currentEpoch
+//                     entry.visitedAt     = NOT_VISITED
+//                     entry.edgesFlow     = 0
+//
+//                     entry.cleanupCalculation()
+//                     if (entry.outgoing) entry.outgoing.clear()
+//                     if (entry.origin && entry.origin === entry) entry.origin.value = undefined
+//                 }
+//
+//                 entry.edgesFlow++
+//
+//                 toVisit.push({ node : identifier, from : node, label : undefined })
+//             }
+//         }
+//     }
+// }
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export type YieldableValue = Effect | Identifier
 
 
@@ -613,6 +700,7 @@ class Transaction extends base {
                             break
                         }
                         else {
+                            debugger
                             throw new Error("cycle")
                             // cycle - the requested quark has started calculation (means it was encountered in this loop before)
                             // but the calculation did not complete yet (even that requested quark is calculated before the current)
