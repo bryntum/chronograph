@@ -120,7 +120,7 @@ class Quark extends base {
     getProposedValue (transaction /*: TransactionI*/) : any {
         if (this.proposedValue !== undefined) return this.proposedValue
 
-        return this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, transaction, this)
+        return this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, this.identifier, transaction)
     }
 }
 
