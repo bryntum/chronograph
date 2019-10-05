@@ -78,7 +78,8 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 name                : `${this.$$.name}/${name}`,
                 field               : field,
                 self                : this,
-                context             : this
+                context             : this,
+                lazy                : field.lazy
             }
 
             //------------------
