@@ -74,7 +74,9 @@ class DispatcherIdentifier extends CalculatedValueSync {
     }
 
 
-    buildProposedValue (transaction : Transaction, quark : DispatcherQuark) {
+    buildProposedValue (me : this, transaction : Transaction) {
+        const quark : DispatcherQuark   = transaction.acquireQuark(me)
+
         const logEntries    = quark.logEntries
 
         const startEntry    = logEntries.get(FieldType.Start)
@@ -213,8 +215,8 @@ StartTest(t => {
                 }
             },
 
-            write (transaction : Transaction, quark : Quark, proposedValue : any, keepDuration : boolean) {
-                CalculatedValueGen.prototype.write.call(this, transaction, quark, proposedValue)
+            write (me : CalculatedValueGen, transaction : Transaction, proposedValue : any, keepDuration : boolean) {
+                me.constructor.prototype.write.call(this, me, transaction, proposedValue)
 
                 preDispatcher.log(transaction, {
                     fieldType               : FieldType.Start,
@@ -245,8 +247,8 @@ StartTest(t => {
                 }
             },
 
-            write (transaction : Transaction, quark : Quark, proposedValue : any, keepDuration : boolean) {
-                CalculatedValueGen.prototype.write.call(this, transaction, quark, proposedValue)
+            write (me : CalculatedValueGen, transaction : Transaction, proposedValue : any, keepDuration : boolean) {
+                me.constructor.prototype.write.call(this, me, transaction, proposedValue)
 
                 preDispatcher.log(transaction, {
                     fieldType               : FieldType.End,
@@ -277,8 +279,8 @@ StartTest(t => {
                 }
             },
 
-            write (transaction : Transaction, quark : Quark, proposedValue : any, keepStart : boolean) {
-                CalculatedValueGen.prototype.write.call(this, transaction, quark, proposedValue)
+            write (me : CalculatedValueGen, transaction : Transaction, proposedValue : any, keepStart : boolean) {
+                me.constructor.prototype.write.call(this, me, transaction, proposedValue)
 
                 preDispatcher.log(transaction, {
                     fieldType               : FieldType.Duration,

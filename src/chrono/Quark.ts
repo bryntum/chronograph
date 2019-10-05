@@ -38,13 +38,6 @@ class Quark extends base {
     visitEpoch      : number = 0
 
 
-    getProposedValue (transaction /*: TransactionI*/) : any {
-        if (this.proposedValue !== undefined) return this.proposedValue
-
-        return this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, transaction, this)
-    }
-
-
     get level () : number {
         return this.identifier.level
     }
@@ -113,6 +106,20 @@ class Quark extends base {
 
     hasValue () : boolean {
         return this.getValue() !== undefined
+    }
+
+
+    setProposedValue (value : any) {
+        if (this.origin && this.origin !== this) throw new Error('Can not set proposed value to the shadow entry')
+
+        this.proposedValue = value
+    }
+
+
+    getProposedValue (transaction /*: TransactionI*/) : any {
+        if (this.proposedValue !== undefined) return this.proposedValue
+
+        return this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, transaction, this)
     }
 }
 

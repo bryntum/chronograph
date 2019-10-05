@@ -93,11 +93,11 @@ class ReferenceIdentifier extends base {
     }
 
 
-    write (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ]) {
-        const me    = quark.identifier as this
+    write (me : this, transaction : Transaction, proposedValue : this[ 'ValueT' ]) {
+        const quark     = transaction.acquireQuarkIfExists(me)
 
         if (me.hasBucket()) {
-            if (quark.isShadow()) {
+            if (quark) {
                 const proposedValue     = quark.proposedValue
 
                 if (isInstanceOf(proposedValue, Entity)) {
@@ -113,7 +113,7 @@ class ReferenceIdentifier extends base {
             }
         }
 
-        super.write(transaction, quark, proposedValue)
+        super.write(me, transaction, proposedValue)
     }
 }
 

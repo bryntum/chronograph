@@ -369,7 +369,7 @@ class Transaction extends base {
 
 
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
-        identifier.write.call(identifier.context || identifier, this, this.acquireQuark(identifier), proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, identifier, this, proposedValue, ...args)
     }
 
 
@@ -378,6 +378,7 @@ class Transaction extends base {
     }
 
 
+    // return quark if it exists and is non-shadowing, otherwise undefined
     acquireQuarkIfExists<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> | undefined {
         const entry     = this.entries.get(identifier)
 
@@ -547,7 +548,7 @@ class Transaction extends base {
 
         const writeTo   = effect.writeTarget
 
-        writeTo.write.call(writeTo.context || writeTo, this, this.acquireQuark(writeTo), ...effect.proposedArgs)
+        writeTo.write.call(writeTo.context || writeTo, writeTo, this, ...effect.proposedArgs)
     }
 
 
@@ -556,7 +557,11 @@ class Transaction extends base {
 
         this.walkContext.currentEpoch++
 
-        effect.writes.forEach(writeInfo => writeInfo.identifier.write.call(writeInfo.identifier.context || writeInfo.identifier, this, this.acquireQuark(writeInfo.identifier), ...writeInfo.proposedArgs))
+        effect.writes.forEach(writeInfo => {
+            const identifier    = writeInfo.identifier
+
+            identifier.write.call(identifier.context || identifier, identifier, this, ...writeInfo.proposedArgs)
+        })
     }
 
 

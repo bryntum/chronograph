@@ -36,7 +36,7 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
 
         ValueT              : Set<Entity>
 
-        @prototypeValue(buildClass(Set, CalculationSync, Quark, ReferenceBucketQuarkEntry))
+        @prototypeValue(buildClass(Set, CalculationSync, Quark, ReferenceBucketQuark))
         quarkClass          : QuarkConstructor
 
 
@@ -66,8 +66,8 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
         }
 
 
-        buildProposedValue (transaction : Transaction, q : InstanceType<this[ 'quarkClass' ]>) : Set<Entity> {
-            const quark     = q as ReferenceBucketQuarkEntry
+        buildProposedValue (me : this, transaction : Transaction) : Set<Entity> {
+            const quark     = transaction.acquireQuark(me) as ReferenceBucketQuarkEntry
 
             const newValue : Set<Entity>        = new Set(quark.previousValue)
 
@@ -87,7 +87,7 @@ export type ReferenceBucketIdentifier = Mixin<typeof ReferenceBucketIdentifier>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketQuarkEntry = <T extends AnyConstructor<Quark>>(base : T) =>
+export const ReferenceBucketQuark = <T extends AnyConstructor<Quark>>(base : T) =>
 
 class ReferenceBucketQuarkEntry extends base {
     oldRefs             : Set<Entity>   = undefined
@@ -95,7 +95,7 @@ class ReferenceBucketQuarkEntry extends base {
     previousValue       : Set<Entity>   = undefined
 }
 
-export type ReferenceBucketQuarkEntry = Mixin<typeof ReferenceBucketQuarkEntry>
+export type ReferenceBucketQuarkEntry = Mixin<typeof ReferenceBucketQuark>
 
 
 //---------------------------------------------------------------------------------------------------------------------

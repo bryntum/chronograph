@@ -230,7 +230,7 @@ class Checkout extends base {
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
         const quark     = this.touch(identifier).acquireQuark() as InstanceType<T[ 'quarkClass' ]>
 
-        if (proposedValue !== undefined) identifier.write(this.activeTransaction, quark, proposedValue, ...args)
+        if (proposedValue !== undefined) identifier.write(identifier, this.activeTransaction, proposedValue, ...args)
 
         return identifier
     }
@@ -278,7 +278,7 @@ class Checkout extends base {
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
         if (proposedValue === undefined) proposedValue = null
 
-        identifier.write.call(identifier.context || identifier, this.activeTransaction, this.activeTransaction.acquireQuark(identifier), proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, identifier, this.activeTransaction, proposedValue, ...args)
     }
 
 
@@ -317,7 +317,7 @@ class Checkout extends base {
             // equality        : () => false,
 
             // this is to be able to extract observer identifiers only
-            segment         : ObserverSegment
+            // segment         : ObserverSegment
         }))
 
         // return this.addListener(identifier, onUpdated)

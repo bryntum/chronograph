@@ -9,7 +9,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.iit('Author/Book', async t => {
+    t.it('Author/Book', async t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()

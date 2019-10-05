@@ -5,7 +5,7 @@ import {
     CalculationGen,
     CalculationIterator,
     CalculationSync,
-    Context,
+    Context, ContextGen,
     Contexts,
     ContextSync
 } from "../primitives/Calculation.js"
@@ -28,15 +28,16 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
     context             : any       = undefined
 
-    segment             : symbol
     level               : number    = 10
 
     lazy                : boolean   = false
 
     quarkClass          : QuarkConstructor
 
+    listeners           : Set<Identifier>   = undefined
 
-    equality (v1 : this[ 'ValueT' ], v2 : this[ 'ValueT' ]) : boolean {
+
+    equality (v1 : ValueT, v2 : ValueT) : boolean {
         return v1 === v2
     }
 
@@ -46,12 +47,20 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     }
 
 
-    write (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        const quark         = transaction.acquireQuark(me)
+
         quark.proposedValue = proposedValue
+
+        const listeners     = me.listeners
+
+        if (listeners) {
+            for (const listener of listeners) transaction.touch(listener)
+        }
     }
 
 
-    buildProposedValue (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>) : ValueT | typeof NoProposedValue {
+    buildProposedValue (me : this, transaction : Transaction) : ValueT | typeof NoProposedValue {
         return NoProposedValue
     }
 
@@ -66,44 +75,46 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Variable<ResultT = any> extends Identifier<typeof ContextSync, ResultT> {
+export class Variable<ValueT = any> extends Identifier<typeof ContextSync, ValueT> {
     YieldT              : never
 
     @prototypeValue(buildClass(Set, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
 
 
-    calculation (context : CalculationContext<this[ 'YieldT' ]>) : ResultT {
-        throw new Error("The 'calculation' method of the variables should not be called for optimization purposes. Instead the value should be set directly to quark")
+    calculation (context : CalculationContext<this[ 'YieldT' ]>) : ValueT {
+        throw new Error("The 'calculation' method of the variables will never be called. Instead the value will be set directly to quark")
     }
 
 
-    write (transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        const quark         = transaction.acquireQuark(me)
+
         quark.value         = proposedValue
     }
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculatedValueSync extends Identifier {
+export class CalculatedValueSync<ValueT = any> extends Identifier<typeof ContextSync, ValueT> {
 
     @prototypeValue(buildClass(Set, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
 
 
-    calculation (YIELD : CalculationContext<this[ 'YieldT' ]>) : this[ 'ValueT' ] {
+    calculation (YIELD : CalculationContext<this[ 'YieldT' ]>) : ValueT {
         return YIELD(ProposedOrCurrent)
     }
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculatedValueGen extends Identifier {
+export class CalculatedValueGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
 
     @prototypeValue(buildClass(Set, CalculationGen, Quark))
     quarkClass          : QuarkConstructor
 
 
-    * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<this[ 'ValueT' ], this[ 'YieldT' ]> {
+    * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<ValueT, this[ 'YieldT' ]> {
         return yield ProposedOrCurrent
     }
 }
