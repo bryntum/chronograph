@@ -48,7 +48,6 @@ project.start(
         group       : 'chrono-userland',
 
         items       : [
-            'chrono-userland/032_cycle_dispatcher.t.js'
         ]
     },
     {
