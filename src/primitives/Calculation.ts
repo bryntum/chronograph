@@ -1,3 +1,4 @@
+import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -45,7 +46,7 @@ export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, A
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const CalculationGen = <
+export const CalculationGen = instanceOf(<
     T extends AnyConstructor<object>,
     ResultT = any,
     YieldT = any,
@@ -124,7 +125,7 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
 
         return this.result
     }
-}
+})
 
 export type CalculationGen = Mixin<typeof CalculationGen>
 
@@ -134,7 +135,7 @@ export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStar
 
 const calculationStartedConstant : { value : typeof SynchronousCalculationStarted } = { value : SynchronousCalculationStarted }
 
-export const CalculationSync = <
+export const CalculationSync = instanceOf(<
     T extends AnyConstructor<object>,
     ResultT = any,
     YieldT = any,
@@ -198,7 +199,7 @@ class CalculationSync extends base implements GenericCalculation<typeof ContextS
     async runAsyncWithEffect (onEffect : CalculationContext<YieldT>, ...args : any[]) : Promise<ResultT> {
         throw new Error('Can not run synchronous calculation asynchronously')
     }
-}
+})
 
 export type CalculationSync = Mixin<typeof CalculationSync>
 
