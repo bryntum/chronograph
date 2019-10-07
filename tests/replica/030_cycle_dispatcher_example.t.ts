@@ -1,4 +1,5 @@
 import { ProposedArgumentsOf, ProposedOrCurrent, ProposedValueOf } from "../../src/chrono/Effect.js"
+import { Identifier } from "../../src/chrono/Identifier.js"
 import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
 import { Base } from "../../src/class/Mixin.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
@@ -123,7 +124,7 @@ class Event extends Entity(Base) {
 
 
     @build_proposed('dispatcher')
-    buildProposedDispatcher (transaction : Transaction) : DispatcherValue {
+    buildProposedDispatcher (me : Identifier, transaction : Transaction) : DispatcherValue {
         const direction : Direction    = transaction.readDirty(this.$.direction)
 
         return new Map([
