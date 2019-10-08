@@ -55,7 +55,7 @@ class Revision extends base {
 
         const value         = latestEntry.getValue()
 
-        return value !== TombStone ? value : undefined
+        return value !== TombStone ? this.read(identifier) : undefined
     }
 
 
