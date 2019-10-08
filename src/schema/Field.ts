@@ -18,6 +18,8 @@ export class Field extends Base {
 
     listeners           : Name[]
 
+    listens             : Name[]
+
     equality            : (v1 : any, v2 : any) => boolean
 
     persistent          : boolean   = true

@@ -45,7 +45,24 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
             })
 
             this.$entity.forEachField((field, name) => {
-                if (field.listeners) $[ name ].listeners = new Set(field.listeners.map(name => $[ name ]))
+                if (field.listeners) {
+                    let listeners     = $[ name ].listeners
+
+                    if (!listeners) listeners = $[ name ].listeners = new Set()
+
+                    field.listeners.forEach(name => listeners.add($[ name ]))
+                }
+
+                if (field.listens) {
+                    field.listens.forEach(name => {
+                        let listeners     = $[ name ].listeners
+
+                        if (!listeners) listeners = $[ name ].listeners = new Set()
+
+                        listeners.add($[ name ])
+                    })
+                }
+
             })
 
             return defineProperty(this as any, '$', $)
