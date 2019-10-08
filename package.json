@@ -17,7 +17,7 @@
   "author": "Nickolay Platonov, Bryntum",
   "license": "MIT",
   "dependencies": {
-    "esm": "^3.0.84",
+    "esm": "^3.2.25",
     "tslib": "^1.9.3"
   },
   "devDependencies": {
