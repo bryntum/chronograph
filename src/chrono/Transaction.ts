@@ -844,9 +844,6 @@ class Transaction extends base {
                     // // reduce garbage collection workload
                     entry.cleanup()
 
-                    // TODO review the calculation of this flag, probably it should always compare with proposed value (if its available)
-                    // and only if that is missing - with previous
-                    // hint - keep in mind as "proposed" would be a separate identifier, which is assigned with a new value
                     let ignoreSelfDependency : boolean = false
 
                     const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
@@ -880,10 +877,11 @@ class Transaction extends base {
                     break
                 }
                 else if (value instanceof Identifier) {
-                    if (entry.identifier.level > value.level) throw new Error('Identifier can not read from higher level identifier')
+                    if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
                     let requestedEntry : Quark             = entries.get(value)
 
+                    // creating "shadowing" entry, to store the new edges
                     if (!requestedEntry) {
                         const previousEntry = this.baseRevision.getLatestEntryFor(value)
 
@@ -902,6 +900,8 @@ class Transaction extends base {
                     let requestedQuark : Quark             = requestedEntry.origin
 
                     if (requestedQuark && requestedQuark.hasValue()) {
+                        if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
+
                         iterationResult         = entry.continueCalculation(requestedQuark.value)
                     }
                     else if (requestedEntry.isShadow()) {
@@ -919,6 +919,7 @@ class Transaction extends base {
                             break
                         }
                         else {
+                            debugger
                             throw new Error("cycle")
                             // cycle - the requested quark has started calculation (means it was encountered in this loop before)
                             // but the calculation did not complete yet (even that requested quark is calculated before the current)
@@ -940,11 +941,10 @@ class Transaction extends base {
                     const effectResult          = context(value)
 
                     // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
+                    // in such case we can not continue calculation and just exit the inner loop
                     if (entry.iterationResult)
-                        // in such case we can not continue calculation
                         iterationResult         = entry.continueCalculation(effectResult)
                     else
-                        // and just exit the inner loop
                         break
                 }
 

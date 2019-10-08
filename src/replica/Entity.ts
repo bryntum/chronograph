@@ -201,6 +201,14 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
+        propagateSync () : PropagateResult {
+            const graph     = this.graph
+
+            if (!graph) return
+
+            return graph.propagateSync()
+        }
+
         // async waitForPropagateCompleted () : Promise<PropagationResult | null> {
         //     return this.getGraph().waitForPropagateCompleted()
         // }
