@@ -65,7 +65,15 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
             })
 
-            return defineProperty(this as any, '$', $)
+            const wrapper = new Proxy($, {
+                get (target : object, p : string | number | symbol, receiver : any) : any {
+                    if (!target[ p ]) debugger
+
+                    return target[ p ]
+                }
+            })
+
+            return defineProperty(this as any, '$', wrapper)
         }
 
 
