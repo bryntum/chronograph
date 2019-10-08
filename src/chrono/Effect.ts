@@ -128,3 +128,15 @@ export const ProposedArgumentsOf = (identifier : Identifier) : ProposedArguments
 export const throwReadingPastIsNotAllowed = (source : Identifier, listener : Identifier) => {
     throw new Error(`Identifier ${listener} can not read the past of the identifier ${source} - it is not specified as listener`)
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const UnsafeProposedOrPreviousValueOfSymbol    = Symbol('UnsafeProposedOrPreviousValueOfSymbol')
+
+export class UnsafeProposedOrPreviousValueOfEffect extends Effect {
+    handler         : symbol    = UnsafeProposedOrPreviousValueOfSymbol
+
+    identifier      : Identifier
+}
+
+export const UnsafeProposedOrPreviousValueOf = (identifier : Identifier) : UnsafeProposedOrPreviousValueOfEffect => UnsafeProposedOrPreviousValueOfEffect.new({ identifier })

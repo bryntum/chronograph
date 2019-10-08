@@ -12,7 +12,7 @@ import {
     Effect, OwnIdentifierSymbol,
     OwnQuarkSymbol, PreviousValueOfEffect, PreviousValueOfSymbol, ProposedArgumentsOfSymbol,
     ProposedOrCurrentSymbol, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol, throwReadingPastIsNotAllowed,
-    TransactionSymbol,
+    TransactionSymbol, UnsafeProposedOrPreviousValueOfSymbol,
     WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
@@ -590,6 +590,14 @@ class Transaction extends base {
         const listener  = activeEntry.identifier
 
         if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+
+        return this.readDirty(source)
+    }
+
+
+    [UnsafeProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
+        const source    = effect.identifier
+        const listener  = activeEntry.identifier
 
         return this.readDirty(source)
     }
