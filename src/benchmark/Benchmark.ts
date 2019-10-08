@@ -96,9 +96,10 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     calibrate (plannedCalibrationTime : number, state : StateT) : { cyclesCount : number, elapsed : number } {
-        const start                 = performance.now()
         let cyclesCount : number    = 0
         let elapsed : number
+
+        const start                 = performance.now()
 
         while ((elapsed = performance.now() - start) < plannedCalibrationTime) {
             this.cycle(0, cyclesCount++, state)
@@ -201,7 +202,7 @@ export class Benchmark<StateT, InfoT> extends Base {
         //
         // if (runInfo.info) console.log(this.stringifyInfo(runInfo.info))
 
-        console.log(`${this.name},${format(runInfo.averageCycleTime)},${format(runInfo.marginOfError)}`)
+        console.log(`${this.name}: ${format(runInfo.averageCycleTime)}ms ±${format(runInfo.marginOfError)}`)
     }
 
 
