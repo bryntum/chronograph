@@ -81,7 +81,7 @@ export class Benchmark<StateT, InfoT> extends Base {
     }
 
 
-    async cycle (iteration : number, cycle : number, state : StateT) {
+    cycle (iteration : number, cycle : number, state : StateT) {
     }
 
 
@@ -101,8 +101,15 @@ export class Benchmark<StateT, InfoT> extends Base {
 
         const start                 = performance.now()
 
+        const isAsync               = this.cycle.constructor.name === 'AsyncFunction'
+
         while ((elapsed = performance.now() - start) < plannedCalibrationTime) {
-            await this.cycle(0, cyclesCount++, state)
+            if (isAsync) {
+                await this.cycle(0, cyclesCount++, state)
+            }
+            else {
+                this.cycle(0, cyclesCount++, state)
+            }
         }
 
         return { cyclesCount, elapsed }
