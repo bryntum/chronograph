@@ -107,6 +107,82 @@ StartTest(t => {
         t.is(graph.read(iden2), 13, 'Correct value')
     })
 
+
+    t.it('Identifier listeners + subtree elimination', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
+
+        // const var0      = graph.variableId('var0', 0)
+        // const var1      = graph.variableId('var1', 0)
+        //
+        // const dispatcher     = graph.addIdentifier(CalculatedValueGen.new({
+        //     name        : 'disp',
+        //
+        //     * calculation (YIELD) : CalculationIterator<number> {
+        //         const proposedValue : number    = YIELD(ProposedOrCurrent)
+        //
+        //         return proposedValue
+        //     },
+        //
+        //
+        // }))
+        //
+        // const iden1     = graph.addIdentifier(CalculatedValueGen.new({
+        //     listeners   : new Set([ dispatcher ]),
+        //
+        //     * calculation (YIELD) : CalculationIterator<number> {
+        //         const disp      = yield dispatcher
+        //
+        //         const proposedValue : number    = YIELD(ProposedOrCurrent)
+        //
+        //         const maxValue : number         = YIELD(max)
+        //
+        //         return proposedValue <= maxValue ? proposedValue : maxValue
+        //     }
+        // }))
+        //
+        // const iden2     = graph.addIdentifier(CalculatedValueGen.new({
+        //     listeners   : new Set([ dispatcher ]),
+        //
+        //     * calculation (YIELD) : CalculationIterator<number> {
+        //         const disp      = yield dispatcher
+        //
+        //         const value1    = yield iden1
+        //
+        //         yield Write(iden1, 1)
+        //
+        //         return proposedValue <= maxValue ? proposedValue : maxValue
+        //     }
+        // }))
+        //
+        //
+        // const spy1      = t.spyOn(iden1, 'calculation')
+        // const spy2      = t.spyOn(iden2, 'calculation')
+        //
+        // //-------------------
+        // graph.propagate()
+        //
+        // t.expect(spy1).toHaveBeenCalled(1)
+        // t.expect(spy2).toHaveBeenCalled(1)
+        //
+        // t.is(graph.read(iden2), 1, 'Correct value')
+        //
+        // //-------------------
+        // spy2.reset()
+        //
+        // graph.write(var0, 5)
+        // graph.write(var1, 7)
+        //
+        // graph.propagate()
+        //
+        // t.expect(spy1).toHaveBeenCalled(2)
+        // t.expect(spy2).toHaveBeenCalled(1)
+        //
+        // t.is(graph.read(var0), 7, 'Correct value')
+        // t.is(graph.read(var1), 5, 'Correct value')
+        // t.is(graph.read(iden2), 13, 'Correct value')
+    })
+
+
     // TODO
     // t.it('Base case - sync', async t => {
     //     const graph : ChronoGraph   = MinimalChronoGraph.new()
