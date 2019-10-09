@@ -76,7 +76,7 @@ export class Benchmark<StateT, InfoT> extends Base {
     // filterExceptionValues   : boolean   = false
 
 
-    setup () : StateT {
+    async setup () : Promise<StateT> {
         return
     }
 
@@ -142,7 +142,7 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     async runTillMaxTime (maxTime : number = this.plannedMaxTime) : Promise<RunInfo<InfoT>> {
-        const state : StateT  = this.setup()
+        const state : StateT  = await this.setup()
 
         const { cyclesCount } = this.calibrate(this.plannedCalibrationTime, state)
 
@@ -151,7 +151,7 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     async runTillRelativeMoe (relMoe : number = this.plannedRelMoe) : Promise<RunInfo<InfoT>> {
-        const state : StateT  = this.setup()
+        const state : StateT  = await this.setup()
 
         const { cyclesCount } = this.calibrate(this.plannedCalibrationTime, state)
 
@@ -163,7 +163,9 @@ export class Benchmark<StateT, InfoT> extends Base {
 
 
     async runFixed (cyclesCount : number, iterationsCount : number) : Promise<RunInfo<InfoT>> {
-        return this.runWhile(false, this.setup(), cyclesCount, (samples, i, elapsed) => i <= iterationsCount)
+        const state : StateT  = await this.setup()
+
+        return this.runWhile(false, state, cyclesCount, (samples, i, elapsed) => i <= iterationsCount)
     }
 
 
