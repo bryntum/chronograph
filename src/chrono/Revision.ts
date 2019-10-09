@@ -47,7 +47,6 @@ class Revision extends base {
     }
 
 
-    // TODO how it relates to lazy identifiers? should those be calculated?
     readIfExists (identifier : Identifier) : any {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
@@ -55,7 +54,7 @@ class Revision extends base {
 
         const value         = latestEntry.getValue()
 
-        return value !== TombStone ? this.read(identifier) : undefined
+        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
     }
 
 
