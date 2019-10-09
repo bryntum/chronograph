@@ -81,7 +81,7 @@ export class Benchmark<StateT, InfoT> extends Base {
     }
 
 
-    cycle (iteration : number, cycle : number, state : StateT) {
+    async cycle (iteration : number, cycle : number, state : StateT) {
     }
 
 
@@ -95,14 +95,14 @@ export class Benchmark<StateT, InfoT> extends Base {
     }
 
 
-    calibrate (plannedCalibrationTime : number, state : StateT) : { cyclesCount : number, elapsed : number } {
+    async calibrate (plannedCalibrationTime : number, state : StateT) : Promise<{ cyclesCount : number, elapsed : number }> {
         let cyclesCount : number    = 0
         let elapsed : number
 
         const start                 = performance.now()
 
         while ((elapsed = performance.now() - start) < plannedCalibrationTime) {
-            this.cycle(0, cyclesCount++, state)
+            await this.cycle(0, cyclesCount++, state)
         }
 
         return { cyclesCount, elapsed }
@@ -144,7 +144,7 @@ export class Benchmark<StateT, InfoT> extends Base {
     async runTillMaxTime (maxTime : number = this.plannedMaxTime) : Promise<RunInfo<InfoT>> {
         const state : StateT  = await this.setup()
 
-        const { cyclesCount } = this.calibrate(this.plannedCalibrationTime, state)
+        const { cyclesCount } = await this.calibrate(this.plannedCalibrationTime, state)
 
         return this.runWhile(true, state, cyclesCount, (samples, i, elapsed) => i < 2 || elapsed < maxTime)
     }
@@ -153,7 +153,7 @@ export class Benchmark<StateT, InfoT> extends Base {
     async runTillRelativeMoe (relMoe : number = this.plannedRelMoe) : Promise<RunInfo<InfoT>> {
         const state : StateT  = await this.setup()
 
-        const { cyclesCount } = this.calibrate(this.plannedCalibrationTime, state)
+        const { cyclesCount } = await this.calibrate(this.plannedCalibrationTime, state)
 
         return this.runWhile(
             true, state, cyclesCount,
@@ -184,7 +184,7 @@ export class Benchmark<StateT, InfoT> extends Base {
             const start     = performance.now()
 
             for (let c = 0; c < cyclesCount; c++) {
-                this.cycle(i, c, state)
+                await this.cycle(i, c, state)
             }
 
             samples.push(performance.now() - start)
