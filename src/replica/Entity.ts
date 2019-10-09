@@ -59,21 +59,21 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
                         if (!listeners) listeners = $[ name ].listeners = new Set()
 
-                        listeners.add($[ name ])
+                        listeners.add($[ field.name ])
                     })
                 }
-
             })
 
-            const wrapper = new Proxy($, {
-                get (target : object, p : string | number | symbol, receiver : any) : any {
-                    if (!target[ p ]) debugger
+            // debugging aid
+            const proxy = new Proxy($, {
+                get (target : object, property : string | number | symbol, receiver : any) : any {
+                    if (!target[ property ]) debugger
 
-                    return target[ p ]
+                    return target[ property ]
                 }
             })
 
-            return defineProperty(this as any, '$', wrapper)
+            return defineProperty(this as any, '$', proxy)
         }
 
 
