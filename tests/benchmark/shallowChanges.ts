@@ -69,7 +69,7 @@ class ShallowChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchI
 export const shallowChangesGen = ShallowChangesChronoGraph.new({
     name        : 'Shallow graph changes - generators',
 
-    setup       : () => {
+    setup       : async () => {
         return deepGraphGen(1300)
     }
 })
@@ -78,7 +78,7 @@ export const shallowChangesGen = ShallowChangesChronoGraph.new({
 export const shallowChangesSync = ShallowChangesChronoGraph.new({
     name        : 'Shallow graph changes - synchronous',
 
-    setup       : () => {
+    setup       : async () => {
         return deepGraphSync(1300)
     }
 })
@@ -86,7 +86,7 @@ export const shallowChangesSync = ShallowChangesChronoGraph.new({
 export const shallowChangesMobx = ShallowChangesMobx.new({
     name        : 'Shallow graph changes - Mobx',
 
-    setup       : () => {
+    setup       : async () => {
         return mobxGraph(1300)
     }
 })
@@ -96,7 +96,7 @@ export const shallowChangesMobx = ShallowChangesMobx.new({
 export const shallowChangesGenBig = ShallowChangesChronoGraph.new({
     name        : 'Shallow graph changes - generators big',
 
-    setup       : () => {
+    setup       : async () => {
         return deepGraphGen(100000)
     }
 })

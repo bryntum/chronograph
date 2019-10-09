@@ -68,7 +68,7 @@ class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo
 export const deepChangesGenSmall = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - generators',
 
-    setup       : () => {
+    setup       : async () => {
         return deepGraphGen(1300)
     }
 })
@@ -77,7 +77,7 @@ export const deepChangesGenSmall = DeepChangesChronoGraph.new({
 export const deepChangesSyncSmall = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - synchronous',
 
-    setup       : () => {
+    setup       : async () => {
         return deepGraphSync(1300)
     }
 })
@@ -85,7 +85,7 @@ export const deepChangesSyncSmall = DeepChangesChronoGraph.new({
 export const deepChangesMobxSmall = DeepChangesMobx.new({
     name        : 'Deep graph changes - Mobx',
 
-    setup       : () => {
+    setup       : async () => {
         return mobxGraph(1300)
     }
 })
@@ -97,7 +97,7 @@ export const deepChangesGenBig = DeepChangesChronoGraph.new({
     // plannedMaxTime  : 20000,
     // coolDownTimeout : 150,
 
-    setup       : () => {
+    setup       : async () => {
         return deepGraphGen(100000)
     }
 })
