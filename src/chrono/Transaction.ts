@@ -101,40 +101,46 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
         if (node.listeners) node.listeners.forEach(identifier => this.doCollectNext(node, identifier, toVisit))
 
-        const entry             = this.baseRevision.getLatestEntryFor(node)
+        const latestEntry       = this.baseRevision.getLatestEntryFor(node)
 
         // newly created identifier
-        if (!entry) return
+        if (!latestEntry) return
 
         // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
         // will have the `previous` property populated
-        visitInfo.previous      = entry
+        visitInfo.previous      = latestEntry
 
-        if (node.lazy && entry.origin && entry.origin.usedProposedOrCurrent) {
+        if (node.lazy && latestEntry.origin && latestEntry.origin.usedProposedOrCurrent) {
             // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
             // from the previous revision
             // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
             // so general consideration is - the revision should contain ALL information needed to calculate it
             // alternatively, this could be done during the `populateCandidateScopeFromTransitions`
-            visitInfo.getQuark().proposedValue   = entry.origin.value
+            visitInfo.getQuark().proposedValue   = latestEntry.origin.value
         }
 
-        if (entry.outgoing) {
-            for (const outgoingEntry of entry.outgoing) {
+        let currentEntry : Quark    = latestEntry
+
+        do {
+            for (const outgoingEntry of currentEntry.outgoing) {
                 const identifier    = outgoingEntry.identifier
 
                 if (outgoingEntry.origin === this.baseRevision.getLatestEntryFor(identifier).origin) {
                     this.doCollectNext(node, identifier, toVisit)
                 }
             }
-        }
 
-        if (visitInfo.outgoing) {
-            for (const outgoingEntry of visitInfo.outgoing) {
-                const identifier    = outgoingEntry.identifier
+            if (currentEntry.isShadow())
+                currentEntry = currentEntry.origin
+            else
+                break
 
-                this.doCollectNext(node, identifier, toVisit)
-            }
+        } while (true)
+
+        for (const outgoingEntry of visitInfo.outgoing) {
+            const identifier    = outgoingEntry.identifier
+
+            this.doCollectNext(node, identifier, toVisit)
         }
     }
 }

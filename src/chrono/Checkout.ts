@@ -108,7 +108,7 @@ class Checkout extends base {
                 // if entry is shadowing some other entry, then we should clear that entry's outgoing edges
                 // otherwise they'll keep in memory unneeded entries
                 // we need to keep the `origin` entry however
-                if (entry.origin && entry.origin !== entry) entry.origin.clear()
+                // if (entry.origin && entry.origin !== entry) entry.origin.clear()
             }
 
             copySetInto(revision.selfDependentQuarks, previous.selfDependentQuarks)
