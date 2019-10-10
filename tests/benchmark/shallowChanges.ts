@@ -25,7 +25,7 @@ class ShallowChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBen
     }
 
 
-    async cycle (iteration : number, cycle : number, setup : GraphGenerationResult) {
+    cycle (iteration : number, cycle : number, setup : GraphGenerationResult) {
         const { graph, boxes } = setup
 
         graph.write(boxes[ 0 ], iteration + cycle)
@@ -54,7 +54,7 @@ class ShallowChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchI
     }
 
 
-    async cycle (iteration : number, cycle : number, setup : MobxGraphGenerationResult) {
+    cycle (iteration : number, cycle : number, setup : MobxGraphGenerationResult) {
         const { boxes } = setup
 
         boxes[ 0 ].set(iteration + cycle)

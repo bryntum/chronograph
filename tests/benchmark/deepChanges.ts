@@ -25,7 +25,7 @@ class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchI
     }
 
 
-    async cycle (iteration : number, cycle : number, setup : GraphGenerationResult) {
+    cycle (iteration : number, cycle : number, setup : GraphGenerationResult) {
         const { graph, boxes } = setup
 
         graph.write(boxes[ 0 ], iteration + cycle)
@@ -53,7 +53,7 @@ class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo
     }
 
 
-    async cycle (iteration : number, cycle : number, setup : MobxGraphGenerationResult) {
+    cycle (iteration : number, cycle : number, setup : MobxGraphGenerationResult) {
         const { boxes } = setup
 
         boxes[ 0 ].set(iteration + cycle)

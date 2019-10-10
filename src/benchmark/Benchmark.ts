@@ -185,13 +185,19 @@ export class Benchmark<StateT, InfoT> extends Base {
 
         let i                       = calibrationDone ? 1 : 0
 
+        const isAsync               = this.cycle.constructor.name === 'AsyncFunction'
+
         while (condition(samples, i, performance.now() - globalStart)) {
             if (this.coolDownTimeout > 0) await new Promise(resolve => setTimeout(resolve, this.coolDownTimeout))
 
             const start     = performance.now()
 
             for (let c = 0; c < cyclesCount; c++) {
-                await this.cycle(i, c, state)
+                if (isAsync) {
+                    await this.cycle(i, c, state)
+                } else {
+                    this.cycle(i, c, state)
+                }
             }
 
             samples.push(performance.now() - start)
