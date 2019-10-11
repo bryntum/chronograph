@@ -1,6 +1,10 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { CalculationIterator } from "../primitives/Calculation.js"
 import { Checkout } from "./Checkout.js"
 import { MinimalRevision, Revision } from "./Revision.js"
+
+
+export type ChronoIterator<ResultT, YieldT = any> = CalculationIterator<ResultT, YieldT>
 
 
 //---------------------------------------------------------------------------------------------------------------------

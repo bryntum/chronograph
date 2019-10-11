@@ -41,7 +41,7 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
 
 
         addToBucket (transaction : Transaction, entity : Entity) {
-            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuarkEntry
+            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
 
             if (!quark.newRefs) quark.newRefs = new Set()
 
@@ -54,7 +54,7 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
 
 
         removeFromBucket (transaction : Transaction, entity : Entity) {
-            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuarkEntry
+            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
 
             if (!quark.oldRefs) quark.oldRefs = new Set()
 
@@ -67,7 +67,7 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
 
 
         buildProposedValue (me : this, transaction : Transaction) : Set<Entity> {
-            const quark     = transaction.acquireQuark(me) as ReferenceBucketQuarkEntry
+            const quark     = transaction.acquireQuark(me) as ReferenceBucketQuark
 
             const newValue : Set<Entity>        = new Set(quark.previousValue)
 
@@ -95,7 +95,7 @@ class ReferenceBucketQuarkEntry extends base {
     previousValue       : Set<Entity>   = undefined
 }
 
-export type ReferenceBucketQuarkEntry = Mixin<typeof ReferenceBucketQuark>
+export type ReferenceBucketQuark = Mixin<typeof ReferenceBucketQuark>
 
 
 //---------------------------------------------------------------------------------------------------------------------

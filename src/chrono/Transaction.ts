@@ -687,7 +687,7 @@ class Transaction extends base {
 
                     let ignoreSelfDependency : boolean = false
 
-                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
+                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
@@ -860,7 +860,7 @@ class Transaction extends base {
 
                     let ignoreSelfDependency : boolean = false
 
-                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.value))
+                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
