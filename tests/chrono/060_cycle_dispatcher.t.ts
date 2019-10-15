@@ -8,15 +8,13 @@ StartTest(t => {
     const EndDate    = Symbol('EndDate')
     const Duration   = Symbol('EndDate')
 
-    // class StartEndDurationDispatcher extends CycleDispatcher<typeof StartDate | typeof EndDate | typeof Duration> {}
+    class StartEndDurationDispatcher extends CycleDispatcher<symbol> {}
 
-
-    let dispatcher : CycleDispatcher
+    let dispatcher : StartEndDurationDispatcher
 
     t.beforeEach(t => {
 
-
-        dispatcher        = CycleDispatcher.new({
+        dispatcher        = StartEndDurationDispatcher.new({
             numberOfEquations   : 1,
 
             variables           : new Set([ StartDate, EndDate, Duration ]),
@@ -160,6 +158,7 @@ StartTest(t => {
         )
     })
 
+
     t.it('Should calculate end date by default', async t => {
         dispatcher.addProposedValueFlag(StartDate)
         dispatcher.addProposedValueFlag(EndDate)
@@ -198,6 +197,7 @@ StartTest(t => {
         )
     })
 
+
     t.it('Should apply keep flags, set start date, keep end date', async t => {
         dispatcher.addPreviousValueFlag(StartDate)
         dispatcher.addPreviousValueFlag(EndDate)
@@ -218,21 +218,27 @@ StartTest(t => {
         )
     })
 
-    // t.it('Should apply keep flags, set start date, keep end date, keep duration', async t => {
-    //     dispatcher.addProposedValueFlag(StartDate)
-    //     dispatcher.addKeepIfPossibleFlag(EndDate)
-    //     dispatcher.addKeepIfPossibleFlag(Duration)
-    //
-    //     const resolution    = dispatcher.getCycleResolution()
-    //
-    //     t.isDeeply(
-    //         resolution,
-    //         new Map([
-    //             [ StartDate, CalculationMode.CalculateProposed ],
-    //             [ EndDate, CalculationMode.CalculatePure ],
-    //             [ Duration, CalculationMode.CalculateProposed ]
-    //         ])
-    //     )
-    // })
+
+    t.it('Should apply keep flags in order, set start date, keep duration, keep end date', async t => {
+        dispatcher.addPreviousValueFlag(StartDate)
+        dispatcher.addPreviousValueFlag(EndDate)
+        dispatcher.addPreviousValueFlag(Duration)
+
+        dispatcher.addProposedValueFlag(StartDate)
+
+        dispatcher.addKeepIfPossibleFlag(Duration)
+        dispatcher.addKeepIfPossibleFlag(EndDate)
+
+        const resolution    = dispatcher.getCycleResolution()
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDate, CalculationMode.CalculateProposed ],
+                [ EndDate, CalculationMode.CalculatePure ],
+                [ Duration, CalculationMode.CalculateProposed ]
+            ])
+        )
+    })
 
 })
