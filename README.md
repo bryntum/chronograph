@@ -17,28 +17,28 @@ Getting started
 A simple Chronograph example will look like:
 
 ```ts
-    class Author extends Entity(Base) {
-        @field()
-        firstName       : string
+class Author extends Entity(Base) {
+    @field()
+    firstName       : string
 
-        @field()
-        lastName        : string
+    @field()
+    lastName        : string
 
-        @field()
-        fullName        : string
+    @field()
+    fullName        : string
 
 
-        @calculate('fullName')
-        * calculateFullName () : CalculationIterator<string> {
-            return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
-        }
+    @calculate('fullName')
+    * calculateFullName () : CalculationIterator<string> {
+        return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
     }
-    
-    const author = Author.new({ firstName : 'Mark', lastName : 'Twain' })
-    
-    author.propagate()
-    
-    console.log(author.fullName) // "Mark Twain"
+}
+
+const author = Author.new({ firstName : 'Mark', lastName : 'Twain' })
+
+author.propagate()
+
+console.log(author.fullName) // "Mark Twain"
     
 ```
 
