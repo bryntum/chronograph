@@ -241,4 +241,25 @@ StartTest(t => {
         )
     })
 
+
+    t.it('Should automatically promote variables with previous value', async t => {
+        dispatcher.addPreviousValueFlag(StartDate)
+
+        dispatcher.addProposedValueFlag(EndDate)
+
+        dispatcher.addKeepIfPossibleFlag(Duration)
+
+        const resolution    = dispatcher.getCycleResolution()
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDate, CalculationMode.CalculateProposed ],
+                [ EndDate, CalculationMode.CalculateProposed ],
+                [ Duration, CalculationMode.CalculatePure ]
+            ])
+        )
+    })
+
+
 })

@@ -117,7 +117,12 @@ export class CycleDispatcher<Variable = object> extends Base {
             return result.get(variable) !== CalculationMode.CalculateProposed && this.hasPreviousValue.has(variable)
         })
 
-        this.promoteSomeVariablesWithPreviousValueToFixed(result, new Set(remainingFreeVariablesWithPreviousValue), needFixedVars - fixedVars)
+        if (remainingFreeVariablesWithPreviousValue.length === needFixedVars - fixedVars) {
+            // promoting remaining all remaining vars
+            remainingFreeVariablesWithPreviousValue.forEach(variable => result.set(variable, CalculationMode.CalculateProposed))
+        } else
+            // need to pick some of remaining vars, asking user
+            this.promoteSomeVariablesWithPreviousValueToFixed(result, new Set(remainingFreeVariablesWithPreviousValue), needFixedVars - fixedVars)
 
         const fixedVars2      = Array.from(result.values()).filter(mode => mode === CalculationMode.CalculateProposed).length
 
