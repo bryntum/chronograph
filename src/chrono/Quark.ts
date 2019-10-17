@@ -6,8 +6,14 @@ import { Identifier } from "./Identifier.js"
 import { YieldableValue } from "./Transaction.js"
 
 
+export enum EdgeType {
+    Normal      = 0,
+    Past        = 1
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------
-export const Quark = <T extends AnyConstructor<Set<any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
+export const Quark = <T extends AnyConstructor<Map<any, EdgeType> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
 
 class Quark extends base {
 
@@ -95,13 +101,13 @@ class Quark extends base {
     }
 
 
-    get outgoing () : Set<Quark> {
-        return this as Set<Quark>
+    get outgoing () : Map<Quark, EdgeType> {
+        return this as Map<Quark, EdgeType>
     }
 
 
-    getOutgoing () : Set<Quark> {
-        return this as Set<Quark>
+    getOutgoing () : Map<Quark, EdgeType> {
+        return this as Map<Quark, EdgeType>
     }
 
 

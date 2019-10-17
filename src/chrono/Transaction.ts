@@ -9,17 +9,25 @@ import {
 import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import {
-    Effect, OwnIdentifierSymbol,
-    OwnQuarkSymbol, PreviousValueOfEffect, PreviousValueOfSymbol, ProposedArgumentsOfSymbol,
-    ProposedOrCurrentSymbol, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol, throwReadingPastIsNotAllowed,
-    TransactionSymbol, UnsafeProposedOrPreviousValueOfSymbol,
+    Effect,
+    OwnIdentifierSymbol,
+    OwnQuarkSymbol,
+    PreviousValueOfEffect,
+    PreviousValueOfSymbol,
+    ProposedArgumentsOfSymbol,
+    ProposedOrCurrentSymbol,
+    ProposedOrPreviousValueOfSymbol,
+    ProposedValueOfEffect,
+    ProposedValueOfSymbol,
+    TransactionSymbol,
+    UnsafeProposedOrPreviousValueOfSymbol,
     WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
     WriteSymbol
 } from "./Effect.js"
 import { Identifier, NoProposedValue, throwUnknownIdentifier } from "./Identifier.js"
-import { Quark, TombStone } from "./Quark.js"
+import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 
 
@@ -28,6 +36,13 @@ export type NotPromise<T> = T extends Promise<any> ? never : T
 
 export type SyncEffectHandler = <T extends any>(effect : YieldableValue) => T & NotPromise<T>
 export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Promise<T>
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// weird stack overflow on 1300 deep benchmark, when using `EdgeType.Normal` w/o aliasing it to constant first
+
+export const EdgeTypeNormal    = EdgeType.Normal
+export const EdgeTypePast      = EdgeType.Past
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -99,8 +114,6 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
 
     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
-        if (node.listeners) node.listeners.forEach(identifier => this.doCollectNext(node, identifier, toVisit))
-
         const latestEntry       = this.baseRevision.getLatestEntryFor(node)
 
         // newly created identifier
@@ -122,7 +135,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
         let currentEntry : Quark    = latestEntry
 
         do {
-            for (const outgoingEntry of currentEntry.outgoing) {
+            for (const outgoingEntry of currentEntry.outgoing.keys()) {
                 const identifier    = outgoingEntry.identifier
 
                 if (outgoingEntry.origin === this.baseRevision.getLatestEntryFor(identifier).origin) {
@@ -137,7 +150,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
         } while (true)
 
-        for (const outgoingEntry of visitInfo.outgoing) {
+        for (const outgoingEntry of visitInfo.outgoing.keys()) {
             const identifier    = outgoingEntry.identifier
 
             this.doCollectNext(node, identifier, toVisit)
@@ -337,7 +350,7 @@ class Transaction extends base {
 
         if (activeEntry.identifier.level < entry.identifier.level) throw new Error('Identifier can not read from higher level identifier')
 
-        entry.getOutgoing().add(activeEntry)
+        entry.getOutgoing().set(activeEntry, EdgeTypeNormal)
 
         //----------------------
         if (entry.hasValue()) return entry.getValue()
@@ -562,16 +575,10 @@ class Transaction extends base {
     }
 
 
-    readingPastisValid (source : Identifier, listener : Identifier) : boolean {
-        return Boolean(source.listeners && source.listeners.has(listener))
-    }
-
-
     [PreviousValueOfSymbol] (effect : PreviousValueOfEffect, activeEntry : Quark) : any {
         const source    = effect.identifier
-        const listener  = activeEntry.identifier
 
-        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+        this.addEdge(source, activeEntry, EdgeTypePast)
 
         return this.baseRevision.readIfExists(source)
     }
@@ -579,9 +586,8 @@ class Transaction extends base {
 
     [ProposedValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
         const source    = effect.identifier
-        const listener  = activeEntry.identifier
 
-        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+        this.addEdge(source, activeEntry, EdgeTypePast)
 
         const quark     = this.entries.get(source)
 
@@ -593,32 +599,55 @@ class Transaction extends base {
 
     [ProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
         const source    = effect.identifier
-        const listener  = activeEntry.identifier
 
-        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+        this.addEdge(source, activeEntry, EdgeTypePast)
 
         return this.readDirty(source)
     }
 
 
     [UnsafeProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
-        const source    = effect.identifier
-        const listener  = activeEntry.identifier
-
-        return this.readDirty(source)
+        return this.readDirty(effect.identifier)
     }
 
 
     [ProposedArgumentsOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
         const source    = effect.identifier
-        const listener  = activeEntry.identifier
 
-        if (!this.readingPastisValid(source, listener)) throwReadingPastIsNotAllowed(source, listener)
+        this.addEdge(source, activeEntry, EdgeTypePast)
 
         const quark     = this.entries.get(source)
 
         return quark && !quark.isShadow() ? quark.proposedArguments : undefined
     }
+
+
+    // this method is intentionally not used, but instead "manually" inlined - this improves benchmarks noticeably
+    addEdge (identifierRead : Identifier, activeEntry : Quark, type : EdgeType) : Quark {
+        const identifier    = activeEntry.identifier
+
+        if (identifier.level < identifierRead.level) throw new Error('Identifier can not read from higher level identifier')
+
+        let requestedEntry : Quark             = this.entries.get(identifierRead)
+
+        // creating "shadowing" entry, to store the new edges
+        if (!requestedEntry) {
+            const previousEntry = this.baseRevision.getLatestEntryFor(identifierRead)
+
+            if (!previousEntry) throwUnknownIdentifier(identifierRead)
+
+            requestedEntry      = identifier.quarkClass.new({ identifier : identifierRead, origin : previousEntry.origin, previous : previousEntry })
+
+            this.entries.set(identifierRead, requestedEntry)
+
+            if (!previousEntry.origin) requestedEntry.forceCalculation()
+        }
+
+        requestedEntry.getOutgoing().set(activeEntry, type)
+
+        return requestedEntry
+    }
+
 
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweights the optimization
@@ -641,7 +670,7 @@ class Transaction extends base {
                 entry.cleanup()
 
                 if (previousEntry && previousEntry.outgoing) {
-                    for (const previousOutgoingEntry of previousEntry.outgoing) {
+                    for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
                         if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
                         const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
@@ -692,11 +721,11 @@ class Transaction extends base {
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
-                        for (const previousOutgoingEntry of previousEntry.outgoing) {
+                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
                             // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.getOutgoing().add(previousOutgoingEntry)
+                            entry.getOutgoing().set(previousOutgoingEntry, 0)
 
                             const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
@@ -720,6 +749,7 @@ class Transaction extends base {
                 else if (value instanceof Identifier) {
                     if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
+                    // should be just `this.addEdge` but inlined manually
                     let requestedEntry : Quark             = entries.get(value)
 
                     // creating "shadowing" entry, to store the new edges
@@ -735,7 +765,8 @@ class Transaction extends base {
                         if (!previousEntry.origin) requestedEntry.forceCalculation()
                     }
 
-                    requestedEntry.getOutgoing().add(entry)
+                    requestedEntry.getOutgoing().set(entry, 0)
+                    // EOF should be just `this.addEdge` but inlined manually
 
                     //----------------
                     let requestedQuark : Quark             = requestedEntry.origin
@@ -814,7 +845,7 @@ class Transaction extends base {
                 entry.cleanup()
 
                 if (previousEntry && previousEntry.outgoing) {
-                    for (const previousOutgoingEntry of previousEntry.outgoing) {
+                    for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
                         if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
                         const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
@@ -865,11 +896,11 @@ class Transaction extends base {
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
-                        for (const previousOutgoingEntry of previousEntry.outgoing) {
+                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
                             // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.getOutgoing().add(previousOutgoingEntry)
+                            entry.getOutgoing().set(previousOutgoingEntry, 0)
 
                             const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
@@ -908,7 +939,7 @@ class Transaction extends base {
                         if (!previousEntry.origin) requestedEntry.forceCalculation()
                     }
 
-                    requestedEntry.getOutgoing().add(entry)
+                    requestedEntry.getOutgoing().set(entry, 0)
 
                     //----------------
                     let requestedQuark : Quark             = requestedEntry.origin

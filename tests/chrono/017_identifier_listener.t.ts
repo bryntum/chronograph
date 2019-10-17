@@ -7,403 +7,326 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.describe('Invalid read', t => {
-        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - PreviousValueOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
+    t.it('Should be able to read the past of the identifier which is being listened - PreviousValueOf', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    YIELD(PreviousValueOf(source))
-                }
-            }))
+        let result
 
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-            }))
+        const listener      = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : any {
+                return result = YIELD(PreviousValueOf(source))
+            }
+        }))
 
-            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
-        })
+        const var1          = graph.variable(0)
 
+        const sourceMode    = graph.variable('proposed')
 
-        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - ProposedValueOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const source        = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : number {
+                const mode : string     = YIELD(sourceMode)
 
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    YIELD(ProposedValueOf(source))
-                }
-            }))
+                if (mode === 'proposed')
+                    return YIELD(ProposedOrCurrent)
+                else
+                    return YIELD(var1) + 1
+            }
+        }))
 
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-            }))
+        const spy           = t.spyOn(listener, 'calculation')
 
-            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
-        })
+        //----------------
+        graph.write(source, 10)
 
+        graph.propagate()
 
-        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - ProposedOrPreviousValueOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
+        t.is(graph.read(source), 10, 'Source value correct #1')
+        t.is(graph.read(listener), null, 'Listener value correct #1')
 
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    YIELD(ProposedOrPreviousValueOf(source))
-                }
-            }))
+        t.expect(spy).toHaveBeenCalled(1)
 
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-            }))
+        //----------------
+        spy.reset()
 
-            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
-        })
+        graph.write(sourceMode, 'pure')
 
+        graph.propagate()
 
-        t.it('Should throw if listener tries to read the past of the identifier which does not translate to it - ProposedArgumentsOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
+        t.is(graph.read(source), 1, 'Source value correct #2')
+        t.isStrict(graph.read(listener), 10, 'Listener value correct #2')
+        t.isStrict(result, 10, 'Listener value correct #2')
 
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    YIELD(ProposedArgumentsOf(source))
-                }
-            }))
+        t.expect(spy).toHaveBeenCalled(1)
 
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-            }))
+        //----------------
+        spy.reset()
 
-            t.throwsOk(() => graph.propagate(), 'can not read the past of the identifier')
-        })
+        graph.write(var1, 1)
+
+        graph.propagate()
+
+        t.is(graph.read(source), 2, 'Source value correct #3')
+        t.isStrict(graph.read(listener), 1, 'Listener value correct #2')
+        t.isStrict(result, 1, 'Listener value correct #2')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //----------------
+        spy.reset()
+
+        graph.write(sourceMode, 'proposed')
+        graph.write(source, 14)
+
+        graph.propagate()
+
+        t.is(graph.read(source), 14, 'Source value correct #4')
+        t.is(graph.read(listener), 2, 'Listener value correct #4')
+
+        t.expect(spy).toHaveBeenCalled(1)
     })
 
 
-    t.describe('Valid read', t => {
+    t.it('Should be able to read the past of the identifier which is being listened - ProposedValueOf', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        t.it('Should be able to read the past of the identifier which being listened - PreviousValueOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
+        let result
 
-            let result
+        const listener      = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : any {
+                return result = YIELD(ProposedValueOf(source))
+            }
+        }))
 
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    return result = YIELD(PreviousValueOf(source))
-                }
-            }))
+        const var1          = graph.variable(0)
 
-            const var1          = graph.variable(0)
+        const sourceMode    = graph.variable('proposed')
 
-            const sourceMode    = graph.variable('proposed')
+        const source        = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : number {
+                const mode : string     = YIELD(sourceMode)
 
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-                listeners   : new Set([ listener ]),
+                if (mode === 'proposed')
+                    return YIELD(ProposedOrCurrent)
+                else
+                    return YIELD(var1) + 1
+            }
+        }))
 
-                calculation (YIELD : SyncEffectHandler) : number {
-                    const mode : string     = YIELD(sourceMode)
+        const spy           = t.spyOn(listener, 'calculation')
 
-                    if (mode === 'proposed')
-                        return YIELD(ProposedOrCurrent)
-                    else
-                        return YIELD(var1) + 1
-                }
-            }))
+        //----------------
+        graph.write(source, 10)
 
-            const spy           = t.spyOn(listener, 'calculation')
+        graph.propagate()
 
-            //----------------
-            graph.write(source, 10)
+        t.is(graph.read(source), 10, 'Source value correct #1')
+        t.is(graph.read(listener), 10, 'Listener value correct #1')
 
-            graph.propagate()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            t.is(graph.read(source), 10, 'Source value correct #1')
-            t.is(graph.read(listener), null, 'Listener value correct #1')
+        //----------------
+        spy.reset()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        graph.write(sourceMode, 'pure')
 
-            //----------------
-            spy.reset()
+        graph.propagate()
 
-            graph.write(sourceMode, 'pure')
+        t.is(graph.read(source), 1, 'Source value correct #2')
+        t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+        t.isStrict(result, undefined, 'Listener value correct #2')
 
-            graph.propagate()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            t.is(graph.read(source), 1, 'Source value correct #2')
-            t.isStrict(graph.read(listener), 10, 'Listener value correct #2')
-            t.isStrict(result, 10, 'Listener value correct #2')
+        //----------------
+        spy.reset()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        graph.write(var1, 1)
 
-            //----------------
-            spy.reset()
+        graph.propagate()
 
-            graph.write(var1, 1)
+        t.is(graph.read(source), 2, 'Source value correct #3')
+        t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+        t.isStrict(result, undefined, 'Listener value correct #2')
 
-            graph.propagate()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            t.is(graph.read(source), 2, 'Source value correct #3')
-            t.isStrict(graph.read(listener), 1, 'Listener value correct #2')
-            t.isStrict(result, 1, 'Listener value correct #2')
+        //----------------
+        spy.reset()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        graph.write(sourceMode, 'proposed')
+        graph.write(source, 14)
 
-            //----------------
-            spy.reset()
+        graph.propagate()
 
-            graph.write(sourceMode, 'proposed')
-            graph.write(source, 14)
+        t.is(graph.read(source), 14, 'Source value correct #4')
+        t.is(graph.read(listener), 14, 'Listener value correct #4')
 
-            graph.propagate()
+        t.expect(spy).toHaveBeenCalled(1)
+    })
 
-            t.is(graph.read(source), 14, 'Source value correct #4')
-            t.is(graph.read(listener), 2, 'Listener value correct #4')
 
-            t.expect(spy).toHaveBeenCalled(1)
-        })
+    t.it('Should be able to read the past of the identifier which is being listened - ProposedOrPreviousValueOf', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
 
+        const listener      = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : any {
+                return YIELD(ProposedOrPreviousValueOf(source))
+            }
+        }))
 
-        t.it('Should be able to read the past of the identifier which being listened - ProposedValueOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const var1          = graph.variable(0)
 
-            let result
+        const sourceMode    = graph.variable('proposed')
 
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    return result = YIELD(ProposedValueOf(source))
-                }
-            }))
+        const source        = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : number {
+                const mode : string     = YIELD(sourceMode)
 
-            const var1          = graph.variable(0)
+                if (mode === 'proposed')
+                    return YIELD(ProposedOrCurrent)
+                else
+                    return YIELD(var1) + 1
+            }
+        }))
 
-            const sourceMode    = graph.variable('proposed')
+        const spy           = t.spyOn(listener, 'calculation')
 
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-                listeners   : new Set([ listener ]),
+        //----------------
+        graph.write(source, 10)
 
-                calculation (YIELD : SyncEffectHandler) : number {
-                    const mode : string     = YIELD(sourceMode)
+        graph.propagate()
 
-                    if (mode === 'proposed')
-                        return YIELD(ProposedOrCurrent)
-                    else
-                        return YIELD(var1) + 1
-                }
-            }))
+        t.is(graph.read(source), 10, 'Source value correct #1')
+        t.is(graph.read(listener), 10, 'Listener value correct #1')
 
-            const spy           = t.spyOn(listener, 'calculation')
+        t.expect(spy).toHaveBeenCalled(1)
 
-            //----------------
-            graph.write(source, 10)
+        //----------------
+        spy.reset()
 
-            graph.propagate()
+        graph.write(sourceMode, 'pure')
 
-            t.is(graph.read(source), 10, 'Source value correct #1')
-            t.is(graph.read(listener), 10, 'Listener value correct #1')
+        graph.propagate()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        t.is(graph.read(source), 1, 'Source value correct #2')
+        t.is(graph.read(listener), 10, 'Listener value correct #2')
 
-            //----------------
-            spy.reset()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            graph.write(sourceMode, 'pure')
+        //----------------
+        spy.reset()
 
-            graph.propagate()
+        graph.write(var1, 1)
 
-            t.is(graph.read(source), 1, 'Source value correct #2')
-            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
-            t.isStrict(result, undefined, 'Listener value correct #2')
+        graph.propagate()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        t.is(graph.read(source), 2, 'Source value correct #3')
+        t.is(graph.read(listener), 1, 'Listener value correct #3')
 
-            //----------------
-            spy.reset()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            graph.write(var1, 1)
+        //----------------
+        spy.reset()
 
-            graph.propagate()
+        graph.write(sourceMode, 'proposed')
+        graph.write(source, 14)
 
-            t.is(graph.read(source), 2, 'Source value correct #3')
-            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
-            t.isStrict(result, undefined, 'Listener value correct #2')
+        graph.propagate()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        t.is(graph.read(source), 14, 'Source value correct #4')
+        t.is(graph.read(listener), 14, 'Listener value correct #4')
 
-            //----------------
-            spy.reset()
+        t.expect(spy).toHaveBeenCalled(1)
+    })
 
-            graph.write(sourceMode, 'proposed')
-            graph.write(source, 14)
 
-            graph.propagate()
+    t.it('Should be able to read the past of the identifier which is being listened - ProposedArgumentsOf', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-            t.is(graph.read(source), 14, 'Source value correct #4')
-            t.is(graph.read(listener), 14, 'Listener value correct #4')
+        let result
 
-            t.expect(spy).toHaveBeenCalled(1)
-        })
+        const listener      = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : any {
+                return result = YIELD(ProposedArgumentsOf(source))
+            }
+        }))
 
+        const var1          = graph.variable(0)
 
-        t.it('Should be able to read the past of the identifier which being listened - ProposedOrPreviousValueOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const sourceMode    = graph.variable('proposed')
 
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    return YIELD(ProposedOrPreviousValueOf(source))
-                }
-            }))
+        const source        = graph.addIdentifier(CalculatedValueSync.new({
+            calculation (YIELD : SyncEffectHandler) : number {
+                const mode : string     = YIELD(sourceMode)
 
-            const var1          = graph.variable(0)
+                if (mode === 'proposed')
+                    return YIELD(ProposedOrCurrent)
+                else
+                    return YIELD(var1) + 1
+            }
+        }))
 
-            const sourceMode    = graph.variable('proposed')
+        const spy           = t.spyOn(listener, 'calculation')
 
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-                listeners   : new Set([ listener ]),
+        //----------------
+        graph.write(source, 10)
 
-                calculation (YIELD : SyncEffectHandler) : number {
-                    const mode : string     = YIELD(sourceMode)
+        graph.propagate()
 
-                    if (mode === 'proposed')
-                        return YIELD(ProposedOrCurrent)
-                    else
-                        return YIELD(var1) + 1
-                }
-            }))
+        t.is(graph.read(source), 10, 'Source value correct #1')
+        t.isDeeply(graph.read(listener), null, 'Listener value correct #1')
 
-            const spy           = t.spyOn(listener, 'calculation')
+        t.expect(spy).toHaveBeenCalled(1)
 
-            //----------------
-            graph.write(source, 10)
+        //----------------
+        spy.reset()
 
-            graph.propagate()
+        graph.write(source, 11, 1, 2, 3)
 
-            t.is(graph.read(source), 10, 'Source value correct #1')
-            t.is(graph.read(listener), 10, 'Listener value correct #1')
+        graph.propagate()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        t.is(graph.read(source), 11, 'Source value correct #1.5')
+        t.isDeeply(graph.read(listener), [ 1, 2, 3 ], 'Listener value correct #1.5')
 
-            //----------------
-            spy.reset()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            graph.write(sourceMode, 'pure')
+        //----------------
+        spy.reset()
 
-            graph.propagate()
+        graph.write(sourceMode, 'pure')
 
-            t.is(graph.read(source), 1, 'Source value correct #2')
-            t.is(graph.read(listener), 10, 'Listener value correct #2')
+        graph.propagate()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        t.is(graph.read(source), 1, 'Source value correct #2')
+        t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+        t.isStrict(result, undefined, 'Listener value correct #2')
 
-            //----------------
-            spy.reset()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            graph.write(var1, 1)
+        //----------------
+        spy.reset()
 
-            graph.propagate()
+        graph.write(var1, 1)
 
-            t.is(graph.read(source), 2, 'Source value correct #3')
-            t.is(graph.read(listener), 1, 'Listener value correct #3')
+        graph.propagate()
 
-            t.expect(spy).toHaveBeenCalled(1)
+        t.is(graph.read(source), 2, 'Source value correct #3')
+        t.isStrict(graph.read(listener), null, 'Listener value correct #2')
+        t.isStrict(result, undefined, 'Listener value correct #2')
 
-            //----------------
-            spy.reset()
+        t.expect(spy).toHaveBeenCalled(1)
 
-            graph.write(sourceMode, 'proposed')
-            graph.write(source, 14)
+        //----------------
+        spy.reset()
 
-            graph.propagate()
+        graph.write(sourceMode, 'proposed')
+        graph.write(source, 14)
 
-            t.is(graph.read(source), 14, 'Source value correct #4')
-            t.is(graph.read(listener), 14, 'Listener value correct #4')
+        graph.propagate()
 
-            t.expect(spy).toHaveBeenCalled(1)
-        })
+        t.is(graph.read(source), 14, 'Source value correct #4')
+        t.is(graph.read(listener), null, 'Listener value correct #4')
 
-
-        t.it('Should be able to read the past of the identifier which being listened - ProposedArgumentsOf', async t => {
-            const graph : ChronoGraph   = MinimalChronoGraph.new()
-
-            let result
-
-            const listener      = graph.addIdentifier(CalculatedValueSync.new({
-                calculation (YIELD : SyncEffectHandler) : any {
-                    return result = YIELD(ProposedArgumentsOf(source))
-                }
-            }))
-
-            const var1          = graph.variable(0)
-
-            const sourceMode    = graph.variable('proposed')
-
-            const source        = graph.addIdentifier(CalculatedValueSync.new({
-                listeners   : new Set([ listener ]),
-
-                calculation (YIELD : SyncEffectHandler) : number {
-                    const mode : string     = YIELD(sourceMode)
-
-                    if (mode === 'proposed')
-                        return YIELD(ProposedOrCurrent)
-                    else
-                        return YIELD(var1) + 1
-                }
-            }))
-
-            const spy           = t.spyOn(listener, 'calculation')
-
-            //----------------
-            graph.write(source, 10)
-
-            graph.propagate()
-
-            t.is(graph.read(source), 10, 'Source value correct #1')
-            t.isDeeply(graph.read(listener), null, 'Listener value correct #1')
-
-            t.expect(spy).toHaveBeenCalled(1)
-
-            //----------------
-            spy.reset()
-
-            graph.write(source, 11, 1, 2, 3)
-
-            graph.propagate()
-
-            t.is(graph.read(source), 11, 'Source value correct #1.5')
-            t.isDeeply(graph.read(listener), [ 1, 2, 3 ], 'Listener value correct #1.5')
-
-            t.expect(spy).toHaveBeenCalled(1)
-
-            //----------------
-            spy.reset()
-
-            graph.write(sourceMode, 'pure')
-
-            graph.propagate()
-
-            t.is(graph.read(source), 1, 'Source value correct #2')
-            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
-            t.isStrict(result, undefined, 'Listener value correct #2')
-
-            t.expect(spy).toHaveBeenCalled(1)
-
-            //----------------
-            spy.reset()
-
-            graph.write(var1, 1)
-
-            graph.propagate()
-
-            t.is(graph.read(source), 2, 'Source value correct #3')
-            t.isStrict(graph.read(listener), null, 'Listener value correct #2')
-            t.isStrict(result, undefined, 'Listener value correct #2')
-
-            t.expect(spy).toHaveBeenCalled(1)
-
-            //----------------
-            spy.reset()
-
-            graph.write(sourceMode, 'proposed')
-            graph.write(source, 14)
-
-            graph.propagate()
-
-            t.is(graph.read(source), 14, 'Source value correct #4')
-            t.is(graph.read(listener), null, 'Listener value correct #4')
-
-            t.expect(spy).toHaveBeenCalled(1)
-        })
+        t.expect(spy).toHaveBeenCalled(1)
     })
 })

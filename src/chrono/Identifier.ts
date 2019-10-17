@@ -34,8 +34,6 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
     quarkClass          : QuarkConstructor
 
-    listeners           : Set<Identifier>   = undefined
-
 
     equality (v1 : ValueT, v2 : ValueT) : boolean {
         return v1 === v2
@@ -73,7 +71,7 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 export class Variable<ValueT = any> extends Identifier<typeof ContextSync, ValueT> {
     YieldT              : never
 
-    @prototypeValue(buildClass(Set, CalculationSync, Quark))
+    @prototypeValue(buildClass(Map, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
 
 
@@ -93,7 +91,7 @@ export class Variable<ValueT = any> extends Identifier<typeof ContextSync, Value
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<typeof ContextSync, ValueT> {
 
-    @prototypeValue(buildClass(Set, CalculationSync, Quark))
+    @prototypeValue(buildClass(Map, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
 
 
@@ -106,7 +104,7 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<typeof Context
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
 
-    @prototypeValue(buildClass(Set, CalculationGen, Quark))
+    @prototypeValue(buildClass(Map, CalculationGen, Quark))
     quarkClass          : QuarkConstructor
 
 
