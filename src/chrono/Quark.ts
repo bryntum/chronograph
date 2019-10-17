@@ -2,10 +2,11 @@ import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI } from "../util/Helpers.js"
-import { Identifier } from "./Identifier.js"
+import { Identifier, NoProposedValue } from "./Identifier.js"
 import { YieldableValue } from "./Transaction.js"
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export enum EdgeType {
     Normal      = 0,
     Past        = 1
@@ -30,18 +31,6 @@ class Quark extends base {
     // quark state
     value                   : any       = undefined
     proposedValue           : any       = undefined
-
-    // _proposedValue           : any       = undefined
-    // set proposedValue (value : any) {
-    //     // if (/deps/i.test(this.name))
-    //     debugger
-    //
-    //     this._proposedValue = value
-    // }
-    // get proposedValue () {
-    //     return this._proposedValue
-    // }
-
     proposedArguments       : any[]     = undefined
     usedProposedOrCurrent   : boolean   = false
     // eof quark state
@@ -125,6 +114,18 @@ class Quark extends base {
 
     hasValue () : boolean {
         return this.getValue() !== undefined
+    }
+
+
+    hasProposedValue () : boolean {
+        if (this.isShadow()) return false
+
+        return this.hasProposedValueInner()
+    }
+
+
+    hasProposedValueInner () : boolean {
+        return this.proposedValue !== undefined && this.proposedValue !== NoProposedValue
     }
 
 

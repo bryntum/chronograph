@@ -10,6 +10,7 @@ import { LeveledStack } from "../util/LeveledStack.js"
 import { PropagateArguments } from "./Checkout.js"
 import {
     Effect,
+    HasProposedValueSymbol,
     OwnIdentifierSymbol,
     OwnQuarkSymbol,
     PreviousValueOfEffect,
@@ -597,6 +598,17 @@ class Transaction extends base {
     }
 
 
+    [HasProposedValueSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
+        const source    = effect.identifier
+
+        this.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark     = this.entries.get(source)
+
+        return quark ? quark.hasProposedValue() : false
+    }
+
+
     [ProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
         const source    = effect.identifier
 
@@ -721,11 +733,11 @@ class Transaction extends base {
                     // if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
-                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
+                        for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                            // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.getOutgoing().set(previousOutgoingEntry, 0)
+                            // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
+                            entry.getOutgoing().set(previousOutgoingEntry, type)
 
                             const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
@@ -765,7 +777,7 @@ class Transaction extends base {
                         if (!previousEntry.origin) requestedEntry.forceCalculation()
                     }
 
-                    requestedEntry.getOutgoing().set(entry, 0)
+                    requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
                     // EOF should be just `this.addEdge` but inlined manually
 
                     //----------------
@@ -900,7 +912,7 @@ class Transaction extends base {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
                             // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.getOutgoing().set(previousOutgoingEntry, 0)
+                            entry.getOutgoing().set(previousOutgoingEntry, EdgeTypeNormal)
 
                             const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
@@ -939,7 +951,7 @@ class Transaction extends base {
                         if (!previousEntry.origin) requestedEntry.forceCalculation()
                     }
 
-                    requestedEntry.getOutgoing().set(entry, 0)
+                    requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
 
                     //----------------
                     let requestedQuark : Quark             = requestedEntry.origin

@@ -5,7 +5,8 @@ import {
     CalculationGen,
     CalculationIterator,
     CalculationSync,
-    Context, ContextGen,
+    Context,
+    ContextGen,
     Contexts,
     ContextSync
 } from "../primitives/Calculation.js"

@@ -5,7 +5,7 @@ import { buildClass } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationSync } from "../primitives/Calculation.js"
 import { Field } from "../schema/Field.js"
-import { defineProperty, prototypeValue } from "../util/Helpers.js"
+import { prototypeValue } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
 
@@ -36,7 +36,7 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
 
         ValueT              : Set<Entity>
 
-        @prototypeValue(buildClass(Set, CalculationSync, Quark, ReferenceBucketQuark))
+        @prototypeValue(buildClass(Map, CalculationSync, Quark, ReferenceBucketQuark))
         quarkClass          : QuarkConstructor
 
 
@@ -93,6 +93,11 @@ class ReferenceBucketQuarkEntry extends base {
     oldRefs             : Set<Entity>   = undefined
     newRefs             : Set<Entity>   = undefined
     previousValue       : Set<Entity>   = undefined
+
+
+    hasProposedValueInner () : boolean {
+        return Boolean(this.oldRefs || this.newRefs)
+    }
 }
 
 export type ReferenceBucketQuark = Mixin<typeof ReferenceBucketQuark>

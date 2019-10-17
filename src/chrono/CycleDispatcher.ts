@@ -1,6 +1,10 @@
 import { Base } from "../class/Mixin.js"
+import { HasProposedValue, PreviousValueOf } from "./Effect.js"
+import { Identifier } from "./Identifier.js"
+import { SyncEffectHandler } from "./Transaction.js"
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export enum CalculationMode {
     CalculateProposed   = 'CalculateProposed',
     CalculatePure       = 'CalculatePure'
@@ -8,13 +12,15 @@ export enum CalculationMode {
 
 
 
-export type CycleResoluion<Variable>  = Map<Variable, CalculationMode>
+//---------------------------------------------------------------------------------------------------------------------
+export type CycleResolution<Variable>  = Map<Variable, CalculationMode>
 
 
-export class CycleDispatcher<Variable> extends Base {
+export class CycleDispatcher<Variable = object> extends Base {
     numberOfEquations   : number
 
-    defaultResolution   : CycleResoluion<Variable>
+    defaultResolution   : CycleResolution<Variable>
+    cycleResolution     : CycleResolution<Variable>
 
     variables           : Set<Variable>
 
@@ -47,17 +53,15 @@ export class CycleDispatcher<Variable> extends Base {
     }
 
 
-    // _cycleResolution : CycleResoluion
-    //
-    // getCycleResolutionCached () : CycleResoluion {
-    //     if (this._cycleResolution) return this._cycleResolution
-    //
-    //     return this._cycleResolution = this.getCycleResolution()
-    // }
+    getCycleResolution () : CycleResolution<Variable> {
+        if (this.cycleResolution) return this.cycleResolution
+
+        return this.cycleResolution = this.buildCycleResolution()
+    }
 
 
-    getCycleResolution () : CycleResoluion<Variable> {
-        const result : CycleResoluion<Variable>   = new Map()
+    buildCycleResolution () : CycleResolution<Variable> {
+        const result : CycleResolution<Variable>   = new Map()
 
         //------------------
         for (const variable of this.variables) {
@@ -124,7 +128,7 @@ export class CycleDispatcher<Variable> extends Base {
             throw new Error('Promoted too many variables')
         }
         else {
-            // give up, not enough fixed variable, set everything to `Proposed`
+            // give up, not enough fixed variables, set everything to `Proposed`
             for (const variable of this.variables) {
                 result.set(variable, CalculationMode.CalculateProposed)
             }
@@ -134,13 +138,23 @@ export class CycleDispatcher<Variable> extends Base {
     }
 
 
-    promoteSomeVariablesWithPreviousValueToFixed (result : CycleResoluion<Variable>, vars : Set<Variable>, needToPromoteAtLeast : number) {
+    promoteSomeVariablesWithPreviousValueToFixed (result : CycleResolution<Variable>, vars : Set<Variable>, needToPromoteNumber : number) {
     }
 
 
-    markRemainingAsPure (result : CycleResoluion<Variable>) {
+    markRemainingAsPure (result : CycleResolution<Variable>) {
         for (const variable of this.variables) {
             if (!result.get(variable)) result.set(variable, CalculationMode.CalculatePure)
         }
+    }
+}
+
+
+export class ChronoCycleDispatcher extends CycleDispatcher<Identifier> {
+
+    collectInfo (YIELD : SyncEffectHandler, identifier : Identifier) {
+        if (YIELD(PreviousValueOf(identifier)) != null) this.addPreviousValueFlag(identifier)
+
+        if (YIELD(HasProposedValue(identifier))) this.addProposedValueFlag(identifier)
     }
 }

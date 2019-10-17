@@ -101,6 +101,18 @@ export const ProposedValueOf = (identifier : Identifier) : ProposedValueOfEffect
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const HasProposedValueSymbol    = Symbol('HasProposedValueSymbol')
+
+export class HasProposedValueEffect extends Effect {
+    handler         : symbol    = HasProposedValueSymbol
+
+    identifier      : Identifier
+}
+
+export const HasProposedValue = (identifier : Identifier) : HasProposedValueEffect => HasProposedValueEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export const ProposedOrPreviousValueOfSymbol    = Symbol('ProposedOrPreviousValueOfSymbol')
 
 export class ProposedOrPreviousValueOfEffect extends Effect {
