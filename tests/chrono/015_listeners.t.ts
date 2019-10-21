@@ -112,4 +112,38 @@ StartTest(t => {
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })
+
+
+    t.iit('Should not trigger listener after the identifier removal', async t => {
+        const graph : ChronoGraph   = MinimalChronoGraph.new()
+
+        const var0      = graph.variableId('var0', 0)
+        const var1      = graph.variableId('var1', 10)
+
+        const iden1     = graph.identifierId('iden1', function* () {
+            return (yield var0) + (yield var1)
+        })
+
+        const spyListener   = t.createSpy()
+
+        graph.addListener(iden1, spyListener)
+
+        //-------------------
+        graph.propagate()
+
+        t.expect(spyListener).toHaveBeenCalled(1)
+
+        //-------------------
+        spyListener.calls.reset()
+
+        graph.removeIdentifier(iden1)
+
+        graph.write(var0, 5)
+        graph.write(var1, 5)
+
+        graph.propagate()
+
+        t.expect(spyListener).toHaveBeenCalled(0)
+    })
+
 })

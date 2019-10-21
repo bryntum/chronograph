@@ -247,7 +247,9 @@ class Checkout extends base {
     removeIdentifier (identifier : Identifier) {
         identifier.leaveGraph(this)
 
-        return this.activeTransaction.removeIdentifier(identifier)
+        this.activeTransaction.removeIdentifier(identifier)
+
+        this.listeners.delete(identifier)
     }
 
 
