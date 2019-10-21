@@ -323,6 +323,29 @@ class Checkout extends base {
     }
 
 
+    observeContext
+        <ContextT extends Context, Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
+        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, context : object, onUpdated : (value : Result) => any) : Identifier
+    {
+        const identifier    = this.addIdentifier(CalculatedValueGen.new({
+            // observers are explicitly eager
+            lazy            : false,
+
+            calculation     : observerFunc as any,
+            context         : context,
+
+            // equality        : () => false,
+
+            // this is to be able to extract observer identifiers only
+            // segment         : ObserverSegment
+        }))
+
+        this.addListener(identifier, onUpdated)
+
+        return identifier
+    }
+
+
     addListener (identifier : Identifier, onUpdated : (value : any) => any) {
         let listener    = this.listeners.get(identifier)
 
