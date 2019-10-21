@@ -24,7 +24,8 @@ export class Field extends Base {
 
     persistent          : boolean   = true
 
-    lazy                : boolean   = false
+    lazy                : boolean
+    eager               : boolean
 
     identifierCls       : FieldIdentifierConstructor  = MinimalFieldIdentifier
 }

@@ -338,7 +338,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should rebuild edges dynamically', async t => {
+    t.it('Should rebuild edges dynamically', async t => {
         event.start = 10
         event.duration = 5
 

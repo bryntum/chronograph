@@ -213,11 +213,11 @@ class Checkout extends base {
         for (const [ identifier, quarkEntry ] of this.baseRevision.scope) {
             quarkEntry.cleanup()
             // ignore "shadowing" entries
-            if (quarkEntry.sameAsPrevious || quarkEntry.isShadow()) continue
+            if (quarkEntry.sameAsPrevious || quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
 
             const listener  = this.listeners.get(identifier)
 
-            if (listener) listener.trigger(quarkEntry.value)
+            if (listener) listener.trigger(quarkEntry.getValue())
         }
 
         this.markAndSweep()
