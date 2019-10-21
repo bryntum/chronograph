@@ -158,21 +158,33 @@ class Checkout extends base {
 
 
     propagate (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagate(args)
+        const activeTransaction = clearLazyProperty(this, 'activeTransaction')
+
+        if (!activeTransaction) return
+
+        const nextRevision      = activeTransaction.propagate(args)
 
         return this.finalizePropagation(nextRevision)
     }
 
 
     propagateSync (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagateSync(args)
+        const activeTransaction = clearLazyProperty(this, 'activeTransaction')
+
+        if (!activeTransaction) return
+
+        const nextRevision      = activeTransaction.propagateSync(args)
 
         return this.finalizePropagation(nextRevision)
     }
 
 
     async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
-        const nextRevision      = await this.activeTransaction.propagateAsync(args)
+        const activeTransaction = clearLazyProperty(this, 'activeTransaction')
+
+        if (!activeTransaction) return Promise.resolve(null)
+
+        const nextRevision      = await activeTransaction.propagateAsync(args)
 
         return this.finalizePropagation(nextRevision)
     }
