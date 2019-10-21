@@ -33,7 +33,7 @@ project.start(
             'chrono/011_lazy_identifier.t.js',
             'chrono/012_impure_calculated_value.t.js',
             'chrono/013_sync_calculation.t.js',
-            // 'chrono/015_listeners.t.js',
+            'chrono/015_listeners.t.js',
             'chrono/016_recursion.t.js',
             'chrono/017_identifier_listener.t.js',
             'chrono/020_graph_branching.t.js',

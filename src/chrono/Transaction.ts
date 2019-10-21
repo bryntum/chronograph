@@ -730,7 +730,7 @@ class Transaction extends base {
 
                     const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
-                    // if (sameAsPrevious) entry.sameAsPrevious    = true
+                    if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
                         for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
@@ -905,14 +905,14 @@ class Transaction extends base {
 
                     const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
-                    // if (sameAsPrevious) entry.sameAsPrevious    = true
+                    if (sameAsPrevious) entry.sameAsPrevious    = true
 
                     if (sameAsPrevious && previousEntry.outgoing) {
-                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
+                        for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                            // copy the "latest" ougoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.getOutgoing().set(previousOutgoingEntry, EdgeTypeNormal)
+                            // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
+                            entry.getOutgoing().set(previousOutgoingEntry, type)
 
                             const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
@@ -936,6 +936,7 @@ class Transaction extends base {
                 else if (value instanceof Identifier) {
                     if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
+                    // should be just `this.addEdge` but inlined manually
                     let requestedEntry : Quark             = entries.get(value)
 
                     // creating "shadowing" entry, to store the new edges
@@ -952,6 +953,7 @@ class Transaction extends base {
                     }
 
                     requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
+                    // EOF should be just `this.addEdge` but inlined manually
 
                     //----------------
                     let requestedQuark : Quark             = requestedEntry.origin

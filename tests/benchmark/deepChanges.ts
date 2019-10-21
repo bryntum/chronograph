@@ -78,7 +78,7 @@ export const deepChangesSyncSmall = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - synchronous',
 
     setup       : async () => {
-        return deepGraphSync(1300)
+        return deepGraphSync(1000)
     }
 })
 
@@ -86,7 +86,7 @@ export const deepChangesMobxSmall = DeepChangesMobx.new({
     name        : 'Deep graph changes - Mobx',
 
     setup       : async () => {
-        return mobxGraph(1300)
+        return mobxGraph(1000)
     }
 })
 

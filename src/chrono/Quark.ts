@@ -39,7 +39,7 @@ class Quark extends base {
     origin          : Quark        = undefined
 
     // used by the listeners facility which is under question
-    // sameAsPrevious          : boolean = false
+    sameAsPrevious          : boolean = false
 
     edgesFlow       : number = 0
     visitedAt       : number = NOT_VISITED

@@ -57,13 +57,13 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
 StartTest(t => {
 
     t.it('Should be possible to run several propagation in parallel', async t => {
-        const { graph, boxes }      = deepGraphGen(100000)
-
-        const observer1  = graph.observe(function * () {
-            yield boxes[ 5000 ]
-            yield boxes[ 5001 ]
-            yield boxes[ 5003 ]
-        })
+        // const { graph, boxes }      = deepGraphGen(100000)
+        //
+        // const observer1  = graph.observe(function * () {
+        //     yield boxes[ 5000 ]
+        //     yield boxes[ 5001 ]
+        //     yield boxes[ 5003 ]
+        // })
 
         // const observer2  = graph.observe(function * () {
         //     yield boxes[ 5004 ]

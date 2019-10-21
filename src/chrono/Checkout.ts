@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
@@ -18,14 +18,14 @@ export type PropagateResult = {
 }
 
 
-// export class Listener extends Base {
-//     handlers            : AnyFunction[]     = []
-//
-//     trigger (value : any) {
-//         for (let i = 0; i < this.handlers.length; i++)
-//             this.handlers[ i ](value)
-//     }
-// }
+export class Listener extends Base {
+    handlers            : AnyFunction[]     = []
+
+    trigger (value : any) {
+        for (let i = 0; i < this.handlers.length; i++)
+            this.handlers[ i ](value)
+    }
+}
 
 
 export const ObserverSegment = Symbol('ObserverSegment')
@@ -46,7 +46,7 @@ class Checkout extends base {
     // users supposed to opt-in for undo/redo by increasing this config
     historyLimit            : number        = 0
 
-    // listeners               : Map<Identifier, Listener> = new Map()
+    listeners               : Map<Identifier, Listener> = new Map()
 
 
     initialize (...args) {
@@ -200,13 +200,12 @@ class Checkout extends base {
         // might be already merged with previous
         for (const [ identifier, quarkEntry ] of this.baseRevision.scope) {
             quarkEntry.cleanup()
-            // // ignore "shadowing" entries
-            // if (quarkEntry.sameAsPrevious || quarkEntry.previous && quarkEntry.quark === quarkEntry.previous.quark) continue
-            //
-            // const listener  = this.listeners.get(identifier)
-            //
-            // // TODO skip quarks with the values, equal to the previous (`sameAsPrevious` flag)
-            // if (listener) listener.trigger(quarkEntry.value)
+            // ignore "shadowing" entries
+            if (quarkEntry.sameAsPrevious || quarkEntry.isShadow()) continue
+
+            const listener  = this.listeners.get(identifier)
+
+            if (listener) listener.trigger(quarkEntry.value)
         }
 
         this.markAndSweep()
@@ -306,7 +305,7 @@ class Checkout extends base {
 
     observe
         <ContextT extends Context, Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
-        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>/*, onUpdated : (value : Result) => any*/)
+        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, onUpdated : (value : Result) => any)
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
             // observers are explicitly eager
@@ -320,22 +319,21 @@ class Checkout extends base {
             // segment         : ObserverSegment
         }))
 
-        // return this.addListener(identifier, onUpdated)
+        return this.addListener(identifier, onUpdated)
     }
 
 
-    // // TODO tie the type of `value` in the `onUpdated` to the `ValueT` in `identifier`
-    // addListener (identifier : Identifier, onUpdated : (value : any) => any) {
-    //     let listener    = this.listeners.get(identifier)
-    //
-    //     if (!listener) {
-    //         listener    = Listener.new()
-    //
-    //         this.listeners.set(identifier, listener)
-    //     }
-    //
-    //     listener.handlers.push(onUpdated)
-    // }
+    addListener (identifier : Identifier, onUpdated : (value : any) => any) {
+        let listener    = this.listeners.get(identifier)
+
+        if (!listener) {
+            listener    = Listener.new()
+
+            this.listeners.set(identifier, listener)
+        }
+
+        listener.handlers.push(onUpdated)
+    }
 
 
     undo () : boolean {
