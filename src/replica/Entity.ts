@@ -44,26 +44,6 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 $[ name ]   = this.createFieldIdentifier(field)
             })
 
-            // this.$entity.forEachField((field, name) => {
-            //     if (field.listeners) {
-            //         let listeners     = $[ name ].listeners
-            //
-            //         if (!listeners) listeners = $[ name ].listeners = new Set()
-            //
-            //         field.listeners.forEach(name => listeners.add($[ name ]))
-            //     }
-            //
-            //     if (field.listens) {
-            //         field.listens.forEach(name => {
-            //             let listeners     = $[ name ].listeners
-            //
-            //             if (!listeners) listeners = $[ name ].listeners = new Set()
-            //
-            //             listeners.add($[ field.name ])
-            //         })
-            //     }
-            // })
-
             // debugging aid
             const proxy = new Proxy($, {
                 get (target : object, property : string | number | symbol, receiver : any) : any {
