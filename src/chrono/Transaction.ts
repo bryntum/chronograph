@@ -29,7 +29,7 @@ import {
 } from "./Effect.js"
 import { Identifier, NoProposedValue, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
-import { MinimalRevision, Revision } from "./Revision.js"
+import { MinimalRevision, Revision, Scope } from "./Revision.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -135,6 +135,8 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
         let currentEntry : Quark    = latestEntry
 
+        // TODO remove the origin/shadowing concepts?
+        // we iterate over the edges from "origin" anyway
         do {
             for (const outgoingEntry of currentEntry.outgoing.keys()) {
                 const identifier    = outgoingEntry.identifier
@@ -249,6 +251,9 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
 //---------------------------------------------------------------------------------------------------------------------
 export type YieldableValue = Effect | Identifier
+
+
+export type TransactionPropagateResult = { revision : Revision, entries : Scope }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -444,7 +449,16 @@ class Transaction extends base {
             // })
 
             for (const [ identifier, entry ] of entries) {
-                candidate.scope.set(identifier, entry)
+                if (entry.isShadow()) {
+                    const latestEntry   = candidate.getLatestEntryFor(identifier)
+
+                    // TODO remove the origin/shadowing concepts? this line won't be needed then
+                    // and we iterate over the edges from "origin" anyway
+                    entry.outgoing.forEach((toEntry, toIdentifier) => latestEntry.outgoing.set(toIdentifier, toEntry))
+
+                } else {
+                    candidate.scope.set(identifier, entry)
+                }
 
                 // entry.transition    = undefined
             }
@@ -477,17 +491,20 @@ class Transaction extends base {
     }
 
 
-    postPropagate () : Revision {
+    postPropagate () : TransactionPropagateResult {
         this.populateCandidateScopeFromTransitions(this.candidate, this.entries)
+
+        // won't be available after next line
+        const entries               = this.entries
 
         // for some reason need to cleanup the `walkContext` manually, otherwise the extra revisions hangs in memory
         this.walkContext            = undefined
 
-        return this.candidate
+        return { revision : this.candidate, entries }
     }
 
 
-    propagate (args? : PropagateArguments) : Revision {
+    propagate (args? : PropagateArguments) : TransactionPropagateResult {
         const stack = this.prePropagate(args)
 
         runGeneratorSyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
@@ -497,7 +514,7 @@ class Transaction extends base {
 
 
     // propagation that does not use generators at all
-    propagateSync (args? : PropagateArguments) : Revision {
+    propagateSync (args? : PropagateArguments) : TransactionPropagateResult {
         const stack = this.prePropagate(args)
 
         this.calculateTransitionsStackSync(this.onEffectSync, stack)
@@ -506,7 +523,7 @@ class Transaction extends base {
     }
 
 
-    async propagateAsync (args? : PropagateArguments) : Promise<Revision> {
+    async propagateAsync (args? : PropagateArguments) : Promise<TransactionPropagateResult> {
         const stack = this.prePropagate(args)
 
         // TODO should check the `async` flag of the effect and do not do `await` if not needed
@@ -662,7 +679,7 @@ class Transaction extends base {
 
 
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
-    // it seems that overhead of calling few more functions in such tight loop as this outweights the optimization
+    // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<Quark>) : Generator<any, void, unknown> {
         const entries = this.entries
 
@@ -811,6 +828,12 @@ class Transaction extends base {
                         }
                     }
                 }
+                // else if (value instanceof Effect) {
+                //
+                //
+                //     stack.pop()
+                //     break
+                // }
                 else if (value === SynchronousCalculationStarted) {
                     // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
                     // 1) there's a cycle during synchronous computation (we throw exception in `read` method)

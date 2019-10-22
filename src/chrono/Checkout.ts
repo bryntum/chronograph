@@ -5,7 +5,7 @@ import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
-import { MinimalTransaction, Transaction, YieldableValue } from "./Transaction.js"
+import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -190,8 +190,10 @@ class Checkout extends base {
     }
 
 
-    finalizePropagation (nextRevision : Revision) : PropagateResult {
-        if (nextRevision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
+    finalizePropagation (transactionResult : TransactionPropagateResult) : PropagateResult {
+        const { revision, entries } = transactionResult
+
+        if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
 
         // dereference all revisions
         for (const [ revision, isReachable ] of this.eachReachableRevision()) {
@@ -202,16 +204,13 @@ class Checkout extends base {
 
         // const previousRevision  = this.baseRevision
 
-        this.baseRevision       = this.topRevision = nextRevision
-
-        // TODO should iterate over "entries" of transaction, instead of `scope` of revision?
-        // the only case when those are different things is calculating of lazy identifier, where
-        // the "candidate" and "baseRevision" of the transaction are same value
+        this.baseRevision       = this.topRevision = revision
 
         // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
         // might be already merged with previous
-        for (const [ identifier, quarkEntry ] of this.baseRevision.scope) {
+        for (const [ identifier, quarkEntry ] of entries) {
             quarkEntry.cleanup()
+
             // ignore "shadowing" entries
             if (quarkEntry.sameAsPrevious || quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
 

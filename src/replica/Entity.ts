@@ -108,7 +108,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 field               : field,
                 self                : this,
                 context             : this,
-                lazy                : field.eager ? false : true
+                // lazy                : field.eager ? false : true
             }
 
             //------------------
