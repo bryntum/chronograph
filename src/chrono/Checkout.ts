@@ -188,7 +188,7 @@ class Checkout extends base {
 
         const result            = this.finalizePropagation(nextRevision)
 
-        await this.finalizePropagationAsync()
+        await this.finalizePropagationAsync(nextRevision)
 
         return result
     }
@@ -232,7 +232,7 @@ class Checkout extends base {
     }
 
 
-    async finalizePropagationAsync () {
+    async finalizePropagationAsync (transactionResult : TransactionPropagateResult) {
     }
 
 
