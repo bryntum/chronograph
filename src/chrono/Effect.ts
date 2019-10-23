@@ -149,7 +149,7 @@ export const UnsafeProposedOrPreviousValueOf = (identifier : Identifier) : Unsaf
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ProgressNotificationEffect extends Effect {
+export type ProgressNotificationEffect = {
     total           : number
 
     remaining       : number

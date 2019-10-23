@@ -637,10 +637,11 @@ class Transaction extends base {
                     if (!lastProgressNotificationDate || (now - lastProgressNotificationDate) > this.emitProgressNotificationsEveryMs) {
                         this.lastProgressNotificationDate   = now
 
-                        this.graph.onPropagationProgressNotification(ProgressNotificationEffect.new({
+                        this.graph.onPropagationProgressNotification({
                             total       : this.plannedTotalIdentifiersToCalculate,
-                            remaining   : stack.length
-                        }))
+                            remaining   : stack.length,
+                            phase       : 'propagating'
+                        })
 
                         yield delay(0)
                     }
