@@ -61,11 +61,13 @@ class Checkout extends base {
     clear () {
         this.baseRevision.scope.clear()
         this.baseRevision.previous  = null
+        this.listeners.clear()
 
         this.baseRevision   = MinimalRevision.new()
         this.topRevision    = this.baseRevision
 
         clearLazyProperty(this, 'followingRevision')
+        clearLazyProperty(this, 'activeTransaction')
 
         this.markAndSweep()
     }
@@ -318,6 +320,11 @@ class Checkout extends base {
 
     touch (identifier : Identifier) : Quark {
         return this.activeTransaction.touch(identifier)
+    }
+
+
+    readIfExists (identifier : Identifier) : any {
+        return this.baseRevision.readIfExists(identifier)
     }
 
 
