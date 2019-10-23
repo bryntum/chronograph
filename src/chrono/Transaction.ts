@@ -6,6 +6,7 @@ import {
     runGeneratorSyncWithEffect,
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
+import { delay } from "../util/Helpers.js"
 import { LeveledStack } from "../util/LeveledStack.js"
 import { CheckoutI, PropagateArguments } from "./Checkout.js"
 import {
@@ -189,6 +190,7 @@ class Transaction extends base {
     stackGen                : LeveledStack<Quark>  = new LeveledStack()
 
     onEffectSync            : SyncEffectHandler     = undefined
+    onEffectAsync           : AsyncEffectHandler    = undefined
 
     propagationStartDate            : number        = 0
     lastProgressNotificationDate    : number        = 0
@@ -225,6 +227,7 @@ class Transaction extends base {
         // since `read` is the most used effect anyway, we bind `onEffectSync` to `read` and
         // instead inside of `read` delegate to `yieldSync` for non-identifiers
         this.onEffectSync   = this.read.bind(this)
+        this.onEffectAsync  = this.yieldAsync.bind(this)
     }
 
 
@@ -246,9 +249,13 @@ class Transaction extends base {
     }
 
 
-    // async yieldAsync (effect : Effect) : Promise<any> {
-    //     return this[ effect.handler ](effect, this.getActiveEntry())
-    // }
+    async yieldAsync (effect : Effect) : Promise<any> {
+        if (effect instanceof Promise) {
+            return await effect
+        }
+
+        return this[ effect.handler ](effect, this.getActiveEntry())
+    }
 
 
     // see the comment for the `onEffectSync`
@@ -459,7 +466,7 @@ class Transaction extends base {
         const stack = this.prePropagate(args)
 
         // TODO should check the `async` flag of the effect and do not do `await` if not needed
-        await runGeneratorAsyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
+        await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
         return this.postPropagate()
     }
@@ -634,6 +641,8 @@ class Transaction extends base {
                             total       : this.plannedTotalIdentifiersToCalculate,
                             remaining   : stack.length
                         }))
+
+                        yield delay(0)
                     }
                 }
             }

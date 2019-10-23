@@ -154,5 +154,3 @@ export class ProgressNotificationEffect extends Effect {
 
     remaining       : number
 }
-
-// export const ProgressNotification = (total : number, remaining : number) : ProgressNotificationEffect => ProgressNotificationEffect.new({ total, remaining })
