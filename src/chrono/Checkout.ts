@@ -186,7 +186,11 @@ class Checkout extends base {
 
         const nextRevision      = await activeTransaction.propagateAsync(args)
 
-        return this.finalizePropagation(nextRevision)
+        const result            = this.finalizePropagation(nextRevision)
+
+        await this.finalizePropagationAsync()
+
+        return result
     }
 
 
@@ -226,6 +230,11 @@ class Checkout extends base {
 
         return
     }
+
+
+    async finalizePropagationAsync () {
+    }
+
 
 
     variable (value : any) : Variable {
