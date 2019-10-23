@@ -153,4 +153,6 @@ export class ProgressNotificationEffect extends Effect {
     total           : number
 
     remaining       : number
+
+    phase           : string
 }
