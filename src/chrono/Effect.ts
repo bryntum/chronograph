@@ -146,3 +146,13 @@ export class UnsafeProposedOrPreviousValueOfEffect extends Effect {
 }
 
 export const UnsafeProposedOrPreviousValueOf = (identifier : Identifier) : UnsafeProposedOrPreviousValueOfEffect => UnsafeProposedOrPreviousValueOfEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ProgressNotificationEffect extends Effect {
+    total           : number
+
+    remaining       : number
+}
+
+// export const ProgressNotification = (total : number, remaining : number) : ProgressNotificationEffect => ProgressNotificationEffect.new({ total, remaining })

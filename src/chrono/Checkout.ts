@@ -2,6 +2,7 @@ import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../c
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
+import { ProgressNotificationEffect } from "./Effect.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
@@ -47,6 +48,10 @@ class Checkout extends base {
     historyLimit            : number        = 0
 
     listeners               : Map<Identifier, Listener> = new Map()
+
+    runningTransaction      : Transaction
+
+    enableProgressNotifications     : boolean   = false
 
 
     initialize (...args) {
@@ -161,7 +166,11 @@ class Checkout extends base {
 
 
     get activeTransaction () : Transaction {
-        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({ baseRevision : this.baseRevision }))
+        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({
+            baseRevision                : this.baseRevision,
+            graph                       : this,
+            enableProgressNotifications : this.enableProgressNotifications
+        }))
     }
 
 
@@ -173,29 +182,37 @@ class Checkout extends base {
 
 
     propagate (args? : PropagateArguments) : PropagateResult {
-        const activeTransaction = clearLazyProperty(this, 'activeTransaction')
+        const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
 
         if (!activeTransaction) return
 
         const nextRevision      = activeTransaction.propagate(args)
 
-        return this.finalizePropagation(nextRevision)
+        const result            = this.finalizePropagation(nextRevision)
+
+        this.runningTransaction = null
+
+        return result
     }
 
 
     propagateSync (args? : PropagateArguments) : PropagateResult {
-        const activeTransaction = clearLazyProperty(this, 'activeTransaction')
+        const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
 
         if (!activeTransaction) return
 
         const nextRevision      = activeTransaction.propagateSync(args)
 
-        return this.finalizePropagation(nextRevision)
+        const result            = this.finalizePropagation(nextRevision)
+
+        this.runningTransaction = null
+
+        return result
     }
 
 
     async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
-        const activeTransaction = clearLazyProperty(this, 'activeTransaction')
+        const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
 
         if (!activeTransaction) return Promise.resolve(null)
 
@@ -204,6 +221,8 @@ class Checkout extends base {
         const result            = this.finalizePropagation(nextRevision)
 
         await this.finalizePropagationAsync(nextRevision)
+
+        this.runningTransaction = null
 
         return result
     }
@@ -429,6 +448,10 @@ class Checkout extends base {
         clearLazyProperty(this, 'activeTransaction')
 
         return true
+    }
+
+
+    onPropagationProgressNotification (notification : ProgressNotificationEffect) {
     }
 }
 

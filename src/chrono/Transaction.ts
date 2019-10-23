@@ -7,7 +7,7 @@ import {
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
 import { LeveledStack } from "../util/LeveledStack.js"
-import { PropagateArguments } from "./Checkout.js"
+import { CheckoutI, PropagateArguments } from "./Checkout.js"
 import {
     Effect,
     HasProposedValueSymbol,
@@ -15,6 +15,7 @@ import {
     OwnQuarkSymbol,
     PreviousValueOfEffect,
     PreviousValueOfSymbol,
+    ProgressNotificationEffect,
     ProposedArgumentsOfSymbol,
     ProposedOrCurrentSymbol,
     ProposedOrPreviousValueOfSymbol,
@@ -174,6 +175,10 @@ export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
 class Transaction extends base {
     baseRevision            : Revision
 
+    candidate               : Revision
+
+    graph                   : CheckoutI
+
     isClosed                : boolean               = false
 
     walkContext             : WalkForwardOverwriteContext
@@ -183,9 +188,19 @@ class Transaction extends base {
     // the `stackGen` supports async effects notably
     stackGen                : LeveledStack<Quark>  = new LeveledStack()
 
-    candidate               : Revision
-
     onEffectSync            : SyncEffectHandler
+
+    enableProgressNotifications     : boolean   = false
+
+    propagationStartDate            : number
+    lastProgressNotificationDate    : number
+
+    startProgressNotificationsAfter : number    = 1500
+    emitProgressNotificationsEvery  : number    = 200
+
+    plannedTotalIdentifiersToCalculate  : number
+
+
 
 
     initialize (...args) {
@@ -385,6 +400,9 @@ class Transaction extends base {
     prePropagate (args? : PropagateArguments) : LeveledStack<Quark> {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
+        this.isClosed   = true
+        this.propagationStartDate   = Date.now()
+
         let stack : LeveledStack<Quark>
 
         if (args && args.calculateOnly) {
@@ -399,9 +417,9 @@ class Transaction extends base {
         } else
             stack                   = this.stackGen
 
-        this.isClosed   = true
-
         for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark)
+
+        this.plannedTotalIdentifiersToCalculate = stack.length
 
         return stack
     }
@@ -597,9 +615,29 @@ class Transaction extends base {
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<Quark>) : Generator<any, void, unknown> {
-        const entries = this.entries
+        const entries                       = this.entries
+        const propagationStartDate          = this.propagationStartDate
+        const enableProgressNotifications   = this.enableProgressNotifications
 
         while (stack.length) {
+            if (enableProgressNotifications) {
+                const now               = Date.now()
+                const elapsed           = now - propagationStartDate
+
+                if (elapsed > this.startProgressNotificationsAfter) {
+                    const lastProgressNotificationDate      = this.lastProgressNotificationDate
+
+                    if (!lastProgressNotificationDate || (now - lastProgressNotificationDate) > this.emitProgressNotificationsEvery) {
+                        this.lastProgressNotificationDate   = now
+
+                        this.graph.onPropagationProgressNotification(ProgressNotificationEffect.new({
+                            total       : this.plannedTotalIdentifiersToCalculate,
+                            remaining   : stack.length
+                        }))
+                    }
+                }
+            }
+
             const entry             = stack.last()
             const identifier        = entry.identifier
 
