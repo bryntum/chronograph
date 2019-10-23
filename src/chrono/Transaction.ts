@@ -193,16 +193,12 @@ class Transaction extends base {
     propagationStartDate            : number        = 0
     lastProgressNotificationDate    : number        = 0
 
-    startProgressNotificationsAfterMs : number      = 1500
+    startProgressNotificationsAfterMs : number      = 0
     emitProgressNotificationsEveryMs  : number      = 200
 
     emitProgressNotificationsEveryCalculations  : number = 100
 
     plannedTotalIdentifiersToCalculate  : number    = 0
-
-
-
-
 
 
     initialize (...args) {
@@ -621,8 +617,10 @@ class Transaction extends base {
         const propagationStartDate          = this.propagationStartDate
         const enableProgressNotifications   = this.graph.enableProgressNotifications
 
+        let counter : number                = 0
+
         while (stack.length) {
-            if (enableProgressNotifications) {
+            if (enableProgressNotifications && !(counter++ % this.emitProgressNotificationsEveryCalculations)) {
                 const now               = Date.now()
                 const elapsed           = now - propagationStartDate
 
