@@ -4,7 +4,7 @@ import { CalculationContext, CalculationFunction, Context } from "../primitives/
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { Quark } from "./Quark.js"
-import { Revision } from "./Revision.js"
+import { MinimalRevision, Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
 
 
@@ -53,6 +53,19 @@ class Checkout extends base {
         super.initialize(...args)
 
         if (!this.topRevision) this.topRevision = this.baseRevision
+
+        this.markAndSweep()
+    }
+
+
+    clear () {
+        this.baseRevision.scope.clear()
+        this.baseRevision.previous  = null
+
+        this.baseRevision   = MinimalRevision.new()
+        this.topRevision    = this.baseRevision
+
+        clearLazyProperty(this, 'followingRevision')
 
         this.markAndSweep()
     }
