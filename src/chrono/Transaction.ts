@@ -173,32 +173,34 @@ export type TransactionPropagateResult = { revision : Revision, entries : Scope 
 export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Transaction extends base {
-    baseRevision            : Revision
+    baseRevision            : Revision              = undefined
 
-    candidate               : Revision
+    candidate               : Revision              = undefined
 
-    graph                   : CheckoutI
+    graph                   : CheckoutI             = undefined
 
     isClosed                : boolean               = false
 
-    walkContext             : WalkForwardOverwriteContext
+    walkContext             : WalkForwardOverwriteContext   = undefined
 
     // we use 2 different stacks, because they support various effects
     stackSync               : LeveledStack<Quark>  = new LeveledStack()
     // the `stackGen` supports async effects notably
     stackGen                : LeveledStack<Quark>  = new LeveledStack()
 
-    onEffectSync            : SyncEffectHandler
+    onEffectSync            : SyncEffectHandler     = undefined
 
-    enableProgressNotifications     : boolean   = false
+    propagationStartDate            : number        = 0
+    lastProgressNotificationDate    : number        = 0
 
-    propagationStartDate            : number
-    lastProgressNotificationDate    : number
+    startProgressNotificationsAfterMs : number      = 1500
+    emitProgressNotificationsEveryMs  : number      = 200
 
-    startProgressNotificationsAfter : number    = 1500
-    emitProgressNotificationsEvery  : number    = 200
+    emitProgressNotificationsEveryCalculations  : number = 100
 
-    plannedTotalIdentifiersToCalculate  : number
+    plannedTotalIdentifiersToCalculate  : number    = 0
+
+
 
 
 
@@ -617,17 +619,17 @@ class Transaction extends base {
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<Quark>) : Generator<any, void, unknown> {
         const entries                       = this.entries
         const propagationStartDate          = this.propagationStartDate
-        const enableProgressNotifications   = this.enableProgressNotifications
+        const enableProgressNotifications   = this.graph.enableProgressNotifications
 
         while (stack.length) {
             if (enableProgressNotifications) {
                 const now               = Date.now()
                 const elapsed           = now - propagationStartDate
 
-                if (elapsed > this.startProgressNotificationsAfter) {
+                if (elapsed > this.startProgressNotificationsAfterMs) {
                     const lastProgressNotificationDate      = this.lastProgressNotificationDate
 
-                    if (!lastProgressNotificationDate || (now - lastProgressNotificationDate) > this.emitProgressNotificationsEvery) {
+                    if (!lastProgressNotificationDate || (now - lastProgressNotificationDate) > this.emitProgressNotificationsEveryMs) {
                         this.lastProgressNotificationDate   = now
 
                         this.graph.onPropagationProgressNotification(ProgressNotificationEffect.new({

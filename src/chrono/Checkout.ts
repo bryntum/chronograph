@@ -168,8 +168,7 @@ class Checkout extends base {
     get activeTransaction () : Transaction {
         return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({
             baseRevision                : this.baseRevision,
-            graph                       : this,
-            enableProgressNotifications : this.enableProgressNotifications
+            graph                       : this
         }))
     }
 
