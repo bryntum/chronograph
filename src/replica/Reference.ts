@@ -87,7 +87,7 @@ export const ReferenceIdentifier = <T extends AnyConstructor<FieldIdentifier & C
             if (this.hasBucket()) {
                 // here we only need to remove from the "previous", "stable" bucket, because
                 // the calculation for the removed reference won't be called - the possible `proposedValue` of reference will be ignored
-                const value  = graph.read(this) as Entity
+                const value  = graph.readIfExists(this) as Entity
 
                 if (value != null) {
                     this.getBucket(value).removeFromBucket(graph.activeTransaction, this.self)

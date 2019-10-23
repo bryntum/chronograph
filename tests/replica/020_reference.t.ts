@@ -274,4 +274,39 @@ StartTest(t => {
         t.isDeeply(entity1.referencedFromEntity2, new Set([ entity2 ]), 'Correctly resolved reference')
         t.isDeeply(entity2.referencedFromEntity1, new Set([ entity1 ]), 'Correctly resolved reference')
     })
+
+
+    t.it('Removing an added entity w/o propagation should not throw exception', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity(Base) {
+            @bucket()
+            books           : Set<Book>
+        }
+
+        @entity
+        class Book extends Entity(Base) {
+            @reference({ bucket : 'books' })
+            writtenBy       : Author
+        }
+
+        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+
+        const markTwain         = Author.new()
+        const tomSoyer          = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(markTwain)
+        replica1.addEntity(tomSoyer)
+
+        // no propagation here, we test that no exception is thrown
+
+        replica1.removeEntity(markTwain)
+        replica1.removeEntity(tomSoyer)
+
+        t.pass('No exception thrown')
+    })
+
 })
