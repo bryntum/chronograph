@@ -130,11 +130,11 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         enterGraph (replica : ChronoGraph) {
             if (this.graph) throw new Error('Already entered replica')
 
-            this.graph        = replica
+            this.graph      = replica
 
             replica.addIdentifier(this.$$)
 
-            const keys  = Object.keys(this.$)
+            const keys      = Object.keys(this.$)
 
             // only the already created identifiers will be added
             for (let i = 0; i < keys.length; i++) {

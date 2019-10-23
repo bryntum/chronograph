@@ -329,6 +329,10 @@ class Transaction extends base {
         const entry                 = this.touch(identifier)
 
         entry.acquireQuark().value  = TombStone
+
+        //TODO cleanup
+        //@ts-ignore
+        identifier.DATA             = this.readDirty(identifier)
     }
 
 

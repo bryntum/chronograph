@@ -23,6 +23,8 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // is cleared during the 1st join to the graph
     DATA        : this[ 'ValueT' ]
 
+    // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
+
     // put (proposedValue : ChronoValue, ...args) {
     //     return super.put(this.field.converter ? this.field.converter(proposedValue, this.field) : proposedValue, ...args)
     // }
