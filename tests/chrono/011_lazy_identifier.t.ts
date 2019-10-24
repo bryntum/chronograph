@@ -1,5 +1,7 @@
+import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
+import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
 declare const StartTest : any
 
@@ -194,5 +196,114 @@ StartTest(t => {
         t.expect(c1Spy).toHaveBeenCalled(0)
     })
 
+
+    t.it('Should not be able to calculate lazy identifier that uses `ProposedOrCurrent`', async t => {
+        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1            = graph1.variableId('i1', 0)
+        const i2            = graph1.variableId('i2', 1)
+
+        const dispatcher    = graph1.variableId('dispatcher', 'pure')
+
+        const c1            = graph1.addIdentifier(CalculatedValueGen.new({
+            name            : 'c1',
+            lazy            : true,
+            calculation     : function * () : CalculationIterator<number>{
+                const dispatch : string = yield dispatcher
+
+                if (dispatch === 'pure') {
+                    return (yield i1) + (yield i2)
+                } else {
+                    return (yield ProposedOrCurrent)
+                }
+            }
+        }))
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'pure', 1 ], "Correct result calculated")
+
+        // ----------------
+        const c1Spy         = t.spyOn(c1, 'calculation')
+
+        graph1.write(dispatcher, 'proposed')
+        graph1.write(c1, 10)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'proposed', 10 ], "Correctly calculated lazy value")
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+
+        // ----------------
+        c1Spy.reset()
+
+        graph1.write(i1, 10)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, 'proposed', 10 ], "Correct result calculated")
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+    })
+
+
+    t.it('Should not be able to calculate lazy identifier that uses `ProposedOrCurrent` - sync', async t => {
+        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1            = graph1.variableId('i1', 0)
+        const i2            = graph1.variableId('i2', 1)
+
+        const dispatcher    = graph1.variableId('dispatcher', 'pure')
+
+        const c1            = graph1.addIdentifier(CalculatedValueSync.new({
+            name            : 'c1',
+            lazy            : true,
+            calculation     : function (YIELD) : number{
+                const dispatch : string = YIELD(dispatcher)
+
+                if (dispatch === 'pure') {
+                    return YIELD(i1) + YIELD(i2)
+                } else {
+                    return YIELD(ProposedOrCurrent)
+                }
+            }
+        }))
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'pure', 1 ], "Correct result calculated")
+
+        // ----------------
+        const c1Spy         = t.spyOn(c1, 'calculation')
+
+        graph1.write(dispatcher, 'proposed')
+        graph1.write(c1, 10)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'proposed', 10 ], "Correctly calculated lazy value")
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+
+        // ----------------
+        c1Spy.reset()
+
+        graph1.write(i1, 10)
+
+        graph1.propagate()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, 'proposed', 10 ], "Correct result calculated")
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+    })
 
 })
