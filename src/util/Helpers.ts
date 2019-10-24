@@ -17,7 +17,7 @@ export const typeOf = (value : any) : string => Object.prototype.toString.call(v
 
 //---------------------------------------------------------------------------------------------------------------------
 export const defineProperty = <T extends object, S extends keyof T>(target : T, property : S, value : T[ S ]) : T[ S ] => {
-    Object.defineProperty(target, property, { value, enumerable : true })
+    Object.defineProperty(target, property, { value, enumerable : true, configurable : true })
 
     return value
 }

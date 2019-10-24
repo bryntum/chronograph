@@ -352,7 +352,7 @@ class Transaction extends base {
 
         //TODO cleanup
         //@ts-ignore
-        identifier.DATA             = this.readDirty(identifier)
+        //identifier.DATA             = this.readDirty(identifier)
     }
 
 
