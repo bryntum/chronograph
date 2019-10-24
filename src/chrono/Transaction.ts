@@ -622,7 +622,8 @@ class Transaction extends base {
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<Quark>) : Generator<any, void, unknown> {
         const entries                       = this.entries
         const propagationStartDate          = this.propagationStartDate
-        const enableProgressNotifications   = this.graph.enableProgressNotifications
+
+        const enableProgressNotifications   = this.graph ? this.graph.enableProgressNotifications : false
 
         let counter : number                = 0
 

@@ -1,7 +1,7 @@
 import { CalculatedValueSync } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
-import { buildClass } from "../class/InstanceOf.js"
+import { buildClass, instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationSync } from "../primitives/Calculation.js"
 import { Field } from "../schema/Field.js"
@@ -10,13 +10,13 @@ import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketField = <T extends AnyConstructor<Field>>(base : T) =>
+export const ReferenceBucketField = instanceOf(<T extends AnyConstructor<Field>>(base : T) =>
 
 class ReferenceBucketField extends base {
     persistent          : boolean   = false
 
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceBucketIdentifier
-}
+})
 
 export type ReferenceBucketField = Mixin<typeof ReferenceBucketField>
 
@@ -29,7 +29,7 @@ export const bucket : FieldDecorator<typeof MinimalReferenceBucketField> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
+export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceBucketIdentifier extends base {
         level               : number                = 1
@@ -81,7 +81,7 @@ export const ReferenceBucketIdentifier = <T extends AnyConstructor<FieldIdentifi
     }
 
     return ReferenceBucketIdentifier
-}
+})
 
 export type ReferenceBucketIdentifier = Mixin<typeof ReferenceBucketIdentifier>
 

@@ -3,7 +3,7 @@ import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction, YieldableValue } from "../chrono/Transaction.js"
-import { buildClass, isInstanceOf } from "../class/InstanceOf.js"
+import { buildClass, instanceOf, isInstanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { CalculationContext, CalculationSync } from "../primitives/Calculation.js"
 import { Field, Name } from "../schema/Field.js"
@@ -17,7 +17,7 @@ export type ResolverFunc    = (locator : any) => Entity
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceField = <T extends AnyConstructor<Field>>(base : T) =>
+export const ReferenceField = instanceOf(<T extends AnyConstructor<Field>>(base : T) =>
 
 class ReferenceField extends base {
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceIdentifier
@@ -25,7 +25,7 @@ class ReferenceField extends base {
     resolver            : ResolverFunc
 
     bucket              : Name
-}
+})
 
 export type ReferenceField = Mixin<typeof ReferenceField>
 
@@ -37,7 +37,7 @@ export const reference : FieldDecorator<typeof MinimalReferenceField> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceIdentifier = <T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
+export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceIdentifier extends base {
         level           : number                = 0
@@ -124,7 +124,7 @@ export const ReferenceIdentifier = <T extends AnyConstructor<FieldIdentifier & C
 
     return ReferenceIdentifier
 
-}
+})
 
 export type ReferenceIdentifier = Mixin<typeof ReferenceIdentifier>
 
