@@ -195,7 +195,7 @@ class Transaction extends base {
     propagationStartDate            : number        = 0
     lastProgressNotificationDate    : number        = 0
 
-    startProgressNotificationsAfterMs : number      = 0
+    startProgressNotificationsAfterMs : number      = 500
     emitProgressNotificationsEveryMs  : number      = 200
 
     emitProgressNotificationsEveryCalculations  : number = 100
