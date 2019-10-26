@@ -1,6 +1,7 @@
 import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
+import { MinimalRevision, Revision } from "../../src/chrono/Revision.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
 declare const StartTest : any
@@ -197,7 +198,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should not be able to calculate lazy identifier that uses `ProposedOrCurrent`', async t => {
+    t.it('Should be able to calculate lazy identifier that uses `ProposedOrCurrent`', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
@@ -208,7 +209,7 @@ StartTest(t => {
         const c1            = graph1.addIdentifier(CalculatedValueGen.new({
             name            : 'c1',
             lazy            : true,
-            calculation     : function * () : CalculationIterator<number>{
+            calculation     : function * () : CalculationIterator<number> {
                 const dispatch : string = yield dispatcher
 
                 if (dispatch === 'pure') {
@@ -252,7 +253,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should not be able to calculate lazy identifier that uses `ProposedOrCurrent` - sync', async t => {
+    t.it('Should be able to calculate lazy identifier that uses `ProposedOrCurrent` - sync', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
@@ -263,7 +264,7 @@ StartTest(t => {
         const c1            = graph1.addIdentifier(CalculatedValueSync.new({
             name            : 'c1',
             lazy            : true,
-            calculation     : function (YIELD) : number{
+            calculation     : function (YIELD) : number {
                 const dispatch : string = YIELD(dispatcher)
 
                 if (dispatch === 'pure') {
@@ -306,4 +307,50 @@ StartTest(t => {
         t.expect(c1Spy).toHaveBeenCalled(0)
     })
 
+
+    t.xit('Should calculate lazy identifiers in a batch', async t => {
+        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1            = graph1.variableId('i1', 0)
+        const i2            = graph1.variableId('i2', 1)
+
+        const c1            = graph1.addIdentifier(CalculatedValueGen.new({
+            name            : 'c1',
+            lazy            : true,
+            calculation     : function * () : CalculationIterator<number> {
+                return (yield i1) + (yield i2)
+            }
+        }))
+
+        const c2            = graph1.addIdentifier(CalculatedValueGen.new({
+            name            : 'c2',
+            lazy            : true,
+            calculation     : function * () : CalculationIterator<number> {
+                return (yield c1) + 1
+            }
+        }))
+
+        const c3            = graph1.addIdentifier(CalculatedValueGen.new({
+            name            : 'c3',
+            lazy            : true,
+            calculation     : function * () : CalculationIterator<number> {
+                return (yield c2) + 1
+            }
+        }))
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 0, 1, 1, 2, 3 ], "Correct result calculated")
+
+        // ----------------
+        const c1Spy         = t.spyOn(MinimalRevision.prototype, 'calculateLazyEntry')
+
+        graph1.write(i1, 1)
+
+        graph1.propagate()
+
+        t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 1, 1, 2, 3, 4 ], "Correct result calculated")
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+    })
 })
