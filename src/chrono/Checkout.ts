@@ -181,11 +181,11 @@ class Checkout extends base {
 
 
     propagate (args? : PropagateArguments) : PropagateResult {
-        const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
+        // const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
+        //
+        // if (!activeTransaction) return
 
-        if (!activeTransaction) return
-
-        const nextRevision      = activeTransaction.propagate(args)
+        const nextRevision      = this.activeTransaction.propagate(args)
 
         const result            = this.finalizePropagation(nextRevision)
 
@@ -196,11 +196,11 @@ class Checkout extends base {
 
 
     propagateSync (args? : PropagateArguments) : PropagateResult {
-        const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
+        // const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
+        //
+        // if (!activeTransaction) return
 
-        if (!activeTransaction) return
-
-        const nextRevision      = activeTransaction.propagateSync(args)
+        const nextRevision      = this.activeTransaction.propagateSync(args)
 
         const result            = this.finalizePropagation(nextRevision)
 
@@ -211,11 +211,11 @@ class Checkout extends base {
 
 
     async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
-        const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
+        // const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
+        //
+        // if (!activeTransaction) return Promise.resolve(null)
 
-        if (!activeTransaction) return Promise.resolve(null)
-
-        const nextRevision      = await activeTransaction.propagateAsync(args)
+        const nextRevision      = await this.activeTransaction.propagateAsync(args)
 
         const result            = this.finalizePropagation(nextRevision)
 
