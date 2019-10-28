@@ -89,7 +89,7 @@ export type ReferenceBucketIdentifier = Mixin<typeof ReferenceBucketIdentifier>
 //---------------------------------------------------------------------------------------------------------------------
 export const ReferenceBucketQuark = <T extends AnyConstructor<Quark>>(base : T) =>
 
-class ReferenceBucketQuarkEntry extends base {
+class ReferenceBucketQuark extends base {
     oldRefs             : Set<Entity>   = undefined
     newRefs             : Set<Entity>   = undefined
     previousValue       : Set<Entity>   = undefined
