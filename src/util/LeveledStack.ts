@@ -13,6 +13,26 @@ export class LeveledStack<T extends { level : number }> {
     currentLevel    : number            = MAX_SMI
 
 
+    takeLowestLevel () {
+        for (let i = 0; i < this.levels.length; i++) {
+            const level     = this.levels[ i ]
+
+            if (level) {
+                this.length         -= level.length
+
+                this.levels[ i ]    = null
+
+                return level
+            }
+        }
+    }
+
+
+    resetCachedPosition () {
+        this.currentLevel               = MAX_SMI
+    }
+
+
     last () {
         for (let i = this.currentLevel !== MAX_SMI ? this.currentLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]

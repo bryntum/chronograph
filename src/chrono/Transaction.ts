@@ -189,9 +189,12 @@ class Transaction extends base {
     // the `stackGen` supports async effects notably
     stackGen                : LeveledStack<Quark>  = new LeveledStack()
 
+    activeStack             : Quark[]
+
     onEffectSync            : SyncEffectHandler     = undefined
     onEffectAsync           : AsyncEffectHandler    = undefined
 
+    //---------------------
     propagationStartDate            : number        = 0
     lastProgressNotificationDate    : number        = 0
 
@@ -242,10 +245,12 @@ class Transaction extends base {
 
 
     getActiveEntry () : Quark {
-        // `stackSync` is always empty, except when the synchronous "batch" is being processed
-        const activeStack   = this.stackSync.length > 0 ? this.stackSync : this.stackGen
+        return this.activeStack[ this.activeStack.length - 1 ]
 
-        return activeStack.last()
+        // // `stackSync` is always empty, except when the synchronous "batch" is being processed
+        // const activeStack   = this.stackSync.length > 0 ? this.stackSync : this.stackGen
+        //
+        // return activeStack.last()
     }
 
 
@@ -405,7 +410,7 @@ class Transaction extends base {
     prePropagate (args? : PropagateArguments) : LeveledStack<Quark> {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
-        this.isClosed   = true
+        this.isClosed               = true
         this.propagationStartDate   = Date.now()
 
         let stack : LeveledStack<Quark>
@@ -413,12 +418,39 @@ class Transaction extends base {
         if (args && args.calculateOnly) {
             const calculateOnly     = args.calculateOnly
 
-            // TODO should probably calculate the identifiers from `calculateOnly`, PLUS all identifiers
-            // of the lower levels from `this.stackGen`, needs test
             stack                   = new LeveledStack()
-            stack.levels[ 0 ]       = calculateOnly.map(identifier => this.entries.get(identifier))
-            stack.length            = calculateOnly.length
 
+            let maxLevel : number   = 0
+
+            for (let i = 0; i < calculateOnly.length; i++) {
+                const identifier    = calculateOnly[ i ]
+
+                if (identifier.level > maxLevel) maxLevel = identifier.level
+
+                const entry = this.entries.get(identifier) || identifier.quarkClass.new({ identifier })
+
+                entry.forceCalculation()
+
+                stack.push(entry)
+            }
+
+            for (let i = 0; i < maxLevel; i++) {
+                const dirtyLayer    = this.stackGen.levels[ i ]
+
+                if (dirtyLayer) {
+                    const existingLevel = stack.levels[ i ]
+
+                    if (existingLevel) {
+                        existingLevel.push.apply(existingLevel, dirtyLayer)
+                    } else {
+                        stack.levels[ i ] = dirtyLayer.slice()
+                    }
+
+                    stack.length        += dirtyLayer.length
+                }
+            }
+
+            stack.resetCachedPosition()
         } else
             stack                   = this.stackGen
 
@@ -619,7 +651,7 @@ class Transaction extends base {
 
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
-    * calculateTransitionsStackGen (context : CalculationContext<any>, stack : LeveledStack<Quark>) : Generator<any, void, unknown> {
+    * calculateTransitionsStackGen (context : CalculationContext<any>, queue : LeveledStack<Quark>) : Generator<any, void, unknown> {
         const entries                       = this.entries
         const propagationStartDate          = this.propagationStartDate
 
@@ -627,376 +659,399 @@ class Transaction extends base {
 
         let counter : number                = 0
 
-        while (stack.length) {
-            if (enableProgressNotifications && !(counter++ % this.emitProgressNotificationsEveryCalculations)) {
-                const now               = Date.now()
-                const elapsed           = now - propagationStartDate
+        const prevActiveStack               = this.activeStack
 
-                if (elapsed > this.startProgressNotificationsAfterMs) {
-                    const lastProgressNotificationDate      = this.lastProgressNotificationDate
+        while (queue.length) {
 
-                    if (!lastProgressNotificationDate || (now - lastProgressNotificationDate) > this.emitProgressNotificationsEveryMs) {
-                        this.lastProgressNotificationDate   = now
+            const stack     = this.activeStack = queue.takeLowestLevel()
 
-                        this.graph.onPropagationProgressNotification({
-                            total       : this.plannedTotalIdentifiersToCalculate,
-                            remaining   : stack.length,
-                            phase       : 'propagating'
-                        })
+            while (stack.length) {
+                if (enableProgressNotifications && !(counter++ % this.emitProgressNotificationsEveryCalculations)) {
+                    const now               = Date.now()
+                    const elapsed           = now - propagationStartDate
 
-                        yield delay(0)
-                    }
-                }
-            }
+                    if (elapsed > this.startProgressNotificationsAfterMs) {
+                        const lastProgressNotificationDate      = this.lastProgressNotificationDate
 
-            const entry             = stack.last()
-            const identifier        = entry.identifier
+                        if (!lastProgressNotificationDate || (now - lastProgressNotificationDate) > this.emitProgressNotificationsEveryMs) {
+                            this.lastProgressNotificationDate   = now
 
-            // all entries in the stack must have entry already
-            if (entry.edgesFlow == 0) {
-                entry.edgesFlow--
+                            this.graph.onPropagationProgressNotification({
+                                total       : this.plannedTotalIdentifiersToCalculate,
+                                remaining   : stack.length,
+                                phase       : 'propagating'
+                            })
 
-                entries.delete(identifier)
-
-                const previousEntry = entry.previous
-
-                // // reduce garbage collection workload
-                entry.cleanup()
-
-                if (previousEntry && previousEntry.outgoing) {
-                    for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
-                        if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
-
-                        const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
-
-                        if (outgoingEntry) outgoingEntry.edgesFlow--
+                            yield delay(0)
+                        }
                     }
                 }
 
-                stack.pop()
-                continue
-            }
+                const entry             = stack[ stack.length - 1 ]
+                const identifier        = entry.identifier
 
-            const quark : Quark   = entry.origin
+                // all entries in the stack must have entry already
+                if (entry.edgesFlow == 0) {
+                    entry.edgesFlow--
 
-            if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                entry.cleanup()
-
-                stack.pop()
-                continue
-            }
-
-            const startedAtEpoch    = entry.visitEpoch
-
-            let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
-
-            do {
-                const value         = iterationResult.value === undefined ? null : iterationResult.value
-
-                if (entry.isCalculationCompleted()) {
-                    if (entry.visitEpoch !== startedAtEpoch) {
-                        stack.pop()
-                        break
-                    }
-
-                    const quark         = entry.getQuark()
-
-                    entry.setValue(value)
+                    entries.delete(identifier)
 
                     const previousEntry = entry.previous
 
                     // // reduce garbage collection workload
                     entry.cleanup()
 
-                    let ignoreSelfDependency : boolean = false
-
-                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
-
-                    if (sameAsPrevious) entry.sameAsPrevious    = true
-
-                    if (sameAsPrevious && previousEntry.outgoing) {
-                        for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
+                    if (previousEntry && previousEntry.outgoing) {
+                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                            // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.getOutgoing().set(previousOutgoingEntry, type)
-
-                            const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+                            const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
 
                             if (outgoingEntry) outgoingEntry.edgesFlow--
                         }
                     }
 
-                    if (quark.usedProposedOrCurrent) {
-                        if (quark.proposedValue !== NoProposedValue) {
-                            if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
-                        } else {
-                            if (sameAsPrevious) ignoreSelfDependency = true
-                        }
+                    stack.pop()
+                    continue
+                }
 
-                        if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
-                    }
+                const quark : Quark   = entry.origin
+
+                if (quark && quark.hasValue() || entry.edgesFlow < 0) {
+                    entry.cleanup()
 
                     stack.pop()
-                    break
+                    continue
                 }
-                else if (value instanceof Identifier) {
-                    if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
-                    // should be just `this.addEdge` but inlined manually
-                    let requestedEntry : Quark             = entries.get(value)
+                const startedAtEpoch    = entry.visitEpoch
 
-                    // creating "shadowing" entry, to store the new edges
-                    if (!requestedEntry) {
-                        const previousEntry = this.baseRevision.getLatestEntryFor(value)
+                let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
 
-                        if (!previousEntry) throwUnknownIdentifier(value)
+                do {
+                    const value         = iterationResult.value === undefined ? null : iterationResult.value
 
-                        requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                    if (entry.isCalculationCompleted()) {
+                        if (entry.visitEpoch !== startedAtEpoch) {
+                            stack.pop()
+                            break
+                        }
 
-                        entries.set(value, requestedEntry)
+                        const quark         = entry.getQuark()
 
-                        if (!previousEntry.origin) requestedEntry.forceCalculation()
-                    }
+                        entry.setValue(value)
 
-                    requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
-                    // EOF should be just `this.addEdge` but inlined manually
+                        const previousEntry = entry.previous
 
-                    //----------------
-                    let requestedQuark : Quark             = requestedEntry.origin
+                        // // reduce garbage collection workload
+                        entry.cleanup()
 
-                    if (requestedQuark && requestedQuark.hasValue()) {
-                        if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
+                        let ignoreSelfDependency : boolean = false
 
-                        iterationResult         = entry.continueCalculation(requestedQuark.value)
-                    }
-                    else if (requestedEntry.isShadow()) {
-                        // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
-                        // in both cases start new calculation
-                        requestedEntry.origin   = requestedEntry
-                        requestedEntry.forceCalculation()
+                        const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
-                        stack.push(requestedEntry)
+                        if (sameAsPrevious) entry.sameAsPrevious    = true
+
+                        if (sameAsPrevious && previousEntry.outgoing) {
+                            for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
+                                if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+
+                                // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
+                                entry.getOutgoing().set(previousOutgoingEntry, type)
+
+                                const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+
+                                if (outgoingEntry) outgoingEntry.edgesFlow--
+                            }
+                        }
+
+                        if (quark.usedProposedOrCurrent) {
+                            if (quark.proposedValue !== NoProposedValue) {
+                                if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
+                            } else {
+                                if (sameAsPrevious) ignoreSelfDependency = true
+                            }
+
+                            if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
+                        }
+
+                        stack.pop()
                         break
                     }
-                    else {
-                        if (!requestedEntry.isCalculationStarted()) {
+                    else if (value instanceof Identifier) {
+                        if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
+
+                        // should be just `this.addEdge` but inlined manually
+                        let requestedEntry : Quark             = entries.get(value)
+
+                        // creating "shadowing" entry, to store the new edges
+                        if (!requestedEntry) {
+                            const previousEntry = this.baseRevision.getLatestEntryFor(value)
+
+                            if (!previousEntry) throwUnknownIdentifier(value)
+
+                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+
+                            entries.set(value, requestedEntry)
+
+                            if (!previousEntry.origin) requestedEntry.forceCalculation()
+                        }
+
+                        requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
+                        // EOF should be just `this.addEdge` but inlined manually
+
+                        //----------------
+                        let requestedQuark : Quark             = requestedEntry.origin
+
+                        if (requestedQuark && requestedQuark.hasValue()) {
+                            if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
+
+                            iterationResult         = entry.continueCalculation(requestedQuark.value)
+                        }
+                        else if (requestedEntry.isShadow()) {
+                            // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
+                            // in both cases start new calculation
+                            requestedEntry.origin   = requestedEntry
+                            requestedEntry.forceCalculation()
+
                             stack.push(requestedEntry)
                             break
                         }
                         else {
-                            debugger
-                            throw new Error("cycle")
-                            // cycle - the requested quark has started calculation (means it was encountered in this loop before)
-                            // but the calculation did not complete yet (even that requested quark is calculated before the current)
-                            // yield GraphCycleDetectedEffect.new()
+                            if (!requestedEntry.isCalculationStarted()) {
+                                stack.push(requestedEntry)
+                                break
+                            }
+                            else {
+                                debugger
+                                throw new Error("cycle")
+                                // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                                // but the calculation did not complete yet (even that requested quark is calculated before the current)
+                                // yield GraphCycleDetectedEffect.new()
+                            }
                         }
                     }
-                }
-                // else if (value instanceof Effect) {
-                //
-                //
-                //     stack.pop()
-                //     break
-                // }
-                else if (value === SynchronousCalculationStarted) {
-                    // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
-                    // 1) there's a cycle during synchronous computation (we throw exception in `read` method)
-                    // 2) some other computation is reading synchronous computation, that has already started
-                    //    in such case its safe to just unwind the stack
+                    // else if (value instanceof Effect) {
+                    //
+                    //
+                    //     stack.pop()
+                    //     break
+                    // }
+                    else if (value === SynchronousCalculationStarted) {
+                        // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
+                        // 1) there's a cycle during synchronous computation (we throw exception in `read` method)
+                        // 2) some other computation is reading synchronous computation, that has already started
+                        //    in such case its safe to just unwind the stack
 
-                    stack.pop()
-                    break
-                }
-                else {
-                    // bypass the unrecognized effect to the outer context
-                    const effectResult          = yield value
-
-                    // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
-                    // in such case we can not continue calculation and just exit the inner loop
-                    if (entry.iterationResult)
-                        iterationResult         = entry.continueCalculation(effectResult)
-                    else
+                        stack.pop()
                         break
-                }
+                    }
+                    else {
+                        // bypass the unrecognized effect to the outer context
+                        const effectResult          = yield value
 
-            } while (true)
+                        // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
+                        // in such case we can not continue calculation and just exit the inner loop
+                        if (entry.iterationResult)
+                            iterationResult         = entry.continueCalculation(effectResult)
+                        else
+                            break
+                    }
+
+                } while (true)
+            }
         }
+
+        this.activeStack    = prevActiveStack
     }
 
 
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
-    calculateTransitionsStackSync (context : CalculationContext<any>, stack : LeveledStack<Quark>) {
-        const entries = this.entries
+    calculateTransitionsStackSync (context : CalculationContext<any>, queue : LeveledStack<Quark>) {
+        const entries                       = this.entries
 
-        while (stack.length) {
-            const entry             = stack.last()
-            const identifier        = entry.identifier
+        const prevActiveStack               = this.activeStack
 
-            // all entries in the stack must have entry already
-            if (entry.edgesFlow == 0) {
-                entry.edgesFlow--
+        while (queue.length) {
+            const stack     = this.activeStack = queue.takeLowestLevel()
 
-                entries.delete(identifier)
+            while (stack.length) {
+                const entry             = stack[ stack.length - 1 ]
+                const identifier        = entry.identifier
 
-                const previousEntry = entry.previous
+                // all entries in the stack must have entry already
+                if (entry.edgesFlow == 0) {
+                    entry.edgesFlow--
 
-                // // reduce garbage collection workload
-                entry.cleanup()
-
-                if (previousEntry && previousEntry.outgoing) {
-                    for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
-                        if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
-
-                        const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
-
-                        if (outgoingEntry) outgoingEntry.edgesFlow--
-                    }
-                }
-
-                stack.pop()
-                continue
-            }
-
-            const quark : Quark   = entry.origin
-
-            if (quark && quark.hasValue() || entry.edgesFlow < 0) {
-                entry.cleanup()
-
-                stack.pop()
-                continue
-            }
-
-            const startedAtEpoch    = entry.visitEpoch
-
-            let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
-
-            do {
-                const value         = iterationResult.value === undefined ? null : iterationResult.value
-
-                if (entry.isCalculationCompleted()) {
-                    if (entry.visitEpoch !== startedAtEpoch) {
-                        stack.pop()
-                        break
-                    }
-
-                    const quark         = entry.getQuark()
-
-                    entry.setValue(value)
+                    entries.delete(identifier)
 
                     const previousEntry = entry.previous
 
                     // // reduce garbage collection workload
                     entry.cleanup()
 
-                    let ignoreSelfDependency : boolean = false
-
-                    const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
-
-                    if (sameAsPrevious) entry.sameAsPrevious    = true
-
-                    if (sameAsPrevious && previousEntry.outgoing) {
-                        for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
+                    if (previousEntry && previousEntry.outgoing) {
+                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
                             if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                            // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
-                            entry.getOutgoing().set(previousOutgoingEntry, type)
-
-                            const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+                            const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
 
                             if (outgoingEntry) outgoingEntry.edgesFlow--
                         }
                     }
 
-                    if (quark.usedProposedOrCurrent) {
-                        if (quark.proposedValue !== NoProposedValue) {
-                            if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
-                        } else {
-                            if (sameAsPrevious) ignoreSelfDependency = true
-                        }
+                    stack.pop()
+                    continue
+                }
 
-                        if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
-                    }
+                const quark : Quark   = entry.origin
+
+                if (quark && quark.hasValue() || entry.edgesFlow < 0) {
+                    entry.cleanup()
 
                     stack.pop()
-                    break
+                    continue
                 }
-                else if (value instanceof Identifier) {
-                    if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
-                    // should be just `this.addEdge` but inlined manually
-                    let requestedEntry : Quark             = entries.get(value)
+                const startedAtEpoch    = entry.visitEpoch
 
-                    // creating "shadowing" entry, to store the new edges
-                    if (!requestedEntry) {
-                        const previousEntry = this.baseRevision.getLatestEntryFor(value)
+                let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
 
-                        if (!previousEntry) throwUnknownIdentifier(value)
+                do {
+                    const value         = iterationResult.value === undefined ? null : iterationResult.value
 
-                        requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                    if (entry.isCalculationCompleted()) {
+                        if (entry.visitEpoch !== startedAtEpoch) {
+                            stack.pop()
+                            break
+                        }
 
-                        entries.set(value, requestedEntry)
+                        const quark         = entry.getQuark()
 
-                        if (!previousEntry.origin) requestedEntry.forceCalculation()
-                    }
+                        entry.setValue(value)
 
-                    requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
-                    // EOF should be just `this.addEdge` but inlined manually
+                        const previousEntry = entry.previous
 
-                    //----------------
-                    let requestedQuark : Quark             = requestedEntry.origin
+                        // // reduce garbage collection workload
+                        entry.cleanup()
 
-                    if (requestedQuark && requestedQuark.hasValue()) {
-                        if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
+                        let ignoreSelfDependency : boolean = false
 
-                        iterationResult         = entry.continueCalculation(requestedQuark.value)
-                    }
-                    else if (requestedEntry.isShadow()) {
-                        // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
-                        // in both cases start new calculation
-                        requestedEntry.origin   = requestedEntry
-                        requestedEntry.forceCalculation()
+                        const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
-                        stack.push(requestedEntry)
+                        if (sameAsPrevious) entry.sameAsPrevious    = true
+
+                        if (sameAsPrevious && previousEntry.outgoing) {
+                            for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
+                                if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+
+                                // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
+                                entry.getOutgoing().set(previousOutgoingEntry, type)
+
+                                const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+
+                                if (outgoingEntry) outgoingEntry.edgesFlow--
+                            }
+                        }
+
+                        if (quark.usedProposedOrCurrent) {
+                            if (quark.proposedValue !== NoProposedValue) {
+                                if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
+                            } else {
+                                if (sameAsPrevious) ignoreSelfDependency = true
+                            }
+
+                            if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
+                        }
+
+                        stack.pop()
                         break
                     }
-                    else {
-                        if (!requestedEntry.isCalculationStarted()) {
+                    else if (value instanceof Identifier) {
+                        if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
+
+                        // should be just `this.addEdge` but inlined manually
+                        let requestedEntry : Quark             = entries.get(value)
+
+                        // creating "shadowing" entry, to store the new edges
+                        if (!requestedEntry) {
+                            const previousEntry = this.baseRevision.getLatestEntryFor(value)
+
+                            if (!previousEntry) throwUnknownIdentifier(value)
+
+                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+
+                            entries.set(value, requestedEntry)
+
+                            if (!previousEntry.origin) requestedEntry.forceCalculation()
+                        }
+
+                        requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
+                        // EOF should be just `this.addEdge` but inlined manually
+
+                        //----------------
+                        let requestedQuark : Quark             = requestedEntry.origin
+
+                        if (requestedQuark && requestedQuark.hasValue()) {
+                            if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
+
+                            iterationResult         = entry.continueCalculation(requestedQuark.value)
+                        }
+                        else if (requestedEntry.isShadow()) {
+                            // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
+                            // in both cases start new calculation
+                            requestedEntry.origin   = requestedEntry
+                            requestedEntry.forceCalculation()
+
                             stack.push(requestedEntry)
                             break
                         }
                         else {
-                            debugger
-                            throw new Error("cycle")
-                            // cycle - the requested quark has started calculation (means it was encountered in this loop before)
-                            // but the calculation did not complete yet (even that requested quark is calculated before the current)
-                            // yield GraphCycleDetectedEffect.new()
+                            if (!requestedEntry.isCalculationStarted()) {
+                                stack.push(requestedEntry)
+                                break
+                            }
+                            else {
+                                debugger
+                                throw new Error("cycle")
+                                // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                                // but the calculation did not complete yet (even that requested quark is calculated before the current)
+                                // yield GraphCycleDetectedEffect.new()
+                            }
                         }
                     }
-                }
-                else if (value === SynchronousCalculationStarted) {
-                    // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
-                    // 1) there's a cycle during synchronous computation (we throw exception in `read` method)
-                    // 2) some other computation is reading synchronous computation, that has already started
-                    //    in such case its safe to just unwind the stack
+                    // else if (value instanceof Effect) {
+                    //
+                    //
+                    //     stack.pop()
+                    //     break
+                    // }
+                    else if (value === SynchronousCalculationStarted) {
+                        // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
+                        // 1) there's a cycle during synchronous computation (we throw exception in `read` method)
+                        // 2) some other computation is reading synchronous computation, that has already started
+                        //    in such case its safe to just unwind the stack
 
-                    stack.pop()
-                    break
-                }
-                else {
-                    // bypass the unrecognized effect to the outer context
-                    const effectResult          = context(value)
-
-                    // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
-                    // in such case we can not continue calculation and just exit the inner loop
-                    if (entry.iterationResult)
-                        iterationResult         = entry.continueCalculation(effectResult)
-                    else
+                        stack.pop()
                         break
-                }
+                    }
+                    else {
+                        // bypass the unrecognized effect to the outer context
+                        const effectResult          = context(value)
 
-            } while (true)
+                        // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
+                        // in such case we can not continue calculation and just exit the inner loop
+                        if (entry.iterationResult)
+                            iterationResult         = entry.continueCalculation(effectResult)
+                        else
+                            break
+                    }
+
+                } while (true)
+            }
         }
+
+        this.activeStack    = prevActiveStack
     }
 }
 
