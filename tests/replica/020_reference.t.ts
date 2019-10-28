@@ -1,5 +1,5 @@
 import { Base } from "../../src/class/Mixin.js"
-import { Entity } from "../../src/replica/Entity.js"
+import { Entity, field } from "../../src/replica/Entity.js"
 import { reference } from "../../src/replica/Reference.js"
 import { bucket } from "../../src/replica/ReferenceBucket.js"
 import { MinimalReplica } from "../../src/replica/Replica.js"
@@ -154,7 +154,7 @@ StartTest(t => {
     })
 
 
-    t.it('Resolver for reference should work', async t => {
+    t.iit('Resolver for reference should work', async t => {
         const authors       = new Map<string, Author>()
 
         class Author extends Entity(Base) {
@@ -173,8 +173,12 @@ StartTest(t => {
         class Book extends Entity(Base) {
             @reference({ bucket : 'books', resolver : locator => authors.get(locator) })
             writtenBy       : Author | string
+
+            @field()
+            someField       : number
         }
 
+        //------------------
         const replica           = MinimalReplica.new()
 
         const markTwain         = Author.new({ id : 'markTwain'})
@@ -183,11 +187,24 @@ StartTest(t => {
         replica.addEntity(markTwain)
         replica.addEntity(tomSoyer)
 
+        //------------------
+        const spy       = t.spyOn(tomSoyer.$.writtenBy, 'calculation')
+
         replica.propagate()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
 
         t.is(tomSoyer.writtenBy, markTwain, 'Correctly resolved reference')
+
+        //------------------
+        spy.reset()
+
+        tomSoyer.someField  = 11
+
+        replica.propagate()
+
+        // the reference should be resolved at the proposed value stage, to not be recalculated again
+        t.expect(spy).toHaveBeenCalled(0)
     })
 
 
