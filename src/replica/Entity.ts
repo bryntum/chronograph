@@ -89,7 +89,6 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 self                : this,
                 context             : this,
                 lazy                : field.lazy
-                // lazy                : isInstanceOf(field, ReferenceField) || isInstanceOf(field, ReferenceBucketField) ? false : true
             }
 
             //------------------
@@ -108,7 +107,10 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
             //------------------
             const buildProposedFunction = this.$buildProposed && this[ this.$buildProposed[ name ] ]
 
-            if (buildProposedFunction) config.buildProposedValue = buildProposedFunction
+            if (buildProposedFunction) {
+                config.buildProposedValue       = buildProposedFunction
+                config.proposedValueIsBuilt     = true
+            }
 
             //------------------
             return field.identifierCls.new(config)

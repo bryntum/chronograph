@@ -283,6 +283,7 @@ class Checkout extends base {
         const quark     = this.touch(identifier).acquireQuark() as InstanceType<T[ 'quarkClass' ]>
 
         if (proposedValue !== undefined) identifier.write(identifier, this.activeTransaction, proposedValue, ...args)
+        // this.write(identifier, proposedValue, ...args)
 
         return identifier
     }

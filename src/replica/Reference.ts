@@ -1,16 +1,15 @@
-import { GetTransaction, OwnIdentifier, ProposedOrCurrent } from "../chrono/Effect.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
-import { Transaction, YieldableValue } from "../chrono/Transaction.js"
+import { Transaction } from "../chrono/Transaction.js"
 import { buildClass, instanceOf, isInstanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { CalculationContext, CalculationSync } from "../primitives/Calculation.js"
+import { CalculationSync } from "../primitives/Calculation.js"
 import { Field, Name } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
-import { ReferenceBucketIdentifier } from "./ReferenceBucket.js"
+import { ReferenceBucketIdentifier, ReferenceBucketQuark } from "./ReferenceBucket.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ResolverFunc    = (locator : any) => Entity
@@ -40,11 +39,13 @@ export const reference : FieldDecorator<typeof MinimalReferenceField> =
 export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceIdentifier extends base {
-        level           : number                = 0
+        level           : number            = 0
 
         field           : ReferenceField    = undefined
 
         ValueT          : Entity
+
+        proposedValueIsBuilt    : boolean   = true
 
         @prototypeValue(buildClass(Map, CalculationSync, Quark))
         quarkClass          : QuarkConstructor
@@ -55,15 +56,14 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
         }
 
 
-        calculation (YIELD : CalculationContext<YieldableValue>) : this[ 'ValueT' ] {
-            const proposedValue     = YIELD(ProposedOrCurrent)
-            const me : this         = YIELD(OwnIdentifier)
+        buildProposedValue (me : this, quark : Quark, transaction : Transaction) : this[ 'ValueT' ] {
+            const proposedValue     = quark.proposedValue
 
-            const value : Entity | null = isInstanceOf(proposedValue, Entity) ? proposedValue : me.resolve(proposedValue)
+            if (proposedValue === null) return null
+
+            const value : Entity    = isInstanceOf(proposedValue, Entity) ? proposedValue : me.resolve(proposedValue)
 
             if (value && me.hasBucket()) {
-                const transaction : Transaction = YIELD(GetTransaction)
-
                 me.getBucket(value).addToBucket(transaction, me.self)
             }
 

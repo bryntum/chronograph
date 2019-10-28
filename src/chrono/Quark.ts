@@ -2,7 +2,7 @@ import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI } from "../util/Helpers.js"
-import { Identifier, NoProposedValue } from "./Identifier.js"
+import { Identifier } from "./Identifier.js"
 import { YieldableValue } from "./Transaction.js"
 
 
@@ -12,6 +12,7 @@ export enum EdgeType {
     Past        = 1
 }
 
+// TODO: combine all boolean flags into single SMI bitmap (field & 8 etc)
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Quark = <T extends AnyConstructor<Map<any, EdgeType> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
@@ -39,7 +40,9 @@ class Quark extends base {
     origin          : Quark        = undefined
 
     // used by the listeners facility which is under question
-    sameAsPrevious          : boolean = false
+    sameAsPrevious              : boolean = false
+
+    needToBuildProposedValue    : boolean = false
 
     edgesFlow       : number = 0
     visitedAt       : number = NOT_VISITED
@@ -125,21 +128,25 @@ class Quark extends base {
 
 
     hasProposedValueInner () : boolean {
-        return this.proposedValue !== undefined && this.proposedValue !== NoProposedValue
+        return this.proposedValue !== undefined
     }
 
 
-    setProposedValue (value : any) {
-        if (this.origin && this.origin !== this) throw new Error('Can not set proposed value to the shadow entry')
-
-        this.proposedValue = value
-    }
+    // setProposedValue (value : any) {
+    //     if (this.origin && this.origin !== this) throw new Error('Can not set proposed value to the shadow entry')
+    //
+    //     this.proposedValue = value
+    // }
 
 
     getProposedValue (transaction /*: TransactionI*/) : any {
-        if (this.proposedValue !== undefined) return this.proposedValue
+        if (this.needToBuildProposedValue) {
+            this.needToBuildProposedValue   = false
 
-        return this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, this.identifier, transaction)
+            this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, this.identifier, this, transaction)
+        }
+
+        return this.proposedValue
     }
 }
 

@@ -36,6 +36,8 @@ export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<Fi
 
         ValueT              : Set<Entity>
 
+        proposedValueIsBuilt    : boolean   = true
+
         @prototypeValue(buildClass(Map, CalculationSync, Quark, ReferenceBucketQuark))
         quarkClass          : QuarkConstructor
 
@@ -66,9 +68,8 @@ export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<Fi
         }
 
 
-        buildProposedValue (me : this, transaction : Transaction) : Set<Entity> {
-            const quark     = transaction.acquireQuark(me) as ReferenceBucketQuark
-
+        buildProposedValue (me : this, quarkArg : Quark, transaction : Transaction) : Set<Entity> {
+            const quark                         = quarkArg as ReferenceBucketQuark
             const newValue : Set<Entity>        = new Set(quark.previousValue)
 
             // need to remove the old references first and then add new - to allow re-adding just removed reference

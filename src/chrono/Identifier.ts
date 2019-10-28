@@ -16,8 +16,6 @@ import { ProposedOrCurrent } from "./Effect.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
-//---------------------------------------------------------------------------------------------------------------------
-export const NoProposedValue    = Symbol('NoProposedValue')
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Identifier<ContextT extends Context = Context, ValueT = any> extends Base {
@@ -34,6 +32,13 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     lazy                : boolean   = false
 
     quarkClass          : QuarkConstructor
+
+    proposedValueIsBuilt    : boolean   = false
+
+
+    newQuark () : InstanceType<this[ 'quarkClass' ]> {
+        return this.quarkClass.new({ identifier : this, needToBuildProposedValue : this.proposedValueIsBuilt }) as InstanceType<this[ 'quarkClass' ]>
+    }
 
 
     equality (v1 : ValueT, v2 : ValueT) : boolean {
@@ -54,8 +59,8 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     }
 
 
-    buildProposedValue (me : this, transaction : Transaction) : ValueT | typeof NoProposedValue {
-        return NoProposedValue
+    buildProposedValue (me : this, quark : InstanceType<this[ 'quarkClass' ]>, transaction : Transaction) : ValueT {
+        return undefined
     }
 
 

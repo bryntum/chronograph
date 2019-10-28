@@ -16,7 +16,6 @@ import {
     OwnQuarkSymbol,
     PreviousValueOfEffect,
     PreviousValueOfSymbol,
-    ProgressNotificationEffect,
     ProposedArgumentsOfSymbol,
     ProposedOrCurrentSymbol,
     ProposedOrPreviousValueOfSymbol,
@@ -29,7 +28,7 @@ import {
     WriteSeveralSymbol,
     WriteSymbol
 } from "./Effect.js"
-import { Identifier, NoProposedValue, throwUnknownIdentifier } from "./Identifier.js"
+import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision, Scope } from "./Revision.js"
 
@@ -61,7 +60,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, entry : Quark) : VisitInfo {
         if (!entry) {
-            entry      = identifier.quarkClass.new({ identifier })
+            entry      = identifier.newQuark()
 
             this.visited.set(identifier, entry)
         }
@@ -97,7 +96,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
         let entry : Quark   = this.visited.get(identifier)
 
         if (!entry) {
-            entry           = identifier.quarkClass.new({ identifier })
+            entry           = identifier.newQuark()
 
             this.visited.set(identifier, entry)
         }
@@ -283,7 +282,7 @@ class Transaction extends base {
 
             if (!latestEntry) throwUnknownIdentifier(identifier)
 
-            entry                   = identifier.quarkClass.new({ identifier, origin : latestEntry.origin, previous : latestEntry })
+            entry                   = identifier.quarkClass.new({ identifier, origin : latestEntry.origin, previous : latestEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
 
             this.entries.set(identifier, entry)
         }
@@ -314,7 +313,7 @@ class Transaction extends base {
     readDirty (identifier : Identifier) : any {
         const dirtyQuark    = this.entries.get(identifier)
 
-        if (dirtyQuark && dirtyQuark.proposedValue !== undefined && dirtyQuark.proposedValue !== NoProposedValue) {
+        if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
             return dirtyQuark.proposedValue
         } else
             return this.baseRevision.readIfExists(identifier)
@@ -427,7 +426,7 @@ class Transaction extends base {
 
                 if (identifier.level > maxLevel) maxLevel = identifier.level
 
-                const entry = this.entries.get(identifier) || identifier.quarkClass.new({ identifier })
+                const entry = this.entries.get(identifier) || identifier.newQuark()
 
                 entry.forceCalculation()
 
@@ -453,6 +452,8 @@ class Transaction extends base {
             stack.resetCachedPosition()
         } else
             stack                   = this.stackGen
+
+        // if (this.baseRevision.selfDependentQuarks.size > 0) debugger
 
         for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark)
 
@@ -511,7 +512,7 @@ class Transaction extends base {
 
         const proposedValue     = quark.getProposedValue(this)
 
-        if (proposedValue !== NoProposedValue) return proposedValue
+        if (proposedValue !== undefined) return proposedValue
 
         const baseRevision      = this.baseRevision
         const identifier        = activeEntry.identifier
@@ -582,7 +583,7 @@ class Transaction extends base {
 
         const proposedValue = quark && !quark.isShadow() ? quark.getProposedValue(this) : undefined
 
-        return proposedValue !== undefined && proposedValue !== NoProposedValue ? proposedValue : undefined
+        return proposedValue
     }
 
 
@@ -636,7 +637,7 @@ class Transaction extends base {
 
             if (!previousEntry) throwUnknownIdentifier(identifierRead)
 
-            requestedEntry      = identifier.quarkClass.new({ identifier : identifierRead, origin : previousEntry.origin, previous : previousEntry })
+            requestedEntry      = identifier.quarkClass.new({ identifier : identifierRead, origin : previousEntry.origin, previous : previousEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
 
             this.entries.set(identifierRead, requestedEntry)
 
@@ -766,7 +767,7 @@ class Transaction extends base {
                         }
 
                         if (quark.usedProposedOrCurrent) {
-                            if (quark.proposedValue !== NoProposedValue) {
+                            if (quark.proposedValue !== undefined) {
                                 if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
                             } else {
                                 if (sameAsPrevious) ignoreSelfDependency = true
@@ -790,7 +791,7 @@ class Transaction extends base {
 
                             if (!previousEntry) throwUnknownIdentifier(value)
 
-                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
 
                             entries.set(value, requestedEntry)
 
@@ -955,7 +956,7 @@ class Transaction extends base {
                         }
 
                         if (quark.usedProposedOrCurrent) {
-                            if (quark.proposedValue !== NoProposedValue) {
+                            if (quark.proposedValue !== undefined) {
                                 if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
                             } else {
                                 if (sameAsPrevious) ignoreSelfDependency = true
@@ -979,7 +980,7 @@ class Transaction extends base {
 
                             if (!previousEntry) throwUnknownIdentifier(value)
 
-                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry })
+                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
 
                             entries.set(value, requestedEntry)
 

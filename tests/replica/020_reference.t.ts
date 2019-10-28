@@ -154,7 +154,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Resolver for reference should work', async t => {
+    t.it('Resolver for reference should work', async t => {
         const authors       = new Map<string, Author>()
 
         class Author extends Entity(Base) {
