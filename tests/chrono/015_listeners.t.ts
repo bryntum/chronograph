@@ -114,7 +114,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should not trigger listener after the identifier removal', async t => {
+    t.it('Should not trigger listener after the identifier removal', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var0      = graph.variableId('var0', 0)
