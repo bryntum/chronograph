@@ -823,7 +823,7 @@ class Transaction extends base {
                                 break
                             }
                             else {
-                                debugger
+                                // debugger
                                 throw new Error("cycle")
                                 // cycle - the requested quark has started calculation (means it was encountered in this loop before)
                                 // but the calculation did not complete yet (even that requested quark is calculated before the current)
@@ -1012,7 +1012,7 @@ class Transaction extends base {
                                 break
                             }
                             else {
-                                debugger
+                                // debugger
                                 throw new Error("cycle")
                                 // cycle - the requested quark has started calculation (means it was encountered in this loop before)
                                 // but the calculation did not complete yet (even that requested quark is calculated before the current)
