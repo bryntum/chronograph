@@ -1,7 +1,7 @@
 import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
-import { MinimalRevision, Revision } from "../../src/chrono/Revision.js"
+import { MinimalRevision } from "../../src/chrono/Revision.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
 declare const StartTest : any

@@ -9,7 +9,7 @@ import { Field, Name } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
-import { ReferenceBucketIdentifier, ReferenceBucketQuark } from "./ReferenceBucket.js"
+import { ReferenceBucketIdentifier } from "./ReferenceBucket.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ResolverFunc    = (locator : any) => Entity
