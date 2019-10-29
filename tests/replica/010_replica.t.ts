@@ -105,4 +105,45 @@ StartTest(t => {
         t.is(result, 'Mr. Mark Twain', 'Correct result from helper method')
     })
 
+
+    t.it('Should set the uninitialized fields to `null` without recomputing them on next propagation', async t => {
+        const schema            = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = schema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity(Base) {
+            @field()
+            firstName       : string
+
+            @field()
+            lastName        : string
+        }
+
+        const replica1          = MinimalReplica.new({ schema : schema })
+
+        const markTwain         = Author.new()
+
+        replica1.addEntity(markTwain)
+
+        //------------------
+        const spy       = t.spyOn(markTwain.$.firstName, 'calculation')
+
+        replica1.propagate()
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        t.isStrict(markTwain.firstName, null, 'Correctly set uninitialized field to `null`')
+
+        //------------------
+        spy.reset()
+
+        markTwain.lastName      = 'Twain'
+
+        replica1.propagate()
+
+        t.expect(spy).toHaveBeenCalled(0)
+    })
+
+
 })

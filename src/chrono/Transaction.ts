@@ -770,7 +770,9 @@ class Transaction extends base {
                             if (quark.proposedValue !== undefined) {
                                 if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
                             } else {
-                                if (sameAsPrevious) ignoreSelfDependency = true
+                                // ignore the uninitialized atoms (`proposedValue` === undefined && !previousEntry)
+                                // which has been calculated to `null` - we don't consider this as a change
+                                if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
                             }
 
                             if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
@@ -959,7 +961,9 @@ class Transaction extends base {
                             if (quark.proposedValue !== undefined) {
                                 if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
                             } else {
-                                if (sameAsPrevious) ignoreSelfDependency = true
+                                // ignore the uninitialized atoms (`proposedValue` === undefined && !previousEntry)
+                                // which has been calculated to `null` - we don't consider this as a change
+                                if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
                             }
 
                             if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
