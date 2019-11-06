@@ -70,7 +70,7 @@ class Quark extends base {
 
 
     cleanup () {
-        this.previous           = null
+        // this.previous           = null
 
         this.cleanupCalculation()
     }

@@ -150,7 +150,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             }
 
             if (currentEntry.isShadow())
-                currentEntry = currentEntry.origin
+                currentEntry = currentEntry.previous
             else
                 break
 
@@ -754,16 +754,29 @@ class Transaction extends base {
                         if (sameAsPrevious) entry.sameAsPrevious    = true
 
                         if (sameAsPrevious && previousEntry.outgoing) {
-                            for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
-                                if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+                            // if (/dispatcher/.test(previousEntry.identifier.name)) debugger
 
-                                // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
-                                entry.getOutgoing().set(previousOutgoingEntry, type)
+                            let currentEntry : Quark    = previousEntry
 
-                                const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+                            while (true) {
+                                for (const [ previousOutgoingEntry, type ] of currentEntry.outgoing) {
+                                    if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                                if (outgoingEntry) outgoingEntry.edgesFlow--
+                                    // // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
+                                    // entry.getOutgoing().set(previousOutgoingEntry, type)
+
+                                    const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+
+                                    if (outgoingEntry) outgoingEntry.edgesFlow--
+                                }
+
+                                if (currentEntry.isShadow())
+                                    currentEntry   = currentEntry.previous
+                                else
+                                    break
                             }
+
+                            entry.origin    = previousEntry.origin
                         }
 
                         if (quark.usedProposedOrCurrent) {
@@ -872,10 +885,10 @@ class Transaction extends base {
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, queue : LeveledStack<Quark>) {
         const entries                       = this.entries
-
         const prevActiveStack               = this.activeStack
 
         while (queue.length) {
+
             const stack     = this.activeStack = queue.takeLowestLevel()
 
             while (stack.length) {
@@ -945,16 +958,29 @@ class Transaction extends base {
                         if (sameAsPrevious) entry.sameAsPrevious    = true
 
                         if (sameAsPrevious && previousEntry.outgoing) {
-                            for (const [ previousOutgoingEntry, type ] of previousEntry.outgoing) {
-                                if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
+                            // if (/dispatcher/.test(previousEntry.identifier.name)) debugger
 
-                                // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
-                                entry.getOutgoing().set(previousOutgoingEntry, type)
+                            let currentEntry : Quark    = previousEntry
 
-                                const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+                            while (true) {
+                                for (const [ previousOutgoingEntry, type ] of currentEntry.outgoing) {
+                                    if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
 
-                                if (outgoingEntry) outgoingEntry.edgesFlow--
+                                    // // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
+                                    // entry.getOutgoing().set(previousOutgoingEntry, type)
+
+                                    const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
+
+                                    if (outgoingEntry) outgoingEntry.edgesFlow--
+                                }
+
+                                if (currentEntry.isShadow())
+                                    currentEntry   = currentEntry.previous
+                                else
+                                    break
                             }
+
+                            entry.origin    = previousEntry.origin
                         }
 
                         if (quark.usedProposedOrCurrent) {
