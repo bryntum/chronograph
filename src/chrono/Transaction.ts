@@ -639,6 +639,85 @@ class Transaction extends base {
     }
 
 
+    onQuarkCalculationCompleted (entry : Quark, value : any) {
+        const identifier    = entry.identifier
+        const quark         = entry.getQuark()
+
+        entry.setValue(value)
+
+        const previousEntry = entry.previous
+
+        // // reduce garbage collection workload
+        entry.cleanup()
+
+        let ignoreSelfDependency : boolean = false
+
+        const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
+
+        if (sameAsPrevious) entry.sameAsPrevious    = true
+
+        if (sameAsPrevious && previousEntry) {
+            previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
+                const outgoingEntry = this.entries.get(previousOutgoingEntry.identifier)
+
+                if (outgoingEntry) outgoingEntry.edgesFlow--
+            })
+
+            entry.origin    = previousEntry.origin
+        }
+
+        if (quark.usedProposedOrCurrent) {
+            if (quark.proposedValue !== undefined) {
+                if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
+            } else {
+                // ignore the uninitialized atoms (`proposedValue` === undefined && !previousEntry)
+                // which has been calculated to `null` - we don't consider this as a change
+                if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
+            }
+
+            if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
+        }
+    }
+
+
+    // onReadIdentifier (value : Identifier, entry : Quark, stack : Quark[]) : IteratorResult<any> | undefined {
+    //     if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
+    //
+    //     //----------------
+    //     const requestedEntry    = this.addEdge(value, entry, EdgeTypeNormal)
+    //
+    //     const requestedQuark : Quark             = requestedEntry.origin
+    //
+    //     if (requestedQuark && requestedQuark.hasValue()) {
+    //         if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
+    //
+    //         return entry.continueCalculation(requestedQuark.value)
+    //     }
+    //     else if (requestedEntry.isShadow()) {
+    //         // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
+    //         // in both cases start new calculation
+    //         requestedEntry.origin   = requestedEntry
+    //         requestedEntry.forceCalculation()
+    //
+    //         stack.push(requestedEntry)
+    //         return undefined
+    //     }
+    //     else {
+    //         if (!requestedEntry.isCalculationStarted()) {
+    //             stack.push(requestedEntry)
+    //             return undefined
+    //         }
+    //         else {
+    //             // debugger
+    //             throw new Error("cycle")
+    //             // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+    //             // but the calculation did not complete yet (even that requested quark is calculated before the current)
+    //             // yield GraphCycleDetectedEffect.new()
+    //         }
+    //     }
+    // }
+
+
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, queue : LeveledStack<Quark>) : Generator<any, void, unknown> {
@@ -680,10 +759,7 @@ class Transaction extends base {
                 const entry             = stack[ stack.length - 1 ]
                 const identifier        = entry.identifier
 
-                // all entries in the stack must have entry already
                 if (entry.edgesFlow == 0) {
-                    entry.edgesFlow--
-
                     entries.delete(identifier)
 
                     const previousEntry = entry.previous
@@ -691,13 +767,11 @@ class Transaction extends base {
                     // // reduce garbage collection workload
                     entry.cleanup()
 
-                    if (previousEntry) {
-                        previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
-                            const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
+                    previousEntry && previousEntry.outgoingInTheFutureCb(this.baseRevision, outgoing => {
+                        const outgoingEntry     = entries.get(outgoing.identifier)
 
-                            if (outgoingEntry) outgoingEntry.edgesFlow--
-                        })
-                    }
+                        if (outgoingEntry) outgoingEntry.edgesFlow--
+                    })
 
                     stack.pop()
                     continue
@@ -720,46 +794,8 @@ class Transaction extends base {
                     const value         = iterationResult.value === undefined ? null : iterationResult.value
 
                     if (entry.isCalculationCompleted()) {
-                        if (entry.visitEpoch !== startedAtEpoch) {
-                            stack.pop()
-                            break
-                        }
-
-                        const quark         = entry.getQuark()
-
-                        entry.setValue(value)
-
-                        const previousEntry = entry.previous
-
-                        // // reduce garbage collection workload
-                        entry.cleanup()
-
-                        let ignoreSelfDependency : boolean = false
-
-                        const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
-
-                        if (sameAsPrevious) entry.sameAsPrevious    = true
-
-                        if (sameAsPrevious && previousEntry) {
-                            previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
-                                const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
-
-                                if (outgoingEntry) outgoingEntry.edgesFlow--
-                            })
-
-                            entry.origin    = previousEntry.origin
-                        }
-
-                        if (quark.usedProposedOrCurrent) {
-                            if (quark.proposedValue !== undefined) {
-                                if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
-                            } else {
-                                // ignore the uninitialized atoms (`proposedValue` === undefined && !previousEntry)
-                                // which has been calculated to `null` - we don't consider this as a change
-                                if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
-                            }
-
-                            if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
+                        if (entry.visitEpoch == startedAtEpoch) {
+                            this.onQuarkCalculationCompleted(entry, value)
                         }
 
                         stack.pop()
