@@ -3,6 +3,7 @@ import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
+import { RevisionI } from "./Revision.js"
 import { YieldableValue } from "./Transaction.js"
 
 
@@ -148,13 +149,46 @@ class Quark extends base {
 
         return this.proposedValue
     }
+
+
+    * outgoingInTheFutureGen (revision : RevisionI) : Generator<Quark, void> {
+        let current : Quark    = this
+
+        while (true) {
+            for (const outgoing of current.outgoing.keys()) {
+                if (outgoing === revision.getLatestEntryFor(outgoing.identifier)) yield outgoing
+            }
+
+            if (current.isShadow())
+                current   = current.previous
+            else
+                break
+        }
+
+    }
+
+
+    outgoingInTheFutureCb (revision : RevisionI, forEach : (quark : Quark) => any) {
+        let current : Quark    = this
+
+        while (current) {
+            for (const outgoing of current.outgoing.keys()) {
+                if (outgoing.origin === revision.getLatestEntryFor(outgoing.identifier).origin) forEach(outgoing)
+            }
+
+            if (current.isShadow())
+                current     = current.previous
+            else
+                current     = null
+        }
+    }
 }
 
 export type Quark = Mixin<typeof Quark>
 
 export type QuarkConstructor = MixinConstructor<typeof Quark>
 
-export interface QuarkI extends Quark {}
+export interface QuarkI extends Mixin<typeof Quark> {}
 
 //---------------------------------------------------------------------------------------------------------------------
 export const TombStone = Symbol('Tombstone')

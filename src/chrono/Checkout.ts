@@ -462,6 +462,6 @@ class Checkout extends base {
 
 export type Checkout = Mixin<typeof Checkout>
 
-export interface CheckoutI extends Checkout {}
+export interface CheckoutI extends Mixin<typeof Checkout> {}
 
 export type CheckoutConstructor = MixinConstructor<typeof Checkout>

@@ -120,7 +120,8 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
         const latestEntry       = this.baseRevision.getLatestEntryFor(node)
 
-        // newly created identifier
+        // newly created identifier, perhaps too early to return here, possibly may need to clean the own
+        // outgoing edges in case of nested write?
         if (!latestEntry) return
 
         // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
@@ -136,25 +137,13 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             visitInfo.getQuark().proposedValue   = latestEntry.origin.value
         }
 
-        let currentEntry : Quark    = latestEntry
+        // for (const outgoingEntry of latestEntry.outgoingInTheFuture(this.baseRevision)) {
+        //     this.doCollectNext(node, outgoingEntry.identifier, toVisit)
+        // }
 
-        // TODO remove the origin/shadowing concepts?
-        // we iterate over the edges from "origin" anyway
-        do {
-            for (const outgoingEntry of currentEntry.outgoing.keys()) {
-                const identifier    = outgoingEntry.identifier
-
-                if (outgoingEntry.origin === this.baseRevision.getLatestEntryFor(identifier).origin) {
-                    this.doCollectNext(node, identifier, toVisit)
-                }
-            }
-
-            if (currentEntry.isShadow())
-                currentEntry = currentEntry.previous
-            else
-                break
-
-        } while (true)
+        latestEntry.outgoingInTheFutureCb(this.baseRevision, (outgoingEntry) => {
+            this.doCollectNext(node, outgoingEntry.identifier, toVisit)
+        })
 
         for (const outgoingEntry of visitInfo.outgoing.keys()) {
             const identifier    = outgoingEntry.identifier
@@ -702,14 +691,12 @@ class Transaction extends base {
                     // // reduce garbage collection workload
                     entry.cleanup()
 
-                    if (previousEntry && previousEntry.outgoing) {
-                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
-                            if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
-
+                    if (previousEntry) {
+                        previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
                             const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
 
                             if (outgoingEntry) outgoingEntry.edgesFlow--
-                        }
+                        })
                     }
 
                     stack.pop()
@@ -753,28 +740,12 @@ class Transaction extends base {
 
                         if (sameAsPrevious) entry.sameAsPrevious    = true
 
-                        if (sameAsPrevious && previousEntry.outgoing) {
-                            // if (/dispatcher/.test(previousEntry.identifier.name)) debugger
+                        if (sameAsPrevious && previousEntry) {
+                            previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
+                                const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
-                            let currentEntry : Quark    = previousEntry
-
-                            while (true) {
-                                for (const [ previousOutgoingEntry, type ] of currentEntry.outgoing) {
-                                    if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
-
-                                    // // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
-                                    // entry.getOutgoing().set(previousOutgoingEntry, type)
-
-                                    const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
-
-                                    if (outgoingEntry) outgoingEntry.edgesFlow--
-                                }
-
-                                if (currentEntry.isShadow())
-                                    currentEntry   = currentEntry.previous
-                                else
-                                    break
-                            }
+                                if (outgoingEntry) outgoingEntry.edgesFlow--
+                            })
 
                             entry.origin    = previousEntry.origin
                         }
@@ -797,27 +768,10 @@ class Transaction extends base {
                     else if (value instanceof Identifier) {
                         if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
-                        // should be just `this.addEdge` but inlined manually
-                        let requestedEntry : Quark             = entries.get(value)
-
-                        // creating "shadowing" entry, to store the new edges
-                        if (!requestedEntry) {
-                            const previousEntry = this.baseRevision.getLatestEntryFor(value)
-
-                            if (!previousEntry) throwUnknownIdentifier(value)
-
-                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
-
-                            entries.set(value, requestedEntry)
-
-                            if (!previousEntry.origin) requestedEntry.forceCalculation()
-                        }
-
-                        requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
-                        // EOF should be just `this.addEdge` but inlined manually
-
                         //----------------
-                        let requestedQuark : Quark             = requestedEntry.origin
+                        const requestedEntry    = this.addEdge(value, entry, EdgeTypeNormal)
+
+                        const requestedQuark : Quark             = requestedEntry.origin
 
                         if (requestedQuark && requestedQuark.hasValue()) {
                             if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
@@ -885,6 +839,7 @@ class Transaction extends base {
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, queue : LeveledStack<Quark>) {
         const entries                       = this.entries
+
         const prevActiveStack               = this.activeStack
 
         while (queue.length) {
@@ -906,14 +861,12 @@ class Transaction extends base {
                     // // reduce garbage collection workload
                     entry.cleanup()
 
-                    if (previousEntry && previousEntry.outgoing) {
-                        for (const previousOutgoingEntry of previousEntry.outgoing.keys()) {
-                            if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
-
+                    if (previousEntry) {
+                        previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
                             const outgoingEntry     = entries.get(previousOutgoingEntry.identifier)
 
                             if (outgoingEntry) outgoingEntry.edgesFlow--
-                        }
+                        })
                     }
 
                     stack.pop()
@@ -957,28 +910,12 @@ class Transaction extends base {
 
                         if (sameAsPrevious) entry.sameAsPrevious    = true
 
-                        if (sameAsPrevious && previousEntry.outgoing) {
-                            // if (/dispatcher/.test(previousEntry.identifier.name)) debugger
+                        if (sameAsPrevious && previousEntry) {
+                            previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
+                                const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
 
-                            let currentEntry : Quark    = previousEntry
-
-                            while (true) {
-                                for (const [ previousOutgoingEntry, type ] of currentEntry.outgoing) {
-                                    if (previousOutgoingEntry !== this.baseRevision.getLatestEntryFor(previousOutgoingEntry.identifier)) continue
-
-                                    // // copy the "latest" outgoing edges from the previous entry - otherwise the dependency will be lost
-                                    // entry.getOutgoing().set(previousOutgoingEntry, type)
-
-                                    const outgoingEntry = entries.get(previousOutgoingEntry.identifier)
-
-                                    if (outgoingEntry) outgoingEntry.edgesFlow--
-                                }
-
-                                if (currentEntry.isShadow())
-                                    currentEntry   = currentEntry.previous
-                                else
-                                    break
-                            }
+                                if (outgoingEntry) outgoingEntry.edgesFlow--
+                            })
 
                             entry.origin    = previousEntry.origin
                         }
@@ -1001,27 +938,10 @@ class Transaction extends base {
                     else if (value instanceof Identifier) {
                         if (entry.identifier.level < value.level) throw new Error('Identifier can not read from higher level identifier')
 
-                        // should be just `this.addEdge` but inlined manually
-                        let requestedEntry : Quark             = entries.get(value)
-
-                        // creating "shadowing" entry, to store the new edges
-                        if (!requestedEntry) {
-                            const previousEntry = this.baseRevision.getLatestEntryFor(value)
-
-                            if (!previousEntry) throwUnknownIdentifier(value)
-
-                            requestedEntry      = identifier.quarkClass.new({ identifier : value, origin : previousEntry.origin, previous : previousEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
-
-                            entries.set(value, requestedEntry)
-
-                            if (!previousEntry.origin) requestedEntry.forceCalculation()
-                        }
-
-                        requestedEntry.getOutgoing().set(entry, EdgeTypeNormal)
-                        // EOF should be just `this.addEdge` but inlined manually
-
                         //----------------
-                        let requestedQuark : Quark             = requestedEntry.origin
+                        const requestedEntry    = this.addEdge(value, entry, EdgeTypeNormal)
+
+                        const requestedQuark : Quark             = requestedEntry.origin
 
                         if (requestedQuark && requestedQuark.hasValue()) {
                             if (requestedQuark.value === TombStone) throwUnknownIdentifier(value)
@@ -1088,6 +1008,6 @@ class Transaction extends base {
 
 export type Transaction = Mixin<typeof Transaction>
 
-export interface TransactionI extends Transaction {}
+export interface TransactionI extends Mixin<typeof Transaction> {}
 
 export class MinimalTransaction extends Transaction(Base) {}
