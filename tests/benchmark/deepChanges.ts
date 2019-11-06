@@ -1,5 +1,5 @@
 import { Benchmark } from "../../src/benchmark/Benchmark.js"
-import { deepGraphGen, deepGraphSync, GraphGenerationResult, mobxGraph, MobxGraphGenerationResult } from "./data.js"
+import { deepGraphGen, deepGraphGenShared, deepGraphSync, GraphGenerationResult, mobxGraph, MobxGraphGenerationResult } from "./data.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 type PostBenchInfo = {
@@ -102,6 +102,17 @@ export const deepChangesGenBig = DeepChangesChronoGraph.new({
     }
 })
 
+//---------------------------------------------------------------------------------------------------------------------
+export const deepChangesGenBigShared = DeepChangesChronoGraph.new({
+    name        : 'Deep graph changes - generators big, shared identifiers',
+
+    // plannedMaxTime  : 20000,
+    // coolDownTimeout : 150,
+
+    setup       : async () => {
+        return deepGraphGenShared(100000)
+    }
+})
 
 
 export const runAllDeepChanges = async () => {
@@ -111,4 +122,5 @@ export const runAllDeepChanges = async () => {
     await deepChangesMobxSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
 
     await deepChangesGenBig.measureTillMaxTime()
+    await deepChangesGenBigShared.measureTillMaxTime()
 }
