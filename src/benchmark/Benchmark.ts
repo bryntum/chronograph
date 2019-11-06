@@ -224,11 +224,11 @@ export class Benchmark<StateT, InfoT> extends Base {
     async clearGarbage () {
         if (globalThis.gc) {
             globalThis.gc()
-            await new Promise(resolve => setTimeout(resolve, 30))
+            await new Promise(resolve => setTimeout(resolve, 50))
             globalThis.gc()
-            await new Promise(resolve => setTimeout(resolve, 30))
+            await new Promise(resolve => setTimeout(resolve, 100))
             globalThis.gc()
-            await new Promise(resolve => setTimeout(resolve, 30))
+            await new Promise(resolve => setTimeout(resolve, 50))
         }
     }
 
