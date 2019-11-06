@@ -117,37 +117,43 @@ class Checkout extends base {
     }
 
 
-    compactRevisions (revision : Revision, previous : Revision) {
-        if (previous.reachableCount > 0 || revision.previous !== previous) throw new Error("Invalid compact operation")
+    compactRevisions (newRev : Revision, prevRev : Revision) {
+        if (prevRev.reachableCount > 0 || newRev.previous !== prevRev) throw new Error("Invalid compact operation")
 
         // we can only shred revision if its being reference maximum 1 time (from the current Checkout instance)
-        if (previous.referenceCount <= 1) {
-            for (const [ identifier, entry ] of revision.scope) {
-                previous.scope.set(identifier, entry)
+        if (prevRev.referenceCount <= 1) {
+            for (const [ identifier, entry ] of newRev.scope) {
+                if (entry.origin === entry) {
+                    entry.previous = undefined
 
-                // if entry is shadowing some other entry, then we should clear that entry's outgoing edges
-                // otherwise they'll keep in memory unneeded entries
-                // we need to keep the `origin` entry however
-                // if (entry.origin && entry.origin !== entry) entry.origin.clear()
+                    const prevQuark = prevRev.scope.get(identifier)
+
+                    if (prevQuark) {
+                        prevQuark.clear()
+                        prevQuark.previous  = undefined
+                    }
+                }
+
+                prevRev.scope.set(identifier, entry)
             }
 
-            copySetInto(revision.selfDependentQuarks, previous.selfDependentQuarks)
+            copySetInto(newRev.selfDependentQuarks, prevRev.selfDependentQuarks)
 
-            revision.scope          = previous.scope
+            newRev.scope          = prevRev.scope
 
             // make sure the previous revision won't be used inconsistently
-            previous.scope          = null
+            prevRev.scope          = null
         }
         // otherwise, we have to copy from it, and keep it intact
         else {
-            revision.scope                  = new Map(concat(previous.scope, revision.scope))
-            revision.selfDependentQuarks    = new Set(concat(previous.selfDependentQuarks, revision.selfDependentQuarks))
+            newRev.scope                  = new Map(concat(prevRev.scope, newRev.scope))
+            newRev.selfDependentQuarks    = new Set(concat(prevRev.selfDependentQuarks, newRev.selfDependentQuarks))
 
-            previous.referenceCount--
+            prevRev.referenceCount--
         }
 
         // in both cases break the `previous` chain
-        revision.previous           = null
+        newRev.previous           = null
     }
 
 
