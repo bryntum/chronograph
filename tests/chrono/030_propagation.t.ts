@@ -176,7 +176,7 @@ StartTest(t => {
 
         graph.propagate()
 
-        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10, 11, 12 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10, 11, 12 ], "Correct result calculated #1")
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1 ][ index ]))
 
@@ -188,7 +188,7 @@ StartTest(t => {
 
         graph.propagate()
 
-        t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 11, 12 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 11, 12 ], "Correct result calculated #2")
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 0, 0 ][ index ]))
 
@@ -200,7 +200,7 @@ StartTest(t => {
 
         graph.propagate()
 
-        t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 7, 10, 11, 12 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 7, 10, 11, 12 ], "Correct result calculated #3")
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 0, 0 ][ index ]))
 
@@ -212,7 +212,7 @@ StartTest(t => {
 
         graph.propagate()
 
-        t.isDeeply(nodes.map(node => graph.read(node)), [ 7, 7, 14, 15, 16 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 7, 7, 14, 15, 16 ], "Correct result calculated #4")
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1 ][ index ]))
     })
