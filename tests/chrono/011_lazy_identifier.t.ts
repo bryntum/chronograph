@@ -308,7 +308,7 @@ StartTest(t => {
     })
 
 
-    t.xit('Should calculate lazy identifiers in a batch', async t => {
+    t.it('Should calculate lazy identifiers in a batch', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
@@ -349,7 +349,9 @@ StartTest(t => {
 
         graph1.propagate()
 
-        t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 1, 1, 2, 3, 4 ], "Correct result calculated")
+        // reading `c3` should calculate `c2` and `c1` inside the `calculateTransitionsStack`, not as separate
+        // calls to `calculateLazyEntry`
+        t.isDeeply([ c3 ].map(node => graph1.read(node)), [ 4 ], "Correct result calculated")
 
         t.expect(c1Spy).toHaveBeenCalled(1)
     })
