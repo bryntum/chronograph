@@ -218,12 +218,12 @@ StartTest(t => {
     })
 
 
-    t.it('Should preserve dependencies from shadowed entries', async t => {
+    t.iit('Should preserve dependencies from shadowed entries #1', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1        = graph.variableId('i1', 1)
         const i2        = graph.variableId('i2', 2)
-        const i3        = graph.variableId('i2', 3)
+        const i3        = graph.variableId('i3', 3)
 
         const c1        = graph.identifierId('c1', function* () {
             return (yield i1) + (yield i2)
@@ -266,4 +266,69 @@ StartTest(t => {
 
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1 ][ index ]))
     })
+
+
+    t.iit('Should preserve dependencies from shadowed entries #2', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1        = graph.variableId('i1', 1)
+        const i2        = graph.variableId('i2', 2)
+        const i3        = graph.variableId('i3', 3)
+
+        const dispatcher = graph.variableId('d', i3)
+
+        const c1        = graph.identifierId('c1', function* () {
+            return (yield i1) + (yield i2)
+        })
+
+        const c2        = graph.identifierId('c2', function* () {
+            return yield (yield dispatcher)
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, i3, c1, c2 ]
+
+        const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 1, 2, 3, 3, 3 ], "Correct result calculated - step 1")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 2)
+        graph.write(dispatcher, i2)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 2, 2, 3, 4, 2 ], "Correct result calculated - step 2")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 3)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 2, 3, 5, 2 ], "Correct result calculated - step 3")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 0 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i2, 3)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 3, 3, 6, 3 ], "Correct result calculated - step 4")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1 ][ index ]))
+    })
+
 })
