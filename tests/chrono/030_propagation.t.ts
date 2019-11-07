@@ -63,7 +63,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should eliminate unchanged trees', async t => {
+    t.it('Should eliminate unchanged subtrees', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1        = graph.variableId('i1', 0)
@@ -151,7 +151,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should preserve dependencies from eliminated entries', async t => {
+    t.it('Should preserve dependencies from eliminated subtrees #1', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1        = graph.variableId('i1', 0)
