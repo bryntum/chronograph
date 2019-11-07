@@ -218,7 +218,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should preserve dependencies from shadowed entries #1', async t => {
+    t.it('Should preserve dependencies from shadowed entries #1', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1        = graph.variableId('i1', 1)
@@ -268,7 +268,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should preserve dependencies from shadowed entries #2', async t => {
+    t.it('Should preserve dependencies from shadowed entries #2', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const i1        = graph.variableId('i1', 1)
