@@ -151,21 +151,21 @@ class Quark extends base {
     }
 
 
-    * outgoingInTheFutureGen (revision : RevisionI) : Generator<Quark, void> {
-        let current : Quark    = this
-
-        while (true) {
-            for (const outgoing of current.outgoing.keys()) {
-                if (outgoing === revision.getLatestEntryFor(outgoing.identifier)) yield outgoing
-            }
-
-            if (current.isShadow())
-                current   = current.previous
-            else
-                break
-        }
-
-    }
+    // * outgoingInTheFutureGen (revision : RevisionI) : Generator<Quark, void> {
+    //     let current : Quark    = this
+    //
+    //     while (true) {
+    //         for (const outgoing of current.outgoing.keys()) {
+    //             if (outgoing === revision.getLatestEntryFor(outgoing.identifier)) yield outgoing
+    //         }
+    //
+    //         if (current.isShadow())
+    //             current   = current.previous
+    //         else
+    //             break
+    //     }
+    //
+    // }
 
 
     outgoingInTheFutureCb (revision : RevisionI, forEach : (quark : Quark) => any) {
