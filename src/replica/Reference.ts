@@ -1,5 +1,5 @@
 import { ChronoGraph } from "../chrono/Graph.js"
-import { CalculatedValueSync } from "../chrono/Identifier.js"
+import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
 import { buildClass, instanceOf, isInstanceOf } from "../class/InstanceOf.js"
@@ -39,7 +39,7 @@ export const reference : FieldDecorator<typeof MinimalReferenceField> =
 export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceIdentifier extends base {
-        level           : number            = 0
+        level           : number            = Levels.Constant
 
         field           : ReferenceField    = undefined
 

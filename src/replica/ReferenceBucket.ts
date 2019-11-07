@@ -1,4 +1,4 @@
-import { CalculatedValueSync } from "../chrono/Identifier.js"
+import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
 import { buildClass, instanceOf } from "../class/InstanceOf.js"
@@ -32,7 +32,7 @@ export const bucket : FieldDecorator<typeof MinimalReferenceBucketField> =
 export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceBucketIdentifier extends base {
-        level               : number                = 1
+        level               : number                = Levels.DependsOnlyOnConstant
 
         ValueT              : Set<Entity>
 

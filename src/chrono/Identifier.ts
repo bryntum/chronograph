@@ -17,6 +17,13 @@ import { Quark, QuarkConstructor } from "./Quark.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
+export enum Levels {
+    Constant                = 0,
+    DependsOnlyOnConstant   = 1,
+    DependsOnSelfKind       = 10
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export class Identifier<ContextT extends Context = Context, ValueT = any> extends Base {
     name                : any       = undefined
@@ -27,7 +34,7 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
     context             : any       = undefined
 
-    level               : number    = 10
+    level               : number    = Levels.DependsOnSelfKind
 
     lazy                : boolean   = false
 
