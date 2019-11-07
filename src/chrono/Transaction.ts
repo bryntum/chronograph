@@ -629,9 +629,10 @@ class Transaction extends base {
             requestedEntry      = identifier.quarkClass.new({ identifier : identifierRead, origin : previousEntry.origin, previous : previousEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
 
             this.entries.set(identifierRead, requestedEntry)
-
-            if (!previousEntry.origin) requestedEntry.forceCalculation()
         }
+
+        // always prevent removal of the entries, from which an edge has started
+        requestedEntry.forceCalculation()
 
         requestedEntry.getOutgoing().set(activeEntry, type)
 
@@ -761,26 +762,30 @@ class Transaction extends base {
                 const identifier        = entry.identifier
 
                 if (entry.edgesFlow == 0) {
-                    entries.delete(identifier)
+                    // even if we delete the entry there might be other copies in stack, so reduce the `edgesFlow` to -1
+                    // to indicate that those are already processed
+                    entry.edgesFlow--
 
                     const previousEntry = entry.previous
-
-                    // // reduce garbage collection workload
-                    entry.cleanup()
 
                     previousEntry && previousEntry.outgoingInTheFutureCb(this.baseRevision, outgoing => {
                         const outgoingEntry     = entries.get(outgoing.identifier)
 
                         if (outgoingEntry) outgoingEntry.edgesFlow--
                     })
+                }
+
+                if (entry.edgesFlow < 0) {
+                    entries.delete(identifier)
+
+                    // // reduce garbage collection workload
+                    entry.cleanup()
 
                     stack.pop()
                     continue
                 }
 
-                const quark : Quark   = entry.origin
-
-                if (quark && quark.hasValue() || entry.edgesFlow < 0) {
+                if (entry.hasValue()) {
                     entry.cleanup()
 
                     stack.pop()
@@ -846,26 +851,30 @@ class Transaction extends base {
                 const identifier        = entry.identifier
 
                 if (entry.edgesFlow == 0) {
-                    entries.delete(identifier)
+                    // even if we delete the entry there might be other copies in stack, so reduce the `edgesFlow` to -1
+                    // to indicate that those are already processed
+                    entry.edgesFlow--
 
                     const previousEntry = entry.previous
-
-                    // // reduce garbage collection workload
-                    entry.cleanup()
 
                     previousEntry && previousEntry.outgoingInTheFutureCb(this.baseRevision, outgoing => {
                         const outgoingEntry     = entries.get(outgoing.identifier)
 
                         if (outgoingEntry) outgoingEntry.edgesFlow--
                     })
+                }
+
+                if (entry.edgesFlow < 0) {
+                    entries.delete(identifier)
+
+                    // // reduce garbage collection workload
+                    entry.cleanup()
 
                     stack.pop()
                     continue
                 }
 
-                const quark : Quark   = entry.origin
-
-                if (quark && quark.hasValue() || entry.edgesFlow < 0) {
+                if (entry.hasValue()) {
                     entry.cleanup()
 
                     stack.pop()
