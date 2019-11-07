@@ -263,31 +263,12 @@ class Transaction extends base {
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
         //----------------------
-        let entry           = this.entries.get(identifier)
+        const entry         = this.addEdge(identifier, this.getActiveEntry(), EdgeTypeNormal)
 
-        // creating "shadowing" entry, to store the new edges
-        if (!entry) {
-            const latestEntry       = this.baseRevision.getLatestEntryFor(identifier)
-
-            if (!latestEntry) throwUnknownIdentifier(identifier)
-
-            entry                   = identifier.quarkClass.new({ identifier, origin : latestEntry.origin, previous : latestEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
-
-            this.entries.set(identifier, entry)
-        }
-
-        //----------------------
-        const activeEntry   = this.getActiveEntry()
-
-        if (activeEntry.identifier.level < entry.identifier.level) throw new Error('Identifier can not read from higher level identifier')
-
-        entry.getOutgoing().set(activeEntry, EdgeTypeNormal)
-
-        //----------------------
         if (entry.hasValue()) return entry.getValue()
 
         //----------------------
-        entry.forceCalculation()
+        // entry.forceCalculation()
 
         this.stackSync.push(entry)
 
@@ -682,9 +663,6 @@ class Transaction extends base {
 
 
     onReadIdentifier (identifierRead : Identifier, activeEntry : Quark, stack : Quark[]) : IteratorResult<any> | undefined {
-        if (activeEntry.identifier.level < identifierRead.level) throw new Error('Identifier can not read from higher level identifier')
-
-        //----------------
         const requestedEntry            = this.addEdge(identifierRead, activeEntry, EdgeTypeNormal)
 
         const requestedQuark : Quark    = requestedEntry.origin
