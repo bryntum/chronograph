@@ -218,6 +218,65 @@ StartTest(t => {
     })
 
 
+    t.it('Should preserve dependencies from eliminated subtrees #2', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1        = graph.variableId('i1', 0)
+        const i2        = graph.variableId('i2', 10)
+        const i3        = graph.variableId('i3', 20)
+
+        const dispatcher = graph.variableId('d', i3)
+
+        const c1        = graph.identifierId('c1', function* () {
+            return (yield i1) + (yield i2)
+        })
+
+        const c2        = graph.identifierId('c2', function* () {
+            return (yield c1) + 1
+        })
+
+        const c3        = graph.identifierId('c3', function* () {
+            return (yield (yield dispatcher))
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, i3, c1, c2, c3 ]
+
+        const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 20, 10, 11, 20 ], "Correct result calculated #1")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 5)
+        graph.write(i2, 5)
+        graph.write(dispatcher, c2)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 20, 10, 11, 11 ], "Correct result calculated #2")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 0, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 7)
+        graph.write(i2, 7)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 7, 7, 20, 14, 15, 15 ], "Correct result calculated #4")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1, 1 ][ index ]))
+    })
+
+
     t.it('Should preserve dependencies from shadowed entries #1', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
