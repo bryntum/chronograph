@@ -615,7 +615,7 @@ class Transaction extends base {
         // always prevent removal of the entries, from which an edge has started
         requestedEntry.forceCalculation()
 
-        requestedEntry.getOutgoing().set(activeEntry, type)
+        requestedEntry.addOutgoingTo(activeEntry, type)
 
         return requestedEntry
     }
@@ -754,7 +754,7 @@ class Transaction extends base {
                 }
 
                 if (entry.edgesFlow < 0) {
-                    entries.delete(identifier)
+                    if (entry.size === 0) entries.delete(identifier)
 
                     // // reduce garbage collection workload
                     entry.cleanup()
@@ -763,7 +763,7 @@ class Transaction extends base {
                     continue
                 }
 
-                if (entry.hasValue()) {
+                if (entry.isShadow() || entry.hasValue()) {
                     entry.cleanup()
 
                     stack.pop()

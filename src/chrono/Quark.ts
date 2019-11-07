@@ -9,8 +9,8 @@ import { YieldableValue } from "./Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum EdgeType {
-    Normal      = 0,
-    Past        = 1
+    Normal      = 1,
+    Past        = 2
 }
 
 // TODO: combine all boolean flags into single SMI bitmap (field & 8 etc)
@@ -104,6 +104,16 @@ class Quark extends base {
     }
 
 
+    // TODO use this method instead of adding edges manually
+    addOutgoingTo (toQuark : Quark, type : EdgeType) {
+        const self      = this.outgoing
+
+        const existing  = self.get(toQuark)
+
+        self.set(toQuark, existing ? existing | type : type)
+    }
+
+
     getValue () : any {
         return this.origin ? this.origin.value : undefined
     }
@@ -169,7 +179,7 @@ class Quark extends base {
 
 
     outgoingInTheFutureCb (revision : RevisionI, forEach : (quark : Quark) => any) {
-        let current : Quark    = this
+        let current : Quark = this
 
         while (current) {
             for (const outgoing of current.outgoing.keys()) {
