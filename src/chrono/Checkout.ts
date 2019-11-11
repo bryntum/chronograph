@@ -14,11 +14,11 @@ export type PropagateArguments = {
     calculateOnly?      : Identifier[]
 }
 
-//---------------------------------------------------------------------------------------------------------------------
 export type PropagateResult = {
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export class Listener extends Base {
     handlers            : AnyFunction[]     = []
 
@@ -124,13 +124,14 @@ class Checkout extends base {
         if (prevRev.referenceCount <= 1) {
             for (const [ identifier, entry ] of newRev.scope) {
                 if (entry.origin === entry) {
-                    entry.previous = undefined
+                    entry.previous  = undefined
 
                     const prevQuark = prevRev.scope.get(identifier)
 
                     if (prevQuark) {
                         prevQuark.clear()
                         prevQuark.previous  = undefined
+                        prevQuark.origin    = undefined
                     }
                 }
 
@@ -139,21 +140,21 @@ class Checkout extends base {
 
             copySetInto(newRev.selfDependent, prevRev.selfDependent)
 
-            newRev.scope          = prevRev.scope
+            newRev.scope            = prevRev.scope
 
             // make sure the previous revision won't be used inconsistently
-            prevRev.scope          = null
+            prevRev.scope           = null
         }
         // otherwise, we have to copy from it, and keep it intact
         else {
-            newRev.scope                  = new Map(concat(prevRev.scope, newRev.scope))
+            newRev.scope            = new Map(concat(prevRev.scope, newRev.scope))
             newRev.selfDependent    = new Set(concat(prevRev.selfDependent, newRev.selfDependent))
 
             prevRev.referenceCount--
         }
 
         // in both cases break the `previous` chain
-        newRev.previous           = null
+        newRev.previous             = null
     }
 
 
@@ -279,9 +280,28 @@ class Checkout extends base {
     variable (value : any) : Variable {
         const variable      = Variable.new()
 
-        this.write(variable, value)
+        return this.addIdentifier(variable, value)
+    }
 
-        return variable
+
+    variableId (name : any, value : any) : Variable {
+        const variable      = Variable.new({ name })
+
+        return this.addIdentifier(variable, value)
+    }
+
+
+    identifier<ContextT extends Context> (calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
+        const identifier    = CalculatedValueGen.new({ calculation, context })
+
+        return this.addIdentifier(identifier)
+    }
+
+
+    identifierId<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
+        const identifier    = CalculatedValueGen.new({ calculation, context, name })
+
+        return this.addIdentifier(identifier)
     }
 
 
@@ -289,15 +309,6 @@ class Checkout extends base {
         const quark     = this.touch(identifier).acquireQuark() as InstanceType<T[ 'quarkClass' ]>
 
         if (proposedValue !== undefined) this.write(identifier, proposedValue, ...args)
-
-        return identifier
-    }
-
-
-    identifier<ContextT extends Context> (calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = CalculatedValueGen.new({ calculation, context })
-
-        this.touch(identifier)
 
         return identifier
     }
@@ -312,26 +323,8 @@ class Checkout extends base {
     }
 
 
-    variableId (name : any, value : any) : Variable {
-        const variable      = Variable.new({ name })
-
-        this.write(variable, value)
-
-        return variable
-    }
-
-
     hasIdentifier (identifier : Identifier) : boolean {
         return Boolean(this.baseRevision.getLatestEntryFor(identifier))
-    }
-
-
-    identifierId<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = CalculatedValueGen.new({ calculation, context, name })
-
-        this.touch(identifier)
-
-        return identifier
     }
 
 
