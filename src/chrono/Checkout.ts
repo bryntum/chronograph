@@ -280,14 +280,16 @@ class Checkout extends base {
     variable (value : any) : Variable {
         const variable      = Variable.new()
 
-        return this.addIdentifier(variable, value)
+        // always initialize variables with `null`
+        return this.addIdentifier(variable, value === undefined ? null : value)
     }
 
 
     variableId (name : any, value : any) : Variable {
         const variable      = Variable.new({ name })
 
-        return this.addIdentifier(variable, value)
+        // always initialize variables with `null`
+        return this.addIdentifier(variable, value === undefined ? null : value)
     }
 
 
@@ -306,7 +308,7 @@ class Checkout extends base {
 
 
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
-        const quark     = this.touch(identifier).acquireQuark() as InstanceType<T[ 'quarkClass' ]>
+        this.activeTransaction.touch(identifier)
 
         if (proposedValue !== undefined) this.write(identifier, proposedValue, ...args)
 
@@ -335,9 +337,9 @@ class Checkout extends base {
     }
 
 
-    touch (identifier : Identifier) : Quark {
-        return this.activeTransaction.touch(identifier)
-    }
+    // touch (identifier : Identifier) : Quark {
+    //     return this.activeTransaction.touch(identifier)
+    // }
 
 
     readIfExists (identifier : Identifier) : any {

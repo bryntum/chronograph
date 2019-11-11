@@ -74,7 +74,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             info.edgesFlow     = 0
 
             info.cleanupCalculation()
-            if (info.outgoing) info.outgoing.clear()
+            info.clearOutgoing()
             if (info.origin && info.origin === info) info.origin.value = undefined
         }
 
@@ -107,7 +107,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             entry.edgesFlow     = 0
 
             entry.cleanupCalculation()
-            if (entry.outgoing) entry.outgoing.clear()
+            entry.clearOutgoing()
             if (entry.origin && entry.origin === entry) entry.origin.value = undefined
         }
 
@@ -145,7 +145,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             this.doCollectNext(node, outgoingEntry.identifier, toVisit)
         })
 
-        for (const outgoingEntry of visitInfo.outgoing.keys()) {
+        for (const outgoingEntry of visitInfo.getOutgoing().keys()) {
             const identifier    = outgoingEntry.identifier
 
             this.doCollectNext(node, identifier, toVisit)
@@ -227,9 +227,9 @@ class Transaction extends base {
     }
 
 
-    isEmpty () : boolean {
-        return this.entries.size === 0
-    }
+    // isEmpty () : boolean {
+    //     return this.entries.size === 0
+    // }
 
 
     getActiveEntry () : Quark {
@@ -268,8 +268,6 @@ class Transaction extends base {
         if (entry.hasValue()) return entry.getValue()
 
         //----------------------
-        // entry.forceCalculation()
-
         this.stackSync.push(entry)
 
         this.calculateTransitionsStackSync(this.onEffectSync, this.stackSync)
@@ -296,7 +294,7 @@ class Transaction extends base {
 
 
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        return this.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
+        return this.touch(identifier).startOrigin() as InstanceType<T[ 'quarkClass' ]>
     }
 
 
@@ -320,9 +318,9 @@ class Transaction extends base {
 
 
     removeIdentifier (identifier : Identifier) {
-        const entry                 = this.touch(identifier)
+        const entry                 = this.touch(identifier).startOrigin()
 
-        entry.acquireQuark().value  = TombStone
+        entry.setValue(TombStone)
     }
 
 
@@ -344,7 +342,7 @@ class Transaction extends base {
 
                     // TODO remove the origin/shadowing concepts? this line won't be needed then
                     // and we iterate over the edges from "origin" anyway
-                    entry.outgoing.forEach((toEntry, toIdentifier) => latestEntry.outgoing.set(toIdentifier, toEntry))
+                    entry.getOutgoing().forEach((toEntry, toIdentifier) => latestEntry.getOutgoing().set(toIdentifier, toEntry))
 
                 } else {
                     candidate.scope.set(identifier, entry)
@@ -452,11 +450,9 @@ class Transaction extends base {
 
 
     [ProposedOrCurrentSymbol] (effect : Effect, activeEntry : Quark) : any {
-        const quark             = activeEntry.acquireQuark()
+        activeEntry.usedProposedOrCurrent = true
 
-        quark.usedProposedOrCurrent      = true
-
-        const proposedValue     = quark.getProposedValue(this)
+        const proposedValue     = activeEntry.getProposedValue(this)
 
         if (proposedValue !== undefined) return proposedValue
 

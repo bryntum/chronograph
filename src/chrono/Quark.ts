@@ -84,13 +84,8 @@ class Quark extends base {
     }
 
 
-    acquireQuark () : Quark {
+    startOrigin () : Quark {
         return this.origin = this
-    }
-
-
-    get outgoing () : Map<Quark, EdgeType> {
-        return this as Map<Quark, EdgeType>
     }
 
 
@@ -101,11 +96,16 @@ class Quark extends base {
 
     // TODO use this method instead of adding edges manually
     addOutgoingTo (toQuark : Quark, type : EdgeType) {
-        const self      = this.outgoing
+        const self      = this as Map<Quark, EdgeType>
 
         const existing  = self.get(toQuark)
 
         self.set(toQuark, existing ? existing | type : type)
+    }
+
+
+    clearOutgoing () {
+        this.clear()
     }
 
 
@@ -177,7 +177,7 @@ class Quark extends base {
         let current : Quark = this
 
         while (current) {
-            for (const outgoing of current.outgoing.keys()) {
+            for (const outgoing of current.getOutgoing().keys()) {
                 if (outgoing.origin === revision.getLatestEntryFor(outgoing.identifier).origin) forEach(outgoing)
             }
 
