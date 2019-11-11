@@ -619,23 +619,18 @@ class Transaction extends base {
 
 
     onQuarkCalculationCompleted (entry : Quark, value : any) {
-        const identifier    = entry.identifier
-        const quark         = entry.getQuark()
-
         entry.setValue(value)
 
-        const previousEntry = entry.previous
-
-        // // reduce garbage collection workload
+        // cleanup the iterator
         entry.cleanup()
 
-        let ignoreSelfDependency : boolean = false
+        const identifier    = entry.identifier
+        const previousEntry = entry.previous
 
+        //--------------------
         const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
-        if (sameAsPrevious) entry.sameAsPrevious    = true
-
-        if (sameAsPrevious && previousEntry) {
+        if (sameAsPrevious) {
             previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
                 const outgoingEntry = this.entries.get(previousOutgoingEntry.identifier)
 
@@ -645,16 +640,19 @@ class Transaction extends base {
             entry.origin    = previousEntry.origin
         }
 
-        if (quark.usedProposedOrCurrent) {
-            if (quark.proposedValue !== undefined) {
-                if (identifier.equality(value, quark.proposedValue)) ignoreSelfDependency = true
+        //--------------------
+        let ignoreSelfDependency : boolean = false
+
+        if (entry.usedProposedOrCurrent) {
+            if (entry.proposedValue !== undefined) {
+                if (identifier.equality(value, entry.proposedValue)) ignoreSelfDependency = true
             } else {
                 // ignore the uninitialized atoms (`proposedValue` === undefined && !previousEntry)
                 // which has been calculated to `null` - we don't consider this as a change
                 if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
             }
 
-            if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(quark.identifier)
+            if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(identifier)
         }
     }
 

@@ -255,7 +255,7 @@ class Checkout extends base {
             quarkEntry.cleanup()
 
             // ignore "shadowing" entries
-            if (quarkEntry.sameAsPrevious || quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
+            if (quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
 
             const listener  = this.listeners.get(identifier)
 

@@ -40,9 +40,6 @@ class Quark extends base {
     previous        : Quark        = undefined
     origin          : Quark        = undefined
 
-    // used by the listeners facility which is under question
-    sameAsPrevious              : boolean = false
-
     needToBuildProposedValue    : boolean = false
 
     edgesFlow       : number = 0
