@@ -56,6 +56,11 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
         }
 
 
+        getBucket (entity : Entity) : ReferenceBucketIdentifier {
+            return entity.$[ this.field.bucket ]
+        }
+
+
         buildProposedValue (me : this, quark : Quark, transaction : Transaction) : this[ 'ValueT' ] {
             const proposedValue     = quark.proposedValue
 
@@ -75,11 +80,6 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
             const resolver  = this.field.resolver
 
             return resolver ? resolver.call(this.self, locator) : null
-        }
-
-
-        getBucket (entity : Entity) : ReferenceBucketIdentifier {
-            return entity.$[ this.field.bucket ]
         }
 
 
