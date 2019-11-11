@@ -323,10 +323,6 @@ class Transaction extends base {
         const entry                 = this.touch(identifier)
 
         entry.acquireQuark().value  = TombStone
-
-        //TODO cleanup
-        //@ts-ignore
-        //identifier.DATA             = this.readDirty(identifier)
     }
 
 
@@ -334,28 +330,12 @@ class Transaction extends base {
         if (candidate.scope.size === 0) {
             // in this branch we can overwrite the whole map
             candidate.scope     = entries
-
-            // its important to clear the transitions, since that reduces garbage collection workload
-            // (improves the `benchmark_sync` significantly)
-            // we do it manually, right after the calculation of every quark completes
-            // so strictly speaking this code is not needed, but, it definitely feels, like
-            // it improves the `benchmark_sync`
-            // perhaps, because all `entries` are accessed sequentially, they are cached in some internal CPU caches
-            // for (const entry of entries.values()) {
-            //     // this code can be uncommented to check if we leak transitions somewhere
-            //     // if (entry.transition) debugger
-            //
-            //     entry.transition    = undefined
-            // }
         } else {
             // in this branch candidate's scope already has some content - this is the case for calculating lazy values
-
 
             // // TODO benchmark what is faster (for small maps) - `map.forEach(entry => {})` or `for (const entry of map) {}`
             // entries.forEach((entry : QuarkEntry, identifier : Identifier) => {
             //     candidate.scope.set(identifier, entry)
-            //
-            //     entry.transition    = null
             // })
 
             for (const [ identifier, entry ] of entries) {
@@ -369,8 +349,6 @@ class Transaction extends base {
                 } else {
                     candidate.scope.set(identifier, entry)
                 }
-
-                // entry.transition    = undefined
             }
         }
     }
