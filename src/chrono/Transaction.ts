@@ -591,8 +591,6 @@ class Transaction extends base {
 
 
     onQuarkCalculationCompleted (entry : Quark, value : any) {
-        entry.setValue(value)
-
         // cleanup the iterator
         entry.cleanup()
 
@@ -610,7 +608,8 @@ class Transaction extends base {
             })
 
             entry.origin    = previousEntry.origin
-        }
+        } else
+            entry.setValue(value)
 
         //--------------------
         let ignoreSelfDependency : boolean = false
