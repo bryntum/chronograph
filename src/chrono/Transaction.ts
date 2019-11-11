@@ -7,7 +7,7 @@ import {
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
-import { LeveledStack } from "../util/LeveledStack.js"
+import { LeveledQueue } from "../util/LeveledQueue.js"
 import { CheckoutI, PropagateArguments } from "./Checkout.js"
 import {
     Effect,
@@ -55,7 +55,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
     baseRevision    : Revision
 
-    pushTo          : LeveledStack<Quark>
+    pushTo          : LeveledQueue<Quark>
 
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, info : Quark) : VisitInfo {
@@ -173,9 +173,9 @@ class Transaction extends base {
     walkContext             : WalkForwardOverwriteContext   = undefined
 
     // we use 2 different stacks, because they support various effects
-    stackSync               : LeveledStack<Quark>  = new LeveledStack()
+    stackSync               : LeveledQueue<Quark>  = new LeveledQueue()
     // the `stackGen` supports async effects notably
-    stackGen                : LeveledStack<Quark>  = new LeveledStack()
+    stackGen                : LeveledQueue<Quark>  = new LeveledQueue()
 
     activeStack             : Quark[]
 
@@ -376,18 +376,18 @@ class Transaction extends base {
     }
 
 
-    prePropagate (args? : PropagateArguments) : LeveledStack<Quark> {
+    prePropagate (args? : PropagateArguments) : LeveledQueue<Quark> {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
         this.isClosed               = true
         this.propagationStartDate   = Date.now()
 
-        let stack : LeveledStack<Quark>
+        let stack : LeveledQueue<Quark>
 
         if (args && args.calculateOnly) {
             const calculateOnly     = args.calculateOnly
 
-            stack                   = new LeveledStack()
+            stack                   = new LeveledQueue()
 
             let maxLevel : number   = 0
 
@@ -696,7 +696,7 @@ class Transaction extends base {
 
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
-    * calculateTransitionsStackGen (context : CalculationContext<any>, queue : LeveledStack<Quark>) : Generator<any, void, unknown> {
+    * calculateTransitionsStackGen (context : CalculationContext<any>, queue : LeveledQueue<Quark>) : Generator<any, void, unknown> {
         const entries                       = this.entries
         const propagationStartDate          = this.propagationStartDate
 
@@ -822,7 +822,7 @@ class Transaction extends base {
 
 
     // // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
-    calculateTransitionsStackSync (context : CalculationContext<any>, queue : LeveledStack<Quark>) {
+    calculateTransitionsStackSync (context : CalculationContext<any>, queue : LeveledQueue<Quark>) {
         const entries                       = this.entries
         const prevActiveStack               = this.activeStack
 

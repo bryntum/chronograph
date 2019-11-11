@@ -1,11 +1,7 @@
 import { MAX_SMI } from "./Helpers.js"
 
-// TODO
-// probably we only need the leveling when the populating of the stack (during the walkDepth)
-// then, during calculations, regular array will be sufficient
 
-
-export class LeveledStack<T extends { level : number }> {
+export class LeveledQueue<T extends { level : number }> {
     length          : number            = 0
 
     levels          : T[][]             = []
