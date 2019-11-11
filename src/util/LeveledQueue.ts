@@ -1,5 +1,6 @@
 import { MAX_SMI } from "./Helpers.js"
 
+// Leveled LIFO queue
 
 export class LeveledQueue<T extends { level : number }> {
     length          : number            = 0
