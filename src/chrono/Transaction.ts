@@ -58,27 +58,27 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     pushTo          : LeveledStack<Quark>
 
 
-    setVisitedInfo (identifier : Identifier, visitedAt : number, entry : Quark) : VisitInfo {
-        if (!entry) {
-            entry      = identifier.newQuark()
+    setVisitedInfo (identifier : Identifier, visitedAt : number, info : Quark) : VisitInfo {
+        if (!info) {
+            info      = identifier.newQuark()
 
-            this.visited.set(identifier, entry)
+            this.visited.set(identifier, info)
         }
 
-        entry.visitedAt    = visitedAt
+        info.visitedAt    = visitedAt
 
-        if (entry.visitEpoch !== this.currentEpoch) {
-            entry.visitEpoch   = this.currentEpoch
+        if (info.visitEpoch !== this.currentEpoch) {
+            info.visitEpoch   = this.currentEpoch
 
-            entry.visitedAt     = NOT_VISITED
-            entry.edgesFlow     = 0
+            info.visitedAt     = NOT_VISITED
+            info.edgesFlow     = 0
 
-            entry.cleanupCalculation()
-            if (entry.outgoing) entry.outgoing.clear()
-            if (entry.origin && entry.origin === entry) entry.origin.value = undefined
+            info.cleanupCalculation()
+            if (info.outgoing) info.outgoing.clear()
+            if (info.origin && info.origin === info) info.origin.value = undefined
         }
 
-        return entry
+        return info
     }
 
 
@@ -141,7 +141,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
         //     this.doCollectNext(node, outgoingEntry.identifier, toVisit)
         // }
 
-        latestEntry.outgoingInTheFutureCb(this.baseRevision, (outgoingEntry) => {
+        latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
             this.doCollectNext(node, outgoingEntry.identifier, toVisit)
         })
 
