@@ -401,8 +401,6 @@ class Transaction extends base {
         } else
             stack                   = this.stackGen
 
-        // if (this.baseRevision.selfDependentQuarks.size > 0) debugger
-
         for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark)
 
         this.plannedTotalIdentifiersToCalculate = stack.length
@@ -638,12 +636,12 @@ class Transaction extends base {
     onReadIdentifier (identifierRead : Identifier, activeEntry : Quark, stack : Quark[]) : IteratorResult<any> | undefined {
         const requestedEntry            = this.addEdge(identifierRead, activeEntry, EdgeTypeNormal)
 
-        const requestedQuark : Quark    = requestedEntry.origin
+        if (requestedEntry.hasValue()) {
+            const value                 = requestedEntry.getValue()
 
-        if (requestedQuark && requestedQuark.hasValue()) {
-            if (requestedQuark.value === TombStone) throwUnknownIdentifier(identifierRead)
+            if (value === TombStone) throwUnknownIdentifier(identifierRead)
 
-            return activeEntry.continueCalculation(requestedQuark.value)
+            return activeEntry.continueCalculation(value)
         }
         else if (requestedEntry.isShadow()) {
             // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
