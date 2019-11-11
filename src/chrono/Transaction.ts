@@ -401,7 +401,7 @@ class Transaction extends base {
         } else
             stack                   = this.stackGen
 
-        for (const selfDependentQuark of this.baseRevision.selfDependentQuarks) this.touch(selfDependentQuark)
+        for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
 
         this.plannedTotalIdentifiersToCalculate = stack.length
 
@@ -628,7 +628,7 @@ class Transaction extends base {
                 if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
             }
 
-            if (!ignoreSelfDependency) this.candidate.selfDependentQuarks.add(identifier)
+            if (!ignoreSelfDependency) this.candidate.selfDependent.add(identifier)
         }
     }
 

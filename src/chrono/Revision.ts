@@ -22,7 +22,7 @@ class Revision extends base {
     reachableCount          : number    = 0
     referenceCount          : number    = 0
 
-    selfDependentQuarks     : Set<Identifier>   = new Set()
+    selfDependent           : Set<Identifier>   = new Set()
 
 
     getLatestEntryFor (identifier : Identifier) : QuarkI {

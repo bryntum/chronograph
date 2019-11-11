@@ -137,7 +137,7 @@ class Checkout extends base {
                 prevRev.scope.set(identifier, entry)
             }
 
-            copySetInto(newRev.selfDependentQuarks, prevRev.selfDependentQuarks)
+            copySetInto(newRev.selfDependent, prevRev.selfDependent)
 
             newRev.scope          = prevRev.scope
 
@@ -147,7 +147,7 @@ class Checkout extends base {
         // otherwise, we have to copy from it, and keep it intact
         else {
             newRev.scope                  = new Map(concat(prevRev.scope, newRev.scope))
-            newRev.selfDependentQuarks    = new Set(concat(prevRev.selfDependentQuarks, newRev.selfDependentQuarks))
+            newRev.selfDependent    = new Set(concat(prevRev.selfDependent, newRev.selfDependent))
 
             prevRev.referenceCount--
         }
