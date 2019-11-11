@@ -253,9 +253,10 @@ StartTest(t => {
         // ----------------
         spies.forEach(spy => spy.reset())
 
+        // the order of writes matters
+        graph.write(dispatcher, c2)
         graph.write(i1, 5)
         graph.write(i2, 5)
-        graph.write(dispatcher, c2)
 
         graph.propagate()
 

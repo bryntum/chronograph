@@ -133,7 +133,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             // from the previous revision
             // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
             // so general consideration is - the revision should contain ALL information needed to calculate it
-            // alternatively, this could be done during the `populateCandidateScopeFromTransitions`
+            // or, this should probably be done during the `populateCandidateScopeFromTransitions` or `compactRevisions`
             visitInfo.getQuark().proposedValue   = latestEntry.origin.value
         }
 
@@ -612,9 +612,6 @@ class Transaction extends base {
             this.entries.set(identifierRead, requestedEntry)
         }
 
-        // always prevent removal of the entries, from which an edge has started
-        requestedEntry.forceCalculation()
-
         requestedEntry.addOutgoingTo(activeEntry, type)
 
         return requestedEntry
@@ -753,10 +750,20 @@ class Transaction extends base {
                     })
                 }
 
-                if (entry.edgesFlow < 0) {
-                    if (entry.size === 0) entries.delete(identifier)
+                // the "edgesFlow < 0" indicates that none of the incoming deps of this quark has changed
+                // thus we don't need to calculate it, moreover, we can remove the quark from the `entries`
+                // to expose the value from the previous revision
+                // however, we only do it, when there is a quark from previous revision and it has "origin" (some value)
+                if (entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
+                    // if there's no outgoing edges we remove the quark
+                    if (entry.size === 0) {
+                        entries.delete(identifier)
+                    } else {
+                        // otherwise turn it into "shadow"
+                        entry.origin = entry.previous.origin
+                    }
 
-                    // // reduce garbage collection workload
+                    // reduce garbage collection workload
                     entry.cleanup()
 
                     stack.pop()
@@ -842,10 +849,17 @@ class Transaction extends base {
                     })
                 }
 
-                if (entry.edgesFlow < 0) {
-                    entries.delete(identifier)
+                // the "edgesFlow < 0" indicates that none of the incoming deps of this quark has changed
+                // thus we don't need to calculate it, moreover, we can remove the quark from the `entries`,
+                if (entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
+                    // but only if there's no outgoing edges
+                    if (entry.size === 0) {
+                        entries.delete(identifier)
+                    } else {
+                        entry.origin = entry.previous.origin
+                    }
 
-                    // // reduce garbage collection workload
+                    // reduce garbage collection workload
                     entry.cleanup()
 
                     stack.pop()
