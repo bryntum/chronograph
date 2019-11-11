@@ -134,7 +134,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
             // so general consideration is - the revision should contain ALL information needed to calculate it
             // or, this should probably be done during the `populateCandidateScopeFromTransitions` or `compactRevisions`
-            visitInfo.getQuark().proposedValue   = latestEntry.origin.value
+            visitInfo.getOrigin().proposedValue   = latestEntry.origin.value
         }
 
         // for (const outgoingEntry of latestEntry.outgoingInTheFuture(this.baseRevision)) {
@@ -296,7 +296,7 @@ class Transaction extends base {
 
 
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        return this.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
+        return this.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
     }
 
 

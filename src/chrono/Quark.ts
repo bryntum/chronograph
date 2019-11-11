@@ -68,8 +68,6 @@ class Quark extends base {
 
 
     cleanup () {
-        // this.previous           = null
-
         this.cleanupCalculation()
     }
 
@@ -79,7 +77,7 @@ class Quark extends base {
     }
 
 
-    getQuark () : Quark {
+    getOrigin () : Quark {
         if (this.origin) return this.origin
 
         return this.origin = this
@@ -119,7 +117,7 @@ class Quark extends base {
     setValue (value : any) {
         if (this.origin && this.origin !== this) throw new Error('Can not set value to the shadow entry')
 
-        this.getQuark().value = value
+        this.getOrigin().value = value
     }
 
 

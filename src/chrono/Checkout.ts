@@ -365,7 +365,7 @@ class Checkout extends base {
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
         // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
 
-        return this.activeTransaction.touch(identifier).getQuark() as InstanceType<T[ 'quarkClass' ]>
+        return this.activeTransaction.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
     }
 
 
