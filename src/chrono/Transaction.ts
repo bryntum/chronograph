@@ -598,7 +598,7 @@ class Transaction extends base {
 
             if (!previousEntry) throwUnknownIdentifier(identifierRead)
 
-            entry               = identifier.newQuark()
+            entry               = identifierRead.newQuark()
 
             entry.origin        = previousEntry.origin
             entry.previous      = previousEntry
