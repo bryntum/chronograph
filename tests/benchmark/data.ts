@@ -1,9 +1,15 @@
 import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
+import { AnyConstructor, Base } from "../../src/class/Mixin.js"
+import { Entity, field } from "../../src/replica/Entity.js"
+import { MinimalReplica, Replica } from "../../src/replica/Replica.js"
 
+//---------------------------------------------------------------------------------------------------------------------
 export type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[], counter : number }
 
+
+//---------------------------------------------------------------------------------------------------------------------
 export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult => {
     const graph : ChronoGraph   = MinimalChronoGraph.new()
 
@@ -62,6 +68,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export const deepGraphGenShared = (atomNum : number = 1000) : GraphGenerationResult => {
     const graph : ChronoGraph   = MinimalChronoGraph.new()
 
@@ -145,7 +152,7 @@ export const deepGraphGenShared = (atomNum : number = 1000) : GraphGenerationRes
 }
 
 
-
+//---------------------------------------------------------------------------------------------------------------------
 export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult => {
     const graph : ChronoGraph   = MinimalChronoGraph.new()
 
@@ -212,6 +219,8 @@ export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult =
     return res
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
 export type MobxBox = { get : () => number, set : (v : number) => any }
 
 export type MobxGraphGenerationResult  = { boxes : MobxBox[], counter : number }
@@ -267,6 +276,147 @@ export const mobxGraph = (atomNum : number = 1000) : MobxGraphGenerationResult =
                 return input.reduce((sum, op) => (sum - op) % 10000, 0)
             }, { keepAlive : true, context : i }))
         }
+    }
+
+    return res
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export type ReplicaGenerationResult  = { replica : Replica, entities : Entity[] }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Mixin1 = <T extends AnyConstructor<Entity>>(base : T) => {
+
+    class Mixin1 extends base {
+        @field()
+        field11         : string        = 'string'
+
+        @field()
+        field12         : number        = 0
+
+        @field()
+        field13         : boolean       = false
+
+        @field()
+        field14         : any[]         = []
+
+        @field()
+        field15         : object        = {}
+    }
+
+    return Mixin1
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Mixin2 = <T extends AnyConstructor<Entity>>(base : T) => {
+
+    class Mixin2 extends base {
+        @field()
+        field21         : string        = 'string'
+
+        @field()
+        field22         : number        = 0
+
+        @field()
+        field23         : boolean       = false
+
+        @field()
+        field24         : any[]         = []
+
+        @field()
+        field25         : object        = {}
+    }
+
+    return Mixin2
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Mixin3 = <T extends AnyConstructor<Entity>>(base : T) => {
+
+    class Mixin3 extends base {
+        @field()
+        field31         : string        = 'string'
+
+        @field()
+        field32         : number        = 0
+
+        @field()
+        field33         : boolean       = false
+
+        @field()
+        field34         : any[]         = []
+
+        @field()
+        field35         : object        = {}
+    }
+
+    return Mixin3
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Mixin4 = <T extends AnyConstructor<Entity>>(base : T) => {
+
+    class Mixin4 extends base {
+        @field()
+        field41         : string        = 'string'
+
+        @field()
+        field42         : number        = 0
+
+        @field()
+        field43         : boolean       = false
+
+        @field()
+        field44         : any[]         = []
+
+        @field()
+        field45         : object        = {}
+    }
+
+    return Mixin4
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+export const Mixin5 = <T extends AnyConstructor<Entity>>(base : T) => {
+
+    class Mixin5 extends base {
+        @field()
+        field51         : string        = 'string'
+
+        @field()
+        field52         : number        = 0
+
+        @field()
+        field53         : boolean       = false
+
+        @field()
+        field54         : any[]         = []
+
+        @field()
+        field55         : object        = {}
+    }
+
+    return Mixin5
+}
+
+class TestEntity5 extends Mixin5(Mixin4(Mixin3(Mixin2(Mixin1(Entity(Base)))))) {}
+
+class TestEntity1 extends Mixin1(Entity(Base)) {}
+
+//---------------------------------------------------------------------------------------------------------------------
+export const replicaGen = (entitiesNum : number = 1000) : ReplicaGenerationResult => {
+    const replica : Replica     = MinimalReplica.new()
+
+    let entities       = []
+
+    const res       = { replica, entities }
+
+    for (let i = 0; i < entitiesNum; i++) {
+        // entities.push(TestEntity5.new())
+        replica.addEntity(TestEntity5.new())
     }
 
     return res
