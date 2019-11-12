@@ -317,6 +317,25 @@ class Transaction extends base {
     }
 
 
+    addIdentifier (identifier : Identifier, proposedValue? : any, ...args : any[]) : Quark {
+        const entry             = identifier.newQuark()
+
+        entry.previous          = this.baseRevision.getLatestEntryFor(identifier)
+
+        entry.forceCalculation()
+
+        this.entries.set(identifier, entry)
+        if (!identifier.lazy) this.stackGen.push(entry)
+
+        if (proposedValue !== undefined) {
+            entry.startOrigin()
+            identifier.writeQuark.call(identifier.context || identifier, identifier, this, entry, proposedValue, ...args)
+        }
+
+        return entry
+    }
+
+
     removeIdentifier (identifier : Identifier) {
         const entry                 = this.touch(identifier).startOrigin()
 

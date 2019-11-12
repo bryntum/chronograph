@@ -3,7 +3,7 @@ import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
@@ -23,6 +23,8 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         $calculations   : { [s in keyof this] : string }
         $writes         : { [s in keyof this] : string }
         $buildProposed  : { [s in keyof this] : string }
+
+        static $skeleton       : object = {}
 
         graph           : ChronoGraph
 
@@ -45,15 +47,15 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
             })
 
             // debugging aid
-            const proxy = new Proxy($, {
-                get (target : object, property : string | number | symbol, receiver : any) : any {
-                    if (!target[ property ]) debugger
+            // const proxy = new Proxy($, {
+            //     get (target : object, property : string | number | symbol, receiver : any) : any {
+            //         if (!target[ property ]) debugger
+            //
+            //         return target[ property ]
+            //     }
+            // })
 
-                    return target[ property ]
-                }
-            })
-
-            return defineProperty(this as any, '$', proxy)
+            return defineProperty(this as any, '$', $)
         }
 
 
@@ -82,38 +84,17 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
         createFieldIdentifier (field : Field) : FieldIdentifierI {
             const name                  = field.name
+            const constructor           = this.constructor as EntityConstructor
+            const skeleton              = constructor.$skeleton
 
-            const config : Partial<FieldIdentifierI> = {
-                name                : `${this.$$.name}/${name}`,
-                field               : field,
-                self                : this,
-                context             : this,
-                lazy                : field.lazy
-            }
+            if (!skeleton[ name ]) skeleton[ name ] = constructor.getIdentifierTemplateClass(this, field)
 
-            //------------------
-            if (field.equality) config.equality = field.equality
+            const identifier            = new skeleton[ name ]()
 
-            //------------------
-            const calculationFunction   = this.$calculations && this[ this.$calculations[ name ] ]
+            identifier.context          = this
+            identifier.self             = this
 
-            if (calculationFunction) config.calculation = calculationFunction
-
-            //------------------
-            const writeFunction         = this.$writes && this[ this.$writes[ name ] ]
-
-            if (writeFunction) config.write = writeFunction
-
-            //------------------
-            const buildProposedFunction = this.$buildProposed && this[ this.$buildProposed[ name ] ]
-
-            if (buildProposedFunction) {
-                config.buildProposedValue       = buildProposedFunction
-                config.proposedValueIsBuilt     = true
-            }
-
-            //------------------
-            return field.identifierCls.new(config)
+            return identifier
         }
 
 
@@ -137,19 +118,13 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
             replica.addIdentifier(this.$$)
 
-            const keys      = Object.keys(this.$)
+            this.$entity.forEachField((field, name) => {
+                const identifier : FieldIdentifier   = this.$[ name ]
 
-            // only the already created identifiers will be added
-            for (let i = 0; i < keys.length; i++) {
-                const identifier : FieldIdentifier   = this.$[ keys[ i ] ]
+                replica.addIdentifier(identifier, identifier.DATA)
 
-                replica.addIdentifier(identifier)
-
-                if (identifier.DATA !== undefined) {
-                    replica.write(identifier, identifier.DATA)
-                    identifier.DATA = undefined
-                }
-            }
+                identifier.DATA = undefined
+            })
         }
 
 
@@ -241,6 +216,47 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
+        static getIdentifierTemplateClass (me : Entity, field : Field) : typeof Identifier {
+            const name                  = field.name
+
+            const config : Partial<FieldIdentifierI> = {
+                name                : `${me.$$.name}/${name}`,
+                field               : field,
+                lazy                : field.lazy,
+            }
+
+            //------------------
+            if (field.equality) config.equality = field.equality
+
+            //------------------
+            const calculationFunction   = me.$calculations && me[ me.$calculations[ name ] ]
+
+            if (calculationFunction) config.calculation = calculationFunction
+
+            //------------------
+            const writeFunction         = me.$writes && me[ me.$writes[ name ] ]
+
+            if (writeFunction) config.write = writeFunction
+
+            //------------------
+            const buildProposedFunction = me.$buildProposed && me[ me.$buildProposed[ name ] ]
+
+            if (buildProposedFunction) {
+                config.buildProposedValue       = buildProposedFunction
+                config.proposedValueIsBuilt     = true
+            }
+
+            //------------------
+            const template              = field.identifierCls.new(config)
+
+            const templateClass         = function () {} as any as typeof Identifier
+
+            templateClass.prototype     = template
+
+            return templateClass
+        }
+
+
         // unfortunately, the better typing:
         // run <Name extends AllowedNames<this, AnyFunction>> (methodName : Name, ...args : Parameters<this[ Name ]>)
         //     : ReturnType<this[ Name ]> extends CalculationIterator<infer Res> ? Res : ReturnType<this[ Name ]>
@@ -262,6 +278,8 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
 export type Entity = Mixin<typeof Entity>
 
+export type EntityConstructor = MixinConstructor<typeof Entity>
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const createEntityOnPrototype = (proto : any) : EntityMeta => {
@@ -269,7 +287,10 @@ export const createEntityOnPrototype = (proto : any) : EntityMeta => {
 
     // the `hasOwnProperty` condition will be `true` for the `Entity` mixin itself
     // if the parent is `Entity` mixin, then this is a top-level entity
-    return defineProperty(proto, '$entity', EntityMeta.new({ parentEntity : parent.hasOwnProperty(isEntityMarker) ? null : parent.$entity }))
+    return defineProperty(proto, '$entity', EntityMeta.new({
+        parentEntity    : parent.hasOwnProperty(isEntityMarker) ? null : parent.$entity,
+        name            : proto.constructor.name
+    }))
 }
 
 

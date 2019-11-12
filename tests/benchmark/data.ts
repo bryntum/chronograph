@@ -410,14 +410,36 @@ class TestEntity1 extends Mixin1(Entity(Base)) {}
 export const replicaGen = (entitiesNum : number = 1000) : ReplicaGenerationResult => {
     const replica : Replica     = MinimalReplica.new()
 
-    let entities       = []
+    let entities : Entity[]      = []
 
     const res       = { replica, entities }
 
     for (let i = 0; i < entitiesNum; i++) {
-        // entities.push(TestEntity5.new())
-        replica.addEntity(TestEntity5.new())
+        const instance  = TestEntity5.new()
+
+        entities.push(instance)
+        replica.addEntity(instance)
     }
+
+    // console.profile('adding')
+    //
+    // // const map = new Map()
+    //
+    // for (let i = 0; i < entitiesNum; i++) {
+    //     const instance  = entities[ i ]
+    //
+    //     replica.addEntity(instance)
+    //
+    //     // instance.$entity.forEachField((field, name) => {
+    //     //     map.set(instance.$[ name ], instance)
+    //     // })
+    // }
+    // // // console.log("Map size: ", map.size)
+    // //
+    // // // console.log("Entries size: ", replica.activeTransaction.entries.size)
+    //
+    // console.profileEnd('adding')
+
 
     return res
 }

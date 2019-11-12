@@ -63,19 +63,19 @@ class Checkout extends base {
     }
 
 
-    clear () {
-        this.baseRevision.scope.clear()
-        this.baseRevision.previous  = null
-        this.listeners.clear()
-
-        this.baseRevision   = MinimalRevision.new()
-        this.topRevision    = this.baseRevision
-
-        clearLazyProperty(this, 'followingRevision')
-        clearLazyProperty(this, 'activeTransaction')
-
-        this.markAndSweep()
-    }
+    // clear () {
+    //     this.baseRevision.scope.clear()
+    //     this.baseRevision.previous  = null
+    //     this.listeners.clear()
+    //
+    //     this.baseRevision   = MinimalRevision.new()
+    //     this.topRevision    = this.baseRevision
+    //
+    //     clearLazyProperty(this, 'followingRevision')
+    //     this._activeTransaction = undefined
+    //
+    //     this.markAndSweep()
+    // }
 
 
     * eachReachableRevision () : IterableIterator<[ Revision, boolean ]> {
@@ -172,11 +172,16 @@ class Checkout extends base {
     }
 
 
+    _activeTransaction : Transaction    = undefined
+
+
     get activeTransaction () : Transaction {
-        return lazyProperty(this, 'activeTransaction', () => MinimalTransaction.new({
+        if (this._activeTransaction) return this._activeTransaction
+
+        return this._activeTransaction = MinimalTransaction.new({
             baseRevision                : this.baseRevision,
             graph                       : this
-        }))
+        })
     }
 
 
@@ -188,10 +193,6 @@ class Checkout extends base {
 
 
     propagate (args? : PropagateArguments) : PropagateResult {
-        // const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
-        //
-        // if (!activeTransaction) return
-
         const nextRevision      = this.activeTransaction.propagate(args)
 
         const result            = this.finalizePropagation(nextRevision)
@@ -203,10 +204,6 @@ class Checkout extends base {
 
 
     propagateSync (args? : PropagateArguments) : PropagateResult {
-        // const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
-        //
-        // if (!activeTransaction) return
-
         const nextRevision      = this.activeTransaction.propagateSync(args)
 
         const result            = this.finalizePropagation(nextRevision)
@@ -218,10 +215,6 @@ class Checkout extends base {
 
 
     async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
-        // const activeTransaction = this.runningTransaction = clearLazyProperty(this, 'activeTransaction')
-        //
-        // if (!activeTransaction) return Promise.resolve(null)
-
         const nextRevision      = await this.activeTransaction.propagateAsync(args)
 
         const result            = this.finalizePropagation(nextRevision)
@@ -266,7 +259,7 @@ class Checkout extends base {
         this.markAndSweep()
 
         clearLazyProperty(this, 'followingRevision')
-        clearLazyProperty(this, 'activeTransaction')
+        this._activeTransaction = undefined
 
         return
     }
@@ -308,9 +301,7 @@ class Checkout extends base {
 
 
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
-        this.activeTransaction.touch(identifier)
-
-        if (proposedValue !== undefined) this.write(identifier, proposedValue, ...args)
+        this.activeTransaction.addIdentifier(identifier, proposedValue, ...args)
 
         return identifier
     }
@@ -429,7 +420,7 @@ class Checkout extends base {
         this.baseRevision       = previous
 
         // note: all unpropagated "writes" are lost
-        clearLazyProperty(this, 'activeTransaction')
+        this._activeTransaction = undefined
 
         return true
     }
@@ -445,7 +436,7 @@ class Checkout extends base {
         this.baseRevision       = nextRevision
 
         // note: all unpropagated "writes" are lost
-        clearLazyProperty(this, 'activeTransaction')
+        this._activeTransaction = undefined
 
         return true
     }

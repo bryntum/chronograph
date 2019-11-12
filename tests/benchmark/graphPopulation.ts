@@ -49,5 +49,3 @@ export const runAllGraphPopulation = async () => {
 
     await replicaPopulation.measureTillRelativeMoe()
 }
-
-// runAllGraphPopulation()

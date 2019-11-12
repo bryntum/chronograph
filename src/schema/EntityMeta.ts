@@ -1,6 +1,4 @@
-import { AnyConstructor, Base } from "../class/Mixin.js"
-import { Entity } from "../replica/Entity.js"
-import { lazyProperty } from "../util/Helpers.js"
+import { Base } from "../class/Mixin.js"
 import { Field, Name } from "./Field.js"
 import { Schema } from "./Schema.js"
 
@@ -50,60 +48,30 @@ export class EntityMeta extends Base {
     }
 
 
+    _allFields : Map<Name, Field>       = undefined
+
+
     get allFields () : Map<Name, Field> {
-        return lazyProperty(this, 'allFields', () => {
-            const allFields : Map<Name, Field>  = new Map()
-            const visited : Set<Name>           = new Set()
+        if (this._allFields !== undefined) return this._allFields
 
-            this.forEachParent(entity => {
-                entity.ownFields.forEach((field : Field, name : Name) => {
-                    if (!visited.has(name)) {
-                        visited.add(name)
+        const allFields : Map<Name, Field>  = new Map()
+        const visited : Set<Name>           = new Set()
 
-                        allFields.set(name, field)
-                    }
-                })
+        this.forEachParent(entity => {
+            entity.ownFields.forEach((field : Field, name : Name) => {
+                if (!visited.has(name)) {
+                    visited.add(name)
+
+                    allFields.set(name, field)
+                }
             })
-
-            return allFields
         })
+
+        return this._allFields = allFields
     }
 
 
     forEachField (func : (field : Field, name : Name) => any) {
         this.allFields.forEach(func)
-    }
-
-
-    // generate a class for lazy instantiation of the identifiers
-    get skeletonClass () : AnyConstructor {
-        return lazyProperty(this, 'skeletonClass', () => {
-            const cls   = class {
-                __instance        : Entity
-
-                constructor (instance : Entity) {
-                    Object.defineProperty(this, '__instance', { value : instance })
-                }
-
-                get $ () : this {
-                    return this
-                }
-            }
-
-            this.forEachField((field : Field, name : Name) => {
-
-                Object.defineProperty(cls.prototype, name, {
-                    get     : function () {
-                        const identifier    = (this.__instance as Entity).createFieldIdentifier(field)
-
-                        Object.defineProperty(this, name, { value : identifier, enumerable : true })
-
-                        return identifier
-                    }
-                })
-            })
-
-            return cls
-        })
     }
 }

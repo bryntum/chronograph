@@ -44,7 +44,14 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
 
     newQuark () : InstanceType<this[ 'quarkClass' ]> {
-        return this.quarkClass.new({ identifier : this, needToBuildProposedValue : this.proposedValueIsBuilt }) as InstanceType<this[ 'quarkClass' ]>
+        // micro-optimization - we don't pass a config object to the `new` constructor
+        // but instead assign directly to instance
+        const newQuark                      = this.quarkClass.new() as InstanceType<this[ 'quarkClass' ]>
+
+        newQuark.identifier                 = this
+        newQuark.needToBuildProposedValue   = this.proposedValueIsBuilt
+
+        return newQuark
     }
 
 
@@ -61,6 +68,12 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         const quark                 = transaction.acquireQuark(me)
 
+        quark.proposedValue         = proposedValue
+        quark.proposedArguments     = args.length > 0 ? args : undefined
+    }
+
+
+    writeQuark (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         quark.proposedValue         = proposedValue
         quark.proposedArguments     = args.length > 0 ? args : undefined
     }
@@ -96,6 +109,12 @@ export class Variable<ValueT = any> extends Identifier<typeof ContextSync, Value
     write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         const quark                 = transaction.acquireQuark(me)
 
+        quark.value                 = proposedValue
+        quark.proposedArguments     = args.length > 0 ? args : undefined
+    }
+
+
+    writeQuark (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         quark.value                 = proposedValue
         quark.proposedArguments     = args.length > 0 ? args : undefined
     }
