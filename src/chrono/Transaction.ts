@@ -590,22 +590,25 @@ class Transaction extends base {
 
         if (identifier.level < identifierRead.level) throw new Error('Identifier can not read from higher level identifier')
 
-        let requestedEntry : Quark             = this.entries.get(identifierRead)
+        let entry : Quark             = this.entries.get(identifierRead)
 
         // creating "shadowing" entry, to store the new edges
-        if (!requestedEntry) {
+        if (!entry) {
             const previousEntry = this.baseRevision.getLatestEntryFor(identifierRead)
 
             if (!previousEntry) throwUnknownIdentifier(identifierRead)
 
-            requestedEntry      = identifier.quarkClass.new({ identifier : identifierRead, origin : previousEntry.origin, previous : previousEntry, needToBuildProposedValue : identifier.proposedValueIsBuilt })
+            entry               = identifier.newQuark()
 
-            this.entries.set(identifierRead, requestedEntry)
+            entry.origin        = previousEntry.origin
+            entry.previous      = previousEntry
+
+            this.entries.set(identifierRead, entry)
         }
 
-        requestedEntry.addOutgoingTo(activeEntry, type)
+        entry.addOutgoingTo(activeEntry, type)
 
-        return requestedEntry
+        return entry
     }
 
 
