@@ -15,13 +15,13 @@ export interface PartOfEntityIdentifier {
 export const FieldIdentifier = instanceOf(<T extends AnyConstructor<Identifier>>(base : T) =>
 
 class FieldIdentifier extends base implements PartOfEntityIdentifier {
-    field       : Field
+    field       : Field             = undefined
 
-    self        : Entity
+    self        : Entity            = undefined
 
     // temp storage for value for the phase, when identifier is created, but has not joined any graph
     // is cleared during the 1st join to the graph
-    DATA        : this[ 'ValueT' ]
+    DATA        : this[ 'ValueT' ]  = undefined
 
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
@@ -50,9 +50,9 @@ export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) 
 export const EntityIdentifier = <T extends AnyConstructor<CalculatedValueSync>>(base : T) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
-    entity      : EntityMeta
+    entity      : EntityMeta        = undefined
 
-    self        : Entity
+    self        : Entity            = undefined
 
 
     toString () : string {
