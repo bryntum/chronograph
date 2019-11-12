@@ -44,16 +44,16 @@ enum Direction {
 
 
 class Event extends Entity(Base) {
-    @field({ listeners : [ 'dispatcher' ] })
+    @field()
     start       : number
 
-    @field({ listeners : [ 'dispatcher' ] })
+    @field()
     end         : number
 
-    @field({ listeners : [ 'dispatcher' ] })
+    @field()
     duration    : number
 
-    @field({ listeners : [ 'dispatcher' ] })
+    @field()
     direction   : Direction    = Direction.Forward
 
     @field({ equality : dispatcherValueEq })

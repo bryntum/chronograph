@@ -1,3 +1,4 @@
+import { Identifier } from "../chrono/Identifier.js"
 import { Base } from "../class/Mixin.js"
 import { FieldIdentifierConstructor, MinimalFieldIdentifier } from "../replica/Identifier.js"
 import { EntityMeta } from "./EntityMeta.js"
@@ -16,16 +17,11 @@ export class Field extends Base {
 
     entity              : EntityMeta
 
-    listeners           : Name[]
-
-    listens             : Name[]
-
     equality            : (v1 : any, v2 : any) => boolean
 
     persistent          : boolean   = true
 
     lazy                : boolean
-    eager               : boolean
 
     identifierCls       : FieldIdentifierConstructor  = MinimalFieldIdentifier
 }
