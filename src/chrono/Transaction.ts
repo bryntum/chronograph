@@ -329,7 +329,7 @@ class Transaction extends base {
 
         if (proposedValue !== undefined) {
             entry.startOrigin()
-            identifier.writeQuark.call(identifier.context || identifier, identifier, this, entry, proposedValue, ...args)
+            identifier.write.call(identifier.context || identifier, identifier, this, entry, proposedValue, ...args)
         }
 
         return entry

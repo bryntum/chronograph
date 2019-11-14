@@ -98,8 +98,8 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
         }
 
 
-        write (me : this, transaction : Transaction, proposedValue : this[ 'ValueT' ]) {
-            const quark     = transaction.acquireQuarkIfExists(me)
+        write (me : this, transaction : Transaction, quark : Quark, proposedValue : this[ 'ValueT' ]) {
+            quark           = quark || transaction.acquireQuarkIfExists(me)
 
             if (me.hasBucket()) {
                 if (quark) {
@@ -118,7 +118,7 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
                 }
             }
 
-            super.write(me, transaction, proposedValue)
+            super.write(me, transaction, quark, proposedValue)
         }
     }
 

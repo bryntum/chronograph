@@ -65,15 +65,9 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     }
 
 
-    write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        const quark                 = transaction.acquireQuark(me)
+    write (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        quark                       = quark || transaction.acquireQuark(me)
 
-        quark.proposedValue         = proposedValue
-        quark.proposedArguments     = args.length > 0 ? args : undefined
-    }
-
-
-    writeQuark (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         quark.proposedValue         = proposedValue
         quark.proposedArguments     = args.length > 0 ? args : undefined
     }
@@ -106,15 +100,9 @@ export class Variable<ValueT = any> extends Identifier<typeof ContextSync, Value
     }
 
 
-    write (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        const quark                 = transaction.acquireQuark(me)
+    write (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        quark                       = quark || transaction.acquireQuark(me)
 
-        quark.value                 = proposedValue
-        quark.proposedArguments     = args.length > 0 ? args : undefined
-    }
-
-
-    writeQuark (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         quark.value                 = proposedValue
         quark.proposedArguments     = args.length > 0 ? args : undefined
     }

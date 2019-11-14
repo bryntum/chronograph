@@ -4,7 +4,6 @@ import { CalculationContext, CalculationFunction, Context } from "../primitives/
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
-import { Quark } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
 
@@ -63,19 +62,19 @@ class Checkout extends base {
     }
 
 
-    // clear () {
-    //     this.baseRevision.scope.clear()
-    //     this.baseRevision.previous  = null
-    //     this.listeners.clear()
-    //
-    //     this.baseRevision   = MinimalRevision.new()
-    //     this.topRevision    = this.baseRevision
-    //
-    //     clearLazyProperty(this, 'followingRevision')
-    //     this._activeTransaction = undefined
-    //
-    //     this.markAndSweep()
-    // }
+    clear () {
+        this.baseRevision.scope.clear()
+        this.baseRevision.previous  = null
+        this.listeners.clear()
+
+        this.baseRevision   = MinimalRevision.new()
+        this.topRevision    = this.baseRevision
+
+        clearLazyProperty(this, 'followingRevision')
+        this._activeTransaction = undefined
+
+        this.markAndSweep()
+    }
 
 
     * eachReachableRevision () : IterableIterator<[ Revision, boolean ]> {
@@ -324,7 +323,7 @@ class Checkout extends base {
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
         if (proposedValue === undefined) proposedValue = null
 
-        identifier.write.call(identifier.context || identifier, identifier, this.activeTransaction, proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, identifier, this.activeTransaction, null, proposedValue, ...args)
     }
 
 

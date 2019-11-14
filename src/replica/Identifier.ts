@@ -47,7 +47,7 @@ export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityIdentifier = <T extends AnyConstructor<CalculatedValueSync>>(base : T) =>
+export const EntityIdentifier = <T extends AnyConstructor<CalculatedValueGen>>(base : T) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta        = undefined
@@ -65,4 +65,4 @@ export type EntityIdentifier = Mixin<typeof EntityIdentifier>
 export interface EntityIdentifierI extends EntityIdentifier {}
 
 
-export class MinimalEntityIdentifier extends EntityIdentifier(CalculatedValueSync) {}
+export class MinimalEntityIdentifier extends EntityIdentifier(CalculatedValueGen) {}
