@@ -172,7 +172,7 @@ export class Benchmark<StateT, InfoT> extends Base {
     async runFixed (cyclesCount : number, iterationsCount : number) : Promise<RunInfo<InfoT>> {
         const state : StateT  = await this.setup()
 
-        return this.runWhile(false, state, cyclesCount, (samples, i, elapsed) => i <= iterationsCount)
+        return this.runWhile(false, state, cyclesCount, (samples, i, elapsed) => i < iterationsCount)
     }
 
 
