@@ -81,6 +81,11 @@ export class Benchmark<StateT, InfoT> extends Base {
     }
 
 
+    async tearDown (state : StateT) {
+        return
+    }
+
+
     cycle (iteration : number, cycle : number, state : StateT) {
     }
 
@@ -208,7 +213,11 @@ export class Benchmark<StateT, InfoT> extends Base {
         // console.profileEnd(this.name)
         // window.BENCH_STATE = state
 
-        return this.getRunInfo(samples, cyclesCount, state)
+        const result    = this.getRunInfo(samples, cyclesCount, state)
+
+        await this.tearDown(state)
+
+        return result
     }
 
 
