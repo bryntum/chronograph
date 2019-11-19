@@ -458,20 +458,27 @@ export const mostlyShadowingGraph = (atomNum : number = 1000) : GraphGenerationR
     const boxes : Identifier[]          = []
     const res : GraphGenerationResult   = { graph, boxes, counter : 0 }
 
-    const staticIdentsCount             = 50
+    const staticIdentsCount             = 4
+
+    class MyIden1 extends CalculatedValueGen {
+        * calculation (YIELD) {
+            let sum     = 0
+
+            for (let i = 0; i < staticIdentsCount; i++) sum += yield boxes[ i ]
+
+            return sum
+        }
+    }
+
 
     for (let i = 0; i < atomNum; i++) {
         if (i < staticIdentsCount) {
             boxes.push(graph.variableId(i, 1))
         }
         else {
-            boxes.push(graph.identifierId(i, function* (YIELD) {
-                let sum     = 0
+            const iden  = MyIden1.new({ name : i, context : i })
 
-                for (let i = 0; i < staticIdentsCount; i++) sum += yield boxes[ i ]
-
-                return sum
-            }, i))
+            boxes.push(graph.addIdentifier(iden))
         }
     }
 

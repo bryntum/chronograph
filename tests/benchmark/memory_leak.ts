@@ -7,7 +7,7 @@ export const shadowingQuarksMemoryLeak = Benchmark.new({
     name        : 'Memory leak because of shadowing quarks',
 
     setup       : async () : Promise<GraphGenerationResult> => {
-        return mostlyShadowingGraph(50000)
+        return mostlyShadowingGraph(100000)
     },
 
 
