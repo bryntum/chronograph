@@ -406,6 +406,7 @@ class TestEntity5 extends Mixin5(Mixin4(Mixin3(Mixin2(Mixin1(Entity(Base)))))) {
 
 class TestEntity1 extends Mixin1(Entity(Base)) {}
 
+
 //---------------------------------------------------------------------------------------------------------------------
 export const replicaGen = (entitiesNum : number = 1000) : ReplicaGenerationResult => {
     const replica : Replica     = MinimalReplica.new()
@@ -440,6 +441,39 @@ export const replicaGen = (entitiesNum : number = 1000) : ReplicaGenerationResul
     //
     // console.profileEnd('adding')
 
+
+    return res
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// in this graph the first 4 identifiers are static variables and all others are the sum of them
+// changing the box[ 0 ] will trigger recalculation of all boxes > 3
+// but the quarks for boxes 1, 2, 3 will be shadowing
+// repeating the set for box 0 will produce a lot of shadowing quarks (but should not leak memory anyway)
+
+export const mostlyShadowingGraph = (atomNum : number = 1000) : GraphGenerationResult => {
+    const graph : ChronoGraph           = MinimalChronoGraph.new()
+
+    const boxes : Identifier[]          = []
+    const res : GraphGenerationResult   = { graph, boxes, counter : 0 }
+
+    const staticIdentsCount             = 50
+
+    for (let i = 0; i < atomNum; i++) {
+        if (i < staticIdentsCount) {
+            boxes.push(graph.variableId(i, 1))
+        }
+        else {
+            boxes.push(graph.identifierId(i, function* (YIELD) {
+                let sum     = 0
+
+                for (let i = 0; i < staticIdentsCount; i++) sum += yield boxes[ i ]
+
+                return sum
+            }, i))
+        }
+    }
 
     return res
 }

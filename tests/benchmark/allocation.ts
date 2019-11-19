@@ -32,10 +32,10 @@ export const graphPopulationMobx = Benchmark.new({
 
 //---------------------------------------------------------------------------------------------------------------------
 export const replicaPopulation = Benchmark.new({
-    name        : 'Replica population 250k',
+    name        : 'Replica population 125k',
 
     cycle       : (iteration : number, cycle : number, setup : any) => {
-        replicaGen(10000)
+        replicaGen(5000)
     }
 })
 
