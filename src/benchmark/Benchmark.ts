@@ -211,7 +211,7 @@ export class Benchmark<StateT, InfoT> extends Base {
         }
 
         // console.profileEnd(this.name)
-        // window.BENCH_STATE = state
+        //globalThis.BENCH_STATE = state
 
         const result    = this.getRunInfo(samples, cyclesCount, state)
 
