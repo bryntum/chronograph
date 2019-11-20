@@ -23,7 +23,7 @@ class Quark extends base {
     static new<T extends typeof Quark> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance = new this()
 
-        Object.assign(instance, props)
+        props && Object.assign(instance, props)
 
         return instance as InstanceType<T>
     }
