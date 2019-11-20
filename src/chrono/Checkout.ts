@@ -129,8 +129,7 @@ class Checkout extends base {
                 if (entry.origin === entry) {
                     if (prevQuark) {
                         prevQuark.clear()
-                        prevQuark.previous  = undefined
-                        prevQuark.origin    = undefined
+                        prevQuark.clearProperties()
                     }
                 }
                 else if (prevQuark && entry.origin === prevQuark) {

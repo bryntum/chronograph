@@ -80,15 +80,27 @@ class Quark extends base {
     }
 
 
+    copyFrom (origin : Quark) {
+        this.value                  = origin.value
+        this.proposedValue          = origin.proposedValue
+        this.proposedArguments      = origin.proposedArguments
+        this.usedProposedOrCurrent  = origin.usedProposedOrCurrent
+    }
+
+
+    clearProperties () {
+        this.value                  = undefined
+        this.proposedValue          = undefined
+        this.proposedArguments      = undefined
+    }
+
+
     mergePreviousOrigin (latestScope : Scope) {
         const origin                = this.origin
 
         if (origin !== this.previous) throw new Error("Invalid state")
 
-        this.value                  = origin.value
-        this.proposedValue          = origin.proposedValue
-        this.proposedArguments      = origin.proposedArguments
-        this.usedProposedOrCurrent  = origin.usedProposedOrCurrent
+        this.copyFrom(origin)
 
         const outgoing              = this.getOutgoing()
 
@@ -105,9 +117,7 @@ class Quark extends base {
         this.origin                 = this
 
         // some help for garbage collector
-        origin.value                = undefined
-        origin.proposedValue        = undefined
-        origin.proposedArguments    = undefined
+        origin.clearProperties()
     }
 
 
