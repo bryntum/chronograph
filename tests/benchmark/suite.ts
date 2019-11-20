@@ -4,11 +4,11 @@ import { runAllMemoryLeak } from "./memory_leak.js"
 import { runAllShallowChanges } from "./shallow_changes.js"
 
 export const runAll = async () => {
-    // await runAllDeepChanges()
-    // await runAllShallowChanges()
-    // await runAllGraphPopulation()
+    await runAllDeepChanges()
+    await runAllShallowChanges()
+    await runAllGraphPopulation()
 
-    await runAllMemoryLeak()
+    // await runAllMemoryLeak()
 }
 
 runAll()
