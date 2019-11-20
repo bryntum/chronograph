@@ -103,6 +103,11 @@ class Quark extends base {
         }
 
         this.origin                 = this
+
+        // some help for garbage collector
+        origin.value                = undefined
+        origin.proposedValue        = undefined
+        origin.proposedArguments    = undefined
     }
 
 
