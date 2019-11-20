@@ -110,6 +110,29 @@ export class Variable<ValueT = any> extends Identifier<typeof ContextSync, Value
     }
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export class VariableGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
+    YieldT              : never
+
+    @prototypeValue(buildClass(Map, CalculationGen, Quark))
+    quarkClass          : QuarkConstructor
+
+
+    * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<ValueT, this[ 'YieldT' ]> {
+        throw new Error("The 'calculation' method of the variables will never be called. Instead the value will be set directly to quark")
+    }
+
+
+    write (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        quark                       = quark || transaction.acquireQuark(me)
+
+        quark.value                 = proposedValue
+        quark.proposedArguments     = args.length > 0 ? args : undefined
+    }
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<typeof ContextSync, ValueT> {
 
