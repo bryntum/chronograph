@@ -3,7 +3,7 @@ import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
-import { RevisionI } from "./Revision.js"
+import { RevisionClock, RevisionI, Scope } from "./Revision.js"
 import { YieldableValue } from "./Transaction.js"
 
 
@@ -16,7 +16,7 @@ export enum EdgeType {
 // TODO: combine all boolean flags into single SMI bitmap (field & 8 etc)
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Quark = <T extends AnyConstructor<Map<any, EdgeType> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
+export const Quark = <T extends AnyConstructor<Map<any, any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
 
 class Quark extends base {
 
@@ -27,6 +27,9 @@ class Quark extends base {
 
         return instance as InstanceType<T>
     }
+
+    // required
+    createdAt       : RevisionClock     = MAX_SMI
 
     identifier      : Identifier        = undefined
 
@@ -77,6 +80,32 @@ class Quark extends base {
     }
 
 
+    mergePreviousOrigin (latestScope : Scope) {
+        const origin                = this.origin
+
+        if (origin !== this.previous) throw new Error("Invalid state")
+
+        this.value                  = origin.value
+        this.proposedValue          = origin.proposedValue
+        this.proposedArguments      = origin.proposedArguments
+        this.usedProposedOrCurrent  = origin.usedProposedOrCurrent
+
+        const outgoing              = this.getOutgoing()
+
+        for (const [ identifier, quark ] of origin.getOutgoing()) {
+            const ownOutgoing       = outgoing.get(identifier)
+
+            if (!ownOutgoing) {
+                const latest        = latestScope.get(identifier)
+
+                if (!latest || latest.origin === quark) outgoing.set(identifier, latest || quark)
+            }
+        }
+
+        this.origin                 = this
+    }
+
+
     getOrigin () : Quark {
         if (this.origin) return this.origin
 
@@ -89,18 +118,19 @@ class Quark extends base {
     }
 
 
-    getOutgoing () : Map<Quark, EdgeType> {
-        return this as Map<Quark, EdgeType>
+    getOutgoing () : Map<Identifier, Quark> {
+        return this as Map<Identifier, Quark>
     }
 
 
-    // TODO use this method instead of adding edges manually
+    // TODO: handle `type`
     addOutgoingTo (toQuark : Quark, type : EdgeType) {
-        const self      = this as Map<Quark, EdgeType>
+        const self      = this as Map<Identifier, Quark>
 
-        const existing  = self.get(toQuark)
+        const existing  = self.get(toQuark.identifier)
 
-        self.set(toQuark, existing ? existing | type : type)
+        // self.set(toQuark, existing ? existing | type : type)
+        self.set(toQuark.identifier, toQuark)
     }
 
 
@@ -177,7 +207,7 @@ class Quark extends base {
         let current : Quark = this
 
         while (current) {
-            for (const outgoing of current.getOutgoing().keys()) {
+            for (const [ identifier, outgoing ] of current.getOutgoing()) {
                 if (outgoing.origin === revision.getLatestEntryFor(outgoing.identifier).origin) forEach(outgoing)
             }
 

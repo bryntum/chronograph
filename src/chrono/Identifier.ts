@@ -14,6 +14,7 @@ import { prototypeValue } from "../util/Helpers.js"
 import { CheckoutI } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
+import { RevisionClock } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
@@ -43,11 +44,12 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     proposedValueIsBuilt    : boolean   = false
 
 
-    newQuark () : InstanceType<this[ 'quarkClass' ]> {
+    newQuark (createdAt : RevisionClock) : InstanceType<this[ 'quarkClass' ]> {
         // micro-optimization - we don't pass a config object to the `new` constructor
         // but instead assign directly to instance
         const newQuark                      = this.quarkClass.new() as InstanceType<this[ 'quarkClass' ]>
 
+        newQuark.createdAt                  = createdAt
         newQuark.identifier                 = this
         newQuark.needToBuildProposedValue   = this.proposedValueIsBuilt
 

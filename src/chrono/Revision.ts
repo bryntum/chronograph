@@ -8,12 +8,16 @@ export type Scope = Map<Identifier, QuarkI>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-let COUNTER : number = 0
+export type RevisionClock   = number
+
+let CLOCK : RevisionClock = 0
 
 export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
 
 class Revision extends base {
-    name                    : string    = 'revision-' + (COUNTER++)
+    createdAt               : RevisionClock = CLOCK++
+
+    name                    : string    = 'revision-' + this.createdAt
 
     previous                : Revision  = undefined
 

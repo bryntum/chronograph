@@ -60,7 +60,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
     setVisitedInfo (identifier : Identifier, visitedAt : number, info : Quark) : VisitInfo {
         if (!info) {
-            info      = identifier.newQuark()
+            info      = identifier.newQuark(this.baseRevision.createdAt)
 
             this.visited.set(identifier, info)
         }
@@ -96,7 +96,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
         let entry : Quark   = this.visited.get(identifier)
 
         if (!entry) {
-            entry           = identifier.newQuark()
+            entry           = identifier.newQuark(this.baseRevision.createdAt)
 
             this.visited.set(identifier, entry)
         }
@@ -145,7 +145,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             this.doCollectNext(node, outgoingEntry.identifier, toVisit)
         })
 
-        for (const outgoingEntry of visitInfo.getOutgoing().keys()) {
+        for (const outgoingEntry of visitInfo.getOutgoing().values()) {
             const identifier    = outgoingEntry.identifier
 
             this.doCollectNext(node, identifier, toVisit)
@@ -318,7 +318,7 @@ class Transaction extends base {
 
 
     addIdentifier (identifier : Identifier, proposedValue? : any, ...args : any[]) : Quark {
-        const entry             = identifier.newQuark()
+        const entry             = identifier.newQuark(this.baseRevision.createdAt)
 
         entry.previous          = this.baseRevision.getLatestEntryFor(identifier)
 
@@ -391,7 +391,7 @@ class Transaction extends base {
 
                 if (identifier.level > maxLevel) maxLevel = identifier.level
 
-                const entry = this.entries.get(identifier) || identifier.newQuark()
+                const entry = this.entries.get(identifier) || identifier.newQuark(this.baseRevision.createdAt)
 
                 entry.forceCalculation()
 
@@ -598,7 +598,7 @@ class Transaction extends base {
 
             if (!previousEntry) throwUnknownIdentifier(identifierRead)
 
-            entry               = identifierRead.newQuark()
+            entry               = identifierRead.newQuark(this.baseRevision.createdAt)
 
             entry.origin        = previousEntry.origin
             entry.previous      = previousEntry

@@ -119,20 +119,23 @@ class Checkout extends base {
     compactRevisions (newRev : Revision, prevRev : Revision) {
         if (prevRev.reachableCount > 0 || newRev.previous !== prevRev) throw new Error("Invalid compact operation")
 
-        // we can only shred revision if its being reference maximum 1 time (from the current Checkout instance)
+        // we can only shred revision if its being referenced maximum 1 time (from the current Checkout instance)
         if (prevRev.referenceCount <= 1) {
             for (const [ identifier, entry ] of newRev.scope) {
+                const prevQuark = prevRev.scope.get(identifier)
+
                 if (entry.origin === entry) {
-                    entry.previous  = undefined
-
-                    const prevQuark = prevRev.scope.get(identifier)
-
                     if (prevQuark) {
                         prevQuark.clear()
                         prevQuark.previous  = undefined
                         prevQuark.origin    = undefined
                     }
                 }
+                else if (prevQuark && entry.origin === prevQuark) {
+                    entry.mergePreviousOrigin(newRev.scope)
+                }
+
+                entry.previous  = undefined
 
                 prevRev.scope.set(identifier, entry)
             }
@@ -247,7 +250,7 @@ class Checkout extends base {
         for (const [ identifier, quarkEntry ] of entries) {
             quarkEntry.cleanup()
 
-            // ignore "shadowing" entries
+            // ignore "shadowing" and lazy entries
             if (quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
 
             const listener  = this.listeners.get(identifier)
