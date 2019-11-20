@@ -4,6 +4,7 @@ import { CalculationContext, CalculationFunction, Context } from "../primitives/
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
+import { TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
 
@@ -124,21 +125,25 @@ class Checkout extends base {
         // we can only shred revision if its being referenced maximum 1 time (from the current Checkout instance)
         if (prevRev.referenceCount <= 1) {
             for (const [ identifier, entry ] of newRev.scope) {
-                const prevQuark = prevRev.scope.get(identifier)
+                if (entry.getValue() === TombStone) {
+                    prevRev.scope.delete(identifier)
+                } else {
+                    const prevQuark = prevRev.scope.get(identifier)
 
-                if (entry.origin === entry) {
-                    if (prevQuark) {
-                        prevQuark.clear()
-                        prevQuark.clearProperties()
+                    if (entry.origin === entry) {
+                        if (prevQuark) {
+                            prevQuark.clear()
+                            prevQuark.clearProperties()
+                        }
                     }
-                }
-                else if (prevQuark && entry.origin === prevQuark) {
-                    entry.mergePreviousOrigin(newRev.scope)
-                }
+                    else if (prevQuark && entry.origin === prevQuark) {
+                        entry.mergePreviousOrigin(newRev.scope)
+                    }
 
-                entry.previous  = undefined
+                    entry.previous  = undefined
 
-                prevRev.scope.set(identifier, entry)
+                    prevRev.scope.set(identifier, entry)
+                }
             }
 
             copySetInto(newRev.selfDependent, prevRev.selfDependent)
