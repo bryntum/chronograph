@@ -289,7 +289,7 @@ class Transaction extends base {
 
 
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
-        identifier.write.call(identifier.context || identifier, identifier, this, proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, identifier, this, null, proposedValue, ...args)
     }
 
 
