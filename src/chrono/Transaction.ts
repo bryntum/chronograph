@@ -317,15 +317,23 @@ class Transaction extends base {
     }
 
 
+    // this is actually an optimized version of `write`, which skips the graph walk phase
+    // (since the identifier is assumed to be new, there should be no dependent quarks)
     addIdentifier (identifier : Identifier, proposedValue? : any, ...args : any[]) : Quark {
-        const entry             = identifier.newQuark(this.baseRevision.createdAt)
+        // however, the identifier may be already in the transaction, for example if the `write` method
+        // of some other identifier writes to this identifier
+        let entry : Quark           = this.entries.get(identifier)
 
-        entry.previous          = this.baseRevision.getLatestEntryFor(identifier)
+        if (!entry) {
+            entry                   = identifier.newQuark(this.baseRevision.createdAt)
 
-        entry.forceCalculation()
+            entry.previous          = this.baseRevision.getLatestEntryFor(identifier)
 
-        this.entries.set(identifier, entry)
-        if (!identifier.lazy) this.stackGen.push(entry)
+            entry.forceCalculation()
+
+            this.entries.set(identifier, entry)
+            if (!identifier.lazy) this.stackGen.push(entry)
+        }
 
         if (proposedValue !== undefined) {
             entry.startOrigin()

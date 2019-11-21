@@ -1,3 +1,4 @@
+import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Variable } from "../../src/chrono/Identifier.js"
 
@@ -267,6 +268,21 @@ StartTest(t => {
     })
 
 
+    t.it('Adding already added identifier should not overwrite the initial proposed value', async t => {
+        const graph : ChronoGraph = MinimalChronoGraph.new()
 
+        const iden1     = graph.addIdentifier(CalculatedValueSync.new({
+            calculation : function (YIELD) {
+                return YIELD(ProposedOrCurrent)
+            }
+        }), 10)
 
+        const iden11    = graph.addIdentifier(iden1)
+
+        t.isStrict(iden1, iden11, 'Do not overwrite the already added identifier')
+
+        graph.propagate()
+
+        t.is(graph.read(iden1), 10, 'Initial proposed value was not overwritten')
+    })
 })
