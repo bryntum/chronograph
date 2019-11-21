@@ -249,11 +249,11 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
             //------------------
             const template              = field.identifierCls.new(config)
 
-            const templateClass         = function () {} as any as typeof Identifier
+            const TemplateClass         = function () {} as any as typeof Identifier
 
-            templateClass.prototype     = template
+            TemplateClass.prototype     = template
 
-            return templateClass
+            return TemplateClass
         }
 
 

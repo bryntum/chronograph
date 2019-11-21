@@ -517,7 +517,7 @@ class Transaction extends base {
 
         const writeTo   = effect.writeTarget
 
-        writeTo.write.call(writeTo.context || writeTo, writeTo, this, ...effect.proposedArgs)
+        writeTo.write.call(writeTo.context || writeTo, writeTo, this, null, ...effect.proposedArgs)
     }
 
 
@@ -529,7 +529,7 @@ class Transaction extends base {
         effect.writes.forEach(writeInfo => {
             const identifier    = writeInfo.identifier
 
-            identifier.write.call(identifier.context || identifier, identifier, this, ...writeInfo.proposedArgs)
+            identifier.write.call(identifier.context || identifier, identifier, this, null, ...writeInfo.proposedArgs)
         })
     }
 
