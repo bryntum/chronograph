@@ -1,7 +1,7 @@
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
-import { MAX_SMI } from "../util/Helpers.js"
+import { MAX_SMI, MIN_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 import { RevisionClock, RevisionI, Scope } from "./Revision.js"
 import { YieldableValue } from "./Transaction.js"
@@ -14,6 +14,10 @@ export enum EdgeType {
 }
 
 // TODO: combine all boolean flags into single SMI bitmap (field & 8 etc)
+
+export type OriginId    = number
+
+let ORIGIN_ID : OriginId    = 0
 
 //---------------------------------------------------------------------------------------------------------------------
 export const Quark = <T extends AnyConstructor<Map<any, any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
@@ -40,8 +44,9 @@ class Quark extends base {
     usedProposedOrCurrent   : boolean   = false
     // eof quark state
 
-    previous        : Quark        = undefined
-    origin          : Quark        = undefined
+    previous        : Quark             = undefined
+    origin          : Quark             = undefined
+    originId        : OriginId          = MIN_SMI
 
     needToBuildProposedValue    : boolean = false
 
@@ -114,21 +119,31 @@ class Quark extends base {
             }
         }
 
+        // changing `origin`, but keeping `originId`
         this.origin                 = this
 
         // some help for garbage collector
         origin.clearProperties()
+        origin.clear()
+    }
+
+
+    setOrigin (origin : Quark) {
+        this.origin     = origin
+        this.originId   = origin.originId
     }
 
 
     getOrigin () : Quark {
         if (this.origin) return this.origin
 
-        return this.origin = this
+        return this.startOrigin()
     }
 
 
     startOrigin () : Quark {
+        this.originId   = ORIGIN_ID++
+
         return this.origin = this
     }
 
@@ -223,7 +238,7 @@ class Quark extends base {
 
         while (current) {
             for (const [ identifier, outgoing ] of current.getOutgoing()) {
-                if (outgoing.origin === revision.getLatestEntryFor(outgoing.identifier).origin) forEach(outgoing)
+                if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
             }
 
             if (current.isShadow())

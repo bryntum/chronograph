@@ -391,4 +391,57 @@ StartTest(t => {
         spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1 ][ index ]))
     })
 
+
+    t.it('Should preserve dependencies from shadowed entries #3', async t => {
+        const graph : ChronoGraph       = MinimalChronoGraph.new()
+
+        const i1        = graph.variableId('i1', 0)
+        const i2        = graph.variableId('i2', 1)
+
+        const c1        = graph.identifierId('c1', function* () {
+            return (yield i1)
+        })
+
+        const c2        = graph.identifierId('c2', function* () {
+            return (yield i2)
+        })
+
+        const c3        = graph.identifierId('c3', function* () {
+            return (yield c1) + (yield c2)
+        })
+
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2, c3 ]
+
+        const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 1, 0, 1, 1 ], "Correct result calculated - step 1")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i2, 2)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 2, 0, 2, 2 ], "Correct result calculated - step 2")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 0, 1, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        graph.write(i1, 1)
+
+        graph.propagate()
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 1, 2, 1, 2, 3 ], "Correct result calculated - step 3")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 0, 1 ][ index ]))
+    })
 })

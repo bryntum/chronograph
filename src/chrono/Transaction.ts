@@ -608,7 +608,7 @@ class Transaction extends base {
 
             entry               = identifierRead.newQuark(this.baseRevision.createdAt)
 
-            entry.origin        = previousEntry.origin
+            previousEntry.origin && entry.setOrigin(previousEntry.origin)
             entry.previous      = previousEntry
 
             this.entries.set(identifierRead, entry)
@@ -637,7 +637,7 @@ class Transaction extends base {
                 if (outgoingEntry) outgoingEntry.edgesFlow--
             })
 
-            entry.origin    = previousEntry.origin
+            entry.setOrigin(previousEntry.origin)
         } else
             entry.setValue(value)
 
@@ -671,7 +671,7 @@ class Transaction extends base {
         else if (requestedEntry.isShadow()) {
             // shadow entry is shadowing a quark w/o value - it is still transitioning or lazy
             // in both cases start new calculation
-            requestedEntry.origin   = requestedEntry
+            requestedEntry.startOrigin()
             requestedEntry.forceCalculation()
 
             stack.push(requestedEntry)
@@ -759,7 +759,7 @@ class Transaction extends base {
                         entries.delete(identifier)
                     } else {
                         // otherwise turn it into "shadow"
-                        entry.origin = entry.previous.origin
+                        entry.setOrigin(entry.previous.origin)
                     }
 
                     // reduce garbage collection workload
@@ -855,7 +855,7 @@ class Transaction extends base {
                     if (entry.size === 0) {
                         entries.delete(identifier)
                     } else {
-                        entry.origin = entry.previous.origin
+                        entry.setOrigin(entry.previous.origin)
                     }
 
                     // reduce garbage collection workload
