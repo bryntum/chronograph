@@ -120,8 +120,6 @@ class Checkout extends base {
     compactRevisions (newRev : Revision, prevRev : Revision) {
         if (prevRev.reachableCount > 0 || newRev.previous !== prevRev) throw new Error("Invalid compact operation")
 
-        // if (window.DEBUG) debugger
-
         // we can only shred revision if its being referenced maximum 1 time (from the current Checkout instance)
         if (prevRev.referenceCount <= 1) {
             for (const [ identifier, entry ] of newRev.scope) {
