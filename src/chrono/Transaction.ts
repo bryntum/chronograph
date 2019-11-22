@@ -754,12 +754,15 @@ class Transaction extends base {
                 // to expose the value from the previous revision
                 // however, we only do it, when there is a quark from previous revision and it has "origin" (some value)
                 if (entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
+                    // even if the entry will be deleted from the transaction, we set the correct origin for it
+                    // this is because there might be other references to this entry in the stack
+                    // and also the entry may be referenced as dependency of some other quark
+                    // in such case the correct `originId` will preserve dependency during revisions compactification
+                    entry.setOrigin(entry.previous.origin)
+
                     // if there's no outgoing edges we remove the quark
                     if (entry.size === 0) {
                         entries.delete(identifier)
-                    } else {
-                        // otherwise turn it into "shadow"
-                        entry.setOrigin(entry.previous.origin)
                     }
 
                     // reduce garbage collection workload
@@ -851,11 +854,11 @@ class Transaction extends base {
                 // the "edgesFlow < 0" indicates that none of the incoming deps of this quark has changed
                 // thus we don't need to calculate it, moreover, we can remove the quark from the `entries`,
                 if (entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
+                    entry.setOrigin(entry.previous.origin)
+
                     // but only if there's no outgoing edges
                     if (entry.size === 0) {
                         entries.delete(identifier)
-                    } else {
-                        entry.setOrigin(entry.previous.origin)
                     }
 
                     // reduce garbage collection workload

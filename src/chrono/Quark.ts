@@ -115,7 +115,7 @@ class Quark extends base {
             if (!ownOutgoing) {
                 const latest        = latestScope.get(identifier)
 
-                if (!latest || latest.origin === quark) outgoing.set(identifier, latest || quark)
+                if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
             }
         }
 
