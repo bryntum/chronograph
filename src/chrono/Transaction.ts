@@ -120,30 +120,20 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
         const latestEntry       = this.baseRevision.getLatestEntryFor(node)
 
-        // newly created identifier, perhaps too early to return here, possibly may need to clean the own
-        // outgoing edges in case of nested write?
-        if (!latestEntry) return
+        if (latestEntry) {
+            // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
+            // will have the `previous` property populated
+            visitInfo.previous      = latestEntry
 
-        // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
-        // will have the `previous` property populated
-        visitInfo.previous      = latestEntry
+            // iterator version is slower
+            // for (const outgoingEntry of latestEntry.outgoingInTheFuture(this.baseRevision)) {
+            //     this.doCollectNext(node, outgoingEntry.identifier, toVisit)
+            // }
 
-        if (node.lazy && latestEntry.origin && latestEntry.origin.usedProposedOrCurrent) {
-            // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
-            // from the previous revision
-            // this is because that, for "historyLimit = 1", the previous revision's data will be completely overwritten by the new one
-            // so general consideration is - the revision should contain ALL information needed to calculate it
-            // or, this should probably be done during the `populateCandidateScopeFromTransitions` or `compactRevisions`
-            visitInfo.getOrigin().proposedValue   = latestEntry.origin.value
+            latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
+                this.doCollectNext(node, outgoingEntry.identifier, toVisit)
+            })
         }
-
-        // for (const outgoingEntry of latestEntry.outgoingInTheFuture(this.baseRevision)) {
-        //     this.doCollectNext(node, outgoingEntry.identifier, toVisit)
-        // }
-
-        latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
-            this.doCollectNext(node, outgoingEntry.identifier, toVisit)
-        })
 
         for (const outgoingEntry of visitInfo.getOutgoing().values()) {
             const identifier    = outgoingEntry.identifier
