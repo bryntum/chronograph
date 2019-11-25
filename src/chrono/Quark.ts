@@ -85,6 +85,18 @@ class Quark extends base {
     }
 
 
+    resetToEpoch (epoch : number) {
+        this.visitEpoch   = epoch
+
+        this.visitedAt     = NOT_VISITED
+        this.edgesFlow     = 0
+
+        this.cleanupCalculation()
+        this.clearOutgoing()
+        if (this.origin && this.origin === this) this.origin.value = undefined
+    }
+
+
     copyFrom (origin : Quark) {
         this.value                  = origin.value
         this.proposedValue          = origin.proposedValue

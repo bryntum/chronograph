@@ -67,16 +67,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
 
         info.visitedAt    = visitedAt
 
-        if (info.visitEpoch !== this.currentEpoch) {
-            info.visitEpoch   = this.currentEpoch
-
-            info.visitedAt     = NOT_VISITED
-            info.edgesFlow     = 0
-
-            info.cleanupCalculation()
-            info.clearOutgoing()
-            if (info.origin && info.origin === info) info.origin.value = undefined
-        }
+        if (info.visitEpoch !== this.currentEpoch) info.resetToEpoch(this.currentEpoch)
 
         return info
     }
@@ -101,15 +92,7 @@ export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
             this.visited.set(identifier, entry)
         }
 
-        if (entry.visitEpoch < this.currentEpoch) {
-            entry.visitEpoch    = this.currentEpoch
-            entry.visitedAt     = NOT_VISITED
-            entry.edgesFlow     = 0
-
-            entry.cleanupCalculation()
-            entry.clearOutgoing()
-            if (entry.origin && entry.origin === entry) entry.origin.value = undefined
-        }
+        if (entry.visitEpoch < this.currentEpoch) entry.resetToEpoch(this.currentEpoch)
 
         entry.edgesFlow++
 
