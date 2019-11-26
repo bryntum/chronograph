@@ -1,4 +1,28 @@
 //---------------------------------------------------------------------------------------------------------------------
+export function every<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : boolean {
+    let i   = 0
+
+    for (const el of iterator) {
+        if (func(el, i++) === false) return false
+    }
+
+    return true
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export function some<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : boolean {
+    let i   = 0
+
+    for (const el of iterator) {
+        if (func(el, i++) === true) return true
+    }
+
+    return false
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export function* map<Element, Result> (iterator : Iterable<Element>, func : (el : Element, index : number) => Result) : Iterable<Result> {
     let i   = 0
 
@@ -110,6 +134,16 @@ export class ChainedIteratorClass<T> {
 
     uniqueOnly () : ChainedIteratorClass<T> {
         return new ChainedIteratorClass(uniqueOnly(this.iterator))
+    }
+
+
+    every (func : (el : T, index : number) => boolean) : boolean {
+        return every(this.iterator, func)
+    }
+
+
+    some (func : (el : T, index : number) => boolean) : boolean {
+        return some(this.iterator, func)
     }
 
 
