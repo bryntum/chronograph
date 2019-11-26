@@ -24,16 +24,13 @@ export enum Levels {
     DependsOnSelfKind       = 10
 }
 
-
 //---------------------------------------------------------------------------------------------------------------------
-export class Identifier<ContextT extends Context = Context, ValueT = any> extends Base {
+export class Meta<ContextT extends Context = Context, ValueT = any> extends Base {
     name                : any       = undefined
 
     ArgsT               : any[]
     YieldT              : YieldableValue
     ValueT              : ValueT
-
-    context             : any       = undefined
 
     level               : number    = Levels.DependsOnSelfKind
 
@@ -42,6 +39,12 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
     quarkClass          : QuarkConstructor
 
     proposedValueIsBuilt    : boolean   = false
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class Identifier<ContextT extends Context = Context, ValueT = any> extends Meta<ContextT, ValueT> {
+    context             : any       = undefined
 
 
     newQuark (createdAt : RevisionClock) : InstanceType<this[ 'quarkClass' ]> {
