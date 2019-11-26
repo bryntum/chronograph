@@ -1,7 +1,8 @@
-import { AnyConstructor, AnyFunction, MixinFunction } from "./Mixin.js"
+import { AnyConstructor, AnyFunction, Base, BaseConstructor, MixinConstructor, MixinFunction } from "./Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-const MixinIdentity  = Symbol('MixinIdentity')
+const MixinIdentity         = Symbol('MixinIdentity')
+const MixinRequirements     = Symbol('MixinRequirements')
 
 const isInstanceOfStatic  = function (instance : any) : boolean {
     return Boolean(instance && instance[ this[ MixinIdentity ] ])
@@ -30,6 +31,43 @@ export const instanceOf = <T>(arg : T) : T => {
 
     return wrapper as any
 }
+
+
+export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], arg : T) : T & (T extends AnyFunction ? MixinConstructor<T> : never) => {
+    const wrapper                   = instanceOf(arg) as any
+
+    wrapper[ MixinRequirements ]    = required
+
+    const reversed                  = required.slice().reverse() as [ any, ...any[] ]
+
+    // no base class provided or the first provided required dependency is a mixin function
+    if (reversed.length === 0 || reversed[ 0 ][ MixinIdentity ] !== undefined) {
+        reversed.unshift(Base)
+    }
+
+    // TODO should build full dependencies graph
+    const Minimal                   = buildClass(...reversed) as any
+
+    if (reversed[ 0 ] === Base) {
+        wrapper.new         = function (props) {
+            const instance      = Minimal.new() as any
+
+            instance.initialize(props)
+
+            return instance
+        }
+    } else {
+        wrapper.new         = function (...args) {
+            return new Minimal(...args)
+        }
+    }
+
+    Object.defineProperty(wrapper, Symbol.species, { value : wrapper.new })
+
+    return wrapper as any
+}
+
+
 
 //---------------------------------------------------------------------------------------------------------------------
 // the `instanceof` analog with typeguard:
