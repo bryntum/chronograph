@@ -1,6 +1,6 @@
 import { PropagateResult } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
-import { Identifier } from "../chrono/Identifier.js"
+import { debug, DEBUG, Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
@@ -36,24 +36,23 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
 
         get $ () : { [s in keyof this] : FieldIdentifierI } {
-            // TODO
-            // // the individual identifiers are populated lazily
-            // return defineProperty(this as any, '$', new this.$entity.skeletonClass(this))
-
             const $ = {}
 
             this.$entity.forEachField((field, name) => {
                 $[ name ]   = this.createFieldIdentifier(field)
             })
 
-            // debugging aid
-            // const proxy = new Proxy($, {
-            //     get (target : object, property : string | number | symbol, receiver : any) : any {
-            //         if (!target[ property ]) debugger
-            //
-            //         return target[ property ]
-            //     }
-            // })
+            if (DEBUG) {
+                const proxy = new Proxy($, {
+                    get (entity : Entity, property : string | number | symbol, receiver : any) : any {
+                        if (!entity[ property ]) debug(new Error(`Attempt to read a missing field ${String(property)} on ${entity}`))
+
+                        return entity[ property ]
+                    }
+                })
+
+                return defineProperty(this as any, '$', proxy)
+            }
 
             return defineProperty(this as any, '$', $)
         }
