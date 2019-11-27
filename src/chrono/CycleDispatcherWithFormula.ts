@@ -1,6 +1,8 @@
 import { mixin } from "../class/InstanceOf.js"
-import { AnyConstructor, Base, BaseConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { ChainedIterator } from "../collection/Iterator.js"
+import { WalkableForward, WalkForwardContext } from "../graph/Node.js"
+import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type FormulaId   = number
@@ -12,6 +14,8 @@ export const DefaultResolution          = Symbol('DefaultResolution')
 
 export type CycleResolution<Variable>   = typeof DefaultResolution | Map<Variable, FormulaId>
 
+export type CycleResolutionFormulas<Variable>   = Set<Formula<Variable>>
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const CalculateProposed : FormulaId      = FORMULA_ID++
@@ -19,13 +23,31 @@ export const CalculatePure : FormulaId          = FORMULA_ID++
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Formula<Variable> extends Base {
-    id                  : FormulaId         = FORMULA_ID++
+export class Formula<Variable = symbol> extends Base {
+    formulaId           : FormulaId         = FORMULA_ID++
 
     inputs              : Set<Variable>     = new Set()
     output              : Variable
 }
 
+
+// //---------------------------------------------------------------------------------------------------------------------
+// export enum Constant {
+//     InitialValue                = 'InitialValue',
+//     ProposedValue               = 'ProposedValue',
+//     PreviousValue               = 'PreviousValue',
+//     PreviousValueIfPossible     = 'PreviousValueIfPossible'
+// }
+
+export class VariableWalkContext<Variable> extends WalkContext<Variable> {
+    cache       : FormulasCache
+
+    collectNext (sourceNode : Variable, toVisit : WalkStep<Variable>[]) {
+        const inputs    = this.cache.formulasByInput.get(sourceNode)
+
+        inputs && inputs.forEach(formula => toVisit.push({ node : formula.output, from : sourceNode, label : undefined }))
+    }
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 export const FormulasCache = mixin(
@@ -35,6 +57,7 @@ export const FormulasCache = mixin(
     class FormulasCache extends base {
         Variable            : any
 
+        variables           : Set<this[ 'Variable' ]>               = new Set()
         formulas            : Set<Formula<this[ 'Variable' ]>>      = new Set()
 
         $formulasByInput    : Map<this[ 'Variable' ], Set<Formula<this[ 'Variable' ]>>>
@@ -85,53 +108,55 @@ export const FormulasCache = mixin(
         }
 
 
-        isAmbiguous () : boolean {
-            // some output variable can be calculated in more than one way
-            return ChainedIterator(this.formulasByOutput.values()).some(value => value.size > 1)
-        }
-
-
         isCyclic () : boolean {
-        }
+            let isCyclic : boolean  = false
 
+            const walkContext       = VariableWalkContext.new({ cache : this, onCycle : () => { isCyclic = true; return OnCycleAction.Cancel } })
+
+            walkContext.startFrom(Array.from(this.variables))
+
+            return isCyclic
+        }
     }
 )
 export type FormulasCache = Mixin<typeof FormulasCache>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type GraphExampleHash    = string
+export type GraphInputsHash    = string
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphDescription<Variable> extends Base {
+export class GraphDescription<Variable = symbol> extends Base {
     variables                   : Set<Variable>
-
     formulas                    : Set<Formula<Variable>>    = new Set()
 
-    exampleResolutionsByHash    : Map<GraphExampleHash, CycleResolution<Variable>>  = new Map()
+    exampleResolutionsByHash    : Map<GraphInputsHash, CycleResolution<Variable>>  = new Map()
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphExample<Variable> extends Base {
+export class CycleDispatcher<Variable = symbol> extends Base {
     description         : GraphDescription<Variable>
 
-    hasProposedValue    : Set<Variable>    = new Set()
-    hasPreviousValue    : Set<Variable>    = new Set()
-    keepIfPossible      : Set<Variable>    = new Set()
+    hasProposedValue    : Set<Variable>         = new Set()
+    hasPreviousValue    : Set<Variable>         = new Set()
+    keepIfPossible      : Set<Variable>         = new Set()
 
-    $hash               : GraphExampleHash
+    $hash               : GraphInputsHash
 
-    get hash () : GraphExampleHash {
+    defaultResolutionFormulas   : CycleResolutionFormulas<Variable>
+
+
+    get hash () : GraphInputsHash {
         if (this.$hash !== undefined) return this.$hash
 
         return this.$hash = this.buildHash()
     }
 
 
-    buildHash () : GraphExampleHash {
-        return
+    buildHash () : GraphInputsHash {
+        return 'hash'
     }
 
 
@@ -167,7 +192,7 @@ export class GraphExample<Variable> extends Base {
     get resolution () : CycleResolution<Variable> {
         if (this.$resolution !== undefined) return this.$resolution
 
-        const cached    = this.description.exampleResolutionsByHash.get(this.hash)
+        const cached    = false//this.description.exampleResolutionsByHash.get(this.hash)
 
         if (cached) {
             return this.$resolution = cached
@@ -181,65 +206,94 @@ export class GraphExample<Variable> extends Base {
     }
 
 
+    includeFormulaIfApplicable (cache : FormulasCache, formula : Formula<Variable>) {
+        if (this.isFormulaApplicable(cache, formula)) cache.formulas.add(formula)
+    }
+
+
+    isFormulaApplicable (cache : FormulasCache, formula : Formula<Variable>) : boolean {
+        return ChainedIterator(formula.inputs).every(
+            variable => this.hasProposedValue.has(variable) || this.hasPreviousValue.has(variable)
+        )
+    }
+
+
+    isFormulaInsignificant (cache : FormulasCache, formula : Formula<Variable>) : boolean {
+        return this.hasPreviousValue.has(formula.output) && ChainedIterator(formula.inputs).some(
+            variable => !this.hasPreviousValue.has(variable)
+        )
+    }
+
+
     buildResolution () : CycleResolution<Variable> {
-        const description       = this.description
-
-        if (
-            // no user input, all variables have values
-            this.hasProposedValue.size === 0 && this.hasPreviousValue.size === description.variables.size
-            ||
-            // initial data load - all variables have input, no previous values
-            this.hasProposedValue.size === description.variables.size && this.hasPreviousValue.size === 0
-        ) {
-            return DefaultResolution
-        }
-
-        //------------------
-        const result : CycleResolution<Variable>   = new Map()
-
+        const description           = this.description
         const formulas              = description.formulas
-        const cache                 = FormulasCache.new({ formulas })
+        const variables             = description.variables
+        const cache                 = FormulasCache.new({ formulas, variables })
 
-        const nextCache             = FormulasCache.new()
+        const nextCache             = FormulasCache.new({ variables })
 
         for (const variable of description.variables) {
-            if (this.hasProposedValue.has(variable)) {
+            if (
+                this.hasProposedValue.has(variable)
+                || this.keepIfPossible.has(variable) && this.hasPreviousValue.has(variable)
+            ) {
                 cache.formulasByInput.get(variable).forEach(formula => nextCache.formulas.add(formula))
             }
         }
 
-        if (nextCache.isCyclic()) {
-            throw new Error("Can't find resolution - formulas set cyclic")
-        }
-
-
-
-        //------------------
         for (const variable of description.variables) {
-            if (this.hasProposedValue.has(variable)) {
-                // remove the formulas, where the user-proposed variable is an output
-                initialCache.formulasByOutput.get(variable).forEach(formula => appropriateFormulas.delete(formula))
+            if (
+                this.hasProposedValue.has(variable)
+                || this.keepIfPossible.has(variable) && this.hasPreviousValue.has(variable)
+            ) {
+                cache.formulasByOutput.get(variable).forEach(formula => nextCache.formulas.delete(formula))
             }
-            else {
-                if (!this.hasPreviousValue.has(variable)) {
-                    // remove the formulas, where the input has no either user-proposed or previous value
-                    initialCache.formulasByInput.get(variable).forEach(formula => appropriateFormulas.delete(formula))
+        }
+
+        for (const variable of description.variables) {
+            if (
+                !this.hasProposedValue.has(variable) && !this.hasPreviousValue.has(variable)
+            ) {
+                cache.formulasByOutput.get(variable).forEach(formula => this.includeFormulaIfApplicable(nextCache, formula))
+            }
+        }
+
+        for (const formula of nextCache.formulas) {
+            if (this.isFormulaInsignificant(nextCache, formula)) nextCache.formulas.delete(formula)
+        }
+
+        // no appropriate formulas, using default ones if possible
+        if (nextCache.formulas.size === 0) {
+            this.defaultResolutionFormulas.forEach(formula => this.includeFormulaIfApplicable(nextCache, formula))
+        }
+
+        // still nothing appropriate or cycle - fallback to all-proposed
+        if (nextCache.formulas.size === 0 || nextCache.isCyclic()) {
+            return new Map(
+                ChainedIterator(this.description.variables).map(variable => [ variable, CalculateProposed ])
+            )
+        }
+
+        // if (nextCache.isCyclic()) {
+        //     throw new Error("Can't find resolution - formulas set cyclic")
+        // }
+
+        return new Map(
+            ChainedIterator(this.description.variables).map(variable => {
+                const formulas   = nextCache.formulasByOutput.get(variable)
+
+                if (formulas && formulas.size > 0) {
+                    if (formulas.size > 1) debugger
+
+                    for (const firstFormula of formulas) {
+                        return [ variable, firstFormula.formulaId ]
+                    }
+                } else {
+                    return [ variable, CalculateProposed ]
                 }
-            }
-        }
-
-        const moreValidCache        = FormulasCache.new({ formulas : appropriateFormulas })
-
-        if (moreValidCache.isAmbiguous()) {
-            throw new Error("Can't find resolution - formulas set ambiguous")
-        }
-
-        if (moreValidCache.isCyclic()) {
-            throw new Error("Can't find resolution - formulas set cyclic")
-        }
-
-
-        return new Map()
+            })
+        )
     }
 }
 

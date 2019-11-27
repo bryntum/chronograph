@@ -162,5 +162,26 @@ export class CalculatedValueGen<ValueT = any> extends Identifier<typeof ContextG
 }
 
 
+// //---------------------------------------------------------------------------------------------------------------------
+// export class DispatchedIdentifierGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
+//
+//     @prototypeValue(buildClass(Map, CalculationGen, Quark))
+//     quarkClass          : QuarkConstructor
+//
+//
+//     @prototypeValue(buildClass(Map, CalculationGen, Quark))
+//     dispatcherClass          : QuarkConstructor
+//
+//
+//     * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<ValueT, this[ 'YieldT' ]> {
+//         // const dispatcher    = yield Dispatcher
+//         //
+//         // return yield* dispatcher.runFormulaFor(yield Self, context)
+//
+//         return
+//     }
+// }
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export const throwUnknownIdentifier = (identifier : Identifier) => { throw new Error(`Unknown identifier ${identifier}`) }

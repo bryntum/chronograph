@@ -43,7 +43,8 @@ project.start(
             'chrono/032_propagation_options.t.js',
             'chrono/040_add_remove.t.js',
             'chrono/050_undo_redo.t.js',
-            'chrono/060_cycle_dispatcher.t.js'
+            'chrono/060_cycle_dispatcher.t.js',
+            'chrono/070_cycle_dispatcher_with_formula.t.js'
         ]
     },
     {
