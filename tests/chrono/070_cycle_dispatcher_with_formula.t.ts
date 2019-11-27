@@ -1,4 +1,4 @@
-import { CalculateProposed, CycleDispatcher, Formula, GraphDescription } from "../../src/chrono/CycleDispatcherWithFormula.js"
+import { CalculateProposed, CycleDispatcherWithFormula, Formula, GraphDescription } from "../../src/chrono/CycleDispatcherWithFormula.js"
 
 declare const StartTest : any
 
@@ -34,7 +34,7 @@ StartTest(t => {
     })
 
 
-    class CycleDispatcherSymbol extends CycleDispatcher<symbol> {}
+    class CycleDispatcherSymbol extends CycleDispatcherWithFormula<symbol> {}
 
     let dispatcher : CycleDispatcherSymbol
 

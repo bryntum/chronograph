@@ -1,8 +1,10 @@
 import { mixin } from "../class/InstanceOf.js"
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
 import { ChainedIterator } from "../collection/Iterator.js"
-import { WalkableForward, WalkForwardContext } from "../graph/Node.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
+import { HasProposedValue, PreviousValueOf } from "./Effect.js"
+import { Identifier } from "./Identifier.js"
+import { SyncEffectHandler } from "./Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type FormulaId   = number
@@ -136,7 +138,7 @@ export class GraphDescription<Variable = symbol> extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CycleDispatcher<Variable = symbol> extends Base {
+export class CycleDispatcherWithFormula<Variable = symbol> extends Base {
     description         : GraphDescription<Variable>
 
     hasProposedValue    : Set<Variable>         = new Set()
@@ -220,7 +222,7 @@ export class CycleDispatcher<Variable = symbol> extends Base {
 
     isFormulaInsignificant (cache : FormulasCache, formula : Formula<Variable>) : boolean {
         return this.hasPreviousValue.has(formula.output) && ChainedIterator(formula.inputs).some(
-            variable => !this.hasPreviousValue.has(variable)
+            variable => !this.hasPreviousValue.has(variable) && !this.hasProposedValue.has(variable)
         )
     }
 
@@ -298,11 +300,11 @@ export class CycleDispatcher<Variable = symbol> extends Base {
 }
 
 
-// // export class ChronoCycleDispatcher extends CycleDispatcher<Identifier> {
-// //
-// //     collectInfo (YIELD : SyncEffectHandler, identifier : Identifier) {
-// //         if (YIELD(PreviousValueOf(identifier)) != null) this.addPreviousValueFlag(identifier)
-// //
-// //         if (YIELD(HasProposedValue(identifier))) this.addProposedValueFlag(identifier)
-// //     }
-// // }
+export class ChronoCycleDispatcherWithFormula extends CycleDispatcherWithFormula<symbol | Identifier> {
+
+    collectInfo (YIELD : SyncEffectHandler, identifier : Identifier) {
+        if (YIELD(PreviousValueOf(identifier)) != null) this.addPreviousValueFlag(identifier)
+
+        if (YIELD(HasProposedValue(identifier))) this.addProposedValueFlag(identifier)
+    }
+}
