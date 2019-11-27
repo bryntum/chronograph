@@ -45,6 +45,8 @@ export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], 
         reversed.unshift(Base)
     }
 
+    reversed.push(arg)
+
     // TODO should build full dependencies graph
     const Minimal                   = buildClass(...reversed) as any
 
