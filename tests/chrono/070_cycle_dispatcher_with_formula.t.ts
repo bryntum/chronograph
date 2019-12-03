@@ -8,39 +8,33 @@ StartTest(t => {
     const EndDate           = Symbol('EndDate')
     const Duration          = Symbol('Duration')
 
-    class FormulaSymbol extends Formula<symbol> {}
-
-    const startDateFormula  = FormulaSymbol.new({
+    const startDateFormula  = Formula.new({
         output      : StartDate,
         inputs      : new Set([ Duration, EndDate ])
     })
 
-    const endDateFormula    = FormulaSymbol.new({
+    const endDateFormula    = Formula.new({
         output      : EndDate,
         inputs      : new Set([ Duration, StartDate ])
     })
 
-    const durationFormula   = FormulaSymbol.new({
+    const durationFormula   = Formula.new({
         output      : Duration,
         inputs      : new Set([ StartDate, EndDate ])
     })
 
 
-    class GraphDescriptionSymbol extends GraphDescription<symbol> {}
-
-    const description       = GraphDescriptionSymbol.new({
+    const description       = GraphDescription.new({
         variables           : new Set([ StartDate, EndDate, Duration ]),
         formulas            : new Set([ startDateFormula, endDateFormula, durationFormula ])
     })
 
 
-    class CycleDispatcherSymbol extends CycleDispatcherWithFormula<symbol> {}
-
-    let dispatcher : CycleDispatcherSymbol
+    let dispatcher : CycleDispatcherWithFormula
 
     t.beforeEach(t => {
 
-        dispatcher        = CycleDispatcherSymbol.new({
+        dispatcher        = CycleDispatcherWithFormula.new({
             description,
             defaultResolutionFormulas : new Set([ endDateFormula ])
         })

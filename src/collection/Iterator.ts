@@ -44,7 +44,6 @@ export function reduce<Element, Result> (iterator : Iterable<Element>, func : (a
 }
 
 
-
 //---------------------------------------------------------------------------------------------------------------------
 export function* uniqueOnly<Element> (iterator : Iterable<Element>) : Iterable<Element> {
     const seen      = new Set<Element>()
@@ -110,6 +109,11 @@ export function* concat<Element> (...iterators : Iterable<Element>[]) : Iterable
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export function* concatIterable<Element> (iteratorsProducer : Iterable<Iterable<Element>>) : Iterable<Element> {
+    for (const iterator of iteratorsProducer) yield* iterator
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------
 // just a chained syntax sugar class
@@ -129,6 +133,11 @@ export class ChainedIteratorClass<T> {
 
     reduce<Result> (func : (acc : Result, el : T, index : number) => Result, initialAcc : Result) : Result {
         return reduce(this.iterator, func, initialAcc)
+    }
+
+
+    concat<K> () : T extends Iterable<K> ? ChainedIteratorClass<K> : never {
+        return new ChainedIteratorClass(concatIterable<K>(this.iterator as any)) as any
     }
 
 
@@ -155,6 +164,12 @@ export class ChainedIteratorClass<T> {
     * [Symbol.iterator] () {
         yield* this.iterator
     }
+
+
+    toArray () : T[] {
+        return Array.from(this)
+    }
 }
 
-export const ChainedIterator = <T>(iterator : Iterable<T>) => new ChainedIteratorClass<T>(iterator)
+export const ChainedIterator = <T>(iterator : Iterable<T>) : ChainedIteratorClass<T> => new ChainedIteratorClass<T>(iterator)
+export type ChainedIterator<T> = ChainedIteratorClass<T>
