@@ -3,7 +3,7 @@ export function every<Element> (iterator : Iterable<Element>, func : (el : Eleme
     let i   = 0
 
     for (const el of iterator) {
-        if (func(el, i++) === false) return false
+        if (!func(el, i++)) return false
     }
 
     return true
@@ -15,7 +15,7 @@ export function some<Element> (iterator : Iterable<Element>, func : (el : Elemen
     let i   = 0
 
     for (const el of iterator) {
-        if (func(el, i++) === true) return true
+        if (func(el, i++)) return true
     }
 
     return false
@@ -51,6 +51,22 @@ export function* uniqueOnly<Element> (iterator : Iterable<Element>) : Iterable<E
     for (const el of iterator) {
         if (!seen.has(el)) {
             seen.add(el)
+
+            yield el
+        }
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export function* uniqueOnlyBy<Element, UniqueBy> (iterator : Iterable<Element>, func : (el : Element) => UniqueBy) : Iterable<Element> {
+    const seen      = new Set<UniqueBy>()
+
+    for (const el of iterator) {
+        const uniqueBy  = func(el)
+
+        if (!seen.has(uniqueBy)) {
+            seen.add(uniqueBy)
 
             yield el
         }
@@ -146,6 +162,11 @@ export class ChainedIteratorClass<T> {
     }
 
 
+    uniqueOnlyBy<UniqueBy> (func : (el : T) => UniqueBy) : ChainedIteratorClass<T> {
+        return new ChainedIteratorClass(uniqueOnlyBy(this.iterator, func))
+    }
+
+
     every (func : (el : T, index : number) => boolean) : boolean {
         return every(this.iterator, func)
     }
@@ -169,6 +190,12 @@ export class ChainedIteratorClass<T> {
     toArray () : T[] {
         return Array.from(this)
     }
+
+
+    flush () {
+        for (const element of this) {}
+    }
+
 }
 
 export const ChainedIterator = <T>(iterator : Iterable<T>) : ChainedIteratorClass<T> => new ChainedIteratorClass<T>(iterator)

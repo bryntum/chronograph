@@ -27,12 +27,12 @@ StartTest(t => {
 
     const effortFormula  = Formula.new({
         output      : EffortVar,
-        inputs      : new Set([ DurationVar, UnitsVar ])
+        inputs      : new Set([ StartDateVar, EndDateVar, UnitsVar ])
     })
 
     const unitsFormula  = Formula.new({
         output      : UnitsVar,
-        inputs      : new Set([ DurationVar, EffortVar ])
+        inputs      : new Set([ StartDateVar, EndDateVar, EffortVar ])
     })
 
 

@@ -227,12 +227,39 @@ export class CycleDispatcherWithFormula extends Base {
     buildResolution () : CycleResolution {
         const walkContext           = WalkState.new({ dispatcher : this })
 
-        // const allWalkStates         = Array.from(walkContext.next())
-        // if (allWalkStates.length > 1) {
-        //     const allResolutions    = allWalkStates.map(state => state.asResolution())
-        //
-        //     debugger
-        // }
+        const allWalkStates         = Array.from(walkContext.next())
+
+        if (allWalkStates.length > 1) {
+            const allResolutions    = allWalkStates.map(state => {
+                return {
+                    resolution              : state.asResolution(),
+                    nbrOfDefaultFormulas    : Array.from(state.previouslyActivatedFormulas.formulas).reduce(
+                        (count : number, formula : Formula) => state.formulaIsDefault(formula) ? count + 1 : count,
+                        0
+                    ),
+                    coversAllInput          : state.coversAllInput(),
+                    unCoveredInputWeight    : state.unCoveredInputWeight()
+                }
+            })
+
+            // allResolutions.sort((res1, res2) => {
+            //     if (res1.coversAllInput && !res2.coversAllInput) return -1
+            //     if (!res1.coversAllInput && res2.coversAllInput) return 1
+            //
+            //     return res2.nbrOfDefaultFormulas - res1.nbrOfDefaultFormulas
+            // })
+
+            allResolutions.sort((res1, res2) => {
+                if (res1.unCoveredInputWeight < res2.unCoveredInputWeight) return -1
+                if (res1.unCoveredInputWeight > res2.unCoveredInputWeight) return 1
+
+                return res2.nbrOfDefaultFormulas - res1.nbrOfDefaultFormulas
+            })
+
+            return allResolutions[ 0 ].resolution
+
+            debugger
+        }
 
         for (const finalWalkState of walkContext.next()) {
             return finalWalkState.asResolution()
@@ -244,7 +271,7 @@ export class CycleDispatcherWithFormula extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class WalkState<Variable = symbol> extends Base {
+export class WalkState extends Base {
     dispatcher                          : CycleDispatcherWithFormula
 
     get description () : GraphDescription { return this.dispatcher.description }
@@ -269,6 +296,53 @@ export class WalkState<Variable = symbol> extends Base {
         }
 
         return this.$previouslyActivatedFormulas = cache
+    }
+
+
+    unCoveredInputWeight () : number {
+        const proposedVars          = map(this.dispatcher.hasProposedValue, variable => { return { variable, isProposed : true }})
+        const keepIfPossibleVars    = map(this.dispatcher.keepIfPossible, variable => { return { variable, isProposed : false }})
+
+        const allInputVars          = ChainedIterator(concatIterable([ proposedVars, keepIfPossibleVars ])).uniqueOnlyBy(el => el.variable)
+
+        return allInputVars.reduce((totalWeight : number, { variable, isProposed }) => {
+            let weight      = 0
+
+            //-----------------
+            const isOverwrittenByFormulas   = this.previouslyActivatedFormulas.formulasByOutput.get(variable)
+
+            if (isOverwrittenByFormulas) {
+                if (isProposed)
+                    weight += 1e5
+                else
+                    weight += 1e4
+            }
+
+            //-----------------
+            const usedInFormulas            = this.previouslyActivatedFormulas.formulasByInput.get(variable)
+
+            if (!(usedInFormulas && usedInFormulas.size > 0)) {
+                if (isProposed)
+                    weight += 1e3
+                else
+                    weight += 1e2
+            }
+
+            return totalWeight + weight
+        }, 0)
+    }
+
+
+    coversAllInput () : boolean {
+        const allInputVars  = ChainedIterator(concatIterable<Variable>([ this.dispatcher.hasProposedValue.values(), this.dispatcher.keepIfPossible.values() ])).uniqueOnly()
+
+        return allInputVars.every(variable => {
+            const usedInFormulas            = this.previouslyActivatedFormulas.formulasByInput.get(variable)
+
+            const isOverwrittenByFormulas   = this.previouslyActivatedFormulas.formulasByOutput.get(variable)
+
+            return usedInFormulas && usedInFormulas.size > 0 && !(isOverwrittenByFormulas && isOverwrittenByFormulas.size > 0)
+        })
     }
 
 

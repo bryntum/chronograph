@@ -27,12 +27,12 @@ StartTest(t => {
 
     const effortFormula  = Formula.new({
         output      : EffortVar,
-        inputs      : new Set([ DurationVar, UnitsVar ])
+        inputs      : new Set([ StartDateVar, EndDateVar, UnitsVar ])
     })
 
     const unitsFormula  = Formula.new({
         output      : UnitsVar,
-        inputs      : new Set([ DurationVar, EffortVar ])
+        inputs      : new Set([ StartDateVar, EndDateVar, EffortVar ])
     })
 
     const endDateByEffortFormula  = Formula.new({
@@ -45,10 +45,10 @@ StartTest(t => {
         inputs      : new Set([ EndDateVar, EffortVar, UnitsVar ])
     })
 
-    const durationByEffortAndUnitsFormula  = Formula.new({
-        output      : DurationVar,
-        inputs      : new Set([ EffortVar, UnitsVar ])
-    })
+    // const durationByEffortAndUnitsFormula  = Formula.new({
+    //     output      : DurationVar,
+    //     inputs      : new Set([ EffortVar, UnitsVar ])
+    // })
 
     const fixedEffortDescription = GraphDescription.new({
         variables           : new Set([ StartDateVar, EndDateVar, DurationVar, EffortVar, UnitsVar ]),
@@ -56,11 +56,11 @@ StartTest(t => {
             endDateByEffortFormula,
             durationFormula,
             unitsFormula,
-            startDateFormula,
-            endDateFormula,
             effortFormula,
             startDateByEffortFormula,
-            durationByEffortAndUnitsFormula
+            // durationByEffortAndUnitsFormula,
+            startDateFormula,
+            endDateFormula
         ])
     })
 
