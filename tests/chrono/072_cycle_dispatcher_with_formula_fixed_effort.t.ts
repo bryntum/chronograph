@@ -470,103 +470,128 @@ StartTest(t => {
     })
 
 
-    // t.it('Should apply keep flags, set start date, keep end date, keep effort', t => {
-    //     dispatcher.addPreviousValueFlag(StartDateVar)
-    //     dispatcher.addPreviousValueFlag(EndDateVar)
-    //     dispatcher.addPreviousValueFlag(DurationVar)
-    //     dispatcher.addPreviousValueFlag(EffortVar)
-    //     dispatcher.addPreviousValueFlag(UnitsVar)
-    //
-    //     dispatcher.addProposedValueFlag(StartDateVar)
-    //     dispatcher.addKeepIfPossibleFlag(EndDateVar)
-    //     dispatcher.addKeepIfPossibleFlag(EffortVar)
-    //
-    //     const resolution    = dispatcher.resolution
-    //
-    //     t.isDeeply(
-    //         resolution,
-    //         new Map([
-    //             [ StartDateVar, CalculateProposed ],
-    //             [ EndDateVar, CalculateProposed ],
-    //             [ DurationVar, durationFormula.formulaId ],
-    //             [ EffortVar, CalculateProposed ],
-    //             [ UnitsVar, unitsFormula.formulaId ]
-    //         ])
-    //     )
-    // })
-    //
-    //
-    // t.it('Should apply keep flags, set end date, keep duration', t => {
-    //     dispatcher.addPreviousValueFlag(StartDateVar)
-    //     dispatcher.addPreviousValueFlag(EndDateVar)
-    //     dispatcher.addPreviousValueFlag(DurationVar)
-    //     dispatcher.addPreviousValueFlag(EffortVar)
-    //     dispatcher.addPreviousValueFlag(UnitsVar)
-    //
-    //     dispatcher.addProposedValueFlag(EndDateVar)
-    //     dispatcher.addKeepIfPossibleFlag(DurationVar)
-    //     dispatcher.addProposedValueFlag(UnitsVar)
-    //
-    //     const resolution    = dispatcher.resolution
-    //
-    //     t.isDeeply(
-    //         resolution,
-    //         new Map([
-    //             [ StartDateVar, startDateFormula.formulaId ],
-    //             [ EndDateVar, CalculateProposed ],
-    //             [ DurationVar, CalculateProposed ],
-    //             [ EffortVar, effortFormula.formulaId ],
-    //             [ UnitsVar, CalculateProposed ]
-    //         ])
-    //     )
-    // })
-    //
-    //
-    // t.it('Should automatically promote variables with previous value #1', t => {
-    //     dispatcher.addPreviousValueFlag(StartDateVar)
-    //     dispatcher.addPreviousValueFlag(EffortVar)
-    //
-    //     dispatcher.addProposedValueFlag(EndDateVar)
-    //
-    //     dispatcher.addKeepIfPossibleFlag(DurationVar)
-    //     dispatcher.addKeepIfPossibleFlag(UnitsVar)
-    //
-    //     const resolution    = dispatcher.resolution
-    //
-    //     t.isDeeply(
-    //         resolution,
-    //         new Map([
-    //             [ StartDateVar, CalculateProposed ],
-    //             [ EndDateVar, CalculateProposed ],
-    //             [ DurationVar, durationFormula.formulaId ],
-    //             [ EffortVar, CalculateProposed ],
-    //             [ UnitsVar, unitsFormula.formulaId ]
-    //         ])
-    //     )
-    // })
-    //
-    //
-    // t.it('Should automatically promote variables with previous value #2', t => {
-    //     dispatcher.addPreviousValueFlag(DurationVar)
-    //     dispatcher.addPreviousValueFlag(UnitsVar)
-    //
-    //     dispatcher.addProposedValueFlag(StartDateVar)
-    //
-    //     dispatcher.addKeepIfPossibleFlag(EndDateVar)
-    //     dispatcher.addKeepIfPossibleFlag(EffortVar)
-    //
-    //     const resolution    = dispatcher.resolution
-    //
-    //     t.isDeeply(
-    //         resolution,
-    //         new Map([
-    //             [ StartDateVar, CalculateProposed ],
-    //             [ EndDateVar, endDateFormula.formulaId ],
-    //             [ DurationVar, CalculateProposed ],
-    //             [ EffortVar, effortFormula.formulaId ],
-    //             [ UnitsVar, CalculateProposed ]
-    //         ])
-    //     )
-    // })
+    t.it('Should update end date and duration - set units', t => {
+        dispatcher.addPreviousValueFlag(StartDateVar)
+        dispatcher.addPreviousValueFlag(EndDateVar)
+        dispatcher.addPreviousValueFlag(DurationVar)
+        dispatcher.addPreviousValueFlag(EffortVar)
+        dispatcher.addPreviousValueFlag(UnitsVar)
+
+        dispatcher.addProposedValueFlag(UnitsVar)
+
+        const resolution    = dispatcher.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDateVar, CalculateProposed ],
+                [ EndDateVar, endDateByEffortFormula.formulaId ],
+                [ DurationVar, durationFormula.formulaId ],
+                [ EffortVar, CalculateProposed ],
+                [ UnitsVar, CalculateProposed ]
+            ])
+        )
+    })
+
+
+
+    t.it('Should apply keep flags, set start date, keep end date, keep effort', t => {
+        dispatcher.addPreviousValueFlag(StartDateVar)
+        dispatcher.addPreviousValueFlag(EndDateVar)
+        dispatcher.addPreviousValueFlag(DurationVar)
+        dispatcher.addPreviousValueFlag(EffortVar)
+        dispatcher.addPreviousValueFlag(UnitsVar)
+
+        dispatcher.addProposedValueFlag(StartDateVar)
+        dispatcher.addKeepIfPossibleFlag(EndDateVar)
+        dispatcher.addKeepIfPossibleFlag(EffortVar)
+
+        const resolution    = dispatcher.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDateVar, CalculateProposed ],
+                [ EndDateVar, CalculateProposed ],
+                [ DurationVar, durationFormula.formulaId ],
+                [ EffortVar, CalculateProposed ],
+                [ UnitsVar, unitsFormula.formulaId ]
+            ])
+        )
+    })
+
+
+    t.it('Should apply keep flags, set end date, keep duration', t => {
+        dispatcher.addPreviousValueFlag(StartDateVar)
+        dispatcher.addPreviousValueFlag(EndDateVar)
+        dispatcher.addPreviousValueFlag(DurationVar)
+        dispatcher.addPreviousValueFlag(EffortVar)
+        dispatcher.addPreviousValueFlag(UnitsVar)
+
+        dispatcher.addProposedValueFlag(EndDateVar)
+        dispatcher.addKeepIfPossibleFlag(DurationVar)
+        dispatcher.addProposedValueFlag(UnitsVar)
+
+        const resolution    = dispatcher.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDateVar, startDateFormula.formulaId ],
+                [ EndDateVar, CalculateProposed ],
+                [ DurationVar, CalculateProposed ],
+                [ EffortVar, effortFormula.formulaId ],
+                [ UnitsVar, CalculateProposed ]
+            ])
+        )
+    })
+
+
+    t.it('Should automatically promote variables with previous value #1', t => {
+        dispatcher.addPreviousValueFlag(StartDateVar)
+        dispatcher.addPreviousValueFlag(EffortVar)
+
+        dispatcher.addProposedValueFlag(EndDateVar)
+
+        dispatcher.addKeepIfPossibleFlag(DurationVar)
+        dispatcher.addKeepIfPossibleFlag(UnitsVar)
+
+        const resolution    = dispatcher.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDateVar, CalculateProposed ],
+                [ EndDateVar, CalculateProposed ],
+                [ DurationVar, durationFormula.formulaId ],
+                [ EffortVar, CalculateProposed ],
+                [ UnitsVar, unitsFormula.formulaId ]
+            ])
+        )
+    })
+
+
+    t.it('Should automatically promote variables with previous value #2', t => {
+        dispatcher.addPreviousValueFlag(DurationVar)
+        dispatcher.addPreviousValueFlag(UnitsVar)
+
+        dispatcher.addProposedValueFlag(StartDateVar)
+
+        dispatcher.addKeepIfPossibleFlag(EndDateVar)
+        dispatcher.addKeepIfPossibleFlag(EffortVar)
+
+        const resolution    = dispatcher.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDateVar, CalculateProposed ],
+                [ EndDateVar, endDateFormula.formulaId ],
+                [ DurationVar, CalculateProposed ],
+                [ EffortVar, effortFormula.formulaId ],
+                [ UnitsVar, CalculateProposed ]
+            ])
+        )
+    })
 
 })
