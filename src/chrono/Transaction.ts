@@ -463,7 +463,7 @@ class Transaction extends base {
         if (latestEntry === activeEntry) {
             return baseRevision.previous ? baseRevision.previous.read(identifier) : undefined
         } else {
-            return latestEntry ? baseRevision.read(identifier) : null
+            return latestEntry ? baseRevision.read(identifier) : undefined
         }
     }
 
