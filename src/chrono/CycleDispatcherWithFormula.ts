@@ -237,7 +237,7 @@ export class CycleDispatcherWithFormula extends Base {
                         (count : number, formula : Formula) => state.formulaIsDefault(formula) ? count + 1 : count,
                         0
                     ),
-                    coversAllInput          : state.coversAllInput(),
+                    // coversAllInput          : state.coversAllInput(),
                     unCoveredInputWeight    : state.unCoveredInputWeight()
                 }
             })
