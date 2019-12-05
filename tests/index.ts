@@ -46,7 +46,9 @@ project.start(
             'chrono/060_cycle_dispatcher.t.js',
             'chrono/070_cycle_dispatcher_with_formula.t.js',
             'chrono/071_cycle_dispatcher_with_formula_fixed_duration.t.js',
-            'chrono/072_cycle_dispatcher_with_formula_fixed_effort.t.js'
+            'chrono/071_cycle_dispatcher_with_formula_fixed_duration_effort_driven.t.js',
+            'chrono/072_cycle_dispatcher_with_formula_fixed_effort.t.js',
+            'chrono/073_cycle_dispatcher_with_formula_fixed_units.t.js'
         ]
     },
     {
