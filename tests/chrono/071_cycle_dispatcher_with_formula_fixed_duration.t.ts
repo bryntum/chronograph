@@ -477,4 +477,28 @@ StartTest(t => {
         )
     })
 
+
+    t.it('Should overwrite user input with default formula to keep the consistency', t => {
+        dispatcher.addPreviousValueFlag(StartDateVar)
+        dispatcher.addPreviousValueFlag(EndDateVar)
+        dispatcher.addPreviousValueFlag(DurationVar)
+        dispatcher.addPreviousValueFlag(EffortVar)
+        dispatcher.addPreviousValueFlag(UnitsVar)
+
+        dispatcher.addProposedValueFlag(EffortVar)
+        dispatcher.addProposedValueFlag(UnitsVar)
+
+        const resolution    = dispatcher.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDateVar, CalculateProposed ],
+                [ EndDateVar, endDateFormula.formulaId ],
+                [ DurationVar, CalculateProposed ],
+                [ EffortVar, effortFormula.formulaId ],
+                [ UnitsVar, CalculateProposed ]
+            ])
+        )
+    })
 })

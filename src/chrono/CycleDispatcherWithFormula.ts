@@ -299,6 +299,12 @@ export class WalkState extends Base {
     }
 
 
+    formulaHasProposedValueInInput (formula : Formula) : boolean {
+        return Array.from(formula.inputs).some(variable => this.dispatcher.hasProposedValue.has(variable))
+    }
+
+
+    // this method counts
     unCoveredInputWeight () : number {
         const proposedVars          = map(this.dispatcher.hasProposedValue, variable => { return { variable, isProposed : true }})
         const keepIfPossibleVars    = map(this.dispatcher.keepIfPossible, variable => { return { variable, isProposed : false }})
@@ -312,10 +318,21 @@ export class WalkState extends Base {
             const isOverwrittenByFormulas   = this.previouslyActivatedFormulas.formulasByOutput.get(variable)
 
             if (isOverwrittenByFormulas) {
-                if (isProposed)
-                    weight += 1e5
-                else
-                    weight += 1e4
+                const formula   = isOverwrittenByFormulas.size === 1 ? Array.from(isOverwrittenByFormulas)[ 0 ] : null
+
+                // the case, when some user input is overwritten with the default formula should be weighted less than
+                // its overwritten with regular formula
+                if (formula && this.formulaIsDefault(formula) && this.formulaHasProposedValueInInput(formula)) {
+                    if (isProposed)
+                        weight += 1e5
+                    else
+                        weight += 1e4
+                } else {
+                    if (isProposed)
+                        weight += 1e7
+                    else
+                        weight += 1e6
+                }
             }
 
             //-----------------
@@ -472,13 +489,15 @@ export class WalkState extends Base {
 
 
     formulaIsApplicable (formula : Formula) : boolean {
-        const hasUserInputOnFormulaOutput       = this.dispatcher.hasProposedValue.has(formula.output)
+        // const hasUserInputOnFormulaOutput       = this.dispatcher.hasProposedValue.has(formula.output)
 
-        const ignoreUserInputOnFormulaOutput    = this.formulaIsDefault(formula) && this.formulaAllInputsHasProposed(formula)
+        // const ignoreUserInputOnFormulaOutput    = this.formulaIsDefault(formula) && this.formulaAllInputsHasProposed(formula)
 
         //-----------------------
         const everyFormulaInputHasValue         = Array.from(formula.inputs).every(
-            variable => this.dispatcher.hasProposedValue.has(variable) || this.dispatcher.hasPreviousValue.has(variable) || this.previouslyActivatedFormulas.formulasByOutput.has(variable)
+            variable => this.dispatcher.hasProposedValue.has(variable)
+                || this.dispatcher.hasPreviousValue.has(variable)
+                || this.previouslyActivatedFormulas.formulasByOutput.has(variable)
         )
 
         //-----------------------
@@ -486,15 +505,18 @@ export class WalkState extends Base {
         cache.add(formula)
 
         //-----------------------
-        const outputVariableAlreadyCalculated   = this.previouslyActivatedFormulas.formulasByOutput.has(formula.output)
+        // const outputVariableAlreadyCalculated   = this.previouslyActivatedFormulas.formulasByOutput.has(formula.output)
 
-        return (!hasUserInputOnFormulaOutput || ignoreUserInputOnFormulaOutput) && !outputVariableAlreadyCalculated && everyFormulaInputHasValue && !cache.isCyclic()
+        return /*(!hasUserInputOnFormulaOutput || ignoreUserInputOnFormulaOutput) &&*/ /*!outputVariableAlreadyCalculated &&*/ everyFormulaInputHasValue && !cache.isCyclic()
     }
 
 
     formulaIsInsignificant (formula : Formula) : boolean {
-        return (this.dispatcher.hasPreviousValue.has(formula.output) || this.previouslyActivatedFormulas.formulasByOutput.has(formula.output))
-            && Array.from(formula.inputs).some(
+        const outputVariableAlreadyCalculated   = this.previouslyActivatedFormulas.formulasByOutput.has(formula.output)
+        const outputVariableHasPreviousValue    = this.dispatcher.hasPreviousValue.has(formula.output)
+
+        return outputVariableAlreadyCalculated
+            || outputVariableHasPreviousValue && Array.from(formula.inputs).some(
                 variable => !this.dispatcher.hasPreviousValue.has(variable) && !this.dispatcher.hasProposedValue.has(variable)
             )
     }
