@@ -1,9 +1,10 @@
 import { PropagateResult } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
-import { debug, DEBUG, Identifier } from "../chrono/Identifier.js"
+import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { DEBUG, debug } from "../environment/Debug.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
@@ -52,9 +53,9 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 })
 
                 return defineProperty(this as any, '$', proxy)
+            } else {
+                return defineProperty(this as any, '$', $)
             }
-
-            return defineProperty(this as any, '$', $)
         }
 
 
