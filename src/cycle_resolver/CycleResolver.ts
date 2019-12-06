@@ -142,15 +142,15 @@ export type GraphInputsHash    = string
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GraphDescription extends FormulasCache(Base) {
-    variables                   : Set<Variable>
+    variables                   : Set<Variable>     = new Set()
     // NOTE - the order of formulas in the set is important - the earlier ones are preferred over the later
-    formulas                    : Set<Formula>    = new Set()
+    formulas                    : Set<Formula>      = new Set()
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CycleResolutionContext extends Base {
-    description                 : GraphDescription
+    description                 : GraphDescription                          = undefined
 
     defaultResolutionFormulas   : CycleResolutionFormulas                   = new Set()
 
@@ -215,11 +215,11 @@ export enum VariableInputState {
 //---------------------------------------------------------------------------------------------------------------------
 export class CycleResolutionInput extends Base {
     @required
-    description         : GraphDescription      = undefined
+    description         : GraphDescription                      = undefined
 
-    private input       : Map<Variable, VariableInputState> = undefined
+    private input       : Map<Variable, VariableInputState>     = undefined
 
-    private $hash       : GraphInputsHash       = ''
+    private $hash       : GraphInputsHash                       = ''
 
 
     get hash () : GraphInputsHash {
@@ -315,127 +315,6 @@ export class CycleResolutionInput extends Base {
         return CI(this.description.variables).filter(variable => this.keepIfPossible(variable))
     }
 }
-
-
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export class CycleDispatcherWithFormula extends Base {
-//     description         : GraphDescription
-//
-//     hasProposedValue    : Set<Variable>         = new Set()
-//     hasPreviousValue    : Set<Variable>         = new Set()
-//     keepIfPossible      : Set<Variable>         = new Set()
-//
-//     $hash               : GraphInputsHash       = ''
-//
-//     defaultResolutionFormulas   : CycleResolutionFormulas       = undefined
-//
-//     defaultResolution           : CycleResolution               = undefined
-//
-//
-//     get hash () : GraphInputsHash {
-//         if (this.$hash !== undefined) return this.$hash
-//
-//         return this.$hash = this.buildHash()
-//     }
-//
-//
-//     buildHash () : GraphInputsHash {
-//         return 'hash'
-//     }
-//
-//
-//     addProposedValueFlag (variable : Variable) {
-//         // debug only
-//         // if (!this.description.variables.has(variable)) throw new Error('Unknown variable')
-//         // if (this.$hash !== undefined) throw new Error('Already hashed')
-//
-//         this.hasProposedValue.add(variable)
-//     }
-//
-//
-//     addPreviousValueFlag (variable : Variable) {
-//         // debug only
-//         // if (!this.description.variables.has(variable)) throw new Error('Unknown variable')
-//         // if (this.$hash !== undefined) throw new Error('Already hashed')
-//
-//         this.hasPreviousValue.add(variable)
-//     }
-//
-//
-//     addKeepIfPossibleFlag (variable : Variable) {
-//         // debug only
-//         // if (!this.description.variables.has(variable)) throw new Error('Unknown variable')
-//         // if (this.$hash !== undefined) throw new Error('Already hashed')
-//
-//         this.keepIfPossible.add(variable)
-//     }
-//
-//
-//     $resolution     : CycleResolution
-//
-//     get resolution () : CycleResolution {
-//         if (this.$resolution !== undefined) return this.$resolution
-//
-//         const cached    = false//this.description.exampleResolutionsByHash.get(this.hash)
-//
-//         if (cached) {
-//             return this.$resolution = cached
-//         } else {
-//             const resolution        = this.buildResolution()
-//
-//             // this.description.exampleResolutionsByHash.set(this.hash, resolution)
-//
-//             return this.$resolution = resolution
-//         }
-//     }
-//
-//
-//     buildResolution () : CycleResolution {
-//         const walkContext           = WalkState.new({ input : this })
-//
-//         const allWalkStates         = Array.from(walkContext.next())
-//
-//         if (allWalkStates.length > 1) {
-//             const allResolutions    = allWalkStates.map(state => {
-//                 return {
-//                     resolution              : state.asResolution(),
-//                     nbrOfDefaultFormulas    : Array.from(state.activatedFormulas.formulas).reduce(
-//                         (count : number, formula : Formula) => state.formulaIsDefault(formula) ? count + 1 : count,
-//                         0
-//                     ),
-//                     // coversAllInput          : state.coversAllInput(),
-//                     unCoveredInputWeight    : state.unCoveredInputWeight()
-//                 }
-//             })
-//
-//             // allResolutions.sort((res1, res2) => {
-//             //     if (res1.coversAllInput && !res2.coversAllInput) return -1
-//             //     if (!res1.coversAllInput && res2.coversAllInput) return 1
-//             //
-//             //     return res2.nbrOfDefaultFormulas - res1.nbrOfDefaultFormulas
-//             // })
-//
-//             allResolutions.sort((res1, res2) => {
-//                 if (res1.unCoveredInputWeight < res2.unCoveredInputWeight) return -1
-//                 if (res1.unCoveredInputWeight > res2.unCoveredInputWeight) return 1
-//
-//                 return res2.nbrOfDefaultFormulas - res1.nbrOfDefaultFormulas
-//             })
-//
-//             return allResolutions[ 0 ].resolution
-//
-//             debugger
-//         }
-//
-//         for (const finalWalkState of walkContext.next()) {
-//             return finalWalkState.asResolution()
-//         }
-//
-//         debugger // return default?
-//     }
-// }
 
 
 //---------------------------------------------------------------------------------------------------------------------
