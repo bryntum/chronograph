@@ -56,7 +56,7 @@ StartTest(t => {
     let input : CycleResolutionInput
 
     t.beforeEach(t => {
-        input               = CycleResolutionInput.new({ description : fixedDurationEffortDrivenDescription })
+        input               = CycleResolutionInput.new({ context : fixedDurationEffortDrivenResolutionContext })
     })
 
 
@@ -69,7 +69,7 @@ StartTest(t => {
 
         input.addProposedValueFlag(EffortVar)
 
-        const resolution    = fixedDurationEffortDrivenResolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -93,7 +93,7 @@ StartTest(t => {
 
         input.addProposedValueFlag(EffortVar)
 
-        const resolution    = fixedDurationEffortDrivenResolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,

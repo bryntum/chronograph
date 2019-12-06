@@ -215,7 +215,7 @@ export enum VariableInputState {
 //---------------------------------------------------------------------------------------------------------------------
 export class CycleResolutionInput extends Base {
     @required
-    description         : GraphDescription                      = undefined
+    context             : CycleResolutionContext                = undefined
 
     private input       : Map<Variable, VariableInputState>     = undefined
 
@@ -226,6 +226,13 @@ export class CycleResolutionInput extends Base {
         if (this.$hash !== '') return this.$hash
 
         return this.$hash = this.buildHash()
+    }
+
+    get description () : GraphDescription { return this.context.description }
+
+
+    get resolution () : CycleResolution {
+        return this.context.resolve(this)
     }
 
 

@@ -68,7 +68,7 @@ StartTest(t => {
     let input : CycleResolutionInput
 
     t.beforeEach(t => {
-        input               = CycleResolutionInput.new({ description : fixedUnitsDescription })
+        input               = CycleResolutionInput.new({ context : fixedUnitsResolutionContext })
     })
 
 
@@ -81,7 +81,7 @@ StartTest(t => {
 
         input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = fixedUnitsResolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,

@@ -37,12 +37,12 @@ StartTest(t => {
     let input : CycleResolutionInput
 
     t.beforeEach(t => {
-        input               = CycleResolutionInput.new({ description : description })
+        input               = CycleResolutionInput.new({ context : resolutionContext })
     })
 
 
     t.it('Should keep undefined state', t => {
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -58,7 +58,7 @@ StartTest(t => {
     t.it('Should keep partial data - start', t => {
         input.addProposedValueFlag(StartDate)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -74,7 +74,7 @@ StartTest(t => {
     t.it('Should keep partial data - end', t => {
         input.addProposedValueFlag(EndDate)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -90,7 +90,7 @@ StartTest(t => {
     t.it('Should keep partial data - duration', t => {
         input.addProposedValueFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -108,7 +108,7 @@ StartTest(t => {
         input.addPreviousValueFlag(EndDate)
         input.addPreviousValueFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -125,7 +125,7 @@ StartTest(t => {
         input.addProposedValueFlag(StartDate)
         input.addProposedValueFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -142,7 +142,7 @@ StartTest(t => {
         input.addProposedValueFlag(EndDate)
         input.addProposedValueFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -159,7 +159,7 @@ StartTest(t => {
         input.addProposedValueFlag(StartDate)
         input.addProposedValueFlag(EndDate)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -177,7 +177,7 @@ StartTest(t => {
         input.addProposedValueFlag(EndDate)
         input.addProposedValueFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -198,7 +198,7 @@ StartTest(t => {
         input.addProposedValueFlag(StartDate)
         input.addKeepIfPossibleFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -219,7 +219,7 @@ StartTest(t => {
         input.addProposedValueFlag(StartDate)
         input.addKeepIfPossibleFlag(EndDate)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -240,7 +240,7 @@ StartTest(t => {
         input.addProposedValueFlag(EndDate)
         input.addKeepIfPossibleFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -261,7 +261,7 @@ StartTest(t => {
         input.addProposedValueFlag(EndDate)
         input.addKeepIfPossibleFlag(StartDate)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -282,7 +282,7 @@ StartTest(t => {
         input.addProposedValueFlag(StartDate)
         input.addKeepIfPossibleFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -303,7 +303,7 @@ StartTest(t => {
         input.addProposedValueFlag(StartDate)
         input.addKeepIfPossibleFlag(EndDate)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -324,7 +324,7 @@ StartTest(t => {
 
         input.addKeepIfPossibleFlag(Duration)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
@@ -344,7 +344,7 @@ StartTest(t => {
 
         input.addKeepIfPossibleFlag(EndDate)
 
-        const resolution    = resolutionContext.resolve(input)
+        const resolution    = input.resolution
 
         t.isDeeply(
             resolution,
