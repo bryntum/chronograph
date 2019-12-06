@@ -1,4 +1,4 @@
-import { AnyConstructor, AnyFunction, Base, BaseConstructor, MixinConstructor, MixinFunction } from "./Mixin.js"
+import { AnyConstructor, AnyFunction, Base, MixinConstructor, MixinFunction } from "./Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 const MixinIdentity         = Symbol('MixinIdentity')
@@ -110,4 +110,24 @@ export const buildClass = <T extends object>(base : AnyConstructor<T>, ...mixins
     }
 
     return cls as AnyConstructor<T>
+}
+
+//---------------------------------------------------------------------------------------
+const RequiredProperties = Symbol('RequiredProperties')
+
+export const required : PropertyDecorator = (proto : object, propertyKey : string | symbol) : void => {
+    let required  = proto[ RequiredProperties ]
+
+    if (!required) required = proto[ RequiredProperties ] = []
+
+    required.push(propertyKey)
+}
+
+export const validateRequiredProperties = (context : any) => {
+    const required      = context[ RequiredProperties ]
+
+    if (required) {
+        for (let i = 0; i < required.length; i++)
+            if (context[ required[ i ] ] === undefined) throw new Error(`Required attribute [${ String(required[ i ]) }] is not provided`)
+    }
 }
