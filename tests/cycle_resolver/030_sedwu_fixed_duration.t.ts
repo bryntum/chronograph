@@ -1,4 +1,4 @@
-import { CalculateProposed, CycleDispatcherWithFormula, Formula, GraphDescription } from "../../src/chrono/CycleDispatcherWithFormula.js"
+import { CalculateProposed, CycleResolutionContext, CycleResolutionInput, Formula, GraphDescription } from "../../src/cycle_resolver/CycleResolver.js"
 
 declare const StartTest : any
 
@@ -47,21 +47,23 @@ StartTest(t => {
         ])
     })
 
+    const fixedDurationDescriptionResolutionContext = CycleResolutionContext.new({
+        description                 : fixedDurationDescription,
+        // fixed duration, non effort-driven
+        defaultResolutionFormulas   : new Set([ endDateFormula, effortFormula ])
+    })
 
-    let dispatcher : CycleDispatcherWithFormula
+
+
+    let input : CycleResolutionInput
 
     t.beforeEach(t => {
-
-        dispatcher        = CycleDispatcherWithFormula.new({
-            description                 : fixedDurationDescription,
-            // fixed duration, non effort-driven
-            defaultResolutionFormulas   : new Set([ endDateFormula, effortFormula ])
-        })
+        input               = CycleResolutionInput.new({ description : fixedDurationDescription })
     })
 
 
     t.it('Should keep undefined state', t => {
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -77,9 +79,9 @@ StartTest(t => {
 
 
     t.it('Should keep partial data - start', t => {
-        dispatcher.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(StartDateVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -95,9 +97,9 @@ StartTest(t => {
 
 
     t.it('Should keep partial data - end', t => {
-        dispatcher.addProposedValueFlag(EndDateVar)
+        input.addProposedValueFlag(EndDateVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -113,9 +115,9 @@ StartTest(t => {
 
 
     t.it('Should keep partial data - duration', t => {
-        dispatcher.addProposedValueFlag(DurationVar)
+        input.addProposedValueFlag(DurationVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -131,9 +133,9 @@ StartTest(t => {
 
 
     t.it('Should keep partial data - effort', t => {
-        dispatcher.addProposedValueFlag(EffortVar)
+        input.addProposedValueFlag(EffortVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -149,9 +151,9 @@ StartTest(t => {
 
 
     t.it('Should keep partial data - units', t => {
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -167,13 +169,13 @@ StartTest(t => {
 
 
     t.it('Should use default resolution when no input is given and previous values present', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -189,10 +191,10 @@ StartTest(t => {
 
 
     t.it('Should normalize end date', t => {
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addProposedValueFlag(DurationVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(DurationVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -208,11 +210,11 @@ StartTest(t => {
 
 
     t.it('Should normalize end date and effort', t => {
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addProposedValueFlag(DurationVar)
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(DurationVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -228,10 +230,10 @@ StartTest(t => {
 
 
     t.it('Should normalize start date', t => {
-        dispatcher.addProposedValueFlag(EndDateVar)
-        dispatcher.addProposedValueFlag(DurationVar)
+        input.addProposedValueFlag(EndDateVar)
+        input.addProposedValueFlag(DurationVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -247,11 +249,11 @@ StartTest(t => {
 
 
     t.it('Should normalize start date and effort', t => {
-        dispatcher.addProposedValueFlag(EndDateVar)
-        dispatcher.addProposedValueFlag(DurationVar)
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(EndDateVar)
+        input.addProposedValueFlag(DurationVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -267,10 +269,10 @@ StartTest(t => {
 
 
     t.it('Should normalize duration', t => {
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addProposedValueFlag(EndDateVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(EndDateVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -286,11 +288,11 @@ StartTest(t => {
 
 
     t.it('Should normalize duration and effort', t => {
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addProposedValueFlag(EndDateVar)
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(EndDateVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -306,13 +308,13 @@ StartTest(t => {
 
 
     t.it("Should calculate end date and effort when there's input on all variables", t => {
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addProposedValueFlag(EndDateVar)
-        dispatcher.addProposedValueFlag(DurationVar)
-        dispatcher.addProposedValueFlag(EffortVar)
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(EndDateVar)
+        input.addProposedValueFlag(DurationVar)
+        input.addProposedValueFlag(EffortVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -328,16 +330,16 @@ StartTest(t => {
 
 
     t.it('Should apply keep flags - set start date, keep duration', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addKeepIfPossibleFlag(DurationVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addKeepIfPossibleFlag(DurationVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -353,17 +355,17 @@ StartTest(t => {
 
 
     t.it('Should update units - set start date, keep duration, set effort', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addKeepIfPossibleFlag(DurationVar)
-        dispatcher.addProposedValueFlag(EffortVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addKeepIfPossibleFlag(DurationVar)
+        input.addProposedValueFlag(EffortVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -379,17 +381,17 @@ StartTest(t => {
 
 
     t.it('Should apply keep flags, set start date, keep end date, keep effort', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(StartDateVar)
-        dispatcher.addKeepIfPossibleFlag(EndDateVar)
-        dispatcher.addKeepIfPossibleFlag(EffortVar)
+        input.addProposedValueFlag(StartDateVar)
+        input.addKeepIfPossibleFlag(EndDateVar)
+        input.addKeepIfPossibleFlag(EffortVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -405,17 +407,17 @@ StartTest(t => {
 
 
     t.it('Should apply keep flags, set end date, keep duration', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(EndDateVar)
-        dispatcher.addKeepIfPossibleFlag(DurationVar)
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(EndDateVar)
+        input.addKeepIfPossibleFlag(DurationVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -431,15 +433,15 @@ StartTest(t => {
 
 
     t.it('Should automatically promote variables with previous value #1', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EffortVar)
 
-        dispatcher.addProposedValueFlag(EndDateVar)
+        input.addProposedValueFlag(EndDateVar)
 
-        dispatcher.addKeepIfPossibleFlag(DurationVar)
-        dispatcher.addKeepIfPossibleFlag(UnitsVar)
+        input.addKeepIfPossibleFlag(DurationVar)
+        input.addKeepIfPossibleFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -455,15 +457,15 @@ StartTest(t => {
 
 
     t.it('Should automatically promote variables with previous value #2', t => {
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(StartDateVar)
 
-        dispatcher.addKeepIfPossibleFlag(EndDateVar)
-        dispatcher.addKeepIfPossibleFlag(EffortVar)
+        input.addKeepIfPossibleFlag(EndDateVar)
+        input.addKeepIfPossibleFlag(EffortVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -479,16 +481,16 @@ StartTest(t => {
 
 
     t.it('Should overwrite user input with default formula to keep the consistency', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(EffortVar)
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(EffortVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationDescriptionResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,

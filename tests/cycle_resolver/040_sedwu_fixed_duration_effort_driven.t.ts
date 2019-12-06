@@ -1,4 +1,4 @@
-import { CalculateProposed, CycleDispatcherWithFormula, Formula, GraphDescription } from "../../src/chrono/CycleDispatcherWithFormula.js"
+import { CalculateProposed, CycleResolutionContext, CycleResolutionInput, Formula, GraphDescription } from "../../src/cycle_resolver/CycleResolver.js"
 
 declare const StartTest : any
 
@@ -46,29 +46,30 @@ StartTest(t => {
         ])
     })
 
+    const fixedDurationEffortDrivenResolutionContext = CycleResolutionContext.new({
+        description                 : fixedDurationEffortDrivenDescription,
+        // fixed duration, effort-driven
+        defaultResolutionFormulas   : new Set([ endDateFormula, unitsFormula ])
+    })
 
-    let dispatcher : CycleDispatcherWithFormula
+
+    let input : CycleResolutionInput
 
     t.beforeEach(t => {
-
-        dispatcher        = CycleDispatcherWithFormula.new({
-            description                 : fixedDurationEffortDrivenDescription,
-            // fixed duration, effort-driven
-            defaultResolutionFormulas   : new Set([ endDateFormula, unitsFormula ])
-        })
+        input               = CycleResolutionInput.new({ description : fixedDurationEffortDrivenDescription })
     })
 
 
     t.it('Should apply keep flags - set start date, keep duration', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(EffortVar)
+        input.addProposedValueFlag(EffortVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationEffortDrivenResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -84,15 +85,15 @@ StartTest(t => {
 
 
     t.it('Should apply keep flags - set start date, keep duration', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(EffortVar)
+        input.addProposedValueFlag(EffortVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedDurationEffortDrivenResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,

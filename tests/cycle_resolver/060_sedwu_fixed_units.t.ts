@@ -1,4 +1,4 @@
-import { CalculateProposed, CycleDispatcherWithFormula, Formula, GraphDescription } from "../../src/chrono/CycleDispatcherWithFormula.js"
+import { CalculateProposed, CycleResolutionContext, CycleResolutionInput, Formula, GraphDescription } from "../../src/cycle_resolver/CycleResolver.js"
 
 declare const StartTest : any
 
@@ -45,7 +45,7 @@ StartTest(t => {
         inputs      : new Set([ EndDateVar, EffortVar, UnitsVar ])
     })
 
-    const fixedEffortDescription = GraphDescription.new({
+    const fixedUnitsDescription = GraphDescription.new({
         variables           : new Set([ StartDateVar, EndDateVar, DurationVar, EffortVar, UnitsVar ]),
         formulas            : new Set([
             endDateByEffortFormula,
@@ -59,27 +59,29 @@ StartTest(t => {
     })
 
 
-    let dispatcher : CycleDispatcherWithFormula
+    const fixedUnitsResolutionContext = CycleResolutionContext.new({
+        description                 : fixedUnitsDescription,
+        defaultResolutionFormulas   : new Set([ endDateFormula, endDateByEffortFormula, effortFormula ])
+    })
+
+
+    let input : CycleResolutionInput
 
     t.beforeEach(t => {
-
-        dispatcher        = CycleDispatcherWithFormula.new({
-            description                 : fixedEffortDescription,
-            defaultResolutionFormulas   : new Set([ endDateFormula, endDateByEffortFormula, effortFormula ])
-        })
+        input               = CycleResolutionInput.new({ description : fixedUnitsDescription })
     })
 
 
     t.it('Should update end date and effort - set units', t => {
-        dispatcher.addPreviousValueFlag(StartDateVar)
-        dispatcher.addPreviousValueFlag(EndDateVar)
-        dispatcher.addPreviousValueFlag(DurationVar)
-        dispatcher.addPreviousValueFlag(EffortVar)
-        dispatcher.addPreviousValueFlag(UnitsVar)
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(EndDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
 
-        dispatcher.addProposedValueFlag(UnitsVar)
+        input.addProposedValueFlag(UnitsVar)
 
-        const resolution    = dispatcher.resolution
+        const resolution    = fixedUnitsResolutionContext.resolve(input)
 
         t.isDeeply(
             resolution,
@@ -92,5 +94,4 @@ StartTest(t => {
             ])
         )
     })
-
 })

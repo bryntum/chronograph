@@ -43,11 +43,18 @@ project.start(
             'chrono/032_propagation_options.t.js',
             'chrono/040_add_remove.t.js',
             'chrono/050_undo_redo.t.js',
-            'chrono/070_cycle_dispatcher_with_formula.t.js',
-            'chrono/071_cycle_dispatcher_with_formula_fixed_duration.t.js',
-            'chrono/071_cycle_dispatcher_with_formula_fixed_duration_effort_driven.t.js',
-            'chrono/072_cycle_dispatcher_with_formula_fixed_effort.t.js',
-            'chrono/073_cycle_dispatcher_with_formula_fixed_units.t.js'
+        ]
+    },
+    {
+        group       : 'Cycle resolver',
+
+        items       : [
+            'cycle_resolver/010_memoizing.t.js',
+            'cycle_resolver/020_sed.t.js',
+            'cycle_resolver/030_sedwu_fixed_duration.t.js',
+            'cycle_resolver/040_sedwu_fixed_duration_effort_driven.t.js',
+            'cycle_resolver/050_sedwu_fixed_effort.t.js',
+            'cycle_resolver/060_sedwu_fixed_units.t.js',
         ]
     },
     {
