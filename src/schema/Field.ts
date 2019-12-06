@@ -1,4 +1,3 @@
-import { Identifier } from "../chrono/Identifier.js"
 import { Base } from "../class/Mixin.js"
 import { FieldIdentifierConstructor, MinimalFieldIdentifier } from "../replica/Identifier.js"
 import { EntityMeta } from "./EntityMeta.js"
