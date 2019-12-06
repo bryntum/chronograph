@@ -1,4 +1,35 @@
 //---------------------------------------------------------------------------------------------------------------------
+export function* inBatchesBySize<Element> (iterator : Iterable<Element>, batchSize : number) : Iterable<Element[]> {
+    if (batchSize < 0) throw new Error("Batch size needs to a natural number")
+    batchSize   = batchSize | 0
+
+    const runningBatch : Element[]  = []
+
+    for (const el of iterator) {
+        if (runningBatch.length === batchSize) {
+            yield runningBatch
+
+            runningBatch.length = 0
+        }
+
+        runningBatch.push(el)
+    }
+
+    if (runningBatch.length > 0) yield runningBatch
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export function* filter<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : Iterable<Element> {
+    let i   = 0
+
+    for (const el of iterator) {
+        if (func(el, i++)) yield el
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export function every<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : boolean {
     let i   = 0
 
@@ -142,6 +173,16 @@ export class ChainedIteratorClass<T> {
     }
 
 
+    inBatchesBySize (batchSize : number) : ChainedIteratorClass<T[]> {
+        return new ChainedIteratorClass(inBatchesBySize(this.iterator, batchSize))
+    }
+
+
+    filter (func : (el : T, index : number) => boolean) : ChainedIteratorClass<T> {
+        return new ChainedIteratorClass(filter(this.iterator, func))
+    }
+
+
     map<Result> (func : (el : T, index : number) => Result) : ChainedIteratorClass<Result> {
         return new ChainedIteratorClass(map(this.iterator, func))
     }
@@ -192,6 +233,16 @@ export class ChainedIteratorClass<T> {
     }
 
 
+    toSet () : Set<T> {
+        return new Set(this)
+    }
+
+
+    // toMap () : T extends [ infer K, infer V ] ? Map<T[ 0 ], T[ 1 ]> : never  {
+    //     return new Map(this)
+    // }
+
+
     flush () {
         for (const element of this) {}
     }
@@ -200,3 +251,5 @@ export class ChainedIteratorClass<T> {
 
 export const ChainedIterator = <T>(iterator : Iterable<T>) : ChainedIteratorClass<T> => new ChainedIteratorClass<T>(iterator)
 export type ChainedIterator<T> = ChainedIteratorClass<T>
+
+export const CI = ChainedIterator
