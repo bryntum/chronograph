@@ -17,7 +17,12 @@
     works correctly
 */
 
+import { mixin } from "./InstanceOf.js"
+
 export class Base {
+
+    static wrap (any : any) : any {}
+
 
     initialize<T extends Base> (props? : Partial<T>) {
         props && Object.assign(this, props)
@@ -65,3 +70,129 @@ export type MixinFunction = (base : AnyConstructor) => AnyConstructor
 // //---------------------------------------------------------------------------------------------------------------------
 // export type ReplaceTypeOfProperty<Type, Property extends keyof Type, NewPropertyType> =
 //     NewPropertyType extends Type[ Property ] ? Omit<Type, Property> & { [ P in Property ] : NewPropertyType } : never
+
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const SomeMixin1 = mixin(
+    [ Base ],
+
+    <T extends AnyConstructor<Base>>(base : T) =>
+
+        class SomeMixin extends base {
+            prop1               : number            = 0
+
+            method1 () : number {
+                return this.prop1 + 1
+            }
+        }
+)
+export type SomeMixin1 = Mixin<typeof SomeMixin1>
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const SomeMixin2 = mixin(
+    [ SomeMixin1 ],
+
+    <T extends AnyConstructor<SomeMixin1>>(base : T) =>
+
+        class SomeMixin extends base {
+            prop2               : string            = ''
+
+            method2 () : string {
+                return this.prop2 + '1'
+            }
+        }
+)
+export type SomeMixin2 = Mixin<typeof SomeMixin2>
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const SomeMixin3 = mixin(
+    [ SomeMixin2 ],
+
+    <T extends AnyConstructor<SomeMixin2>>(base : T) =>
+
+        class SomeMixin3 extends base {
+            prop3               : Set<string>       = new Set()
+
+            method3 (a : string) : boolean {
+                return this.prop3.has(a)
+            }
+        }
+)
+export type SomeMixin3 = Mixin<typeof SomeMixin3>
+
+const a : SomeMixin3     = SomeMixin3.new({ prop1 : 1, zxc : 11 })
+
+const b = (a : SomeMixin3) => {
+    a.method1()
+
+    a.prop2
+
+    a.zxc()
+}
+
+const ManuallyAppliedSomeMixin3 = SomeMixin3(Base)
+
+const a : SomeMixin3     = SomeMixin3.new({ prop1 : 1, zxc : 11 })
+
+const b = (a : SomeMixin3) => {
+    a.method1()
+
+    a.prop2
+
+    a.zxc()
+}
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class SomeMixin4 extends mixin(
+    [ Base ],
+
+    <T extends AnyConstructor<Base>>(base : T) =>
+
+        class SomeMixin4 extends base {
+            // static wrap (any : any) : any {}
+
+            prop3               : SomeMixin5
+
+            another             : SomeMixin3
+        }
+){}
+// export type SomeMixin4 = Mixin<typeof SomeMixin4>
+
+//---------------------------------------------------------------------------------------------------------------------
+export class SomeMixin5 extends mixin(
+    [ Base ],
+
+    <T extends AnyConstructor<Base>>(base : T) =>
+
+        class SomeMixin5 extends base {
+            prop3               : SomeMixin4
+        }
+){}
+
+const ManuallyAppliedSomeMixin4 = SomeMixin4.wrap(Base)
+
+const a4 : SomeMixin4     = SomeMixin4.new({ another : a, zanother : 1 })
+const a5 : SomeMixin5     = SomeMixin5.new({ prop3 : a4, zxc : 11 })
+
+a4.prop2 = 11
+
+a4.prop3    = new Set()
+a4.prop3    = a5
+
+a4.another  = 'a'
+a4.another  = a
+
+const b = (a : SomeMixin3) => {
+    a.method1()
+
+    a.prop2
+
+    a.zxc()
+}
