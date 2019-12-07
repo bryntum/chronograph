@@ -32,8 +32,9 @@ export const instanceOf = <T>(arg : T) : T => {
     return wrapper as any
 }
 
+export const SELF = Symbol('SELF')
 
-export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], arg : T) : T & (T extends AnyFunction ? MixinConstructor<T> : never) => {
+export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], arg : T) : (T extends AnyFunction ? MixinConstructor<T> & { [SELF] : MixinConstructor<T> } : never) => {
     const wrapper                   = instanceOf(arg) as any
 
     wrapper[ MixinRequirements ]    = required

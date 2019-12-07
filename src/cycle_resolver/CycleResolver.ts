@@ -47,7 +47,7 @@ export class VariableWalkContext extends WalkContext<Variable | Formula> {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-export const FormulasCache = mixin(
+export class FormulasCache extends Mixin(
     [ Base ],
 
     <T extends AnyConstructor<Base>>(base : T) =>
@@ -132,8 +132,7 @@ export const FormulasCache = mixin(
             return isCyclic
         }
     }
-)
-export type FormulasCache = Mixin<typeof FormulasCache>
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -141,10 +140,7 @@ export type GraphInputsHash    = string
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphDescription extends FormulasCache(Base) {
-    variables                   : Set<Variable>     = new Set()
-    // NOTE - the order of formulas in the set is important - the earlier ones are preferred over the later
-    formulas                    : Set<Formula>      = new Set()
+export class GraphDescription extends FormulasCache {
 }
 
 
