@@ -24,11 +24,8 @@ export type VisitState = {
     topoLevel       : number
 }
 
-
 export class MixinWalkDepthState {
     sourceEl                        : MixinState                    = undefined
-
-    private visited                 : Map<MixinState, VisitState>   = new Map()
 
     private $elementsByTopoLevel    : Map<number, MixinState[]>     = undefined
 
@@ -54,11 +51,7 @@ export class MixinWalkDepthState {
 
 
     buildTopoLevels () : number[] {
-        const levels        = Array.from(this.elementsByTopoLevel.keys())
-
-        levels.sort((level1, level2) => level1 - level2)
-
-        return levels
+        return Array.from(this.elementsByTopoLevel.keys()).sort((level1, level2) => level1 - level2)
     }
 
 
@@ -69,85 +62,49 @@ export class MixinWalkDepthState {
     }
 
 
-    buildElementsByTopoLevel () : Map<number, MixinState[]> {
-        const map = CI(this.walkDepth(0, null, [ this.sourceEl ])).reduce(
-            (elementsByTopoLevel, el) => {
-                let maxTopoLevel : number    = 0
+    getLevel<T> (map : Map<number, T[]>, topoLevel : number) : T[] {
+        let elementsAtLevel : T[]     = map.get(topoLevel)
 
-                for (const nextEl of this.next(el)) {
-                    const nextElVisit   = this.visited.get(nextEl)
+        if (!elementsAtLevel) {
+            elementsAtLevel     = []
 
-                    if (nextElVisit.topoLevel > maxTopoLevel) maxTopoLevel = nextElVisit.topoLevel
-                }
-
-                const visitInfo         = this.visited.get(el)
-                const topoLevel         = visitInfo.topoLevel = maxTopoLevel + 1
-
-                let elementsAtLevel : MixinState[]     = elementsByTopoLevel.get(topoLevel)
-
-                if (!elementsAtLevel) {
-                    elementsAtLevel     = []
-
-                    elementsByTopoLevel.set(topoLevel, elementsAtLevel)
-                }
-
-                elementsAtLevel.push(el)
-
-                return elementsByTopoLevel
-            },
-            new Map<number, MixinState[]>()
-        )
-
-        map.forEach(level => level.sort((mixin1, mixin2) => mixin1.id - mixin2.id))
-
-        return map
-    }
-
-
-    next (mixinState : MixinState) : Iterable<MixinState> {
-        return mixinState.requirements
-    }
-
-
-    * walkDepth (depth : number, fromEl : MixinState | null, iterator : Iterable<MixinState>) : Iterable<MixinState> {
-        const visited : Map<MixinState, VisitState>  = this.visited
-
-        for (const el of iterator) {
-            let visitInfo       = visited.get(el)
-
-            if (visitInfo === undefined) {
-                visitInfo       = { visitedAt : depth, from : fromEl, topoLevel : 0 }
-
-                this.visited.set(el, visitInfo)
-
-                yield* this.walkDepth(depth + 1, el, this.next(el))
-            }
-
-            if (visitInfo.visitedAt == VISITED_TOPOLOGICALLY) {
-                continue
-            }
-
-            if (visitInfo.visitedAt < depth) {
-                // this.onCycle(el)
-
-                throw new Error("Cyclic walk depth")
-            }
-
-            visitInfo.visitedAt = VISITED_TOPOLOGICALLY
-
-            // yield element in topologically sorted position, however, not yet sorted by topological level
-            yield el
+            map.set(topoLevel, elementsAtLevel)
         }
+
+        return elementsAtLevel
+    }
+
+
+    buildElementsByTopoLevel () : Map<number, MixinState[]> {
+        let maxTopoLevel : number    = 0
+
+        const map =
+            CI(this.sourceEl.requirements)
+            .map(mixin => mixin.walkDepthState.elementsByTopoLevel)
+            .concat<[ number, MixinState[] ]>()
+            .reduce(
+                (elementsByTopoLevel, [ topoLevel, mixins ]) => {
+                    if (topoLevel > maxTopoLevel) maxTopoLevel = topoLevel
+
+                    let elementsAtLevel = this.getLevel(elementsByTopoLevel, topoLevel)
+
+                    elementsAtLevel.push(mixins)
+
+                    return elementsByTopoLevel
+                },
+                new Map<number, MixinState[][]>()
+            )
+
+        this.getLevel(map, maxTopoLevel + 1).push([ this.sourceEl ])
+
+        return CI(map).map(([ level, elements ]) => {
+            return [ level, CI(elements).concat<MixinState>().uniqueOnly().toArray().sort((mixin1, mixin2) => mixin1.id - mixin2.id) ]
+        }).toMap()
     }
 
 
     * linearizedByTopoLevels () : Iterable<MixinState> {
         yield* CI(this.topoLevels).map(level => this.elementsByTopoLevel.get(level)).concat()
-    }
-
-
-    restoreCycle (el : MixinState) {
-
     }
 }
 
@@ -172,8 +129,6 @@ export class MixinState {
     identitySymbol              : symbol                = undefined
 
     mixinLambda                 : (base : AnyConstructor) => AnyConstructor  = identity
-
-    // symbol                      : symbol                = undefined
 
     walkDepthState              : MixinWalkDepthState   = MixinWalkDepthState.new({ sourceEl : this })
 
@@ -239,8 +194,8 @@ export class MixinState {
         const minimalClass : MixinClass = Object.assign(minimalClassConstructor, {
             [MixinIdentity]         : this.identitySymbol,
             [MixinStateProperty]    : this,
-
-            mix                     : this.mixinLambda
+            mix                     : this.mixinLambda,
+            $                       : this
         })
 
         Object.defineProperty(minimalClass, Symbol.hasInstance, { value : isInstanceOfStatic })
@@ -257,9 +212,11 @@ export class MixinState {
 
 
     toString () : string {
-        return ''
+        return this.walkDepthState.linearizedByTopoLevelsSource.reduce(
+            (acc : string, mixin : MixinState) => `${mixin.mixinLambda.name}(${acc})`,
+            this.baseClass.name
+        )
     }
-
 
     static minimalClassesByLinearHash : Map<MixinHash, MixinClass> = new Map()
 }

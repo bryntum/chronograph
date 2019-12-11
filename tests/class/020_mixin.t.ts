@@ -112,7 +112,7 @@ export class SomeMixin123_1 extends Mixin(
     [ SomeMixin12, SomeMixin3 ],
     <T extends AnyConstructor<SomeMixin12 & SomeMixin3>>(base : T) =>
 
-        class SomeMixin123_ extends base {
+        class SomeMixin123_1 extends base {
             prop123_1     : string    = '123_1'
         }
 ){}
@@ -169,6 +169,12 @@ StartTest(t => {
         t.ok(isInstanceOf(instance, SomeMixin1), "Correct isInstanceOf call")
         t.ok(isInstanceOf(instance, SomeMixin2), "Correct isInstanceOf call")
         t.ok(isInstanceOf(instance, SomeMixin3), "Correct isInstanceOf call")
+
+        t.is(instance.prop1, '1')
+        t.is(instance.prop2, '2')
+        t.is(instance.prop3, '3')
+        t.is(instance.prop12, '12')
+        t.is(instance.prop123_1, '123_1')
     })
 
 
