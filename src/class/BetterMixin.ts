@@ -165,8 +165,6 @@ export class MixinWalkDepthState {
 export type MixinId         = number
 export type MixinHash       = string
 
-// const BaseClassMixinId : MixinId    = 0
-
 // Note: 65535 mixins only, because of the hashing function implementation
 let MIXIN_ID : MixinId      = 1
 
@@ -297,15 +295,9 @@ export class Base {
 
         return instance as InstanceType<T>
     }
-
-    // static [MixinStateProperty] : MixinState
 }
 
-// const BaseMixinState = Base[ MixinStateProperty ] = MixinState.new({ id : BaseClassMixinId, $minimalClass : Base })
-// const ObjectMixinState = MixinState.new({ id : BaseClassMixinId, $minimalClass : Object })
-
 export type BaseConstructor             = typeof Base
-
 
 //---------------------------------------------------------------------------------------------------------------------
 export type AnyFunction<A = any>        = (...input : any[]) => A
@@ -320,20 +312,14 @@ export type MixinConstructor<T extends AnyFunction> =
 
 export type MixinClassConstructor<T> =
     T extends AnyFunction<infer M> ?
-        (M extends AnyConstructor<Base> ? M & BaseConstructor : M) & MixinStateExtension & { mix : T }
+        (M extends AnyConstructor<Base> ? M & BaseConstructor : M) & { mix : T }
     : never
-
-
-
-//---------------------------------------------------------------------------------------------------------------------
-// very rough typing for a mixin function
-// export type MixinFunction = (base : AnyConstructor) => AnyConstructor
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type MixinHelperFuncAny = <T>(required : AnyConstructor[], arg : T) =>
     T extends AnyFunction ?
-        MixinClassConstructor<T> /*& { [SelfType] : T }*/
+        MixinClassConstructor<T>
     : never
 
 
@@ -342,7 +328,7 @@ export type MixinHelperFunc1 = <A1 extends AnyConstructor, T>(required : [ A1 ],
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1>> ?
                 InstanceType<A1> extends InstanceType<Base> ?
-                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
+                    MixinClassConstructor<T>
                 : never
             : never
         : never
@@ -353,7 +339,7 @@ export type MixinHelperFunc2 = <A1 extends AnyConstructor, A2 extends AnyConstru
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2>> ?
                 InstanceType<A1> & InstanceType<A2> extends InstanceType<Base> ?
-                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
+                    MixinClassConstructor<T>
                 : never
             : never
         : never
@@ -364,7 +350,7 @@ export type MixinHelperFunc3 = <A1 extends AnyConstructor, A2 extends AnyConstru
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3>> ?
                 InstanceType<A1> & InstanceType<A2> & InstanceType<A3> extends InstanceType<Base> ?
-                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
+                    MixinClassConstructor<T>
                 : never
             : never
         : never
@@ -375,7 +361,7 @@ export type MixinHelperFunc4 = <A1 extends AnyConstructor, A2 extends AnyConstru
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4>> ?
                 InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> extends InstanceType<Base> ?
-                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
+                    MixinClassConstructor<T>
                 : never
             : never
         : never
@@ -386,7 +372,7 @@ export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstru
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5>> ?
                 InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4 & InstanceType<A5>> extends InstanceType<Base> ?
-                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
+                    MixinClassConstructor<T>
                 : never
             : never
         : never
@@ -401,7 +387,7 @@ const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any
 
 
 export const mixin = <T>(required : (AnyConstructor | MixinClass)[], arg : T) :
-    (T extends AnyFunction ? MixinClassConstructor<T> /*& { [SelfType] : T }*/ : never) =>
+    (T extends AnyFunction ? MixinClassConstructor<T> : never) =>
 {
     let baseClass : AnyConstructor
 

@@ -49,7 +49,6 @@ export class VariableWalkContext extends WalkContext<Variable | Formula> {
 //---------------------------------------------------------------------------------------------------------------------
 export class FormulasCache extends Mixin(
     [ Base ],
-
     <T extends AnyConstructor<Base>>(base : T) =>
 
     class FormulasCache extends base {
