@@ -238,8 +238,8 @@ export class ChainedIteratorClass<T> {
     }
 
 
-    // toMap () : T extends [ infer K, infer V ] ? Map<T[ 0 ], T[ 1 ]> : never  {
-    //     return new Map(this)
+    // toMap () : T extends [ infer K, infer V ] ? Map<K, V> : never  {
+    //     return new Map(this as (T extends [ infer K, infer V ] ? Iterable<[ K, V ]> : never))
     // }
 
 
