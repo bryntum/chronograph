@@ -299,11 +299,6 @@ export type AnyConstructor<A = object>  = new (...input : any[]) => A
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
-
-export type MixinConstructor<T extends AnyFunction> =
-    T extends AnyFunction<infer M> ? (M extends AnyConstructor<Base> ? M & BaseConstructor : M) : never
-
 export type MixinClassConstructor<T> =
     T extends AnyFunction<infer M> ?
         (M extends AnyConstructor<Base> ? M & BaseConstructor : M) & { mix : T }
@@ -374,9 +369,7 @@ export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstru
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const mixin = <T>(required : (AnyConstructor | MixinClass)[], arg : T) :
-    (T extends AnyFunction ? MixinClassConstructor<T> : never) =>
-{
+export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) : MixinClassConstructor<T> => {
     let baseClass : AnyConstructor
 
     if (required.length > 0) {
@@ -388,9 +381,9 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], arg : T) :
     const requirements : MixinState[]    = []
 
     required.forEach((requirement, index) => {
-        const mixinState    = requirement[ MixinStateProperty ]
+        const mixinState    = requirement[ MixinStateProperty ] as MixinState
 
-        if (mixinState instanceof MixinState) {
+        if (mixinState !== undefined) {
             if (!baseClass) baseClass = mixinState.baseClass
 
             if (mixinState.baseClass !== baseClass) throw new Error("Base class mismatch")
@@ -405,7 +398,7 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], arg : T) :
     if (!baseClass) baseClass = Object
 
     //------------------
-    const mixinState    = MixinState.new({ requirements, mixinLambda : arg as any, baseClass })
+    const mixinState    = MixinState.new({ requirements, mixinLambda : mixinLambda as any, baseClass })
 
     return mixinState.minimalClass as any
 }
