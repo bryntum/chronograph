@@ -135,6 +135,8 @@ export class MixinState {
     private $hash               : MixinHash             = ''
     $minimalClass               : MixinClass            = undefined
 
+    name                        : string                = ''
+
 
     static new (props : Partial<MixinState>) {
         const me    = new this()
@@ -187,7 +189,13 @@ export class MixinState {
         let baseCls : AnyConstructor = this.baseClass
 
         const minimalClassConstructor : AnyConstructor = this.walkDepthState.linearizedByTopoLevelsSource.reduce(
-            (cls : AnyConstructor, mixin : MixinState) => mixin.mixinLambda(cls),
+            (cls : AnyConstructor, mixin : MixinState) => {
+                const wrapperCls = mixin.mixinLambda(cls)
+
+                mixin.name = wrapperCls.name
+
+                return wrapperCls
+            },
             baseCls
         )
 
@@ -195,7 +203,8 @@ export class MixinState {
             [MixinIdentity]         : this.identitySymbol,
             [MixinStateProperty]    : this,
             mix                     : this.mixinLambda,
-            $                       : this
+            $                       : this,
+            toString                : this.toString.bind(this)
         })
 
         Object.defineProperty(minimalClass, Symbol.hasInstance, { value : isInstanceOfStatic })
@@ -213,7 +222,7 @@ export class MixinState {
 
     toString () : string {
         return this.walkDepthState.linearizedByTopoLevelsSource.reduce(
-            (acc : string, mixin : MixinState) => `${mixin.mixinLambda.name}(${acc})`,
+            (acc : string, mixin : MixinState) => `${mixin.name}(${acc})`,
             this.baseClass.name
         )
     }
