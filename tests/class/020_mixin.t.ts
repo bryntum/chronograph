@@ -146,7 +146,7 @@ StartTest(t => {
     })
 
 
-    t.it('`instanceof` and `isInstanceOf` should support transitive requirements', t => {
+    t.it('`instanceof` and `isInstanceOf` should support transitive requirements #1', t => {
         const instance  = SomeMixin13.new()
 
         t.ok(instance instanceof SomeMixin1, "Correct instanceof call")
@@ -156,6 +156,19 @@ StartTest(t => {
         t.ok(isInstanceOf(instance, SomeMixin1), "Correct isInstanceOf call")
         t.ok(isInstanceOf(instance, SomeMixin3), "Correct isInstanceOf call")
         t.ok(isInstanceOf(instance, SomeMixin13), "Correct isInstanceOf call")
+    })
+
+
+    t.it('`instanceof` and `isInstanceOf` should support transitive requirements #2', t => {
+        const instance  = SomeMixin123_1.new()
+
+        t.ok(instance instanceof SomeMixin1, "Correct instanceof call")
+        t.ok(instance instanceof SomeMixin2, "Correct instanceof call")
+        t.ok(instance instanceof SomeMixin3, "Correct instanceof call")
+
+        t.ok(isInstanceOf(instance, SomeMixin1), "Correct isInstanceOf call")
+        t.ok(isInstanceOf(instance, SomeMixin2), "Correct isInstanceOf call")
+        t.ok(isInstanceOf(instance, SomeMixin3), "Correct isInstanceOf call")
     })
 
 
@@ -215,6 +228,34 @@ StartTest(t => {
             // uncomment to verify that unknown properties generates compilation error
             // temp.zxc
         }
+
+
+
+        if (temp instanceof SomeMixin1) {
+            temp.prop1
+
+            // uncomment to verify that unknown properties generates compilation error
+            // temp.prop2
+            // temp.zxc
+        }
+
+        if (temp instanceof SomeMixin2) {
+            temp.prop2
+
+            // uncomment to verify that unknown properties generates compilation error
+            // temp.zxc
+            // temp.prop3
+        }
+
+        if (temp instanceof SomeMixin123_1) {
+            temp.prop1
+            temp.prop2
+            temp.prop3
+
+            // uncomment to verify that unknown properties generates compilation error
+            // temp.zxc
+        }
+
     })
 
 })

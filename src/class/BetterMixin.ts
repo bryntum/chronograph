@@ -380,12 +380,6 @@ export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstru
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// this function works both with default mixin class and mixin application function
-const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any) : boolean {
-    return Boolean(instance && instance[ this[ MixinIdentity ] ])
-}
-
-
 export const mixin = <T>(required : (AnyConstructor | MixinClass)[], arg : T) :
     (T extends AnyFunction ? MixinClassConstructor<T> : never) =>
 {
@@ -423,10 +417,18 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], arg : T) :
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+// this function works both with default mixin class and mixin application function
+// it supplied internally as [Symbol.hasInstance] for the default mixin class and mixin application function
+const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any) : boolean {
+    return Boolean(instance && instance[ this[ MixinIdentity ] ])
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------
-// the `instanceof` analog with typeguard:
+// This is the `instanceof` analog with typeguard:
 // https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards
+// though, the regular `instanceof` will also provide type narrowing now
 export const isInstanceOf = <T>(instance : any, func : T)
     : instance is (T extends AnyConstructor<infer A> ? A : unknown) =>
 {
