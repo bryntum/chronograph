@@ -16,9 +16,6 @@
          }
     works correctly
 */
-
-import { mixin, SELF } from "./InstanceOf.js"
-
 export class Base {
 
     static wrap (any : any) : any {}
@@ -57,73 +54,3 @@ export type MixinConstructor<T extends AnyFunction> =
 // very rough typing for a mixin function
 export type MixinFunction = (base : AnyConstructor) => AnyConstructor
 
-// //---------------------------------------------------------------------------------------------------------------------
-// type FilterFlags<Base, Condition> = {
-//     [Key in keyof Base] : Base[Key] extends Condition ? Key : never
-// }
-//
-// type AllowedNames<Base, Condition> = FilterFlags<Base, Condition>[ keyof Base ]
-//
-// export type OnlyPropertiesOfType<Base, Type> = Pick<Base, AllowedNames<Base, Type>>
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export type ReplaceTypeOfProperty<Type, Property extends keyof Type, NewPropertyType> =
-//     NewPropertyType extends Type[ Property ] ? Omit<Type, Property> & { [ P in Property ] : NewPropertyType } : never
-
-
-
-
-export type MixinHelperFuncAny = <T>(required : AnyConstructor[], arg : T) =>
-    T extends AnyFunction ?
-        MixinConstructor<T> & { [SELF] : T }
-    : never
-
-
-export type MixinHelperFunc1 = <A1 extends AnyConstructor, T>(required : [ A1 ], arg : T) =>
-    T extends AnyFunction ?
-        Parameters<T> extends [ infer Base ] ?
-            Base extends AnyConstructor<InstanceType<A1>> ?
-                InstanceType<A1> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SELF] : T }
-                    : never
-            : never
-        : never
-    : never
-
-export type MixinHelperFunc2 = <A1 extends AnyConstructor, A2 extends AnyConstructor, T>(required : [ A1, A2 ], arg : T) =>
-    T extends AnyFunction ?
-        Parameters<T> extends [ infer Base ] ?
-            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2>> ?
-                InstanceType<A1> & InstanceType<A2> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SELF] : T }
-                    : never
-                : never
-            : never
-        : never
-
-export type MixinHelperFunc3 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, T>(required : [ A1, A2, A3 ], arg : T) =>
-    T extends AnyFunction ?
-        Parameters<T> extends [ infer Base ] ?
-            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3>> ?
-                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SELF] : T }
-                    : never
-                : never
-            : never
-        : never
-
-export type MixinHelperFunc4 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, T>(required : [ A1, A2, A3, A4 ], arg : T) =>
-    T extends AnyFunction ?
-        Parameters<T> extends [ infer Base ] ?
-            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4>> ?
-                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SELF] : T }
-                    : never
-                : never
-            : never
-        : never
-
-
-export const Mixin : MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 = mixin as any
-export const MixinAny : MixinHelperFuncAny = mixin as any

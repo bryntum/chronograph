@@ -1,11 +1,20 @@
+import { ChainedIterator, CI } from "../collection/Iterator.js"
+
 //---------------------------------------------------------------------------------------------------------------------
 const MixinIdentity         = Symbol('MixinIdentity')
+const MixinStateProperty    = Symbol('MixinStateProperty')
 
 export const VISITED_TOPOLOGICALLY      = -1
 
 //---------------------------------------------------------------------------------------------------------------------
-export type MixinFunction = (base : AnyConstructor) => AnyConstructor & { [MixinIdentity] : MixinState }
-export type MixinClass = AnyConstructor & { [MixinIdentity] : MixinState }
+export type MixinStateExtension = {
+    [MixinIdentity]         : symbol
+    [MixinStateProperty]    : MixinState
+}
+
+export type MixinFunction   = ((base : AnyConstructor) => AnyConstructor) & MixinStateExtension
+
+export type MixinClass      = AnyConstructor & MixinStateExtension
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -17,18 +26,95 @@ export type VisitState = {
 
 
 export class MixinWalkDepthState {
+    sourceEl                : MixinState                    = undefined
+
     visited                 : Map<MixinState, VisitState>   = new Map()
 
-    elementsByTopoLevel     : Map<number, MixinState[]>     = new Map()
+    $elementsByTopoLevel    : Map<number, MixinState[]>     = undefined
 
-    levels                  : number[]                      = []
+    $topoLevels             : number[]                      = undefined
+
+    walkSource                      : ChainedIterator<MixinState>   = CI(this.walk())
+    linearizedByTopoLevelsSource    : ChainedIterator<MixinState>   = CI(this.linearizedByTopoLevels())
 
     // dummy property to fix the leading * syntax error (on the next line)
     semicolon
 
 
-    * next (mixinState : MixinState) : Iterable<MixinState> {
-        yield* mixinState.requirementsAsMixinState()
+    static new (props : Partial<MixinWalkDepthState>) {
+        const me    = new this()
+
+        props && Object.assign(me, props)
+
+        return me
+    }
+
+
+    get topoLevels () : number[] {
+        if (this.$topoLevels !== undefined) return this.$topoLevels
+
+        return this.$topoLevels = this.buildTopoLevels()
+    }
+
+
+    buildTopoLevels () : number[] {
+        const levels        = Array.from(this.elementsByTopoLevel.keys())
+
+        levels.sort((level1, level2) => level1 - level2)
+
+        return levels
+    }
+
+
+    get elementsByTopoLevel () : Map<number, MixinState[]> {
+        if (this.$elementsByTopoLevel !== undefined) return this.$elementsByTopoLevel
+
+        return this.$elementsByTopoLevel = this.buildElementsByTopoLevel()
+    }
+
+
+    buildElementsByTopoLevel () : Map<number, MixinState[]> {
+        const map = this.walkSource.split().reduce(
+            (elementsByTopoLevel : Map<number, MixinState[]>, el) => {
+                let maxTopoLevel : number    = 0
+
+                for (const nextEl of this.next(el)) {
+                    const nextElVisit   = this.visited.get(nextEl)
+
+                    if (nextElVisit.topoLevel > maxTopoLevel) maxTopoLevel = nextElVisit.topoLevel
+                }
+
+                const visitInfo         = this.visited.get(el)
+                const topoLevel         = visitInfo.topoLevel = maxTopoLevel + 1
+
+                let elementsAtLevel : MixinState[]     = elementsByTopoLevel.get(topoLevel)
+
+                if (!elementsAtLevel) {
+                    elementsAtLevel     = []
+
+                    elementsByTopoLevel.set(topoLevel, elementsAtLevel)
+                }
+
+                elementsAtLevel.push(el)
+
+                return elementsByTopoLevel
+            },
+            new Map()
+        )
+
+        map.forEach(level => level.sort((mixin1, mixin2) => mixin1.id - mixin2.id))
+
+        return map
+    }
+
+
+    next (mixinState : MixinState) : Iterable<MixinState> {
+        return mixinState.requirements
+    }
+
+
+    * walk () : Iterable<MixinState> {
+        yield* this.walkDepth(0, null, [ this.sourceEl ])
     }
 
 
@@ -38,16 +124,16 @@ export class MixinWalkDepthState {
         for (const el of iterator) {
             let visitInfo       = visited.get(el)
 
-            if (visitInfo.visitedAt == VISITED_TOPOLOGICALLY) {
-                continue
-            }
-
             if (visitInfo === undefined) {
                 visitInfo       = { visitedAt : depth, from : fromEl, topoLevel : 0 }
 
                 this.visited.set(el, visitInfo)
 
                 yield* this.walkDepth(depth + 1, el, this.next(el))
+            }
+
+            if (visitInfo.visitedAt == VISITED_TOPOLOGICALLY) {
+                continue
             }
 
             if (visitInfo.visitedAt < depth) {
@@ -60,43 +146,12 @@ export class MixinWalkDepthState {
 
             // yield element in topologically sorted position, however, not yet sorted by topological level
             yield el
-
-            let maxTopoLevel : number    = 0
-
-            for (const nextEl of this.next(el)) {
-                const nextElVisit   = visited.get(nextEl)
-
-                if (nextElVisit.topoLevel > maxTopoLevel) maxTopoLevel = nextElVisit.topoLevel
-            }
-
-            const topoLevel = visitInfo.topoLevel = maxTopoLevel + 1
-
-            let elementsAtLevel : MixinState[]     = this.elementsByTopoLevel.get(topoLevel)
-
-            if (!elementsAtLevel) {
-                elementsAtLevel     = []
-
-                this.elementsByTopoLevel.set(topoLevel, elementsAtLevel)
-            }
-
-            elementsAtLevel.push(el)
         }
-    }
-
-
-    processTopoLevels () {
-        this.elementsByTopoLevel.forEach(level => level.sort((mixin1, mixin2) => mixin1.id - mixin2.id))
-
-        this.levels     = Array.from(this.elementsByTopoLevel.keys())
-
-        this.levels.sort((level1, level2) => level1 - level2)
     }
 
 
     * linearizedByTopoLevels () : Iterable<MixinState> {
-        for (const level of this.levels) {
-            yield* this.elementsByTopoLevel.get(level)
-        }
+        yield* CI(this.topoLevels).map(level => this.elementsByTopoLevel.get(level)).concat()
     }
 
 
@@ -110,7 +165,10 @@ export class MixinWalkDepthState {
 export type MixinId         = number
 export type MixinHash       = string
 
-let MIXIN_ID : MixinId      = 0
+// const BaseClassMixinId : MixinId    = 0
+
+// Note: 65535 mixins only, because of the hashing function implementation
+let MIXIN_ID : MixinId      = 1
 
 const identity              = a => a
 
@@ -118,25 +176,50 @@ const identity              = a => a
 export class MixinState {
     id                          : MixinId               = MIXIN_ID++
 
-    requirements                : MixinFunction[]       = []
+    requirements                : MixinState[]          = []
 
-    linearizedRequirements      : MixinState[]          = undefined
+    baseClass                   : AnyConstructor        = Object
+
+    identitySymbol              : symbol                = undefined
 
     mixinLambda                 : (base : AnyConstructor) => AnyConstructor  = identity
 
-    walkDepthState              : MixinWalkDepthState   = new MixinWalkDepthState()
+    // symbol                      : symbol                = undefined
 
-    topoLevel                   : number                = 0
+    walkDepthState              : MixinWalkDepthState   = MixinWalkDepthState.new({ sourceEl : this })
 
     private $hash               : MixinHash             = ''
-    private $minimalClass       : AnyConstructor        = undefined
+    $minimalClass               : MixinClass            = undefined
 
 
-    get linearizedRequirements () : MixinState[] {
+    static new (props : Partial<MixinState>) {
+        const me    = new this()
+
+        props && Object.assign(me, props)
+
+        //------------------
+        const mixinLambda                   = me.mixinLambda
+        const symbol                        = me.identitySymbol = Symbol(mixinLambda.name)
+
+        const mixinLambdaWrapper : MixinFunction          = Object.assign(function (base : AnyConstructor) : AnyConstructor {
+            const extendedClass = mixinLambda(base)
+            extendedClass.prototype[ symbol ] = true
+            return extendedClass
+        }, {
+            [ MixinIdentity ]       : symbol,
+            [ MixinStateProperty ]  : me
+        })
+
+        mixinLambdaWrapper[ MixinIdentity ]        = symbol
+        Object.defineProperty(mixinLambdaWrapper, Symbol.hasInstance, { value : isInstanceOfStatic })
+
+        me.mixinLambda                      = mixinLambdaWrapper
+
+        return me
     }
 
 
-    get minimalClass () : AnyConstructor {
+    get minimalClass () : MixinClass {
         if (this.$minimalClass !== undefined) return this.$minimalClass
 
         return this.$minimalClass = this.buildMinimalClass()
@@ -150,40 +233,37 @@ export class MixinState {
     }
 
 
-    * requirementsAsMixinState () : Iterable<MixinState> {
-        for (const requirement of this.requirements) yield requirement[ MixinIdentity ]
-    }
-
-
-    buildMinimalClass () : AnyConstructor {
-        const walkDepthState    = this.walkDepthState
-
-        for (const _ of walkDepthState.walkDepth(0, this, this.requirementsAsMixinState())) {}
-
-        walkDepthState.processTopoLevels()
-
-        let cls : AnyConstructor = Object
-
-        const linearized        = Array.from(walkDepthState.linearizedByTopoLevels())
-
-        const hash              = String.fromCharCode(...linearized.map(mixinState => mixinState.id))
-
+    buildMinimalClass () : MixinClass {
         const constructor       = this.constructor as typeof MixinState
-
+        const hash              = this.hash
         const cached            = constructor.minimalClassesByLinearHash.get(hash)
 
         if (cached !== undefined) return cached
 
-        for (const mixinState of walkDepthState.linearizedByTopoLevels()) {
-            cls                 = mixinState.mixinLambda(cls)
-        }
+        let baseCls : AnyConstructor = this.baseClass
 
-        return cls
+        const minimalClassConstructor : AnyConstructor = this.walkDepthState.linearizedByTopoLevelsSource.split().reduce(
+            (cls : AnyConstructor, mixin : MixinState) => mixin.mixinLambda(cls),
+            baseCls
+        )
+
+        const minimalClass : MixinClass = Object.assign(minimalClassConstructor, {
+            [MixinIdentity]         : this.identitySymbol,
+            [MixinStateProperty]    : this,
+
+            mix                     : this.mixinLambda
+        })
+
+        Object.defineProperty(minimalClass, Symbol.hasInstance, { value : isInstanceOfStatic })
+
+        constructor.minimalClassesByLinearHash.set(hash, minimalClass)
+
+        return minimalClass
     }
 
 
     buildHash () : MixinHash {
-        return ''
+        return String.fromCharCode(...this.walkDepthState.linearizedByTopoLevelsSource.split().map(mixin => mixin.id))
     }
 
 
@@ -191,11 +271,8 @@ export class MixinState {
         return ''
     }
 
-    // static fromAnyConstructor () : MixinState {
-    //     return new this
-    // }
 
-    static minimalClassesByLinearHash : Map<MixinHash, AnyConstructor> = new Map()
+    static minimalClassesByLinearHash : Map<MixinHash, MixinClass> = new Map()
 }
 
 
@@ -207,11 +284,6 @@ Recommended base class.
 
 */
 export class Base {
-
-    static mix<T extends typeof Base> (this : T, konstructor : AnyConstructor) : AnyConstructor {
-        throw new Error("Abstract method 'mix' called")
-    }
-
 
     initialize<T extends Base> (props? : Partial<T>) {
         props && Object.assign(this, props)
@@ -225,7 +297,12 @@ export class Base {
 
         return instance as InstanceType<T>
     }
+
+    // static [MixinStateProperty] : MixinState
 }
+
+// const BaseMixinState = Base[ MixinStateProperty ] = MixinState.new({ id : BaseClassMixinId, $minimalClass : Base })
+// const ObjectMixinState = MixinState.new({ id : BaseClassMixinId, $minimalClass : Object })
 
 export type BaseConstructor             = typeof Base
 
@@ -239,7 +316,13 @@ export type AnyConstructor<A = object>  = new (...input : any[]) => A
 export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
 
 export type MixinConstructor<T extends AnyFunction> =
-    T extends AnyFunction<infer M> ? (M extends AnyConstructor<Base> ? M & BaseConstructor : M) : ReturnType<T>
+    T extends AnyFunction<infer M> ? (M extends AnyConstructor<Base> ? M & BaseConstructor : M) : never
+
+export type MixinClassConstructor<T> =
+    T extends AnyFunction<infer M> ?
+        (M extends AnyConstructor<Base> ? M & BaseConstructor : M) & MixinStateExtension & { mix : T }
+    : never
+
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -250,7 +333,7 @@ export type MixinConstructor<T extends AnyFunction> =
 //---------------------------------------------------------------------------------------------------------------------
 export type MixinHelperFuncAny = <T>(required : AnyConstructor[], arg : T) =>
     T extends AnyFunction ?
-        MixinConstructor<T> & { [SelfType] : T }
+        MixinClassConstructor<T> /*& { [SelfType] : T }*/
     : never
 
 
@@ -259,8 +342,8 @@ export type MixinHelperFunc1 = <A1 extends AnyConstructor, T>(required : [ A1 ],
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1>> ?
                 InstanceType<A1> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SelfType] : T }
-                    : never
+                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
+                : never
             : never
         : never
     : never
@@ -270,114 +353,87 @@ export type MixinHelperFunc2 = <A1 extends AnyConstructor, A2 extends AnyConstru
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2>> ?
                 InstanceType<A1> & InstanceType<A2> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SelfType] : T }
-                    : never
+                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
                 : never
             : never
         : never
+    : never
 
 export type MixinHelperFunc3 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, T>(required : [ A1, A2, A3 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3>> ?
                 InstanceType<A1> & InstanceType<A2> & InstanceType<A3> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SelfType] : T }
-                    : never
+                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
                 : never
             : never
         : never
+    : never
 
 export type MixinHelperFunc4 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, T>(required : [ A1, A2, A3, A4 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4>> ?
                 InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SelfType] : T }
-                    : never
+                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
                 : never
             : never
         : never
+    : never
 
 export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5>> ?
-                    InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4 & InstanceType<A5>> extends InstanceType<Base> ?
-                    MixinConstructor<T> & { [SelfType] : T }
-                    : never
+                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4 & InstanceType<A5>> extends InstanceType<Base> ?
+                    MixinClassConstructor<T> /*& { [SelfType] : T }*/
                 : never
             : never
         : never
+    : never
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// const MixinIdentity         = Symbol('MixinIdentity')
-const MixinRequirements     = Symbol('MixinRequirements')
-
-const isInstanceOfStatic  = function (instance : any) : boolean {
+// this function works both with default mixin class and mixin application function
+const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any) : boolean {
     return Boolean(instance && instance[ this[ MixinIdentity ] ])
 }
 
-// we want the return type to match the type of the argument
-// this does not work:
-//      export const instanceOf = <T extends AnyConstructor<AnyFunction<object>>(base : T) : T => {
-// the mixins wrapped with such declaration loses the type of return value
-// because of this we just apply typecasting to the argument
-export const instanceOf = <T>(arg : T) : T => {
-    const mixin         = arg as unknown as MixinFunction
 
-    const symbol        = Symbol(mixin.name)
+export const mixin = <T>(required : (AnyConstructor | MixinClass)[], arg : T) :
+    (T extends AnyFunction ? MixinClassConstructor<T> /*& { [SelfType] : T }*/ : never) =>
+{
+    let baseClass : AnyConstructor
 
-    const wrapper       = function (base : AnyConstructor) : AnyConstructor {
-        const extendedClass = mixin(base)
+    if (required.length > 0) {
+        const lastRequiredEl            = required[ required.length - 1 ]
 
-        extendedClass.prototype[ symbol ] = true
-
-        return extendedClass
+        if (!lastRequiredEl[ MixinStateProperty ]) baseClass = lastRequiredEl
     }
 
-    wrapper[ MixinIdentity ]        = symbol
-    Object.defineProperty(wrapper, Symbol.hasInstance, { value : isInstanceOfStatic })
+    const requirements : MixinState[]    = []
 
-    return wrapper as any
-}
+    required.forEach((requirement, index) => {
+        const mixinState    = requirement[ MixinStateProperty ]
 
-export const SelfType = Symbol('SelfType')
+        if (mixinState instanceof MixinState) {
+            if (!baseClass) baseClass = mixinState.baseClass
 
-export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], arg : T) : (T extends AnyFunction ? MixinConstructor<T> & { [SelfType] : MixinConstructor<T> } : never) => {
-    const wrapper                   = instanceOf(arg) as any
+            if (mixinState.baseClass !== baseClass) throw new Error("Base class mismatch")
 
-    wrapper[ MixinRequirements ]    = required
-
-    const reversed                  = required.slice().reverse() as [ any, ...any[] ]
-
-    // no base class provided or the first provided required dependency is a mixin function
-    if (reversed.length === 0 || reversed[ 0 ][ MixinIdentity ] !== undefined) {
-        reversed.unshift(Base)
-    }
-
-    reversed.push(arg)
-
-    // TODO should build full dependencies graph
-    const Minimal                   = buildClass(...reversed) as any
-
-    if (reversed[ 0 ] === Base) {
-        wrapper.new         = function (props) {
-            const instance      = Minimal.new() as any
-
-            instance.initialize(props)
-
-            return instance
+            requirements.push(mixinState)
         }
-    } else {
-        wrapper.new         = function (...args) {
-            return new Minimal(...args)
+        else {
+            if (index !== required.length - 1) throw new Error("Base class should be provided as the last elements of the requirements array")
         }
-    }
+    })
 
-    Object.defineProperty(wrapper, Symbol.species, { value : wrapper.new })
+    if (!baseClass) baseClass = Object
 
-    return wrapper as any
+    //------------------
+    const mixinState    = MixinState.new({ requirements, mixinLambda : arg as any, baseClass })
+
+    return mixinState.minimalClass as any
 }
 
 
@@ -385,62 +441,10 @@ export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], 
 //---------------------------------------------------------------------------------------------------------------------
 // the `instanceof` analog with typeguard:
 // https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards
-export const isInstanceOf = <T extends any>(instance : any, func : T)
-    : instance is (T extends AnyFunction<infer Z> ? (Z extends AnyConstructor<infer X> ? X : unknown) : unknown) =>
+export const isInstanceOf = <T>(instance : any, func : T)
+    : instance is (T extends AnyConstructor<infer A> ? A : unknown) =>
 {
     return Boolean(instance && instance[ func[ MixinIdentity ] ])
-}
-
-
-//---------------------------------------------------------------------------------------
-const ClassIdentity = Symbol('ClassIdentity')
-
-let counter : number = 0
-
-const getClassId = (cls : AnyFunction | AnyConstructor) : number => {
-    let classId = cls[ ClassIdentity ]
-
-    if (!classId) classId = cls[ ClassIdentity ] = ++counter
-
-    return classId
-}
-
-const classCache : Map<string, AnyConstructor> = new Map()
-
-export const buildClass = <T extends object>(base : AnyConstructor<T>, ...mixins : MixinFunction[]) : AnyConstructor<T> => {
-    const classId   = mixins.reduce(
-        (classId : string, mixin : MixinFunction) => classId + '/' + getClassId(mixin),
-        String(getClassId(base))
-    )
-
-    let cls         = classCache.get(classId)
-
-    if (!cls) {
-        cls       = mixins.reduce((klass : AnyConstructor, mixin : MixinFunction) => mixin ? mixin(klass) : klass, base)
-        classCache.set(classId, cls)
-    }
-
-    return cls as AnyConstructor<T>
-}
-
-//---------------------------------------------------------------------------------------
-const RequiredProperties = Symbol('RequiredProperties')
-
-export const required : PropertyDecorator = (proto : object, propertyKey : string | symbol) : void => {
-    let required  = proto[ RequiredProperties ]
-
-    if (!required) required = proto[ RequiredProperties ] = []
-
-    required.push(propertyKey)
-}
-
-export const validateRequiredProperties = (context : any) => {
-    const required      = context[ RequiredProperties ]
-
-    if (required) {
-        for (let i = 0; i < required.length; i++)
-            if (context[ required[ i ] ] === undefined) throw new Error(`Required attribute [${ String(required[ i ]) }] is not provided`)
-    }
 }
 
 
