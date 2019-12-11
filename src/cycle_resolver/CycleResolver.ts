@@ -1,5 +1,5 @@
-import { mixin, required, validateRequiredProperties } from "../class/InstanceOf.js"
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Base, Mixin } from "../class/BetterMixin.js"
+import { required, validateRequiredProperties } from "../class/RequiredProperty.js"
 import { ChainedIterator, CI, concatIterable, map, uniqueOnly } from "../collection/Iterator.js"
 import { DEBUG } from "../environment/Debug.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
