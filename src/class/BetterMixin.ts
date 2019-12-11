@@ -1,4 +1,4 @@
-import { ChainedIterator, CI } from "../collection/Iterator.js"
+import { CI, MemoizedIterator, MI } from "../collection/Iterator.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 const MixinIdentity         = Symbol('MixinIdentity')
@@ -34,8 +34,7 @@ export class MixinWalkDepthState {
 
     $topoLevels             : number[]                      = undefined
 
-    walkSource                      : ChainedIterator<MixinState>   = CI(this.walk())
-    linearizedByTopoLevelsSource    : ChainedIterator<MixinState>   = CI(this.linearizedByTopoLevels())
+    linearizedByTopoLevelsSource    : MemoizedIterator<MixinState>   = MI(this.linearizedByTopoLevels())
 
     // dummy property to fix the leading * syntax error (on the next line)
     semicolon
@@ -74,8 +73,8 @@ export class MixinWalkDepthState {
 
 
     buildElementsByTopoLevel () : Map<number, MixinState[]> {
-        const map = this.walkSource.split().reduce(
-            (elementsByTopoLevel : Map<number, MixinState[]>, el) => {
+        const map = CI(this.walkDepth(0, null, [ this.sourceEl ])).reduce(
+            (elementsByTopoLevel, el) => {
                 let maxTopoLevel : number    = 0
 
                 for (const nextEl of this.next(el)) {
@@ -99,7 +98,7 @@ export class MixinWalkDepthState {
 
                 return elementsByTopoLevel
             },
-            new Map()
+            new Map<number, MixinState[]>()
         )
 
         map.forEach(level => level.sort((mixin1, mixin2) => mixin1.id - mixin2.id))
@@ -110,11 +109,6 @@ export class MixinWalkDepthState {
 
     next (mixinState : MixinState) : Iterable<MixinState> {
         return mixinState.requirements
-    }
-
-
-    * walk () : Iterable<MixinState> {
-        yield* this.walkDepth(0, null, [ this.sourceEl ])
     }
 
 
@@ -240,7 +234,7 @@ export class MixinState {
 
         let baseCls : AnyConstructor = this.baseClass
 
-        const minimalClassConstructor : AnyConstructor = this.walkDepthState.linearizedByTopoLevelsSource.split().reduce(
+        const minimalClassConstructor : AnyConstructor = this.walkDepthState.linearizedByTopoLevelsSource.reduce(
             (cls : AnyConstructor, mixin : MixinState) => mixin.mixinLambda(cls),
             baseCls
         )
@@ -261,7 +255,7 @@ export class MixinState {
 
 
     buildHash () : MixinHash {
-        return String.fromCharCode(...this.walkDepthState.linearizedByTopoLevelsSource.split().map(mixin => mixin.id))
+        return String.fromCharCode(...this.walkDepthState.linearizedByTopoLevelsSource.map(mixin => mixin.id))
     }
 
 
