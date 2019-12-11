@@ -26,18 +26,15 @@ export type VisitState = {
 
 
 export class MixinWalkDepthState {
-    sourceEl                : MixinState                    = undefined
+    sourceEl                        : MixinState                    = undefined
 
-    visited                 : Map<MixinState, VisitState>   = new Map()
+    private visited                 : Map<MixinState, VisitState>   = new Map()
 
-    $elementsByTopoLevel    : Map<number, MixinState[]>     = undefined
+    private $elementsByTopoLevel    : Map<number, MixinState[]>     = undefined
 
-    $topoLevels             : number[]                      = undefined
+    private $topoLevels             : number[]                      = undefined
 
-    linearizedByTopoLevelsSource    : MemoizedIterator<MixinState>   = MI(this.linearizedByTopoLevels())
-
-    // dummy property to fix the leading * syntax error (on the next line)
-    semicolon
+    linearizedByTopoLevelsSource    : MemoizedIterator<MixinState>  = MI(this.linearizedByTopoLevels())
 
 
     static new (props : Partial<MixinWalkDepthState>) {
