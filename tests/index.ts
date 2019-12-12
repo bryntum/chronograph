@@ -14,7 +14,8 @@ project.start(
 
         items       : [
             'class/010_instanceof.t.js',
-            'class/020_mixin.t.js'
+            'class/020_mixin.t.js',
+            'class/030_mixin_caching.t.js'
         ]
     },
     {

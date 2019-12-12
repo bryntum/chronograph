@@ -132,11 +132,12 @@ export class MixinState {
 
     walkDepthState              : MixinWalkDepthState   = MixinWalkDepthState.new({ sourceEl : this })
 
-    private $hash               : MixinHash             = ''
+    // private $hash               : MixinHash             = ''
     $minimalClass               : MixinClass            = undefined
 
     name                        : string                = ''
 
+    static minimalClassesByLinearHash : Map<MixinHash, AnyConstructor> = new Map()
 
     static new (props : Partial<MixinState>) {
         const me    = new this()
@@ -172,32 +173,39 @@ export class MixinState {
     }
 
 
-    get hash () : MixinHash {
-        if (this.$hash !== '') return this.$hash
-
-        return this.$hash = this.buildHash()
-    }
+    // get hash () : MixinHash {
+    //     if (this.$hash !== '') return this.$hash
+    //
+    //     return this.$hash = this.buildHash()
+    // }
 
 
     buildMinimalClass () : MixinClass {
         const constructor       = this.constructor as typeof MixinState
-        const hash              = this.hash
-        const cached            = constructor.minimalClassesByLinearHash.get(hash)
-
-        if (cached !== undefined) return cached
 
         let baseCls : AnyConstructor = this.baseClass
 
         const minimalClassConstructor : AnyConstructor = this.walkDepthState.linearizedByTopoLevelsSource.reduce(
-            (cls : AnyConstructor, mixin : MixinState) => {
-                const wrapperCls = mixin.mixinLambda(cls)
+            (acc, mixin) => {
+                const { cls, hash } = acc
+                const nextHash      = hash + String.fromCharCode(mixin.id)
 
-                mixin.name = wrapperCls.name
+                let wrapperCls      = constructor.minimalClassesByLinearHash.get(nextHash)
 
-                return wrapperCls
+                if (!wrapperCls) {
+                    wrapperCls      = mixin.mixinLambda(cls)
+                    mixin.name      = wrapperCls.name
+
+                    constructor.minimalClassesByLinearHash.set(nextHash, wrapperCls)
+                }
+
+                acc.cls             = wrapperCls
+                acc.hash            = nextHash
+
+                return acc
             },
-            baseCls
-        )
+            { cls : baseCls, hash : '' }
+        ).cls
 
         const minimalClass : MixinClass = Object.assign(minimalClassConstructor, {
             [MixinIdentity]         : this.identitySymbol,
@@ -209,15 +217,13 @@ export class MixinState {
 
         Object.defineProperty(minimalClass, Symbol.hasInstance, { value : isInstanceOfStatic })
 
-        constructor.minimalClassesByLinearHash.set(hash, minimalClass)
-
         return minimalClass
     }
 
 
-    buildHash () : MixinHash {
-        return String.fromCharCode(...this.walkDepthState.linearizedByTopoLevelsSource.map(mixin => mixin.id))
-    }
+    // buildHash () : MixinHash {
+    //     return String.fromCharCode(...this.walkDepthState.linearizedByTopoLevelsSource.map(mixin => mixin.id))
+    // }
 
 
     toString () : string {
@@ -226,8 +232,6 @@ export class MixinState {
             this.baseClass.name
         )
     }
-
-    static minimalClassesByLinearHash : Map<MixinHash, MixinClass> = new Map()
 }
 
 
