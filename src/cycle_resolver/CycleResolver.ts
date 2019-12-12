@@ -1,5 +1,5 @@
-import { mixin, required, validateRequiredProperties } from "../class/InstanceOf.js"
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Base, Mixin } from "../class/BetterMixin.js"
+import { required, validateRequiredProperties } from "../class/RequiredProperty.js"
 import { ChainedIterator, CI, concatIterable, map, uniqueOnly } from "../collection/Iterator.js"
 import { DEBUG } from "../environment/Debug.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
@@ -47,9 +47,8 @@ export class VariableWalkContext extends WalkContext<Variable | Formula> {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-export const FormulasCache = mixin(
+export class FormulasCache extends Mixin(
     [ Base ],
-
     <T extends AnyConstructor<Base>>(base : T) =>
 
     class FormulasCache extends base {
@@ -132,8 +131,7 @@ export const FormulasCache = mixin(
             return isCyclic
         }
     }
-)
-export type FormulasCache = Mixin<typeof FormulasCache>
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -141,10 +139,7 @@ export type GraphInputsHash    = string
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphDescription extends FormulasCache(Base) {
-    variables                   : Set<Variable>     = new Set()
-    // NOTE - the order of formulas in the set is important - the earlier ones are preferred over the later
-    formulas                    : Set<Formula>      = new Set()
+export class GraphDescription extends FormulasCache {
 }
 
 

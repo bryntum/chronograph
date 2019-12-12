@@ -10,7 +10,7 @@ project.configure({
 
 project.start(
     {
-        group       : 'class',
+        group       : 'Class',
 
         items       : [
             'class/010_instanceof.t.js',
@@ -18,7 +18,14 @@ project.start(
         ]
     },
     {
-        group       : 'graph',
+        group       : 'Iterator',
+
+        items       : [
+            'collection/010_chained_iterator.t.js',
+        ]
+    },
+    {
+        group       : 'Graph',
 
         items       : [
             'graph/010_walkable.t.js',
@@ -27,7 +34,7 @@ project.start(
         ]
     },
     {
-        group       : 'chrono',
+        group       : 'ChronoGraph',
 
         items       : [
             'chrono/010_identifier_variable.t.js',
@@ -64,7 +71,7 @@ project.start(
         ]
     },
     {
-        group       : 'replica',
+        group       : 'Replica',
 
         items       : [
             'replica/001_entity.t.js',
@@ -76,7 +83,7 @@ project.start(
         ]
     },
     {
-        group       : 'schema',
+        group       : 'Schema',
 
         items       : [
             'schema/010_schema.t.js',

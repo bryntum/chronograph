@@ -32,8 +32,9 @@ export const instanceOf = <T>(arg : T) : T => {
     return wrapper as any
 }
 
+export const SELF = Symbol('SELF')
 
-export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], arg : T) : T & (T extends AnyFunction ? MixinConstructor<T> : never) => {
+export const mixin = <T>(required : (AnyConstructor<object> | MixinFunction)[], arg : T) : (T extends AnyFunction ? MixinConstructor<T> & { [SELF] : MixinConstructor<T> } : never) => {
     const wrapper                   = instanceOf(arg) as any
 
     wrapper[ MixinRequirements ]    = required
@@ -110,24 +111,4 @@ export const buildClass = <T extends object>(base : AnyConstructor<T>, ...mixins
     }
 
     return cls as AnyConstructor<T>
-}
-
-//---------------------------------------------------------------------------------------
-const RequiredProperties = Symbol('RequiredProperties')
-
-export const required : PropertyDecorator = (proto : object, propertyKey : string | symbol) : void => {
-    let required  = proto[ RequiredProperties ]
-
-    if (!required) required = proto[ RequiredProperties ] = []
-
-    required.push(propertyKey)
-}
-
-export const validateRequiredProperties = (context : any) => {
-    const required      = context[ RequiredProperties ]
-
-    if (required) {
-        for (let i = 0; i < required.length; i++)
-            if (context[ required[ i ] ] === undefined) throw new Error(`Required attribute [${ String(required[ i ]) }] is not provided`)
-    }
 }
