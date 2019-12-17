@@ -93,6 +93,7 @@ class Quark extends base {
 
         this.cleanupCalculation()
         this.clearOutgoing()
+
         if (this.origin && this.origin === this) this.origin.value = undefined
     }
 
@@ -169,9 +170,9 @@ class Quark extends base {
     addOutgoingTo (toQuark : Quark, type : EdgeType) {
         const self      = this as Map<Identifier, Quark>
 
-        const existing  = self.get(toQuark.identifier)
-
+        // const existing  = self.get(toQuark.identifier)
         // self.set(toQuark, existing ? existing | type : type)
+
         self.set(toQuark.identifier, toQuark)
     }
 
@@ -249,7 +250,7 @@ class Quark extends base {
         let current : Quark = this
 
         while (current) {
-            for (const [ identifier, outgoing ] of current.getOutgoing()) {
+            for (const outgoing of current.getOutgoing().values()) {
                 if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
             }
 
