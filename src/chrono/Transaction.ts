@@ -31,12 +31,13 @@ import {
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision, Scope } from "./Revision.js"
+import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type NotPromise<T> = T extends Promise<any> ? never : T
 
-export type YieldableValue = Effect | Identifier
+export type YieldableValue = Effect | Identifier | Promise<any>
 
 export type SyncEffectHandler = <T extends any>(effect : YieldableValue) => T & NotPromise<T>
 export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Promise<T>
@@ -143,7 +144,7 @@ class Transaction extends base {
 
     isClosed                : boolean               = false
 
-    walkContext             : WalkForwardOverwriteContext   = undefined
+    walkContext             : TransactionWalkDepth   = undefined
 
     // we use 2 different stacks, because they support various effects
     stackSync               : LeveledQueue<Quark>  = new LeveledQueue()
@@ -170,7 +171,7 @@ class Transaction extends base {
     initialize (...args) {
         super.initialize(...args)
 
-        this.walkContext    = WalkForwardOverwriteContext.new({
+        this.walkContext    = TransactionWalkDepth.new({
             baseRevision    : this.baseRevision,
             pushTo          : this.stackGen
             // // ignore cycles when determining potentially changed atoms
@@ -486,7 +487,7 @@ class Transaction extends base {
     [WriteSymbol] (effect : WriteEffect, activeEntry : Quark) : any {
         if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
 
-        this.walkContext.currentEpoch++
+        this.walkContext.startNewEpoch()
 
         const writeTo   = effect.writeTarget
 
@@ -497,7 +498,7 @@ class Transaction extends base {
     [WriteSeveralSymbol] (effect : WriteSeveralEffect, activeEntry : Quark) : any {
         if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
 
-        this.walkContext.currentEpoch++
+        this.walkContext.startNewEpoch()
 
         effect.writes.forEach(writeInfo => {
             const identifier    = writeInfo.identifier
