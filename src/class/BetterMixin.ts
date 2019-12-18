@@ -81,7 +81,7 @@ export class MixinWalkDepthState {
         const map =
             CI(this.sourceEl.requirements)
             .map(mixin => mixin.walkDepthState.elementsByTopoLevel)
-            .concat<[ number, MixinState[] ]>()
+            .concat()
             .reduce(
                 (elementsByTopoLevel, [ topoLevel, mixins ]) => {
                     if (topoLevel > maxTopoLevel) maxTopoLevel = topoLevel
@@ -98,7 +98,7 @@ export class MixinWalkDepthState {
         this.getLevel(map, maxTopoLevel + 1).push([ this.sourceEl ])
 
         return CI(map).map(([ level, elements ]) => {
-            return [ level, CI(elements).concat<MixinState>().uniqueOnly().toArray().sort((mixin1, mixin2) => mixin1.id - mixin2.id) ]
+            return [ level, CI(elements).concat().uniqueOnly().toArray().sort((mixin1, mixin2) => mixin1.id - mixin2.id) ]
         }).toMap()
     }
 

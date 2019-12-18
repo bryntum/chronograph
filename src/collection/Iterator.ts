@@ -227,7 +227,7 @@ export class ChainedIteratorClass<T> {
         this.iterable       = iterable
     }
 
-
+    
     split () : ChainedIteratorClass<T> {
         const [ iter1, iter2 ] = split(this.iterable)
 
@@ -257,10 +257,9 @@ export class ChainedIteratorClass<T> {
     }
 
 
-    concat<K> () : T extends Iterable<K> ? ChainedIteratorClass<K> : never {
-        return new ChainedIteratorClass<K>(
-            concatIterable<K>(this.iterable as (T extends Iterable<K> ? Iterable<T> : never))
-        ) as (T extends Iterable<K> ? ChainedIteratorClass<K> : never)
+    concat () : T extends Iterable<infer K> ? ChainedIteratorClass<K> : never {
+        //@ts-ignore
+        return new ChainedIteratorClass(concatIterable(this.iterable))
     }
 
 
@@ -290,12 +289,17 @@ export class ChainedIteratorClass<T> {
 
 
     * [Symbol.iterator] () : IterableIterator<T> {
-        if (!this.iterable) throw new Error("Chained iterator already exhausted")
+        let iterable    = this.iterable
 
-        yield* this.iterable
+        if (!iterable) throw new Error("Chained iterator already exhausted")
 
         // practice shows, that cleaning up the iterable after yourself helps garbage collector a lot
         this.iterable   = null
+
+        yield* iterable
+
+        // yes, we really want to avoid memory leaks
+        iterable        = null
     }
 
 
@@ -309,9 +313,14 @@ export class ChainedIteratorClass<T> {
     }
 
 
-    toMap<K, V> () : T extends [ K, V ] ? Map<K, V> : never  {
-        return new Map<K, V>(this.iterable as (T extends [ K, V ] ? Iterable<T> : never)) as (T extends [ K, V ] ? Map<K, V> : never)
+    toMap () : T extends [ infer K, infer V ] ? Map<K, V> : never  {
+        //@ts-ignore
+        return new Map(this.iterable)
     }
+
+    // toMap<K, V> () : T extends [ K, V ] ? Map<K, V> : never  {
+    //     return new Map<K, V>(this.iterable as (T extends [ K, V ] ? Iterable<T> : never)) as (T extends [ K, V ] ? Map<K, V> : never)
+    // }
 
 
     flush () {
