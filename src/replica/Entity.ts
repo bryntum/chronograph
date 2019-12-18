@@ -98,16 +98,8 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
-        forEachFieldAtom<T extends this> (func : (field : FieldIdentifierI, name : keyof T) => any) {
-            const keys  = Object.keys(this.$) as (keyof this)[]
-
-            // only the already created identifiers will be added
-            for (let i = 0; i < keys.length; i++) {
-                const name                          = keys[ i ]
-                const identifier : FieldIdentifier  = this.$[ name ]
-
-                func(identifier, name)
-            }
+        forEachFieldIdentifier<T extends this> (func : (field : FieldIdentifierI, name : string) => any) {
+            this.$entity.forEachField((field, name) => func(this.$[ name ], name))
         }
 
 
@@ -131,16 +123,12 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         leaveGraph () {
             const graph     = this.graph
             if (!graph) return
-            this.graph      = undefined
 
-            const keys  = Object.keys(this.$)
-
-            // only the already created identifiers will be added
-            for (let i = 0; i < keys.length; i++) {
-                graph.removeIdentifier(this.$[ keys[ i ] ])
-            }
+            this.$entity.forEachField((field, name) => graph.removeIdentifier(this.$[ name ]))
 
             graph.removeIdentifier(this.$$)
+
+            this.graph      = undefined
         }
 
 
