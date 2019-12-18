@@ -201,8 +201,8 @@ export class CycleResolutionContext extends Base {
 
 export enum VariableInputState {
     NoInput                 = 0,
-    HasProposedValue        = 1,
-    HasPreviousValue        = 2,
+    HasPreviousValue        = 1,
+    HasProposedValue        = 2,
     KeepIfPossible          = 4,
 }
 
