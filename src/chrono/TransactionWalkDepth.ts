@@ -34,26 +34,10 @@ export class TransactionWalkDepth extends Base {
 
 
     startNewEpoch () {
-        if (this.toVisit) throw new Error("Can not start new walk epoch in the middle of the walk")
+        if (this.toVisit.length) throw new Error("Can not start new walk epoch in the middle of the walk")
 
         this.currentEpoch++
     }
-
-
-    // setVisitedInfo (identifier : Identifier, visitedAt : number, info : Quark) : VisitInfo {
-    //     if (!info) {
-    //         info      = identifier.newQuark(this.baseRevision.createdAt)
-    //
-    //         this.visited.set(identifier, info)
-    //     }
-    //
-    //     info.visitedAt    = visitedAt
-    //
-    //     if (info.visitEpoch !== this.currentEpoch) info.resetToEpoch(this.currentEpoch)
-    //
-    //     return info
-    // }
-
 
 
     onTopologicalNode (identifier : Identifier, visitInfo : Quark) {
@@ -66,21 +50,22 @@ export class TransactionWalkDepth extends Base {
     }
 
 
-    // doCollectNext (from : Identifier, identifier : Identifier, toVisit : WalkStep[]) {
-    //     let entry : Quark   = this.visited.get(identifier)
-    //
-    //     if (!entry) {
-    //         entry           = identifier.newQuark(this.baseRevision.createdAt)
-    //
-    //         this.visited.set(identifier, entry)
-    //     }
-    //
-    //     if (entry.visitEpoch < this.currentEpoch) entry.resetToEpoch(this.currentEpoch)
-    //
-    //     entry.edgesFlow++
-    //
-    //     toVisit.push({ node : identifier, from : from, label : undefined })
-    // }
+    // it is more efficient (=faster) to create new quarks for yet unvisited identifiers
+    // in batches, using this method, instead of in normal flow in the `walkDepth` method
+    // this is probably because of the CPU context switch between the `this.visited` and `this.baseRevision.getLatestEntryFor`
+    doCollectNext (from : Identifier, to : Identifier, toVisit : WalkStep[]) {
+        let quark : Quark   = this.visited.get(to)
+
+        if (!quark) {
+            quark               = to.newQuark(this.baseRevision.createdAt)
+
+            quark.visitEpoch    = this.currentEpoch
+
+            this.visited.set(to, quark)
+        }
+
+        toVisit.push({ to, from })
+    }
 
 
     collectNext (from : Identifier, toVisit : WalkStep[], visitInfo : Quark) {
@@ -92,23 +77,13 @@ export class TransactionWalkDepth extends Base {
             visitInfo.previous      = latestEntry
 
             latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
-                toVisit.push({ from : from, to : outgoingEntry.identifier })
+                this.doCollectNext(from, outgoingEntry.identifier, toVisit)
             })
         }
 
         for (const outgoingIdentifier of visitInfo.getOutgoing().keys()) {
-            toVisit.push({ from : from, to : outgoingIdentifier })
+            this.doCollectNext(from, outgoingIdentifier, toVisit)
         }
-    }
-
-
-    onRepeatedVisit (node : Identifier, visitInfo : Quark) {
-        visitInfo.edgesFlow++
-    }
-
-
-    onFirstVisitInEpoch (node : Identifier) : boolean {
-        return true
     }
 
 
@@ -147,15 +122,11 @@ export class TransactionWalkDepth extends Base {
 
                 toVisit.pop()
             } else {
-                // if we break here, we can re-enter the loop later
-                if (this.onFirstVisitInEpoch(node) === false) break
-
                 const lengthBefore  = toVisit.length
 
                 if (!visitInfo) {
                     visitInfo               = node.newQuark(this.baseRevision.createdAt)
 
-                    visitInfo.visitedAt     = depth
                     visitInfo.visitEpoch    = this.currentEpoch
 
                     visited.set(node, visitInfo)
@@ -165,9 +136,9 @@ export class TransactionWalkDepth extends Base {
 
                 if (visitInfo.visitEpoch < this.currentEpoch) {
                     visitInfo.resetToEpoch(this.currentEpoch)
-                    visitInfo.visitedAt     = depth
                 }
 
+                visitInfo.visitedAt     = depth
                 visitInfo.edgesFlow++
 
                 // if there's no outgoing edges, node is at topological position

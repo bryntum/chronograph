@@ -1,5 +1,4 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import { OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import {
     CalculationContext,
     runGeneratorAsyncWithEffect,
@@ -50,82 +49,82 @@ export const EdgeTypeNormal    = EdgeType.Normal
 export const EdgeTypePast      = EdgeType.Past
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
-    visited         : Map<Identifier, Quark>
-
-    baseRevision    : Revision
-
-    pushTo          : LeveledQueue<Quark>
-
-
-    setVisitedInfo (identifier : Identifier, visitedAt : number, info : Quark) : VisitInfo {
-        if (!info) {
-            info      = identifier.newQuark(this.baseRevision.createdAt)
-
-            this.visited.set(identifier, info)
-        }
-
-        info.visitedAt    = visitedAt
-
-        if (info.visitEpoch !== this.currentEpoch) info.resetToEpoch(this.currentEpoch)
-
-        return info
-    }
-
-
-    onTopologicalNode (identifier : Identifier) {
-        if (!identifier.lazy) this.pushTo.push(this.visited.get(identifier))
-    }
-
-
-    onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
-        return OnCycleAction.Resume
-    }
-
-
-    doCollectNext (from : Identifier, identifier : Identifier, toVisit : WalkStep<Identifier>[]) {
-        let entry : Quark   = this.visited.get(identifier)
-
-        if (!entry) {
-            entry           = identifier.newQuark(this.baseRevision.createdAt)
-
-            this.visited.set(identifier, entry)
-        }
-
-        if (entry.visitEpoch < this.currentEpoch) entry.resetToEpoch(this.currentEpoch)
-
-        entry.edgesFlow++
-
-        toVisit.push({ node : identifier, from : from, label : undefined })
-    }
-
-
-    collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
-        const latestEntry       = this.baseRevision.getLatestEntryFor(node)
-
-        if (latestEntry) {
-            // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
-            // will have the `previous` property populated
-            visitInfo.previous      = latestEntry
-
-            // iterator version is slower
-            // for (const outgoingEntry of latestEntry.outgoingInTheFuture(this.baseRevision)) {
-            //     this.doCollectNext(node, outgoingEntry.identifier, toVisit)
-            // }
-
-            latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
-                this.doCollectNext(node, outgoingEntry.identifier, toVisit)
-            })
-        }
-
-        for (const outgoingEntry of visitInfo.getOutgoing().values()) {
-            const identifier    = outgoingEntry.identifier
-
-            this.doCollectNext(node, identifier, toVisit)
-        }
-    }
-}
+// //---------------------------------------------------------------------------------------------------------------------
+// export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
+//     visited         : Map<Identifier, Quark>
+//
+//     baseRevision    : Revision
+//
+//     pushTo          : LeveledQueue<Quark>
+//
+//
+//     setVisitedInfo (identifier : Identifier, visitedAt : number, info : Quark) : VisitInfo {
+//         if (!info) {
+//             info      = identifier.newQuark(this.baseRevision.createdAt)
+//
+//             this.visited.set(identifier, info)
+//         }
+//
+//         info.visitedAt    = visitedAt
+//
+//         if (info.visitEpoch !== this.currentEpoch) info.resetToEpoch(this.currentEpoch)
+//
+//         return info
+//     }
+//
+//
+//     onTopologicalNode (identifier : Identifier) {
+//         if (!identifier.lazy) this.pushTo.push(this.visited.get(identifier))
+//     }
+//
+//
+//     onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
+//         return OnCycleAction.Resume
+//     }
+//
+//
+//     doCollectNext (from : Identifier, identifier : Identifier, toVisit : WalkStep<Identifier>[]) {
+//         let entry : Quark   = this.visited.get(identifier)
+//
+//         if (!entry) {
+//             entry           = identifier.newQuark(this.baseRevision.createdAt)
+//
+//             this.visited.set(identifier, entry)
+//         }
+//
+//         if (entry.visitEpoch < this.currentEpoch) entry.resetToEpoch(this.currentEpoch)
+//
+//         entry.edgesFlow++
+//
+//         toVisit.push({ node : identifier, from : from, label : undefined })
+//     }
+//
+//
+//     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
+//         const latestEntry       = this.baseRevision.getLatestEntryFor(node)
+//
+//         if (latestEntry) {
+//             // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
+//             // will have the `previous` property populated
+//             visitInfo.previous      = latestEntry
+//
+//             // iterator version is slower
+//             // for (const outgoingEntry of latestEntry.outgoingInTheFuture(this.baseRevision)) {
+//             //     this.doCollectNext(node, outgoingEntry.identifier, toVisit)
+//             // }
+//
+//             latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
+//                 this.doCollectNext(node, outgoingEntry.identifier, toVisit)
+//             })
+//         }
+//
+//         for (const outgoingEntry of visitInfo.getOutgoing().values()) {
+//             const identifier    = outgoingEntry.identifier
+//
+//             this.doCollectNext(node, identifier, toVisit)
+//         }
+//     }
+// }
 
 
 //---------------------------------------------------------------------------------------------------------------------
