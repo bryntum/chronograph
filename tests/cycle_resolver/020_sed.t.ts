@@ -355,4 +355,28 @@ StartTest(t => {
             ])
         )
     })
+
+
+    t.it('Should prefer overwriting `keepIfPossible` over overwriting `proposedValue`', t => {
+        input.addPreviousValueFlag(Duration)
+        input.addPreviousValueFlag(StartDate)
+        input.addPreviousValueFlag(EndDate)
+
+        input.addProposedValueFlag(EndDate)
+        input.addProposedValueFlag(Duration)
+
+        input.addKeepIfPossibleFlag(StartDate)
+
+        const resolution    = input.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDate, startDateFormula.formulaId ],
+                [ EndDate, CalculateProposed ],
+                [ Duration, CalculateProposed ]
+            ])
+        )
+    })
+
 })

@@ -367,7 +367,7 @@ export class WalkState extends Base {
         const proposedVars          = map(this.input.hasProposedValueVars(), variable => { return { variable, isProposed : true }})
         const keepIfPossibleVars    = map(this.input.keepIfPossibleVars(), variable => { return { variable, isProposed : false }})
 
-        const allInputVars          = CI(concatIterable([ proposedVars, keepIfPossibleVars ])).uniqueOnlyBy(el => el.variable)
+        const allInputVars          = CI([ proposedVars, keepIfPossibleVars ]).concat().uniqueOnlyBy(el => el.variable)
 
         return allInputVars.reduce((totalWeight : number, { variable, isProposed }) => {
             let weight      = 0
@@ -382,14 +382,14 @@ export class WalkState extends Base {
                 // its overwritten with regular formula
                 if (formula && this.formulaIsDefault(formula) && this.formulaHasProposedValueInInput(formula)) {
                     if (isProposed)
-                        weight += 1e5
+                        weight += 1e6
                     else
                         weight += 1e4
                 } else {
                     if (isProposed)
                         weight += 1e7
                     else
-                        weight += 1e6
+                        weight += 1e5
                 }
             }
 
