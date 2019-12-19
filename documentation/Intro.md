@@ -111,7 +111,7 @@ Takes over:
     - Generator calculations has unlimited stack depth and can be asynchronous. They are a bit slower, however.
     - The identifiers of different types still can freely mixed   
 
-Scopes. Variables
+Scopes. Variables. Reactive contract 
 -----------------
 
 The identifiers themselves represent a closed world of pure functions. To be able to interact with this world, we need to sort of "materialize" it. We do it by adding an identifier to the `ChronoGraph` instance. Now, we can read the value of that identifier "in the scope" of that `ChronoGraph` instance.
@@ -151,10 +151,40 @@ const value10 = graph.read(variable9)
 As you probably already guessed, after you wrote to some variable, reading from any dependent identifier will return updated, consistent value - that is what we call "reactive contract".
 
 
-Equality
+Equality. Reactive contract continued
 --------
 
 Another property of the identifiers is, how they "understand" or implement equality for their data. By default, the equality check is performed with the `===` operator, one can provide a custom implementation using the `equality` property. 
+
+```ts
+const identifier10 = Identifier.new({
+    equality : (v1 : Date, v2 : Date) => v1.getTime() === v2.getTime(),
+    
+    calculation (Y : SyncEffectHandler) : Date {
+        return new Date(2020, 1, 1)
+    },
+}) as Identifier<Date>
+```
+
+Another part of the reactive contract, is that if the value is calculated to the same value as it had previously, the identifiers, dependent on it, will not be re-calculated. This minimizes the numbers of computations needed to bring the data into the consistent state and greatly improves performance. In fact, identifiers forms a memoized set of calculations. 
+
+
+```ts
+const variable11 : Variable<number> = graph.variable(5)
+const variable12 : Variable<number> = graph.variable(5)
+
+const identifier13 = graph.identifier(Y => Y(variable11) + Y(variable12))
+
+const identifier14 = graph.identifier(Y => Y(identifier13) + 10)
+
+const value14 = graph.read(identifier14)
+
+graph.write(variable11, 3)
+graph.write(variable12, 7)
+
+// won't trigger the identifier14's calculation
+const value15 = graph.read(identifier14)
+```
 
 
 Data branching

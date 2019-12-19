@@ -55,7 +55,7 @@ const identifier6 = Identifier.new({
         const value1 : number = Y(identifier1)
 
         return value1 + 5
-    },
+    }
 })
 
 const identifier7 = Identifier.new({
@@ -97,8 +97,31 @@ graph.write(variable9, 11)
 
 const value10 = graph.read(variable9)
 
+
 //-----------------------------------
 // example10
-// graph.write(variable9, 11)
-//
-// const value10 = graph.read(variable9)
+const identifier10 = Identifier.new({
+    equality : (v1 : Date, v2 : Date) => v1.getTime() === v2.getTime(),
+
+    calculation (Y : SyncEffectHandler) : Date {
+        return new Date(2020, 1, 1)
+    },
+}) as Identifier<Date>
+
+
+//-----------------------------------
+// example11
+const variable11 : Variable<number> = graph.variable(5)
+const variable12 : Variable<number> = graph.variable(5)
+
+const identifier13 = graph.identifier(Y => Y(variable11) + Y(variable12))
+
+const identifier14 = graph.identifier(Y => Y(identifier13) + 10)
+
+const value14 = graph.read(identifier14)
+
+graph.write(variable11, 3)
+graph.write(variable12, 7)
+
+// won't trigger the identifier14's calculation
+const value15 = graph.read(identifier14)
