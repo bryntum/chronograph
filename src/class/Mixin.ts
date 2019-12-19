@@ -18,9 +18,6 @@
 */
 export class Base {
 
-    static wrap (any : any) : any {}
-
-
     initialize<T extends Base> (props? : Partial<T>) {
         props && Object.assign(this, props)
     }
