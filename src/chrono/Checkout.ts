@@ -334,7 +334,7 @@ class Checkout extends base {
     }
 
 
-    write (identifier : Identifier, proposedValue : any, ...args : any[]) {
+    write<T> (identifier : Identifier<T>, proposedValue : T, ...args : any[]) {
         if (proposedValue === undefined) proposedValue = null
 
         identifier.write.call(identifier.context || identifier, identifier, this.activeTransaction, null, proposedValue, ...args)
@@ -351,7 +351,7 @@ class Checkout extends base {
     }
 
 
-    read (identifier : Identifier) : any {
+    read<T> (identifier : Identifier<T>) : T {
         return this.baseRevision.read(identifier)
     }
 

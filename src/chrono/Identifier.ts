@@ -26,7 +26,7 @@ export enum Levels {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Meta<ContextT extends Context = Context, ValueT = any> extends Base {
+export class Meta<ValueT = any, ContextT extends Context = Context> extends Base {
     name                : any       = undefined
 
     ArgsT               : any[]
@@ -44,7 +44,7 @@ export class Meta<ContextT extends Context = Context, ValueT = any> extends Base
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Identifier<ContextT extends Context = Context, ValueT = any> extends Meta<ContextT, ValueT> {
+export class Identifier<ValueT = any, ContextT extends Context = Context> extends Meta<ValueT, ContextT> {
     context             : any       = undefined
 
 
@@ -94,7 +94,7 @@ export class Identifier<ContextT extends Context = Context, ValueT = any> extend
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Variable<ValueT = any> extends Identifier<typeof ContextSync, ValueT> {
+export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
 
     @prototypeValue(buildClass(Map, CalculationSync, Quark))
@@ -116,7 +116,7 @@ export class Variable<ValueT = any> extends Identifier<typeof ContextSync, Value
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class VariableGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
+export class VariableGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
     YieldT              : never
 
     @prototypeValue(buildClass(Map, CalculationGen, Quark))
@@ -138,7 +138,7 @@ export class VariableGen<ValueT = any> extends Identifier<typeof ContextGen, Val
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculatedValueSync<ValueT = any> extends Identifier<typeof ContextSync, ValueT> {
+export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
 
     @prototypeValue(buildClass(Map, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
@@ -151,7 +151,7 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<typeof Context
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculatedValueGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
+export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
 
     @prototypeValue(buildClass(Map, CalculationGen, Quark))
     quarkClass          : QuarkConstructor
