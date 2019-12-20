@@ -388,9 +388,8 @@ export class MemoizedIteratorClass<T> extends ChainedIteratorClass<T> {
         if (this.$iterable) {
             if (!this.$iterator) this.$iterator = this.$iterable[ Symbol.iterator ]()
 
-            let iterator    = this.$iterator
-
-            let alreadyConsumed   = elements.length
+            let iterator            = this.$iterator
+            let alreadyConsumed     = elements.length
 
             // yield the 1st batch "efficiently"
             if (alreadyConsumed > 0) yield* elements
