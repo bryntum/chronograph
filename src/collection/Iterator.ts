@@ -396,6 +396,7 @@ export class MemoizedIteratorClass<T> extends ChainedIteratorClass<T> {
 
             while (true) {
                 if (elements.length > alreadyConsumed) {
+                    // wonder if `yield* elements.slice(alreadyConsumed)` is more performant or not
                     for (let i = alreadyConsumed; i < elements.length; i++) yield elements[ i ]
 
                     alreadyConsumed             = elements.length
