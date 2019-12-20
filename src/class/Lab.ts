@@ -15,90 +15,86 @@ export type OnlyPropertiesOfType<Base, Type> = Pick<Base, AllowedNames<Base, Typ
 type ReplaceTypeOfProperty<Type, Property extends keyof Type, NewPropertyType> =
     NewPropertyType extends Type[ Property ] ? Omit<Type, Property> & { [ P in Property ] : NewPropertyType } : never
 
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// class SomeMixin1 extends Mixin(
-//     [ Base ],
-//     <T extends AnyConstructor<Base>>(base : T) =>
-//
-//         class SomeMixin1 extends base {
-//             prop1       : string    = '1'
-//
-//             method1 (p1 : boolean) : string {
-//                 return this.prop1
-//             }
-//         }
-// ){}
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// class SomeMixin2 extends Mixin(
-//     [ Base ],
-//     <T extends AnyConstructor<Base>>(base : T) =>
-//
-//         class SomeMixin2 extends base {
-//             prop2       : string    = '2'
-//
-//             method2 (p2 : boolean) : string {
-//                 return this.prop2
-//             }
-//         }
-// ){}
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// class SomeMixin12 extends Mixin(
-//     [ SomeMixin1, SomeMixin2 ],
-//     <T extends AnyConstructor<SomeMixin1 & SomeMixin2>>(base : T) =>
-//
-//         class SomeMixin12 extends base {
-//             prop12       : string   = '12'
-//
-//             method12 (p12 : boolean) : string {
-//                 this.prop1
-//                 this.prop2
-//
-//                 // this.zxc
-//
-//                 return this.prop12
-//             }
-//         }
-// ){}
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// class SomeMixin3<A extends SomeMixin1> extends Mixin(
-//     [ Base ],
-//     <T extends AnyConstructor<Base>>(base : T) =>
-//
-//         class SomeMixin3<B> extends base {
-//             constructor (...args : any[]) {
-//                 super()
-//             }
-//
-//             prop3       : string    = '3'
-//
-//             A           : SomeMixin1
-//
-//             method3 (p3 : boolean) : string {
-//                 return this.prop3
-//             }
-//
-//             method3A (a : this[ 'A' ]) : this[ 'A' ][] {
-//                 const bb : this[ 'A' ] = a
-//
-//                 bb.length
-//                 bb.zxc
-//
-//                 return [ bb ]
-//             }
-//         }
-// ){}
-//
-// interface SomeMixin3<A extends SomeMixin1> {
-//     A       : A
-// }
-//
+
+
+//---------------------------------------------------------------------------------------------------------------------
+class SomeMixin1 extends Mixin(
+    [ Base ],
+    <T extends AnyConstructor<Base>>(base : T) =>
+
+        class SomeMixin1 extends base {
+            prop1       : string    = '1'
+
+            method1 (p1 : boolean) : string {
+                return this.prop1
+            }
+        }
+){}
+
+//---------------------------------------------------------------------------------------------------------------------
+class SomeMixin2 extends Mixin(
+    [ Base ],
+    <T extends AnyConstructor<Base>>(base : T) =>
+
+        class SomeMixin2 extends base {
+            prop2       : string    = '2'
+
+            method2 (p2 : boolean) : string {
+                return this.prop2
+            }
+        }
+){}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+class SomeMixin12 extends Mixin(
+    [ SomeMixin1, SomeMixin2 ],
+    <T extends AnyConstructor<SomeMixin1 & SomeMixin2>>(base : T) =>
+
+        class SomeMixin12 extends base {
+            prop12       : string   = '12'
+
+            method12 (p12 : boolean) : string {
+                this.prop1
+                this.prop2
+
+                // this.zxc
+
+                return this.prop12
+            }
+        }
+){}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+class SomeMixin3<A extends any> extends Mixin(
+    [ Base ],
+    <T extends AnyConstructor<Base>>(base : T) =>
+
+        class SomeMixin3 extends base {
+            prop3       : string    = '3'
+
+            A           : unknown
+
+            method3 (p3 : boolean) : string {
+                return this.prop3
+            }
+
+            method3A (a : this[ 'A' ]) : this[ 'A' ][] {
+                const bb : this[ 'A' ] = a
+
+                bb.length
+                bb.zxc
+
+                return [ bb ]
+            }
+        }
+){}
+
+interface SomeMixin3<A extends any> {
+    A       : A
+}
+
 // type Extends<A, B> = A extends B ? A : never
 //
 // type SomeMixin3M = SomeMixin3<SomeMixin12>
@@ -107,31 +103,31 @@ type ReplaceTypeOfProperty<Type, Property extends keyof Type, NewPropertyType> =
 //
 // const a : ZZ = true
 // const b : ZZ = false
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// class SomeMixin23 extends Mixin(
-//     [ SomeMixin2, SomeMixin3 ],
-//     <T extends AnyConstructor<SomeMixin2 & SomeMixin3<SomeMixin12>>>(base : T) =>
-//
-//         class SomeMixin23 extends base {
-//             prop23       : string   = '23'
-//
-//             method23 (p23 : boolean, p23a : this[ 'A' ]) : string {
-//                 this.prop2
-//                 this.prop3
-//
-//                 this.method3A(p23a)
-//                 this.method3A(11)
-//                 this.method3A('zz')
-//
-//                 // this.zxc
-//
-//                 return this.prop23
-//             }
-//         }
-// ){}
-//
-//
+
+//---------------------------------------------------------------------------------------------------------------------
+class SomeMixin23 extends Mixin(
+    [ SomeMixin2, SomeMixin3 ],
+    <T extends AnyConstructor<SomeMixin2 & SomeMixin3<number>>>(base : T) =>
+
+        class SomeMixin23 extends base {
+            prop23       : string   = '23'
+
+            method23 (p23 : boolean, p23a : this[ 'A' ]) : string {
+                this.prop2
+                this.prop3
+
+                this.method3A(p23a)
+                this.method3A(11)
+                this.method3A('zz')
+
+                // this.zxc
+
+                return this.prop23
+            }
+        }
+){}
+
+
 // // //---------------------------------------------------------------------------------------------------------------------
 // // @mix(SomeMixin3, SomeMixin2)
 // // class SomeMixin32<A> {
