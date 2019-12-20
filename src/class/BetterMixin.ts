@@ -62,7 +62,7 @@ export class MixinWalkDepthState {
     }
 
 
-    getLevel<T> (map : Map<number, T[]>, topoLevel : number) : T[] {
+    getOrCreateLevel<T> (map : Map<number, T[]>, topoLevel : number) : T[] {
         let elementsAtLevel : T[]     = map.get(topoLevel)
 
         if (!elementsAtLevel) {
@@ -86,19 +86,17 @@ export class MixinWalkDepthState {
                 (elementsByTopoLevel, [ topoLevel, mixins ]) => {
                     if (topoLevel > maxTopoLevel) maxTopoLevel = topoLevel
 
-                    let elementsAtLevel = this.getLevel(elementsByTopoLevel, topoLevel)
-
-                    elementsAtLevel.push(mixins)
+                    this.getOrCreateLevel(elementsByTopoLevel, topoLevel).push(mixins)
 
                     return elementsByTopoLevel
                 },
                 new Map<number, MixinState[][]>()
             )
 
-        this.getLevel(map, maxTopoLevel + 1).push([ this.sourceEl ])
+        this.getOrCreateLevel(map, maxTopoLevel + 1).push([ this.sourceEl ])
 
         return CI(map).map(([ level, elements ]) => {
-            return [ level, CI(elements).concat().uniqueOnly().toArray().sort((mixin1, mixin2) => mixin1.id - mixin2.id) ]
+            return [ level, CI(elements).concat().uniqueOnly().sort((mixin1, mixin2) => mixin1.id - mixin2.id) ]
         }).toMap()
     }
 
@@ -118,13 +116,16 @@ let MIXIN_ID : MixinId      = 1
 
 const identity              = a => a
 
+// possibly will need to use custom root base class, `class ZeroBaseClass {}` due to transpilation complications
+const ZeroBaseClass         = Object
+
 //---------------------------------------------------------------------------------------------------------------------
 export class MixinState {
     id                          : MixinId               = MIXIN_ID++
 
     requirements                : MixinState[]          = []
 
-    baseClass                   : AnyConstructor        = Object
+    baseClass                   : AnyConstructor        = ZeroBaseClass
 
     identitySymbol              : symbol                = undefined
 
@@ -133,11 +134,13 @@ export class MixinState {
     walkDepthState              : MixinWalkDepthState   = MixinWalkDepthState.new({ sourceEl : this })
 
     // private $hash               : MixinHash             = ''
-    $minimalClass               : MixinClass            = undefined
+    private $minimalClass       : MixinClass            = undefined
 
     name                        : string                = ''
 
     static minimalClassesByLinearHash : Map<MixinHash, AnyConstructor> = new Map()
+    static baseClassesIds : Map<AnyConstructor, MixinId> = new Map()
+
 
     static new (props : Partial<MixinState>) {
         const me    = new this()
@@ -157,7 +160,6 @@ export class MixinState {
             [ MixinStateProperty ]  : me
         })
 
-        mixinLambdaWrapper[ MixinIdentity ]        = symbol
         Object.defineProperty(mixinLambdaWrapper, Symbol.hasInstance, { value : isInstanceOfStatic })
 
         me.mixinLambda                      = mixinLambdaWrapper
@@ -178,6 +180,25 @@ export class MixinState {
     //
     //     return this.$hash = this.buildHash()
     // }
+
+    // buildHash () : MixinHash {
+    //     return String.fromCharCode(...this.walkDepthState.linearizedByTopoLevelsSource.map(mixin => mixin.id))
+    // }
+
+
+    getBaseClassMixinId (baseClass : AnyConstructor) : MixinId {
+        const constructor       = this.constructor as typeof MixinState
+
+        const mixinId           = constructor.baseClassesIds.get(baseClass)
+
+        if (mixinId !== undefined) return mixinId
+
+        const newId             = MIXIN_ID++
+
+        constructor.baseClassesIds.set(baseClass, newId)
+
+        return newId
+    }
 
 
     buildMinimalClass () : MixinClass {
@@ -204,7 +225,7 @@ export class MixinState {
 
                 return acc
             },
-            { cls : baseCls, hash : '' }
+            { cls : baseCls, hash : String.fromCharCode(this.getBaseClassMixinId(baseCls)) }
         ).cls
 
         const minimalClass : MixinClass = Object.assign(minimalClassConstructor, {
@@ -219,11 +240,6 @@ export class MixinState {
 
         return minimalClass
     }
-
-
-    // buildHash () : MixinHash {
-    //     return String.fromCharCode(...this.walkDepthState.linearizedByTopoLevelsSource.map(mixin => mixin.id))
-    // }
 
 
     toString () : string {
@@ -278,6 +294,17 @@ export type MixinHelperFuncAny = <T>(required : AnyConstructor[], arg : T) =>
         MixinClassConstructor<T>
     : never
 
+
+export type MixinHelperFunc0 = <T>(required : [], arg : T) =>
+    T extends AnyFunction ?
+        Parameters<T> extends [ infer Base ] ?
+            Base extends AnyConstructor<object> ?
+                object extends InstanceType<Base> ?
+                    MixinClassConstructor<T>
+                : never
+            : never
+        : never
+    : never
 
 export type MixinHelperFunc1 = <A1 extends AnyConstructor, T>(required : [ A1 ], arg : T) =>
     T extends AnyFunction ?
@@ -340,20 +367,31 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda
     let baseClass : AnyConstructor
 
     if (required.length > 0) {
-        const lastRequiredEl            = required[ required.length - 1 ]
+        const lastRequirement    = required[ required.length - 1 ]
 
-        if (!lastRequiredEl[ MixinStateProperty ]) baseClass = lastRequiredEl
+        // avoid assigning ZeroBaseClass - it will be applied as default at the end
+        if (!lastRequirement[ MixinStateProperty ]) baseClass = lastRequirement === ZeroBaseClass ? undefined : lastRequirement
     }
 
     const requirements : MixinState[]    = []
 
     required.forEach((requirement, index) => {
-        const mixinState    = requirement[ MixinStateProperty ] as MixinState
+        const mixinState        = requirement[ MixinStateProperty ] as MixinState
 
         if (mixinState !== undefined) {
-            if (!baseClass) baseClass = mixinState.baseClass
+            const currentBaseClass  = mixinState.baseClass
 
-            if (mixinState.baseClass !== baseClass) throw new Error("Base class mismatch")
+            // ignore ZeroBaseClass - since those are compatible with any other base class
+            if (currentBaseClass !== ZeroBaseClass) {
+                // already found a base class different from ZeroBaseClass among requirements
+                if (baseClass) {
+                    // non-ZeroBaseClass base class requirements should match for all requirements
+                    if (currentBaseClass !== baseClass) throw new Error("Base class mismatch")
+                }
+                else {
+                    baseClass = currentBaseClass
+                }
+            }
 
             requirements.push(mixinState)
         }
@@ -362,7 +400,7 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda
         }
     })
 
-    if (!baseClass) baseClass = Object
+    if (!baseClass) baseClass = ZeroBaseClass
 
     //------------------
     const mixinState    = MixinState.new({ requirements, mixinLambda : mixinLambda as any, baseClass })
@@ -391,5 +429,5 @@ export const isInstanceOf = <T>(instance : any, func : T)
 
 
 //---------------------------------------------------------------------------------------
-export const Mixin : MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 & MixinHelperFunc5 = mixin as any
+export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 & MixinHelperFunc5 = mixin as any
 export const MixinAny : MixinHelperFuncAny = mixin as any

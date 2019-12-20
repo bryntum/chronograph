@@ -227,7 +227,7 @@ export class ChainedIteratorClass<T> {
         this.iterable       = iterable
     }
 
-    
+
     split () : ChainedIteratorClass<T> {
         const [ iter1, iter2 ] = split(this.iterable)
 
@@ -305,6 +305,11 @@ export class ChainedIteratorClass<T> {
 
     toArray () : T[] {
         return Array.from(this)
+    }
+
+
+    sort (order : (v1 : T, v2 : T) => number) : T[] {
+        return Array.from(this).sort(order)
     }
 
 

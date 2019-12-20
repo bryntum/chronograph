@@ -5,7 +5,6 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it('Repeating creation with the same requirements should not call mixin functions and use cache', t => {
-
         let count1 = 0
         let count2 = 0
         let count3 = 0
@@ -92,7 +91,97 @@ StartTest(t => {
         ){}
 
         t.isDeeply([ count1, count2, count3 ], [ 0, 0, 0 ], 'Re-used mixin3(mixin2(mixin1())) from cache')
-
     })
+
+
+    t.it('Repeating creation with different base class should call mixin functions', t => {
+        let count1 = 0
+        let count2 = 0
+
+        class SomeMixin1 extends Mixin(
+            [],
+            <T extends AnyConstructor>(base : T) => {
+                count1++
+
+                class SomeMixin1 extends base {
+                    prop1       : string    = '1'
+                }
+
+                return SomeMixin1
+            }
+        ){}
+
+        class SomeMixin2 extends Mixin(
+            [],
+            <T extends AnyConstructor>(base : T) => {
+                count2++
+
+                class SomeMixin2 extends base {
+                    prop2       : string    = '2'
+                }
+
+                return SomeMixin2
+            }
+        ){}
+
+        t.isDeeply([ count1, count2 ], [ 1, 1 ], 'Mixin functions called once')
+
+        //-----------------------
+        count1 = count2 = 0
+
+        class SomeMixin12 extends Mixin(
+            [ SomeMixin2, SomeMixin1 ],
+            <T extends AnyConstructor<SomeMixin2 & SomeMixin1>>(base : T) =>
+
+                class SomeMixin12 extends base {
+                    prop12      : string   = '12'
+                }
+        ){}
+
+        t.isDeeply([ count1, count2 ], [ 0, 1 ], 'Re-used mixin1 from cache')
+
+        //-----------------------
+        count1 = count2 = 0
+
+        class SomeMixin12_2 extends Mixin(
+            [ SomeMixin2, SomeMixin1 ],
+            <T extends AnyConstructor<SomeMixin2 & SomeMixin1>>(base : T) =>
+
+                class SomeMixin12_2 extends base {
+                    prop12_2      : string   = '12_2'
+                }
+        ){}
+
+        t.isDeeply([ count1, count2 ], [ 0, 0 ], 'Re-used mixin2(mixin1) from cache')
+
+        //-----------------------
+        count1 = count2 = 0
+
+        class SomeMixin12_3 extends Mixin(
+            [ SomeMixin2, SomeMixin1, Base ],
+            <T extends AnyConstructor<SomeMixin2 & SomeMixin1 & Base>>(base : T) =>
+
+                class SomeMixin12_3 extends base {
+                    prop12_3      : string   = '12_3'
+                }
+        ){}
+
+        t.isDeeply([ count1, count2 ], [ 1, 1 ], 'Called the mixin functions again for different base class')
+
+        //-----------------------
+        count1 = count2 = 0
+
+        class SomeMixin12_4 extends Mixin(
+            [ SomeMixin2, SomeMixin1, Base ],
+            <T extends AnyConstructor<SomeMixin2 & SomeMixin1 & Base>>(base : T) =>
+
+                class SomeMixin12_4 extends base {
+                    prop12_4      : string   = '12_4'
+                }
+        ){}
+
+        t.isDeeply([ count1, count2 ], [ 0, 0 ], 'Re-used mixin2(mixin1(Base)) from cache')
+    })
+
 })
 
