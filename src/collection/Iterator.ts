@@ -6,7 +6,7 @@ export function split<Element> (iterable : Iterable<Element>) : [ Iterable<Eleme
     let iterator : Iterator<Element>
 
     const gen1 = function * () : Generator<Element, any, undefined> {
-        if (!iterator) iterator = iterable[Symbol.iterator]()
+        if (!iterator) iterator = iterable[ Symbol.iterator ]()
 
         while (true) {
             if (gen1Pending.length) {
@@ -18,7 +18,7 @@ export function split<Element> (iterable : Iterable<Element>) : [ Iterable<Eleme
 
             const { value, done }       = iterator.next()
 
-            if (done) { iterator = null; break }
+            if (done) { iterator = null; iterable = null; break }
 
             gen2Pending.push(value)
 
@@ -27,7 +27,7 @@ export function split<Element> (iterable : Iterable<Element>) : [ Iterable<Eleme
     }
 
     const gen2 = function * () : Generator<Element, any, undefined> {
-        if (!iterator) iterator = iterable[Symbol.iterator]()
+        if (!iterator) iterator = iterable[ Symbol.iterator ]()
 
         while (true) {
             if (gen2Pending.length) {
@@ -39,7 +39,7 @@ export function split<Element> (iterable : Iterable<Element>) : [ Iterable<Eleme
 
             const { value, done }       = iterator.next()
 
-            if (done) { iterator = null; break }
+            if (done) { iterator = null; iterable = null; break }
 
             gen1Pending.push(value)
 
@@ -217,6 +217,9 @@ export function* concatIterable<Element> (iteratorsProducer : Iterable<Iterable<
 
 //---------------------------------------------------------------------------------------------------------------------
 // just a chained syntax sugar class
+// note, that we either use a combination of `this.derive()` + this.iterable (which will clear the `this.iterable`)
+// or, use just `this` as iterable, which will also clear the iterator
+//
 export class ChainedIteratorClass<T> {
     iterable        : Iterable<T>   = undefined
 
@@ -224,11 +227,18 @@ export class ChainedIteratorClass<T> {
     constructor (iterable : Iterable<T>) {
         if (!iterable) throw new Error("Require an iterable instance for chaining")
 
-        this.iterable       = iterable
+        this.iterable   = iterable
     }
 
 
-    split () : ChainedIteratorClass<T> {
+    derive<K> (iterable : Iterable<K>) : ChainedIteratorClass<K> {
+        this.iterable   = undefined
+
+        return new ChainedIteratorClass(iterable)
+    }
+
+
+    copy () : ChainedIteratorClass<T> {
         const [ iter1, iter2 ] = split(this.iterable)
 
         this.iterable   = iter2
@@ -237,69 +247,76 @@ export class ChainedIteratorClass<T> {
     }
 
 
+    split () : [ ChainedIteratorClass<T>, ChainedIteratorClass<T> ] {
+        const [ iter1, iter2 ] = split(this.iterable)
+
+        return [ new ChainedIteratorClass(iter1), this.derive(iter2) ]
+    }
+
+
     inBatchesBySize (batchSize : number) : ChainedIteratorClass<T[]> {
-        return new ChainedIteratorClass(inBatchesBySize(this.iterable, batchSize))
+        return this.derive(inBatchesBySize(this.iterable, batchSize))
     }
 
 
     filter (func : (el : T, index : number) => boolean) : ChainedIteratorClass<T> {
-        return new ChainedIteratorClass(filter(this.iterable, func))
+        return this.derive(filter(this.iterable, func))
     }
 
 
     map<Result> (func : (el : T, index : number) => Result) : ChainedIteratorClass<Result> {
-        return new ChainedIteratorClass(map(this.iterable, func))
+        return this.derive(map(this.iterable, func))
     }
 
 
     reduce<Result> (func : (acc : Result, el : T, index : number) => Result, initialAcc : Result) : Result {
-        return reduce(this.iterable, func, initialAcc)
+        return reduce(this, func, initialAcc)
     }
 
 
     concat () : T extends Iterable<infer K> ? ChainedIteratorClass<K> : never {
         //@ts-ignore
-        return new ChainedIteratorClass(concatIterable(this.iterable))
+        return this.derive(concatIterable(this.iterable))
     }
 
 
     uniqueOnly () : ChainedIteratorClass<T> {
-        return new ChainedIteratorClass(uniqueOnly(this.iterable))
+        return this.derive(uniqueOnly(this.iterable))
     }
 
 
     uniqueOnlyBy<UniqueBy> (func : (el : T) => UniqueBy) : ChainedIteratorClass<T> {
-        return new ChainedIteratorClass(uniqueOnlyBy(this.iterable, func))
+        return this.derive(uniqueOnlyBy(this.iterable, func))
     }
 
 
     every (func : (el : T, index : number) => boolean) : boolean {
-        return every(this.iterable, func)
+        return every(this, func)
     }
 
 
     some (func : (el : T, index : number) => boolean) : boolean {
-        return some(this.iterable, func)
+        return some(this, func)
     }
 
 
     takeWhile (func : (el : T, index : number) => boolean) : ChainedIteratorClass<T> {
-        return new ChainedIteratorClass(takeWhile(this.iterable, func))
+        return this.derive(takeWhile(this.iterable, func))
     }
 
 
     * [Symbol.iterator] () : IterableIterator<T> {
         let iterable    = this.iterable
 
-        if (!iterable) throw new Error("Chained iterator already exhausted")
+        if (!iterable) throw new Error("Chained iterator already exhausted or used to derive the new one")
 
         // practice shows, that cleaning up the iterable after yourself helps garbage collector a lot
-        this.iterable   = null
+        this.iterable   = undefined
 
         yield* iterable
 
         // yes, we really want to avoid memory leaks
-        iterable        = null
+        iterable        = undefined
     }
 
 
@@ -320,7 +337,7 @@ export class ChainedIteratorClass<T> {
 
     toMap () : T extends [ infer K, infer V ] ? Map<K, V> : never  {
         //@ts-ignore
-        return new Map(this.iterable)
+        return new Map(this)
     }
 
     // toMap<K, V> () : T extends [ K, V ] ? Map<K, V> : never  {
@@ -329,12 +346,12 @@ export class ChainedIteratorClass<T> {
 
 
     flush () {
-        for (const element of this.iterable) {}
+        for (const element of this) {}
     }
 
 
     memoize () : MemoizedIteratorClass<T> {
-        return new MemoizedIteratorClass(this.iterable)
+        return new MemoizedIteratorClass(this)
     }
 }
 
@@ -349,6 +366,7 @@ export class MemoizedIteratorClass<T> extends ChainedIteratorClass<T> {
     elements        : T[]           = []
 
     $iterable       : Iterable<T>
+    $iterator       : Iterator<T>   = undefined
 
     set iterable (iterable : Iterable<T>) {
         this.$iterable  = iterable
@@ -358,19 +376,49 @@ export class MemoizedIteratorClass<T> extends ChainedIteratorClass<T> {
         return this
     }
 
-    semicolon
+
+    derive<K> (iterable : Iterable<K>) : ChainedIteratorClass<K> {
+        return new ChainedIteratorClass(iterable)
+    }
+
 
     * [Symbol.iterator] () : IterableIterator<T> {
+        const elements      = this.elements
+
         if (this.$iterable) {
-            for (const element of this.$iterable) {
-                this.elements.push(element)
+            if (!this.$iterator) this.$iterator = this.$iterable[ Symbol.iterator ]()
 
-                yield element
+            let iterator    = this.$iterator
+
+            let alreadyConsumed   = elements.length
+
+            // yield the 1st batch "efficiently"
+            if (alreadyConsumed > 0) yield* elements
+
+            while (true) {
+                if (elements.length > alreadyConsumed) {
+                    for (let i = alreadyConsumed; i < elements.length; i++) yield elements[ i ]
+
+                    alreadyConsumed             = elements.length
+                }
+
+                if (!iterator) break
+
+                const { value, done }           = iterator.next()
+
+                if (done) {
+                    iterator = this.$iterator   = null
+                    this.$iterable              = null
+                } else {
+                    elements.push(value)
+
+                    alreadyConsumed++
+
+                    yield value
+                }
             }
-
-            this.$iterable   = null
         } else {
-            yield* this.elements
+            yield* elements
         }
     }
 }
