@@ -354,7 +354,7 @@ export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstru
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5>> ?
-                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4 & InstanceType<A5>> extends InstanceType<Base> ?
+                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> extends InstanceType<Base> ?
                     MixinClassConstructor<T>
                 : never
             : never
