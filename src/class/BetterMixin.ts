@@ -369,8 +369,9 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda
     if (required.length > 0) {
         const lastRequirement    = required[ required.length - 1 ]
 
+        // absence of `[ MixinStateProperty ]` indicates its a regular class and not a mixin class
         // avoid assigning ZeroBaseClass - it will be applied as default at the end
-        if (!lastRequirement[ MixinStateProperty ]) baseClass = lastRequirement === ZeroBaseClass ? undefined : lastRequirement
+        if (!lastRequirement[ MixinStateProperty ] && lastRequirement !== ZeroBaseClass) baseClass = lastRequirement
     }
 
     const requirements : MixinState[]    = []
