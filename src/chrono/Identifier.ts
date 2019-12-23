@@ -1,5 +1,4 @@
-import { buildClass } from "../class/InstanceOf.js"
-import { Base } from "../class/Mixin.js"
+import { Base, IdentityMixin, Mixin } from "../class/BetterMixin.js"
 import {
     CalculationContext,
     CalculationGen,
@@ -11,7 +10,7 @@ import {
     ContextSync
 } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { CheckoutI } from "./Checkout.js"
+import { Checkout } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
 import { RevisionClock } from "./Revision.js"
@@ -84,11 +83,11 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    enterGraph (graph : CheckoutI) {
+    enterGraph (graph : Checkout) {
     }
 
 
-    leaveGraph (graph : CheckoutI) {
+    leaveGraph (graph : Checkout) {
     }
 }
 
@@ -97,7 +96,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
 export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
 
-    @prototypeValue(buildClass(Map, CalculationSync, Quark))
+    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor
 
 
@@ -119,7 +118,7 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
 export class VariableGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
     YieldT              : never
 
-    @prototypeValue(buildClass(Map, CalculationGen, Quark))
+    @prototypeValue(Mixin([ CalculationGen, Quark, Map ], IdentityMixin<CalculationGen & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor
 
 
@@ -140,7 +139,7 @@ export class VariableGen<ValueT = any> extends Identifier<ValueT, typeof Context
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
 
-    @prototypeValue(buildClass(Map, CalculationSync, Quark))
+    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor
 
 
@@ -153,7 +152,7 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
 
-    @prototypeValue(buildClass(Map, CalculationGen, Quark))
+    @prototypeValue(Mixin([ CalculationGen, Quark, Map ], IdentityMixin<CalculationGen & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor
 
 
@@ -161,27 +160,6 @@ export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof 
         return yield ProposedOrCurrent
     }
 }
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export class DispatchedIdentifierGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
-//
-//     @prototypeValue(buildClass(Map, CalculationGen, Quark))
-//     quarkClass          : QuarkConstructor
-//
-//
-//     @prototypeValue(buildClass(Map, CalculationGen, Quark))
-//     dispatcherClass          : QuarkConstructor
-//
-//
-//     * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<ValueT, this[ 'YieldT' ]> {
-//         // const dispatcher    = yield Dispatcher
-//         //
-//         // return yield* dispatcher.runFormulaFor(yield Self, context)
-//
-//         return
-//     }
-// }
 
 
 //---------------------------------------------------------------------------------------------------------------------

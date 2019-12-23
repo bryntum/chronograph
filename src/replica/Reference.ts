@@ -2,8 +2,7 @@ import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
-import { buildClass, instanceOf, isInstanceOf } from "../class/InstanceOf.js"
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, IdentityMixin, isInstanceOf, Mixin } from "../class/BetterMixin.js"
 import { CalculationSync } from "../primitives/Calculation.js"
 import { Field, Name } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
@@ -16,7 +15,9 @@ export type ResolverFunc    = (locator : any) => Entity
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceField = instanceOf(<T extends AnyConstructor<Field>>(base : T) =>
+export class ReferenceField extends Mixin(
+    [ Field ],
+    <T extends AnyConstructor<Field>>(base : T) =>
 
 class ReferenceField extends base {
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceIdentifier
@@ -24,19 +25,18 @@ class ReferenceField extends base {
     resolver            : ResolverFunc
 
     bucket              : Name
-})
-
-export type ReferenceField = Mixin<typeof ReferenceField>
-
-export class MinimalReferenceField extends ReferenceField(Field) {}
-
-//---------------------------------------------------------------------------------------------------------------------
-export const reference : FieldDecorator<typeof MinimalReferenceField> =
-    (fieldConfig?, fieldCls = MinimalReferenceField) => generic_field(fieldConfig, fieldCls)
+}){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
+export const reference : FieldDecorator<typeof ReferenceField> =
+    (fieldConfig?, fieldCls = ReferenceField) => generic_field(fieldConfig, fieldCls)
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceIdentifier extends Mixin(
+    [ FieldIdentifier ],
+    <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
 
     class ReferenceIdentifier extends base {
         level           : number            = Levels.Constant
@@ -47,7 +47,7 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
 
         proposedValueIsBuilt    : boolean   = true
 
-        @prototypeValue(buildClass(Map, CalculationSync, Quark))
+        @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
         quarkClass          : QuarkConstructor
 
 
@@ -105,7 +105,7 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
                 if (quark) {
                     const proposedValue     = quark.proposedValue
 
-                    if (isInstanceOf(proposedValue, Entity)) {
+                    if (proposedValue instanceof Entity) {
                         me.getBucket(proposedValue).removeFromBucket(transaction, me.self)
                     }
                 }
@@ -123,10 +123,7 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
     }
 
     return ReferenceIdentifier
-
-})
-
-export type ReferenceIdentifier = Mixin<typeof ReferenceIdentifier>
+}){}
 
 
-export class MinimalReferenceIdentifier extends ReferenceIdentifier(FieldIdentifier(CalculatedValueSync)) {}
+export class MinimalReferenceIdentifier extends ReferenceIdentifier.mix(FieldIdentifier.mix(CalculatedValueSync)) {}

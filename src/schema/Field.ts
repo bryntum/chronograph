@@ -1,4 +1,4 @@
-import { Base } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 import { FieldIdentifierConstructor, MinimalFieldIdentifier } from "../replica/Identifier.js"
 import { EntityMeta } from "./EntityMeta.js"
 

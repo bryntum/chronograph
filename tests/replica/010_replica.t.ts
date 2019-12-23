@@ -1,7 +1,7 @@
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { calculate, Entity, field } from "../../src/replica/Entity.js"
-import { MinimalReplica } from "../../src/replica/Replica.js"
+import { Replica } from "../../src/replica/Replica.js"
 import { Schema } from "../../src/schema/Schema.js"
 
 declare const StartTest : any
@@ -14,7 +14,7 @@ StartTest(t => {
         const entity            = schema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @field()
             id              : string
 
@@ -35,7 +35,7 @@ StartTest(t => {
         }
 
         @entity
-        class Book extends Entity(Base) {
+        class Book extends Entity.mix(Base) {
             @field()
             name            : string
 
@@ -46,7 +46,7 @@ StartTest(t => {
         t.ok(schema.hasEntity('Author'), 'Entity added to schema')
         t.ok(schema.hasEntity('Book'), 'Entity added to schema')
 
-        const replica1          = MinimalReplica.new({ schema : schema })
+        const replica1          = Replica.new({ schema : schema })
 
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
         const tomSoyer          = Book.new({ name : 'Tom Soyer', writtenBy : markTwain })
@@ -68,7 +68,7 @@ StartTest(t => {
 
     t.it('Helper methods', async t => {
 
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @field()
             firstName       : string
 
@@ -90,7 +90,7 @@ StartTest(t => {
             }
         }
 
-        const replica1          = MinimalReplica.new()
+        const replica1          = Replica.new()
 
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
 
@@ -112,7 +112,7 @@ StartTest(t => {
         const entity            = schema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @field()
             firstName       : string
 
@@ -120,7 +120,7 @@ StartTest(t => {
             lastName        : string
         }
 
-        const replica1          = MinimalReplica.new({ schema : schema })
+        const replica1          = Replica.new({ schema : schema })
 
         const markTwain         = Author.new()
 

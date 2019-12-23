@@ -1,4 +1,4 @@
-import { Base } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 import { Field, Name } from "./Field.js"
 import { Schema } from "./Schema.js"
 

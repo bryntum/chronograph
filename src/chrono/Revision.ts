@@ -1,10 +1,10 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
-import { QuarkI, TombStone } from "./Quark.js"
-import { MinimalTransaction } from "./Transaction.js"
+import { Quark, TombStone } from "./Quark.js"
+import { Transaction } from "./Transaction.js"
 
 
-export type Scope = Map<Identifier, QuarkI>
+export type Scope = Map<Identifier, Quark>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -12,9 +12,7 @@ export type RevisionClock   = number
 
 let CLOCK : RevisionClock = 0
 
-export const Revision = <T extends AnyConstructor<Base>>(base : T) =>
-
-class Revision extends base {
+export class Revision extends Base {
     createdAt               : RevisionClock = CLOCK++
 
     name                    : string    = 'revision-' + this.createdAt
@@ -29,7 +27,7 @@ class Revision extends base {
     selfDependent           : Set<Identifier>   = new Set()
 
 
-    getLatestEntryFor (identifier : Identifier) : QuarkI {
+    getLatestEntryFor (identifier : Identifier) : Quark {
         let revision : Revision = this
 
         while (revision) {
@@ -90,8 +88,8 @@ class Revision extends base {
     }
 
 
-    calculateLazyEntry (entry : QuarkI) : any {
-        const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
+    calculateLazyEntry (entry : Quark) : any {
+        const transaction   = Transaction.new({ baseRevision : this, candidate : this })
 
         transaction.entries.set(entry.identifier, entry)
         transaction.stackGen.push(entry)
@@ -102,12 +100,4 @@ class Revision extends base {
 
         return entry.getValue()
     }
-
 }
-
-export type Revision = Mixin<typeof Revision>
-
-export interface RevisionI extends Mixin<typeof Revision> {}
-
-
-export class MinimalRevision extends Revision(Base) {}

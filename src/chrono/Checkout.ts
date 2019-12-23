@@ -1,12 +1,12 @@
-import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
 import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
-import { MinimalRevision, Revision } from "./Revision.js"
-import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
+import { Revision } from "./Revision.js"
+import { Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -33,9 +33,7 @@ export const ObserverSegment = Symbol('ObserverSegment')
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Checkout = <T extends AnyConstructor<Base>>(base : T) =>
-
-class Checkout extends base {
+export class Checkout extends Base {
     // the revision currently being "checked out"
     baseRevision            : Revision      = undefined
 
@@ -68,7 +66,7 @@ class Checkout extends base {
         this.baseRevision.previous  = null
         this.listeners.clear()
 
-        this.baseRevision   = MinimalRevision.new()
+        this.baseRevision   = Revision.new()
         this.topRevision    = this.baseRevision
 
         clearLazyProperty(this, 'followingRevision')
@@ -191,7 +189,7 @@ class Checkout extends base {
     get activeTransaction () : Transaction {
         if (this._activeTransaction) return this._activeTransaction
 
-        return this._activeTransaction = MinimalTransaction.new({
+        return this._activeTransaction = Transaction.new({
             baseRevision                : this.baseRevision,
             graph                       : this
         })
@@ -459,8 +457,4 @@ class Checkout extends base {
     }
 }
 
-export type Checkout = Mixin<typeof Checkout>
-
-export interface CheckoutI extends Mixin<typeof Checkout> {}
-
-export type CheckoutConstructor = MixinConstructor<typeof Checkout>
+export type CheckoutConstructor = typeof Checkout

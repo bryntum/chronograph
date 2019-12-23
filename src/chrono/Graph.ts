@@ -1,19 +1,19 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 import { CalculationIterator } from "../primitives/Calculation.js"
 import { Checkout } from "./Checkout.js"
-import { MinimalRevision, Revision } from "./Revision.js"
+import { Revision } from "./Revision.js"
 
 
 export type ChronoIterator<ResultT, YieldT = any> = CalculationIterator<ResultT, YieldT>
 
-
 //---------------------------------------------------------------------------------------------------------------------
-export const ChronoGraph = <T extends AnyConstructor<Checkout>>(base : T) =>
+export class ChronoGraph extends Mixin(
+    [ Checkout ],
+    <T extends AnyConstructor<Checkout>>(base : T) =>
 
 class ChronoGraph extends base {
-    baseRevision        : Revision      = MinimalRevision.new()
-}
+    baseRevision        : Revision      = Revision.new()
+}){}
 
-export type ChronoGraph = Mixin<typeof ChronoGraph>
-
-export class MinimalChronoGraph extends ChronoGraph(Checkout(Base)) {}
+// backward compat
+export const MinimalChronoGraph = ChronoGraph

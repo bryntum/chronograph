@@ -1,6 +1,5 @@
 import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
-import { instanceOf } from "../class/InstanceOf.js"
-import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"
@@ -12,7 +11,9 @@ export interface PartOfEntityIdentifier {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const FieldIdentifier = instanceOf(<T extends AnyConstructor<Identifier>>(base : T) =>
+export class FieldIdentifier extends Mixin(
+    [ Identifier ],
+    <T extends AnyConstructor<Identifier>>(base : T) =>
 
 class FieldIdentifier extends base implements PartOfEntityIdentifier {
     field       : Field             = undefined
@@ -33,21 +34,18 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     toString () : string {
         return `[${ this.field.name }] of [${ this.self }]`
     }
-})
+}){}
 
-export type FieldIdentifier = Mixin<typeof FieldIdentifier>
+export type FieldIdentifierConstructor  = typeof FieldIdentifier
 
-export type FieldIdentifierConstructor  = MixinConstructor<typeof FieldIdentifier>
-
-export interface FieldIdentifierI extends FieldIdentifier {}
-
-
-export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) {}
+export class MinimalFieldIdentifier extends FieldIdentifier.mix(CalculatedValueGen) {}
 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityIdentifier = <T extends AnyConstructor<CalculatedValueGen>>(base : T) =>
+export class EntityIdentifier extends Mixin(
+    [ Identifier ],
+    <T extends AnyConstructor<Identifier>>(base : T) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta        = undefined
@@ -58,11 +56,6 @@ class EntityIdentifier extends base implements PartOfEntityIdentifier {
     toString () : string {
         return `Entity identifier [${ this.self }]`
     }
-}
+}){}
 
-export type EntityIdentifier = Mixin<typeof EntityIdentifier>
-
-export interface EntityIdentifierI extends EntityIdentifier {}
-
-
-export class MinimalEntityIdentifier extends EntityIdentifier(CalculatedValueGen) {}
+export class MinimalEntityIdentifier extends EntityIdentifier.mix(CalculatedValueGen) {}

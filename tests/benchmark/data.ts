@@ -1,9 +1,9 @@
 import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
-import { AnyConstructor, Base } from "../../src/class/Mixin.js"
+import { AnyConstructor, Base, IdentityMixin, Mixin, MixinAny } from "../../src/class/BetterMixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
-import { MinimalReplica, Replica } from "../../src/replica/Replica.js"
+import { Replica } from "../../src/replica/Replica.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[], counter : number }
@@ -287,7 +287,8 @@ export type ReplicaGenerationResult  = { replica : Replica, entities : Entity[] 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Mixin1 = <T extends AnyConstructor<Entity>>(base : T) => {
+export class Mixin1 extends Mixin(
+    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
 
     class Mixin1 extends base {
         @field()
@@ -307,10 +308,11 @@ export const Mixin1 = <T extends AnyConstructor<Entity>>(base : T) => {
     }
 
     return Mixin1
-}
+}){}
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Mixin2 = <T extends AnyConstructor<Entity>>(base : T) => {
+export class Mixin2 extends Mixin(
+    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
 
     class Mixin2 extends base {
         @field()
@@ -330,10 +332,11 @@ export const Mixin2 = <T extends AnyConstructor<Entity>>(base : T) => {
     }
 
     return Mixin2
-}
+}){}
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Mixin3 = <T extends AnyConstructor<Entity>>(base : T) => {
+export class Mixin3 extends Mixin(
+    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
 
     class Mixin3 extends base {
         @field()
@@ -353,11 +356,12 @@ export const Mixin3 = <T extends AnyConstructor<Entity>>(base : T) => {
     }
 
     return Mixin3
-}
+}){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Mixin4 = <T extends AnyConstructor<Entity>>(base : T) => {
+export class Mixin4 extends Mixin(
+    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
 
     class Mixin4 extends base {
         @field()
@@ -377,10 +381,11 @@ export const Mixin4 = <T extends AnyConstructor<Entity>>(base : T) => {
     }
 
     return Mixin4
-}
+}){}
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Mixin5 = <T extends AnyConstructor<Entity>>(base : T) => {
+export class Mixin5 extends Mixin(
+    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
 
     class Mixin5 extends base {
         @field()
@@ -400,16 +405,23 @@ export const Mixin5 = <T extends AnyConstructor<Entity>>(base : T) => {
     }
 
     return Mixin5
-}
+}){}
 
-class TestEntity5 extends Mixin5(Mixin4(Mixin3(Mixin2(Mixin1(Entity(Base)))))) {}
+class TestEntity5 extends MixinAny(
+    [ Mixin5, Mixin4, Mixin3, Mixin2, Mixin1, Entity, Base ],
+    IdentityMixin<Mixin5 & Mixin4 & Mixin3 & Mixin2 & Mixin1 & Entity & Base>()
+){}
 
-class TestEntity1 extends Mixin1(Entity(Base)) {}
+
+class TestEntity1 extends Mixin(
+    [ Mixin1, Entity, Base ],
+    IdentityMixin<Mixin1 & Entity & Base>()
+) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const replicaGen = (entitiesNum : number = 1000) : ReplicaGenerationResult => {
-    const replica : Replica     = MinimalReplica.new()
+    const replica : Replica     = Replica.new()
 
     let entities : Entity[]      = []
 

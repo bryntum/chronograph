@@ -1,8 +1,7 @@
 import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
-import { buildClass, instanceOf } from "../class/InstanceOf.js"
-import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, IdentityMixin, Mixin } from "../class/BetterMixin.js"
 import { CalculationSync } from "../primitives/Calculation.js"
 import { Field } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
@@ -10,26 +9,42 @@ import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketField = instanceOf(<T extends AnyConstructor<Field>>(base : T) =>
+export class ReferenceBucketField extends Mixin(
+    [ Field ],
+    <T extends AnyConstructor<Field>>(base : T) =>
 
 class ReferenceBucketField extends base {
     persistent          : boolean   = false
 
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceBucketIdentifier
-})
-
-export type ReferenceBucketField = Mixin<typeof ReferenceBucketField>
-
-
-export class MinimalReferenceBucketField extends ReferenceBucketField(Field) {}
-
-//---------------------------------------------------------------------------------------------------------------------
-export const bucket : FieldDecorator<typeof MinimalReferenceBucketField> =
-    (fieldConfig?, fieldCls = MinimalReferenceBucketField) => generic_field(fieldConfig, fieldCls)
+}){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
+export const bucket : FieldDecorator<typeof ReferenceBucketField> =
+    (fieldConfig?, fieldCls = ReferenceBucketField) => generic_field(fieldConfig, fieldCls)
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceBucketQuark extends Mixin(
+    [ Quark ],
+    <T extends AnyConstructor<Quark>>(base : T) =>
+
+class ReferenceBucketQuark extends base {
+    oldRefs             : Set<Entity>   = undefined
+    newRefs             : Set<Entity>   = undefined
+    previousValue       : Set<Entity>   = undefined
+
+
+    hasProposedValueInner () : boolean {
+        return Boolean(this.oldRefs || this.newRefs)
+    }
+}){}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class ReferenceBucketIdentifier extends Mixin(
+    [ FieldIdentifier ], <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
 
     class ReferenceBucketIdentifier extends base {
         level               : number                = Levels.DependsOnlyOnConstant
@@ -38,7 +53,7 @@ export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<Fi
 
         proposedValueIsBuilt    : boolean   = true
 
-        @prototypeValue(buildClass(Map, CalculationSync, Quark, ReferenceBucketQuark))
+        @prototypeValue(Mixin([ ReferenceBucketQuark, CalculationSync, Quark, Map ], IdentityMixin<ReferenceBucketQuark & CalculationSync & Quark & Map<any, any>>()))
         quarkClass          : QuarkConstructor
 
 
@@ -82,27 +97,10 @@ export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<Fi
     }
 
     return ReferenceBucketIdentifier
-})
-
-export type ReferenceBucketIdentifier = Mixin<typeof ReferenceBucketIdentifier>
+}){}
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export const ReferenceBucketQuark = <T extends AnyConstructor<Quark>>(base : T) =>
-
-class ReferenceBucketQuark extends base {
-    oldRefs             : Set<Entity>   = undefined
-    newRefs             : Set<Entity>   = undefined
-    previousValue       : Set<Entity>   = undefined
-
-
-    hasProposedValueInner () : boolean {
-        return Boolean(this.oldRefs || this.newRefs)
-    }
-}
-
-export type ReferenceBucketQuark = Mixin<typeof ReferenceBucketQuark>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier(FieldIdentifier(CalculatedValueSync)) {}
+export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier.mix(FieldIdentifier.mix(CalculatedValueSync)) {}

@@ -1,7 +1,7 @@
 import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
-import { MinimalRevision } from "../../src/chrono/Revision.js"
+import { Revision } from "../../src/chrono/Revision.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
 declare const StartTest : any
@@ -343,7 +343,7 @@ StartTest(t => {
         t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 0, 1, 1, 2, 3 ], "Correct result calculated")
 
         // ----------------
-        const c1Spy         = t.spyOn(MinimalRevision.prototype, 'calculateLazyEntry')
+        const c1Spy         = t.spyOn(Revision.prototype, 'calculateLazyEntry')
 
         graph1.write(i1, 1)
 

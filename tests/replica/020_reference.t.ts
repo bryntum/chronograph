@@ -1,8 +1,8 @@
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
 import { reference } from "../../src/replica/Reference.js"
 import { bucket } from "../../src/replica/ReferenceBucket.js"
-import { MinimalReplica } from "../../src/replica/Replica.js"
+import { Replica } from "../../src/replica/Replica.js"
 import { Schema } from "../../src/schema/Schema.js"
 
 declare const StartTest : any
@@ -15,18 +15,18 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @bucket()
             books           : Set<Book>
         }
 
         @entity
-        class Book extends Entity(Base) {
+        class Book extends Entity.mix(Base) {
             @reference({ bucket : 'books' })
             writtenBy       : Author
         }
 
-        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const replica1          = Replica.new({ schema : SomeSchema })
 
         const markTwain         = Author.new()
         const tomSoyer          = Book.new({ writtenBy : markTwain })
@@ -71,18 +71,18 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @bucket()
             books           : Set<Book>
         }
 
         @entity
-        class Book extends Entity(Base) {
+        class Book extends Entity.mix(Base) {
             @reference({ bucket : 'books' })
             writtenBy       : Author
         }
 
-        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const replica1          = Replica.new({ schema : SomeSchema })
 
         const markTwain         = Author.new()
         const markTwain2        = Author.new()
@@ -128,7 +128,7 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class TreeNode extends Entity(Base) {
+        class TreeNode extends Entity.mix(Base) {
             @bucket()
             children            : Set<TreeNode>
 
@@ -136,7 +136,7 @@ StartTest(t => {
             parent              : TreeNode
         }
 
-        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const replica1          = Replica.new({ schema : SomeSchema })
 
         const node1             = TreeNode.new()
         const node2             = TreeNode.new({ parent : node1 })
@@ -157,7 +157,7 @@ StartTest(t => {
     t.it('Resolver for reference should work', async t => {
         const authors       = new Map<string, Author>()
 
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             id          : string
 
             @bucket()
@@ -170,7 +170,7 @@ StartTest(t => {
             }
         }
 
-        class Book extends Entity(Base) {
+        class Book extends Entity.mix(Base) {
             @reference({ bucket : 'books', resolver : locator => authors.get(locator) })
             writtenBy       : Author | string
 
@@ -179,7 +179,7 @@ StartTest(t => {
         }
 
         //------------------
-        const replica           = MinimalReplica.new()
+        const replica           = Replica.new()
 
         const markTwain         = Author.new({ id : 'markTwain'})
         const tomSoyer          = Book.new({ writtenBy : 'markTwain' })
@@ -211,7 +211,7 @@ StartTest(t => {
     t.it('Reference with resolver, without bucket', async t => {
         const authors       = new Map<string, Author>()
 
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             id          : string
 
             initialize () {
@@ -221,12 +221,12 @@ StartTest(t => {
             }
         }
 
-        class Book extends Entity(Base) {
+        class Book extends Entity.mix(Base) {
             @reference({ resolver : locator => authors.get(locator) })
             writtenBy       : Author | string
         }
 
-        const replica           = MinimalReplica.new()
+        const replica           = Replica.new()
 
         const markTwain         = Author.new({ id : 'markTwain'})
         const tomSoyer          = Book.new({ writtenBy : 'markTwain' })
@@ -244,7 +244,7 @@ StartTest(t => {
         const dictionary1       = new Map<string, Entity1>()
         const dictionary2       = new Map<string, Entity2>()
 
-        class Entity1 extends Entity(Base) {
+        class Entity1 extends Entity.mix(Base) {
             id              : string
 
             @bucket()
@@ -260,7 +260,7 @@ StartTest(t => {
             }
         }
 
-        class Entity2 extends Entity(Base) {
+        class Entity2 extends Entity.mix(Base) {
             id              : string
 
             @bucket()
@@ -276,7 +276,7 @@ StartTest(t => {
             }
         }
 
-        const replica           = MinimalReplica.new()
+        const replica           = Replica.new()
 
         const entity1           = Entity1.new({ id : 'entity1', referencingEntity2 : 'entity2' })
         const entity2           = Entity2.new({ id : 'entity2', referencingEntity1 : 'entity1' })
@@ -299,18 +299,18 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @bucket()
             books           : Set<Book>
         }
 
         @entity
-        class Book extends Entity(Base) {
+        class Book extends Entity.mix(Base) {
             @reference({ bucket : 'books' })
             writtenBy       : Author
         }
 
-        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const replica1          = Replica.new({ schema : SomeSchema })
 
         const markTwain         = Author.new()
         const tomSoyer          = Book.new({ writtenBy : markTwain })

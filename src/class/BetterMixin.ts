@@ -1,15 +1,15 @@
 import { CI, MemoizedIterator, MI } from "../collection/Iterator.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-const MixinIdentity         = Symbol('MixinIdentity')
-const MixinStateProperty    = Symbol('MixinStateProperty')
+const MixinInstanceOfProperty   = Symbol('MixinIdentity')
+const MixinStateProperty        = Symbol('MixinStateProperty')
 
 export const VISITED_TOPOLOGICALLY      = -1
 
 //---------------------------------------------------------------------------------------------------------------------
 export type MixinStateExtension = {
-    [MixinIdentity]         : symbol
-    [MixinStateProperty]    : MixinState
+    [MixinInstanceOfProperty]   : symbol
+    [MixinStateProperty]        : MixinState
 }
 
 export type MixinFunction   = ((base : AnyConstructor) => AnyConstructor) & MixinStateExtension
@@ -111,11 +111,17 @@ export class MixinWalkDepthState {
 export type MixinId         = number
 export type MixinHash       = string
 
-// Note: 65535 mixins only, because of the hashing function implementation
+// Note: 65535 mixins only, because of the hashing function implementation (String.fromCharCode)
 let MIXIN_ID : MixinId      = 1
 
+//---------------------------------------------------------------------------------------------------------------------
 const identity              = a => a
 
+export type IdentityMixin<Base extends object>         = < T extends AnyConstructor<Base>>(base : T) => T
+
+export const IdentityMixin             = <Base extends object>() : IdentityMixin<Base> => identity
+
+//---------------------------------------------------------------------------------------------------------------------
 // possibly will need to use custom root base class, `class ZeroBaseClass {}` due to transpilation complications
 const ZeroBaseClass         = Object
 
@@ -156,7 +162,7 @@ export class MixinState {
             extendedClass.prototype[ symbol ] = true
             return extendedClass
         }, {
-            [ MixinIdentity ]       : symbol,
+            [ MixinInstanceOfProperty ]       : symbol,
             [ MixinStateProperty ]  : me
         })
 
@@ -229,12 +235,14 @@ export class MixinState {
         ).cls
 
         const minimalClass : MixinClass = Object.assign(minimalClassConstructor, {
-            [MixinIdentity]         : this.identitySymbol,
+            [MixinInstanceOfProperty]         : this.identitySymbol,
             [MixinStateProperty]    : this,
             mix                     : this.mixinLambda,
+            derive                  : (base) => Mixin([ minimalClass, base ], identity),
             $                       : this,
             toString                : this.toString.bind(this)
         })
+
 
         Object.defineProperty(minimalClass, Symbol.hasInstance, { value : isInstanceOfStatic })
 
@@ -280,11 +288,12 @@ export type BaseConstructor             = typeof Base
 export type AnyFunction<A = any>        = (...input : any[]) => A
 export type AnyConstructor<A = object>  = new (...input : any[]) => A
 
-
 //---------------------------------------------------------------------------------------------------------------------
 export type MixinClassConstructor<T> =
     T extends AnyFunction<infer M> ?
-        (M extends AnyConstructor<Base> ? M & BaseConstructor : M) & { mix : T }
+        M extends AnyConstructor<Base> ?
+            M & BaseConstructor & { mix? : T, derive? : <K extends AnyConstructor<object>>(base : K) => K & M }
+        : M & { mix? : T, derive? : <K extends AnyConstructor<object>>(base : K) => K & M }
     : never
 
 
@@ -414,7 +423,7 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda
 // this function works both with default mixin class and mixin application function
 // it supplied internally as [Symbol.hasInstance] for the default mixin class and mixin application function
 const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any) : boolean {
-    return Boolean(instance && instance[ this[ MixinIdentity ] ])
+    return Boolean(instance && instance[ this[ MixinInstanceOfProperty ] ])
 }
 
 
@@ -425,7 +434,7 @@ const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any
 export const isInstanceOf = <T>(instance : any, func : T)
     : instance is (T extends AnyConstructor<infer A> ? A : unknown) =>
 {
-    return Boolean(instance && instance[ func[ MixinIdentity ] ])
+    return Boolean(instance && instance[ func[ MixinInstanceOfProperty ] ])
 }
 
 

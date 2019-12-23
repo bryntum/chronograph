@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 import {
     CalculationContext,
     runGeneratorAsyncWithEffect,
@@ -7,7 +7,7 @@ import {
 } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { CheckoutI, PropagateArguments } from "./Checkout.js"
+import { Checkout, PropagateArguments } from "./Checkout.js"
 import {
     Effect,
     HasProposedValueSymbol,
@@ -29,7 +29,7 @@ import {
 } from "./Effect.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
-import { MinimalRevision, Revision, Scope } from "./Revision.js"
+import { Revision, Scope } from "./Revision.js"
 import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
 
 
@@ -49,97 +49,17 @@ export const EdgeTypeNormal    = EdgeType.Normal
 export const EdgeTypePast      = EdgeType.Past
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export class WalkForwardOverwriteContext extends WalkContext<Identifier> {
-//     visited         : Map<Identifier, Quark>
-//
-//     baseRevision    : Revision
-//
-//     pushTo          : LeveledQueue<Quark>
-//
-//
-//     setVisitedInfo (identifier : Identifier, visitedAt : number, info : Quark) : VisitInfo {
-//         if (!info) {
-//             info      = identifier.newQuark(this.baseRevision.createdAt)
-//
-//             this.visited.set(identifier, info)
-//         }
-//
-//         info.visitedAt    = visitedAt
-//
-//         if (info.visitEpoch !== this.currentEpoch) info.resetToEpoch(this.currentEpoch)
-//
-//         return info
-//     }
-//
-//
-//     onTopologicalNode (identifier : Identifier) {
-//         if (!identifier.lazy) this.pushTo.push(this.visited.get(identifier))
-//     }
-//
-//
-//     onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
-//         return OnCycleAction.Resume
-//     }
-//
-//
-//     doCollectNext (from : Identifier, identifier : Identifier, toVisit : WalkStep<Identifier>[]) {
-//         let entry : Quark   = this.visited.get(identifier)
-//
-//         if (!entry) {
-//             entry           = identifier.newQuark(this.baseRevision.createdAt)
-//
-//             this.visited.set(identifier, entry)
-//         }
-//
-//         if (entry.visitEpoch < this.currentEpoch) entry.resetToEpoch(this.currentEpoch)
-//
-//         entry.edgesFlow++
-//
-//         toVisit.push({ node : identifier, from : from, label : undefined })
-//     }
-//
-//
-//     collectNext (node : Identifier, toVisit : WalkStep<Identifier>[], visitInfo : Quark) {
-//         const latestEntry       = this.baseRevision.getLatestEntryFor(node)
-//
-//         if (latestEntry) {
-//             // since `collectNext` is called exactly once for every node, all nodes (which are transitions)
-//             // will have the `previous` property populated
-//             visitInfo.previous      = latestEntry
-//
-//             // iterator version is slower
-//             // for (const outgoingEntry of latestEntry.outgoingInTheFuture(this.baseRevision)) {
-//             //     this.doCollectNext(node, outgoingEntry.identifier, toVisit)
-//             // }
-//
-//             latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
-//                 this.doCollectNext(node, outgoingEntry.identifier, toVisit)
-//             })
-//         }
-//
-//         for (const outgoingEntry of visitInfo.getOutgoing().values()) {
-//             const identifier    = outgoingEntry.identifier
-//
-//             this.doCollectNext(node, identifier, toVisit)
-//         }
-//     }
-// }
-
-
 //---------------------------------------------------------------------------------------------------------------------
 export type TransactionPropagateResult = { revision : Revision, entries : Scope }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Transaction = <T extends AnyConstructor<Base>>(base : T) =>
-
-class Transaction extends base {
+export class Transaction extends Base {
     baseRevision            : Revision              = undefined
 
     candidate               : Revision              = undefined
 
-    graph                   : CheckoutI             = undefined
+    graph                   : Checkout              = undefined
 
     isClosed                : boolean               = false
 
@@ -181,7 +101,7 @@ class Transaction extends base {
             // }
         })
 
-        if (!this.candidate) this.candidate = MinimalRevision.new({ previous : this.baseRevision })
+        if (!this.candidate) this.candidate = Revision.new({ previous : this.baseRevision })
 
         // the `onEffectSync` should be bound to the `yieldSync` of course, and `yieldSync` should look like:
         //     yieldSync (effect : YieldableValue) : any {
@@ -893,9 +813,3 @@ class Transaction extends base {
         this.activeStack    = prevActiveStack
     }
 }
-
-export type Transaction = Mixin<typeof Transaction>
-
-export interface TransactionI extends Mixin<typeof Transaction> {}
-
-export class MinimalTransaction extends Transaction(Base) {}

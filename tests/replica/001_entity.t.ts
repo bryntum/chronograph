@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { Entity } from "../../src/replica/Entity.js"
 
 declare const StartTest : any
@@ -6,7 +6,7 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it('Entity, created lazily, subclass entry accessed first', async t => {
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
         }
 
         class SpecialAuthor extends Author {
@@ -24,7 +24,7 @@ StartTest(t => {
 
 
     t.it('Entity, created lazily, superclass entry accessed first', async t => {
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
         }
 
         class SpecialAuthor extends Author {

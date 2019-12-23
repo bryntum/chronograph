@@ -1,4 +1,4 @@
-import { Base } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 
 const performance : { now : () => number }  = globalThis.performance || Date
 
