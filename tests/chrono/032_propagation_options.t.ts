@@ -1,4 +1,4 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
@@ -8,7 +8,7 @@ StartTest(t => {
 
 
     t.it('Should be able to only calculate the specified nodes', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const box1      = graph.variable(1)
         const box2      = graph.variable(2)

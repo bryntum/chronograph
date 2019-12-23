@@ -1,11 +1,11 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Graph branching', async t => {
-        const graph1 : ChronoGraph   = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph1.variable(0)
 
@@ -27,7 +27,7 @@ StartTest(t => {
 
 
     t.it('Should not recalculate nodes from previous branch', t => {
-        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
         const i2            = graph1.variableId('i2', 1)
@@ -70,7 +70,7 @@ StartTest(t => {
 
 
     t.it('Should not recalculate nodes from alternative branch', async t => {
-        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
         const i2            = graph1.variableId('i2', 1)
@@ -114,7 +114,7 @@ StartTest(t => {
 
 
     t.it('Should not use stale deep history', async t => {
-        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
         const i2            = graph1.variableId('i2', 1)
@@ -153,7 +153,7 @@ StartTest(t => {
 
 
     t.it('Should recalculate nodes, changed in deep history', async t => {
-        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableId('i1', 0)
         const i2            = graph1.variableId('i2', 1)
@@ -187,7 +187,7 @@ StartTest(t => {
 
 
     t.it('Should eliminate unchanged trees, in cross-branch case', async t => {
-        const graph1 : ChronoGraph       = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph1.variableId('i1', 0)
         const i2        = graph1.variableId('i2', 10)

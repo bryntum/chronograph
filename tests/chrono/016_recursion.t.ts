@@ -1,12 +1,12 @@
 import { ProposedOrCurrent, Write, WriteSeveral } from "../../src/chrono/Effect.js"
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Base case - gen', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableId('var0', 0)
         const var1      = graph.variableId('var1', 0)
@@ -51,7 +51,7 @@ StartTest(t => {
 
 
     t.it('Subtree elimination - gen', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableId('var0', 0)
         const var1      = graph.variableId('var1', 0)
@@ -109,7 +109,7 @@ StartTest(t => {
 
 
     t.it('Identifier listeners + subtree elimination', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         // const var0      = graph.variableId('var0', 0)
         // const var1      = graph.variableId('var1', 0)

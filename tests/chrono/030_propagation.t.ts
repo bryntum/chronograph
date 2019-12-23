@@ -1,11 +1,11 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Should not recalculate nodes outside of affected scope', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const box1      = graph.variable(0)
         const box2      = graph.variable(0)
@@ -64,7 +64,7 @@ StartTest(t => {
 
 
     t.it('Should eliminate unchanged subtrees', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableId('i1', 0)
         const i2        = graph.variableId('i2', 10)
@@ -121,7 +121,7 @@ StartTest(t => {
 
 
     t.it('Should determine all potentially changed nodes', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const atom0     = graph.variable(0)
 
@@ -152,7 +152,7 @@ StartTest(t => {
 
 
     t.it('Should preserve dependencies from eliminated subtrees #1', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableId('i1', 0)
         const i2        = graph.variableId('i2', 10)
@@ -219,7 +219,7 @@ StartTest(t => {
 
 
     t.it('Should preserve dependencies from eliminated subtrees #2', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableId('i1', 0)
         const i2        = graph.variableId('i2', 10)
@@ -279,7 +279,7 @@ StartTest(t => {
 
 
     t.it('Should preserve dependencies from shadowed entries #1', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableId('i1', 1)
         const i2        = graph.variableId('i2', 2)
@@ -329,7 +329,7 @@ StartTest(t => {
 
 
     t.it('Should preserve dependencies from shadowed entries #2', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableId('i1', 1)
         const i2        = graph.variableId('i2', 2)
@@ -393,7 +393,7 @@ StartTest(t => {
 
 
     t.it('Should preserve dependencies from shadowed entries #3', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableId('i1', 0)
         const i2        = graph.variableId('i2', 1)

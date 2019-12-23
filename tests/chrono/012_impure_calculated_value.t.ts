@@ -1,5 +1,5 @@
 import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
@@ -8,7 +8,7 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it('`ProposedOrCurrent` effect', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const max       = graph.variableId('variable', 100)
 
@@ -62,7 +62,7 @@ StartTest(t => {
 
 
     t.it('ProposedOrCurrent - caching, generators', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableId('var0', 1)
 
@@ -146,7 +146,7 @@ StartTest(t => {
 
 
     t.it('ProposedOrCurrent - caching, sync', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableId('var0', 1)
 
@@ -230,7 +230,7 @@ StartTest(t => {
 
 
     t.it('Lazily calculated impure identifier, generators', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableId('var0', 1)
 
@@ -310,7 +310,7 @@ StartTest(t => {
 
 
     t.it('Lazily calculated impure identifier, sync', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableId('var0', 1)
 

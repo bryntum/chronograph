@@ -1,5 +1,5 @@
 import { Benchmark } from "../../src/benchmark/Benchmark.js"
-import { MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, Variable } from "../../src/chrono/Identifier.js"
 import { GraphGenerationResult, mostlyShadowingGraph } from "./data.js"
 
@@ -28,7 +28,7 @@ export const tombStonesMemoryLeak = Benchmark.new({
     name        : 'Memory leak because of tombstones',
 
     setup       : async () : Promise<GraphGenerationResult> => {
-        return { graph : MinimalChronoGraph.new(), boxes : [], counter : 0 }
+        return { graph : ChronoGraph.new(), boxes : [], counter : 0 }
     },
 
 

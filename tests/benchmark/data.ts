@@ -1,5 +1,5 @@
 import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
 import { AnyConstructor, Base, IdentityMixin, Mixin, MixinAny } from "../../src/class/BetterMixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
@@ -11,7 +11,7 @@ export type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[]
 
 //---------------------------------------------------------------------------------------------------------------------
 export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult => {
-    const graph : ChronoGraph   = MinimalChronoGraph.new()
+    const graph : ChronoGraph   = ChronoGraph.new()
 
     let boxes       = []
 
@@ -70,7 +70,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
 
 //---------------------------------------------------------------------------------------------------------------------
 export const deepGraphGenShared = (atomNum : number = 1000) : GraphGenerationResult => {
-    const graph : ChronoGraph   = MinimalChronoGraph.new()
+    const graph : ChronoGraph   = ChronoGraph.new()
 
     let boxes       = []
 
@@ -154,7 +154,7 @@ export const deepGraphGenShared = (atomNum : number = 1000) : GraphGenerationRes
 
 //---------------------------------------------------------------------------------------------------------------------
 export const deepGraphSync = (atomNum : number = 1000) : GraphGenerationResult => {
-    const graph : ChronoGraph   = MinimalChronoGraph.new()
+    const graph : ChronoGraph   = ChronoGraph.new()
 
     let boxes       = []
 
@@ -465,7 +465,7 @@ export const replicaGen = (entitiesNum : number = 1000) : ReplicaGenerationResul
 // repeating the set for box 0 will produce a lot of shadowing quarks (but should not leak memory anyway)
 
 export const mostlyShadowingGraph = (atomNum : number = 1000) : GraphGenerationResult => {
-    const graph : ChronoGraph           = MinimalChronoGraph.new()
+    const graph : ChronoGraph           = ChronoGraph.new()
 
     const boxes : Identifier[]          = []
     const res : GraphGenerationResult   = { graph, boxes, counter : 0 }

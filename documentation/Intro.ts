@@ -14,7 +14,7 @@ const identifier2 = Identifier.new({ calculation : (Y : SyncEffectHandler) => Y(
 
 //-----------------------------------
 // example3
-import { ChronoIterator, MinimalChronoGraph } from "../src/chrono/Graph.js"
+import { ChronoIterator, ChronoGraph } from "../src/chrono/Graph.js"
 
 const identifier3 = Identifier.new({
     *calculation  (Y : SyncEffectHandler) : ChronoIterator<number> {
@@ -70,7 +70,7 @@ const identifier7 = Identifier.new({
 //-----------------------------------
 // example6
 
-const graph = MinimalChronoGraph.new()
+const graph = ChronoGraph.new()
 
 graph.addIdentifier(identifier1)
 

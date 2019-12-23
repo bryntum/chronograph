@@ -14,6 +14,3 @@ export class ChronoGraph extends Mixin(
 class ChronoGraph extends base {
     baseRevision        : Revision      = Revision.new()
 }){}
-
-// backward compat
-export const MinimalChronoGraph = ChronoGraph
