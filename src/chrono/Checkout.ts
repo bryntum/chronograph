@@ -3,7 +3,7 @@ import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
-import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
+import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
@@ -280,7 +280,6 @@ export class Checkout extends Base {
     }
 
 
-
     variable (value : any) : Variable {
         const variable      = Variable.new()
 
@@ -298,14 +297,20 @@ export class Checkout extends Base {
 
 
     identifier<ContextT extends Context> (calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = CalculatedValueGen.new({ calculation, context })
+        const identifier    = calculation.constructor.name === 'GeneratorFunction' ?
+            CalculatedValueGen.new({ calculation, context })
+            :
+            CalculatedValueSync.new({ calculation, context })
 
         return this.addIdentifier(identifier)
     }
 
 
     identifierId<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = CalculatedValueGen.new({ calculation, context, name })
+        const identifier    = calculation.constructor.name === 'GeneratorFunction' ?
+            CalculatedValueGen.new({ calculation, context })
+            :
+            CalculatedValueSync.new({ calculation, context })
 
         return this.addIdentifier(identifier)
     }
@@ -333,9 +338,7 @@ export class Checkout extends Base {
 
 
     write<T> (identifier : Identifier<T>, proposedValue : T, ...args : any[]) {
-        if (proposedValue === undefined) proposedValue = null
-
-        identifier.write.call(identifier.context || identifier, identifier, this.activeTransaction, null, proposedValue, ...args)
+        this.activeTransaction.write(identifier, proposedValue, ...args)
     }
 
 

@@ -22,7 +22,7 @@ import {
     ProposedValueOfSymbol,
     TransactionSymbol,
     UnsafeProposedOrPreviousValueOfSymbol,
-    WriteEffect,
+    WriteEffect, WriteInfo,
     WriteSeveralEffect,
     WriteSeveralSymbol,
     WriteSymbol
@@ -86,6 +86,8 @@ export class Transaction extends Base {
 
     plannedTotalIdentifiersToCalculate  : number    = 0
 
+    writes                  : WriteInfo[]           = []
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -125,6 +127,11 @@ export class Transaction extends Base {
     // }
 
 
+    onNewWrite () {
+
+    }
+
+
     getActiveEntry () : Quark {
         return this.activeStack[ this.activeStack.length - 1 ]
 
@@ -150,7 +157,26 @@ export class Transaction extends Base {
     }
 
 
-    // TODO merge into `yieldSync` ??
+    readOptmistically (identifier : Identifier) : any {
+        // see the comment for the `onEffectSync`
+        if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
+
+        //----------------------
+        const entry         = this.addEdge(identifier, this.getActiveEntry(), EdgeTypeNormal)
+
+        if (entry.hasValue()) return entry.getValue()
+
+        //----------------------
+        this.stackSync.push(entry)
+
+        this.calculateTransitionsStackSync(this.onEffectSync, this.stackSync)
+
+        if (!entry.hasValue()) throw new Error('Cycle during synchronous computation')
+
+        return entry.getValue()
+    }
+
+
     read (identifier : Identifier) : any {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
@@ -182,7 +208,16 @@ export class Transaction extends Base {
 
 
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
-        identifier.write.call(identifier.context || identifier, identifier, this, null, proposedValue, ...args)
+        if (proposedValue === undefined) proposedValue = null
+
+        this.writes.push(WriteEffect.new({
+            identifier      : identifier,
+            proposedArgs    : [ proposedValue, ...args ]
+        }))
+
+        this.onNewWrite()
+
+        // identifier.write.call(identifier.context || identifier, identifier, this, null, proposedValue, ...args)
     }
 
 
@@ -408,9 +443,13 @@ export class Transaction extends Base {
 
         this.walkContext.startNewEpoch()
 
-        const writeTo   = effect.writeTarget
+        this.writes.push(effect)
 
-        writeTo.write.call(writeTo.context || writeTo, writeTo, this, null, ...effect.proposedArgs)
+        // const writeTo   = effect.identifier
+        //
+        // writeTo.write.call(writeTo.context || writeTo, writeTo, this, null, ...effect.proposedArgs)
+
+        this.onNewWrite()
     }
 
 
@@ -419,11 +458,15 @@ export class Transaction extends Base {
 
         this.walkContext.startNewEpoch()
 
-        effect.writes.forEach(writeInfo => {
-            const identifier    = writeInfo.identifier
+        // effect.writes.forEach(writeInfo => {
+        this.writes.push(...effect.writes)
 
-            identifier.write.call(identifier.context || identifier, identifier, this, null, ...writeInfo.proposedArgs)
-        })
+            // const identifier    = writeInfo.identifier
+            //
+            // identifier.write.call(identifier.context || identifier, identifier, this, null, ...writeInfo.proposedArgs)
+        // })
+
+        this.onNewWrite()
     }
 
 
