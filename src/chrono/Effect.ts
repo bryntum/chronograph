@@ -47,23 +47,24 @@ export const OwnIdentifier : Effect = Effect.new({ handler : OwnIdentifierSymbol
 //---------------------------------------------------------------------------------------------------------------------
 export const WriteSymbol    = Symbol('WriteSymbol')
 
-export class WriteEffect extends Effect {
-    handler         : symbol    = WriteSymbol
-
-    writeTarget     : Identifier
-    proposedArgs    : [ any, ...any[] ]
-}
-
-
-export const Write = (writeTarget : Identifier, proposedValue : any, ...proposedArgs : any[]) : WriteEffect =>
-    WriteEffect.new({ writeTarget, proposedArgs : [ proposedValue, ...proposedArgs ] })
-
-
 //---------------------------------------------------------------------------------------------------------------------
 export type WriteInfo = {
     identifier      : Identifier
     proposedArgs    : [ any, ...any[] ]
 }
+
+
+export class WriteEffect extends Effect implements WriteInfo {
+    handler         : symbol    = WriteSymbol
+
+    identifier      : Identifier
+    proposedArgs    : [ any, ...any[] ]
+}
+
+
+export const Write = (identifier : Identifier, proposedValue : any, ...proposedArgs : any[]) : WriteEffect =>
+    WriteEffect.new({ identifier, proposedArgs : [ proposedValue, ...proposedArgs ] })
+
 
 export const WriteSeveralSymbol    = Symbol('WriteSeveralSymbol')
 
