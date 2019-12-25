@@ -1,3 +1,4 @@
+import { CheckoutI } from "../chrono/Checkout.js"
 import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
@@ -25,9 +26,21 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
-    // put (proposedValue : ChronoValue, ...args) {
-    //     return super.put(this.field.converter ? this.field.converter(proposedValue, this.field) : proposedValue, ...args)
-    // }
+
+    readFromGraphSync (me : this, graph : CheckoutI) : this[ 'ValueT' ] {
+        if (graph)
+            return graph.read(me)
+        else
+            return this.DATA
+    }
+
+
+    writeToGraph (me : this, graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+        if (graph)
+            graph.write(me, proposedValue, ...args)
+        else
+            this.DATA = proposedValue
+    }
 
 
     toString () : string {

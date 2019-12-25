@@ -3,7 +3,14 @@ import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
-import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "./Identifier.js"
+import {
+    CalculatedValueGen,
+    CalculatedValueGenConstructor,
+    CalculatedValueSyncConstructor,
+    Identifier,
+    Variable,
+    VariableConstructor
+} from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
 import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
@@ -282,37 +289,37 @@ class Checkout extends base {
     }
 
 
-    variable (value : any) : Variable {
-        const variable      = Variable.new()
+    variable<T> (value : T) : Variable<T> {
+        const variable      = VariableConstructor<T>()
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
     }
 
 
-    variableId (name : any, value : any) : Variable {
-        const variable      = Variable.new({ name })
+    variableNamed<T> (name : any, value : T) : Variable<T> {
+        const variable      = VariableConstructor<T>({ name })
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
     }
 
 
-    identifier<ContextT extends Context> (calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = calculation.constructor.name === 'GeneratorFunction' ?
-            CalculatedValueGen.new({ calculation, context })
+    identifier<ContextT extends Context, ValueT> (calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
+        const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
+            CalculatedValueGenConstructor<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
             :
-            CalculatedValueSync.new({ calculation, context })
+            CalculatedValueSyncConstructor<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
 
         return this.addIdentifier(identifier)
     }
 
 
-    identifierNamed<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = calculation.constructor.name === 'GeneratorFunction' ?
-            CalculatedValueGen.new({ calculation, context })
+    identifierNamed<ContextT extends Context, ValueT> (name : any, calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
+        const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
+            CalculatedValueGenConstructor<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
             :
-            CalculatedValueSync.new({ calculation, context })
+            CalculatedValueSyncConstructor<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
 
         return this.addIdentifier(identifier)
     }
@@ -356,6 +363,11 @@ class Checkout extends base {
 
     read<T> (identifier : Identifier<T>) : T {
         return this.baseRevision.read(identifier)
+    }
+
+
+    readAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        return this.activeTransaction.readAsync(identifier)
     }
 
 

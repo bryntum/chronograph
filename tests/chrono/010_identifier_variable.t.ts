@@ -77,7 +77,7 @@ StartTest(t => {
     t.it('Observe variable in generator calculation', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var1      = graph.variableId('variable', 0)
+        const var1      = graph.variableNamed('variable', 0)
 
         const iden1     = graph.identifierNamed('identifier', function * () {
             return yield var1

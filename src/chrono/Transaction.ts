@@ -237,7 +237,7 @@ class Transaction extends base {
     }
 
 
-    readOptmistically (identifier : Identifier) : any {
+    readOptmistically <T> (identifier : Identifier<T>) : T {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
@@ -257,7 +257,12 @@ class Transaction extends base {
     }
 
 
-    read (identifier : Identifier) : any {
+    readAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        return
+    }
+
+
+    read<T> (identifier : Identifier<T>) : T {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
@@ -277,7 +282,7 @@ class Transaction extends base {
     }
 
 
-    readDirty (identifier : Identifier) : any {
+    readDirty <T> (identifier : Identifier<T>) : T {
         const dirtyQuark    = this.entries.get(identifier)
 
         if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
@@ -302,6 +307,11 @@ class Transaction extends base {
 
 
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
+        return this.touch(identifier).startOrigin() as InstanceType<T[ 'quarkClass' ]>
+    }
+
+
+    getWriteTarget<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
         return this.touch(identifier).startOrigin() as InstanceType<T[ 'quarkClass' ]>
     }
 

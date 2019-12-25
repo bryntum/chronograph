@@ -66,8 +66,8 @@ StartTest(t => {
     t.it('Should eliminate unchanged subtrees', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 10)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 10)
 
         const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
@@ -154,8 +154,8 @@ StartTest(t => {
     t.it('Should preserve dependencies from eliminated subtrees #1', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 10)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 10)
 
         const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
@@ -221,11 +221,11 @@ StartTest(t => {
     t.it('Should preserve dependencies from eliminated subtrees #2', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 10)
-        const i3        = graph.variableId('i3', 20)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 10)
+        const i3        = graph.variableNamed('i3', 20)
 
-        const dispatcher = graph.variableId('d', i3)
+        const dispatcher = graph.variableNamed('d', i3)
 
         const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
@@ -281,9 +281,9 @@ StartTest(t => {
     t.it('Should preserve dependencies from shadowed entries #1', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 1)
-        const i2        = graph.variableId('i2', 2)
-        const i3        = graph.variableId('i3', 3)
+        const i1        = graph.variableNamed('i1', 1)
+        const i2        = graph.variableNamed('i2', 2)
+        const i3        = graph.variableNamed('i3', 3)
 
         const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
@@ -331,11 +331,11 @@ StartTest(t => {
     t.it('Should preserve dependencies from shadowed entries #2', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 1)
-        const i2        = graph.variableId('i2', 2)
-        const i3        = graph.variableId('i3', 3)
+        const i1        = graph.variableNamed('i1', 1)
+        const i2        = graph.variableNamed('i2', 2)
+        const i3        = graph.variableNamed('i3', 3)
 
-        const dispatcher = graph.variableId('d', i3)
+        const dispatcher = graph.variableNamed('d', i3)
 
         const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
@@ -395,8 +395,8 @@ StartTest(t => {
     t.it('Should preserve dependencies from shadowed entries #3', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 1)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 1)
 
         const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1)

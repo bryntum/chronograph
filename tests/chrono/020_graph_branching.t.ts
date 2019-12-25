@@ -29,9 +29,9 @@ StartTest(t => {
     t.it('Should not recalculate nodes from previous branch', t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
-        const dispatcher    = graph1.variableId('dispatcher', i1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
+        const dispatcher    = graph1.variableNamed('dispatcher', i1)
 
         const c1            = graph1.identifierNamed('c1', function* () {
             return (yield (yield dispatcher)) + 1
@@ -72,9 +72,9 @@ StartTest(t => {
     t.it('Should not recalculate nodes from alternative branch', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
-        const dispatcher    = graph1.variableId('dispatcher', i1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
+        const dispatcher    = graph1.variableNamed('dispatcher', i1)
 
         const c1            = graph1.identifierNamed('c1', function* () {
             return (yield (yield dispatcher)) + 1
@@ -116,9 +116,9 @@ StartTest(t => {
     t.it('Should not use stale deep history', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
-        const dispatcher    = graph1.variableId('dispatcher', i1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
+        const dispatcher    = graph1.variableNamed('dispatcher', i1)
 
         const c1            = graph1.identifierNamed('c1', function* () {
             return (yield (yield dispatcher)) + 1
@@ -155,8 +155,8 @@ StartTest(t => {
     t.it('Should recalculate nodes, changed in deep history', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
 
         const c1            = graph1.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
@@ -169,7 +169,7 @@ StartTest(t => {
         // ----------------
         const graph2        = graph1.branch()
 
-        const i3            = graph2.variableId('i3', 2)
+        const i3            = graph2.variableNamed('i3', 2)
 
         graph2.propagate()
 
@@ -189,8 +189,8 @@ StartTest(t => {
     t.it('Should eliminate unchanged trees, in cross-branch case', async t => {
         const graph1 : ChronoGraph       = MinimalChronoGraph.new()
 
-        const i1        = graph1.variableId('i1', 0)
-        const i2        = graph1.variableId('i2', 10)
+        const i1        = graph1.variableNamed('i1', 0)
+        const i2        = graph1.variableNamed('i2', 10)
 
         const c1        = graph1.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
