@@ -27,6 +27,14 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
 
+    readFromGraphDirtySync (graph) {
+        if (graph)
+            return graph.readDirty(this)
+        else
+            return this.DATA
+    }
+
+
     readFromGraphSync (graph : CheckoutI) : this[ 'ValueT' ] {
         if (graph)
             return graph.read(this)
