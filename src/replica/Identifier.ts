@@ -68,6 +68,14 @@ class EntityIdentifier extends base implements PartOfEntityIdentifier {
     self        : Entity            = undefined
 
 
+    // entity atom is considered changed if any of its incoming atoms has changed
+    // this just means if it's calculation method has been called, it should always
+    // assign a new value
+    equality () : boolean {
+        return false
+    }
+
+
     toString () : string {
         return `Entity identifier [${ this.self }]`
     }

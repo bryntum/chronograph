@@ -64,15 +64,10 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 name                : this.$entity.name,
                 entity              : this.$entity,
 
-                self                : this,
-
-                // entity atom is considered changed if any of its incoming atoms has changed
-                // this just means if it's calculation method has been called, it should always
-                // assign a new value
-                equality            : () => false,
-
                 calculation         : this.calculateSelf,
-                context             : this
+
+                context             : this,
+                self                : this,
             }))
         }
 
