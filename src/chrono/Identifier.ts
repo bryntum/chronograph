@@ -102,6 +102,11 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
+    readFromGraphDirtySync (me : this, graph : CheckoutI) : ValueT {
+        return graph.readDirty(me)
+    }
+
+
     readFromTransactionSync (me : this, transaction : Transaction) : ValueT {
         return transaction.read(me)
     }

@@ -60,7 +60,7 @@ export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityIdentifier = <T extends AnyConstructor<CalculatedValueGen>>(base : T) =>
+export const EntityIdentifier = <T extends AnyConstructor<Identifier>>(base : T) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta        = undefined

@@ -25,6 +25,10 @@ export type PropagateResult = {
 }
 
 
+export const PropagateZero : PropagateResult = {
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export class Listener extends Base {
     handlers            : AnyFunction[]     = []
@@ -371,7 +375,7 @@ class Checkout extends base {
     }
 
 
-    readDirty (identifier : Identifier) : any {
+    readDirty<T> (identifier : Identifier<T>) : T {
         return this.activeTransaction.readDirty(identifier)
     }
 
