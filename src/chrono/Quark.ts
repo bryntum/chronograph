@@ -22,7 +22,7 @@ let ORIGIN_ID : OriginId    = 0
 //---------------------------------------------------------------------------------------------------------------------
 export class Quark extends MixinAny(
     [ Map ],
-    <T extends AnyConstructor<Map<any, any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
+    (base : AnyConstructor<Map<any, any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>) =>
 
 class Quark extends base {
 
