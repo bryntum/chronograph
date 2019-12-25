@@ -308,12 +308,12 @@ export const generic_field : FieldDecorator<typeof Field> =
             )
 
             Object.defineProperty(target, propertyKey, {
-                get     : function (this : Entity) {
-                    return this.$[ propertyKey ].readFromGraphDirtySync(this.graph)
+                get     : function (this : Entity) : any {
+                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraphDirtySync(this.graph)
                 },
 
                 set     : function (this : Entity, value : any) {
-                    this.$[ propertyKey ].writeToGraph(this.graph, value)
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value)
                 }
             })
 
@@ -323,13 +323,13 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
-                    return this.$[ propertyKey ].readFromGraphDirtySync(this.graph)
+                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraphDirtySync(this.graph)
                 }
             }
 
             if (!(setterFnName in target)) {
                 target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<PropagateResult> {
-                    this.$[ propertyKey ].writeToGraph(this.graph, value, ...args)
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
 
                     return this.graph ? this.graph.propagateAsync() : Promise.resolve(PropagateZero)
                 }
@@ -337,7 +337,7 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             if (!(putterFnName in target)) {
                 target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
-                    this.$[ propertyKey ].writeToGraph(this.graph, value, ...args)
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
                 }
             }
         }

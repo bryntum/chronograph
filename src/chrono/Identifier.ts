@@ -87,38 +87,38 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    writeToTransaction (me : this, transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        transaction.write(me, proposedValue, ...args)
+    writeToTransaction (transaction : Transaction, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        transaction.write(this, proposedValue, ...args)
     }
 
 
-    writeToGraph (me : this, graph : CheckoutI, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        graph.write(me, proposedValue, ...args)
+    writeToGraph (graph : CheckoutI, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        graph.write(this, proposedValue, ...args)
     }
 
 
-    readFromGraphSync (me : this, graph : CheckoutI) : ValueT {
-        return graph.read(me)
+    readFromGraphSync (graph : CheckoutI) : ValueT {
+        return graph.read(this)
     }
 
 
-    readFromGraphDirtySync (me : this, graph : CheckoutI) : ValueT {
-        return graph.readDirty(me)
+    readFromGraphDirtySync (graph : CheckoutI) : ValueT {
+        return graph.readDirty(this)
     }
 
 
-    readFromTransactionSync (me : this, transaction : Transaction) : ValueT {
-        return transaction.read(me)
+    readFromTransactionSync (transaction : Transaction) : ValueT {
+        return transaction.read(this)
     }
 
 
-    readFromGraphAsync (me : this, graph : CheckoutI) : Promise<ValueT> {
-        return graph.readAsync(me)
+    readFromGraphAsync (graph : CheckoutI) : Promise<ValueT> {
+        return graph.readAsync(this)
     }
 
 
-    readFromTransactionAsync (me : this, transaction : Transaction) : Promise<ValueT> {
-        return transaction.readAsync(me)
+    readFromTransactionAsync (transaction : Transaction) : Promise<ValueT> {
+        return transaction.readAsync(this)
     }
 
 
