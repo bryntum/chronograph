@@ -28,17 +28,25 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
 
-    readFromGraphSync (me : this, graph : Checkout) : this[ 'ValueT' ] {
+    readFromGraphDirtySync (graph : Checkout) {
         if (graph)
-            return graph.read(me)
+            return graph.readDirty(this)
         else
             return this.DATA
     }
 
 
-    writeToGraph (me : this, graph : Checkout, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    readFromGraphSync (graph : Checkout) : this[ 'ValueT' ] {
         if (graph)
-            graph.write(me, proposedValue, ...args)
+            return graph.read(this)
+        else
+            return this.DATA
+    }
+
+
+    writeToGraph (graph : Checkout, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+        if (graph)
+            graph.write(this, proposedValue, ...args)
         else
             this.DATA = proposedValue
     }
@@ -64,6 +72,14 @@ class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta        = undefined
 
     self        : Entity            = undefined
+
+
+    // entity atom is considered changed if any of its incoming atoms has changed
+    // this just means if it's calculation method has been called, it should always
+    // assign a new value
+    equality () : boolean {
+        return false
+    }
 
 
     toString () : string {

@@ -1,4 +1,4 @@
-import { PropagateResult } from "../chrono/Checkout.js"
+import { PropagateResult, PropagateZero } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
@@ -68,15 +68,10 @@ export class Entity extends Mixin(
                 name                : this.$entity.name,
                 entity              : this.$entity,
 
-                self                : this,
-
-                // entity atom is considered changed if any of its incoming atoms has changed
-                // this just means if it's calculation method has been called, it should always
-                // assign a new value
-                equality            : () => false,
-
                 calculation         : this.calculateSelf,
-                context             : this
+
+                context             : this,
+                self                : this,
             }))
         }
 
@@ -153,7 +148,7 @@ export class Entity extends Mixin(
         async propagateAsync () : Promise<PropagateResult> {
             const graph     = this.graph
 
-            if (!graph) return
+            if (!graph) return Promise.resolve(PropagateZero)
 
             return graph.propagateAsync()
         }
@@ -315,12 +310,12 @@ export const generic_field : FieldDecorator<typeof Field> =
             )
 
             Object.defineProperty(target, propertyKey, {
-                get     : function (this : Entity) {
-                    this.$[ propertyKey ].readFromGraph(this.graph)
+                get     : function (this : Entity) : any {
+                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraphDirtySync(this.graph)
                 },
 
-                set     : function (this : Entity, value : any, ...args : any[]) {
-                    this.$[ propertyKey ].writeToGraph(this.graph, value, ...args)
+                set     : function (this : Entity, value : any) {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value)
                 }
             })
 
@@ -330,33 +325,21 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
-                    if (this.graph) {
-                        return this.graph.readDirty(this.$[ propertyKey ])
-                    } else {
-                        return this.$[ propertyKey ].DATA
-                    }
+                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraphDirtySync(this.graph)
                 }
             }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : any {
-                    if (this.graph) {
-                        this.graph.write(this.$[ propertyKey ], value, ...args)
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<PropagateResult> {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
 
-                        return this.graph.propagateAsync()
-                    } else {
-                        this.$[ propertyKey ].DATA = value
-                    }
+                    return this.graph ? this.graph.propagateAsync() : Promise.resolve(PropagateZero)
                 }
             }
 
             if (!(putterFnName in target)) {
                 target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
-                    if (this.graph) {
-                        this.graph.write(this.$[ propertyKey ], value, ...args)
-                    } else {
-                        this.$[ propertyKey ].DATA = value
-                    }
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
                 }
             }
         }
