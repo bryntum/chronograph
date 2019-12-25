@@ -10,7 +10,7 @@ StartTest(t => {
     t.it('Should not re-entry synchronous calculations', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var1      = graph.variableId('v1', 1)
+        const var1      = graph.variableNamed('v1', 1)
 
         let count : number = 0
 
@@ -51,7 +51,7 @@ StartTest(t => {
     t.it('Should not re-entry gen calculations', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var1      = graph.variableId('v1', 1)
+        const var1      = graph.variableNamed('v1', 1)
 
         let count : number = 0
 

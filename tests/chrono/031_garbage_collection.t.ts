@@ -41,9 +41,9 @@ StartTest(t => {
         // explicitly set that we don't track history
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const var1      = graph.variableId('var1', 100)
+        const var1      = graph.variableNamed('var1', 100)
 
         const var2      = graph.addIdentifier(CalculatedValueGen.new({
             * calculation () : CalculationIterator<number> {

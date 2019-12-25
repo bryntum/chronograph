@@ -8,12 +8,12 @@ StartTest(t => {
     t.it('Base case - gen', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 0)
-        const var1      = graph.variableId('var1', 0)
+        const var0      = graph.variableNamed('var0', 0)
+        const var1      = graph.variableNamed('var1', 0)
 
-        const varMax    = graph.variableId('varMax', 10)
+        const varMax    = graph.variableNamed('varMax', 10)
 
-        const idenSum   = graph.identifierId('idenSum', function* () {
+        const idenSum   = graph.identifierNamed('idenSum', function* () {
             const sum : number  = (yield var0) + (yield var1)
 
             const max : number  = yield varMax
@@ -53,18 +53,18 @@ StartTest(t => {
     t.it('Subtree elimination - gen', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 0)
-        const var1      = graph.variableId('var1', 0)
+        const var0      = graph.variableNamed('var0', 0)
+        const var1      = graph.variableNamed('var1', 0)
 
-        const iden1     = graph.identifierId('iden1', function* () {
+        const iden1     = graph.identifierNamed('iden1', function* () {
             return (yield var0) + (yield var1)
         })
 
-        const iden2     = graph.identifierId('iden2', function* () {
+        const iden2     = graph.identifierNamed('iden2', function* () {
             return (yield iden1) + 1
         })
 
-        const iden3     = graph.identifierId('iden3', function* () {
+        const iden3     = graph.identifierNamed('iden3', function* () {
             const value0 : number  = yield var0
             const value1 : number  = yield var1
 
@@ -111,8 +111,8 @@ StartTest(t => {
     t.it('Identifier listeners + subtree elimination', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        // const var0      = graph.variableId('var0', 0)
-        // const var1      = graph.variableId('var1', 0)
+        // const var0      = graph.variableNamed('var0', 0)
+        // const var1      = graph.variableNamed('var1', 0)
         //
         // const dispatcher     = graph.addIdentifier(CalculatedValueGen.new({
         //     name        : 'disp',
@@ -187,12 +187,12 @@ StartTest(t => {
     // t.it('Base case - sync', async t => {
     //     const graph : ChronoGraph   = MinimalChronoGraph.new()
     //
-    //     const var0      = graph.variableId('var0', 0)
-    //     const var1      = graph.variableId('var1', 0)
+    //     const var0      = graph.variableNamed('var0', 0)
+    //     const var1      = graph.variableNamed('var1', 0)
     //
-    //     const varMax    = graph.variableId('varMax', 10)
+    //     const varMax    = graph.variableNamed('varMax', 10)
     //
-    //     const idenSum   = graph.identifierId('idenSum', function* () {
+    //     const idenSum   = graph.identifierNamed('idenSum', function* () {
     //         const sum : number  = (yield var0) + (yield var1)
     //
     //         const max : number  = yield varMax
@@ -232,18 +232,18 @@ StartTest(t => {
     // t.it('Subtree elimination - sync', async t => {
     //     const graph : ChronoGraph   = MinimalChronoGraph.new()
     //
-    //     const var0      = graph.variableId('var0', 0)
-    //     const var1      = graph.variableId('var1', 0)
+    //     const var0      = graph.variableNamed('var0', 0)
+    //     const var1      = graph.variableNamed('var1', 0)
     //
-    //     const iden1     = graph.identifierId('iden1', function* () {
+    //     const iden1     = graph.identifierNamed('iden1', function* () {
     //         return (yield var0) + (yield var1)
     //     })
     //
-    //     const iden2     = graph.identifierId('iden2', function* () {
+    //     const iden2     = graph.identifierNamed('iden2', function* () {
     //         return (yield iden1) + 1
     //     })
     //
-    //     const iden3     = graph.identifierId('iden3', function* () {
+    //     const iden3     = graph.identifierNamed('iden3', function* () {
     //         const value0 : number  = yield var0
     //         const value1 : number  = yield var1
     //

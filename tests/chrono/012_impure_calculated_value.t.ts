@@ -10,7 +10,7 @@ StartTest(t => {
     t.it('`ProposedOrCurrent` effect', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const max       = graph.variableId('variable', 100)
+        const max       = graph.variableNamed('variable', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueGen.new({
             * calculation () : CalculationIterator<number> {
@@ -64,9 +64,9 @@ StartTest(t => {
     t.it('ProposedOrCurrent - caching, generators', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueGen.new({
             * calculation () : CalculationIterator<number> {
@@ -148,9 +148,9 @@ StartTest(t => {
     t.it('ProposedOrCurrent - caching, sync', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueSync.new({
             calculation (YIELD) : number {
@@ -232,9 +232,9 @@ StartTest(t => {
     t.it('Lazily calculated impure identifier, generators', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueGen.new({
             lazy : true,
@@ -312,9 +312,9 @@ StartTest(t => {
     t.it('Lazily calculated impure identifier, sync', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueSync.new({
             lazy : true,

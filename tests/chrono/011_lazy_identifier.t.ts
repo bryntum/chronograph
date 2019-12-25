@@ -11,8 +11,8 @@ StartTest(t => {
     t.it('Lazy identifier, generators', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var1                  = graph.variableId('var1', 0)
-        const var2                  = graph.variableId('var2', 1)
+        const var1                  = graph.variableNamed('var1', 0)
+        const var2                  = graph.variableNamed('var2', 1)
 
         const ident1                = graph.addIdentifier(CalculatedValueGen.new({
             name            : 'ident1',
@@ -82,8 +82,8 @@ StartTest(t => {
     t.it('Lazy identifier, sync', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
-        const var1                  = graph.variableId('var1', 0)
-        const var2                  = graph.variableId('var2', 1)
+        const var1                  = graph.variableNamed('var1', 0)
+        const var2                  = graph.variableNamed('var2', 1)
 
         const ident1                = graph.addIdentifier(CalculatedValueSync.new({
             name            : 'ident1',
@@ -154,9 +154,9 @@ StartTest(t => {
     t.it('Should not use stale deep history', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
-        const dispatcher    = graph1.variableId('dispatcher', i1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
+        const dispatcher    = graph1.variableNamed('dispatcher', i1)
 
         const c1            = graph1.addIdentifier(CalculatedValueGen.new({
             name            : 'c1',
@@ -201,10 +201,10 @@ StartTest(t => {
     t.it('Should be able to calculate lazy identifier that uses `ProposedOrCurrent`', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
 
-        const dispatcher    = graph1.variableId('dispatcher', 'pure')
+        const dispatcher    = graph1.variableNamed('dispatcher', 'pure')
 
         const c1            = graph1.addIdentifier(CalculatedValueGen.new({
             name            : 'c1',
@@ -256,10 +256,10 @@ StartTest(t => {
     t.it('Should be able to calculate lazy identifier that uses `ProposedOrCurrent` - sync', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
 
-        const dispatcher    = graph1.variableId('dispatcher', 'pure')
+        const dispatcher    = graph1.variableNamed('dispatcher', 'pure')
 
         const c1            = graph1.addIdentifier(CalculatedValueSync.new({
             name            : 'c1',
@@ -311,8 +311,8 @@ StartTest(t => {
     t.it('Should calculate lazy identifiers in a batch', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
-        const i1            = graph1.variableId('i1', 0)
-        const i2            = graph1.variableId('i2', 1)
+        const i1            = graph1.variableNamed('i1', 0)
+        const i2            = graph1.variableNamed('i2', 1)
 
         const c1            = graph1.addIdentifier(CalculatedValueGen.new({
             name            : 'c1',

@@ -66,30 +66,30 @@ StartTest(t => {
     t.it('Should eliminate unchanged subtrees', async t => {
         const graph : ChronoGraph       = ChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 10)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 10)
 
-        const c1        = graph.identifierId('c1', function* () {
+        const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
         })
 
-        const c2        = graph.identifierId('c2', function* () {
+        const c2        = graph.identifierNamed('c2', function* () {
             return (yield i1) + (yield c1)
         })
 
-        const c3        = graph.identifierId('c3', function* () {
+        const c3        = graph.identifierNamed('c3', function* () {
             return (yield c1)
         })
 
-        const c4        = graph.identifierId('c4', function* () {
+        const c4        = graph.identifierNamed('c4', function* () {
             return (yield c3)
         })
 
-        const c5        = graph.identifierId('c5', function* () {
+        const c5        = graph.identifierNamed('c5', function* () {
             return (yield c3)
         })
 
-        const c6        = graph.identifierId('c6', function* () {
+        const c6        = graph.identifierNamed('c6', function* () {
             return (yield c5) + (yield i2)
         })
 
@@ -154,18 +154,18 @@ StartTest(t => {
     t.it('Should preserve dependencies from eliminated subtrees #1', async t => {
         const graph : ChronoGraph       = ChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 10)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 10)
 
-        const c1        = graph.identifierId('c1', function* () {
+        const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
         })
 
-        const c2        = graph.identifierId('c2', function* () {
+        const c2        = graph.identifierNamed('c2', function* () {
             return (yield c1) + 1
         })
 
-        const c3        = graph.identifierId('c3', function* () {
+        const c3        = graph.identifierNamed('c3', function* () {
             return (yield c1) + 2
         })
 
@@ -221,21 +221,21 @@ StartTest(t => {
     t.it('Should preserve dependencies from eliminated subtrees #2', async t => {
         const graph : ChronoGraph       = ChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 10)
-        const i3        = graph.variableId('i3', 20)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 10)
+        const i3        = graph.variableNamed('i3', 20)
 
-        const dispatcher = graph.variableId('d', i3)
+        const dispatcher = graph.variableNamed('d', i3)
 
-        const c1        = graph.identifierId('c1', function* () {
+        const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
         })
 
-        const c2        = graph.identifierId('c2', function* () {
+        const c2        = graph.identifierNamed('c2', function* () {
             return (yield c1) + 1
         })
 
-        const c3        = graph.identifierId('c3', function* () {
+        const c3        = graph.identifierNamed('c3', function* () {
             return (yield (yield dispatcher))
         })
 
@@ -281,15 +281,15 @@ StartTest(t => {
     t.it('Should preserve dependencies from shadowed entries #1', async t => {
         const graph : ChronoGraph       = ChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 1)
-        const i2        = graph.variableId('i2', 2)
-        const i3        = graph.variableId('i3', 3)
+        const i1        = graph.variableNamed('i1', 1)
+        const i2        = graph.variableNamed('i2', 2)
+        const i3        = graph.variableNamed('i3', 3)
 
-        const c1        = graph.identifierId('c1', function* () {
+        const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
         })
 
-        const c2        = graph.identifierId('c2', function* () {
+        const c2        = graph.identifierNamed('c2', function* () {
             return (yield i3) + (yield i2)
         })
 
@@ -331,17 +331,17 @@ StartTest(t => {
     t.it('Should preserve dependencies from shadowed entries #2', async t => {
         const graph : ChronoGraph       = ChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 1)
-        const i2        = graph.variableId('i2', 2)
-        const i3        = graph.variableId('i3', 3)
+        const i1        = graph.variableNamed('i1', 1)
+        const i2        = graph.variableNamed('i2', 2)
+        const i3        = graph.variableNamed('i3', 3)
 
-        const dispatcher = graph.variableId('d', i3)
+        const dispatcher = graph.variableNamed('d', i3)
 
-        const c1        = graph.identifierId('c1', function* () {
+        const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
         })
 
-        const c2        = graph.identifierId('c2', function* () {
+        const c2        = graph.identifierNamed('c2', function* () {
             return yield (yield dispatcher)
         })
 
@@ -395,18 +395,18 @@ StartTest(t => {
     t.it('Should preserve dependencies from shadowed entries #3', async t => {
         const graph : ChronoGraph       = ChronoGraph.new()
 
-        const i1        = graph.variableId('i1', 0)
-        const i2        = graph.variableId('i2', 1)
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 1)
 
-        const c1        = graph.identifierId('c1', function* () {
+        const c1        = graph.identifierNamed('c1', function* () {
             return (yield i1)
         })
 
-        const c2        = graph.identifierId('c2', function* () {
+        const c2        = graph.identifierNamed('c2', function* () {
             return (yield i2)
         })
 
-        const c3        = graph.identifierId('c3', function* () {
+        const c3        = graph.identifierNamed('c3', function* () {
             return (yield c1) + (yield c2)
         })
 

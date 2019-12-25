@@ -98,7 +98,7 @@ export class ReferenceIdentifier extends Mixin(
         }
 
 
-        write (me : this, transaction : Transaction, quark : Quark, proposedValue : this[ 'ValueT' ]) {
+        write (me : this, transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ]) {
             quark           = quark || transaction.acquireQuarkIfExists(me)
 
             if (me.hasBucket()) {

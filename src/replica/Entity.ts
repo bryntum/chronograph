@@ -316,19 +316,11 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             Object.defineProperty(target, propertyKey, {
                 get     : function (this : Entity) {
-                    if (this.graph) {
-                        return this.graph.readDirty(this.$[ propertyKey ])
-                    } else {
-                        return this.$[ propertyKey ].DATA
-                    }
+                    this.$[ propertyKey ].readFromGraph(this.graph)
                 },
 
-                set     : function (this : Entity, value : any) {
-                    if (this.graph) {
-                        return this.graph.write(this.$[ propertyKey ], value)
-                    } else {
-                        this.$[ propertyKey ].DATA = value
-                    }
+                set     : function (this : Entity, value : any, ...args : any[]) {
+                    this.$[ propertyKey ].writeToGraph(this.graph, value, ...args)
                 }
             })
 
