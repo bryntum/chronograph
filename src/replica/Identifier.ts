@@ -1,4 +1,4 @@
-import { CheckoutI } from "../chrono/Checkout.js"
+import { Checkout } from "../chrono/Checkout.js"
 import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
 import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
@@ -28,7 +28,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
 
-    readFromGraphSync (me : this, graph : CheckoutI) : this[ 'ValueT' ] {
+    readFromGraphSync (me : this, graph : Checkout) : this[ 'ValueT' ] {
         if (graph)
             return graph.read(me)
         else
@@ -36,7 +36,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     }
 
 
-    writeToGraph (me : this, graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    writeToGraph (me : this, graph : Checkout, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         if (graph)
             graph.write(me, proposedValue, ...args)
         else

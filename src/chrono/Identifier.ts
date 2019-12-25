@@ -91,12 +91,12 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    writeToGraph (me : this, graph : CheckoutI, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+    writeToGraph (me : this, graph : Checkout, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         graph.write(me, proposedValue, ...args)
     }
 
 
-    readFromGraphSync (me : this, graph : CheckoutI) : ValueT {
+    readFromGraphSync (me : this, graph : Checkout) : ValueT {
         return graph.read(me)
     }
 
@@ -106,7 +106,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    readFromGraphAsync (me : this, graph : CheckoutI) : Promise<ValueT> {
+    readFromGraphAsync (me : this, graph : Checkout) : Promise<ValueT> {
         return graph.readAsync(me)
     }
 
