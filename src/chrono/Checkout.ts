@@ -308,7 +308,7 @@ class Checkout extends base {
     }
 
 
-    identifierId<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
+    identifierNamed<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
         const identifier    = calculation.constructor.name === 'GeneratorFunction' ?
             CalculatedValueGen.new({ calculation, context })
             :

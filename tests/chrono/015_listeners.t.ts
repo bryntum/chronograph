@@ -53,11 +53,11 @@ StartTest(t => {
         const var0      = graph.variableId('var0', 0)
         const var1      = graph.variableId('var1', 10)
 
-        const iden1     = graph.identifierId('iden1', function* () {
+        const iden1     = graph.identifierNamed('iden1', function* () {
             return (yield var1) + 1
         })
 
-        const iden2     = graph.identifierId('iden2', function* () {
+        const iden2     = graph.identifierNamed('iden2', function* () {
             return (yield iden1) + (yield var0)
         })
 
@@ -88,7 +88,7 @@ StartTest(t => {
         const var0      = graph.variableId('var0', 0)
         const var1      = graph.variableId('var1', 10)
 
-        const iden1     = graph.identifierId('iden1', function* () {
+        const iden1     = graph.identifierNamed('iden1', function* () {
             return (yield var0) + (yield var1)
         })
 
@@ -120,7 +120,7 @@ StartTest(t => {
         const var0      = graph.variableId('var0', 0)
         const var1      = graph.variableId('var1', 10)
 
-        const iden1     = graph.identifierId('iden1', function* () {
+        const iden1     = graph.identifierNamed('iden1', function* () {
             return (yield var0) + (yield var1)
         })
 

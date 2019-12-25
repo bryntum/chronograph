@@ -22,7 +22,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
             boxes.push(graph.variableId(i, 1))
         }
         else if (i <= 10) {
-            boxes.push(graph.identifierId(i, function* (YIELD) {
+            boxes.push(graph.identifierNamed(i, function* (YIELD) {
                 res.counter++
 
                 const input : number[] = [
@@ -36,7 +36,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
             }, i))
         }
         else if (i % 2 == 0) {
-            boxes.push(graph.identifierId(i, function* (YIELD) {
+            boxes.push(graph.identifierNamed(i, function* (YIELD) {
                 res.counter++
 
                 const input : number[] = [
@@ -49,7 +49,7 @@ export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult =>
                 return input.reduce((sum, op) => (sum + op) % 10000, 0)
             }, i))
         } else {
-            boxes.push(graph.identifierId(i, function* (YIELD) {
+            boxes.push(graph.identifierNamed(i, function* (YIELD) {
                 res.counter++
 
                 const input : number[] = [

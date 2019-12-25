@@ -79,7 +79,7 @@ StartTest(t => {
 
         const var1      = graph.variableId('variable', 0)
 
-        const iden1     = graph.identifierId('identifier', function * () {
+        const iden1     = graph.identifierNamed('identifier', function * () {
             return yield var1
         })
 

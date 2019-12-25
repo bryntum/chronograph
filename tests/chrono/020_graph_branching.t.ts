@@ -33,7 +33,7 @@ StartTest(t => {
         const i2            = graph1.variableId('i2', 1)
         const dispatcher    = graph1.variableId('dispatcher', i1)
 
-        const c1            = graph1.identifierId('c1', function* () {
+        const c1            = graph1.identifierNamed('c1', function* () {
             return (yield (yield dispatcher)) + 1
         })
 
@@ -76,7 +76,7 @@ StartTest(t => {
         const i2            = graph1.variableId('i2', 1)
         const dispatcher    = graph1.variableId('dispatcher', i1)
 
-        const c1            = graph1.identifierId('c1', function* () {
+        const c1            = graph1.identifierNamed('c1', function* () {
             return (yield (yield dispatcher)) + 1
         })
 
@@ -120,7 +120,7 @@ StartTest(t => {
         const i2            = graph1.variableId('i2', 1)
         const dispatcher    = graph1.variableId('dispatcher', i1)
 
-        const c1            = graph1.identifierId('c1', function* () {
+        const c1            = graph1.identifierNamed('c1', function* () {
             return (yield (yield dispatcher)) + 1
         })
 
@@ -158,7 +158,7 @@ StartTest(t => {
         const i1            = graph1.variableId('i1', 0)
         const i2            = graph1.variableId('i2', 1)
 
-        const c1            = graph1.identifierId('c1', function* () {
+        const c1            = graph1.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
         })
 
@@ -192,27 +192,27 @@ StartTest(t => {
         const i1        = graph1.variableId('i1', 0)
         const i2        = graph1.variableId('i2', 10)
 
-        const c1        = graph1.identifierId('c1', function* () {
+        const c1        = graph1.identifierNamed('c1', function* () {
             return (yield i1) + (yield i2)
         })
 
-        const c2        = graph1.identifierId('c2', function* () {
+        const c2        = graph1.identifierNamed('c2', function* () {
             return (yield i1) + (yield c1)
         })
 
-        const c3        = graph1.identifierId('c3', function* () {
+        const c3        = graph1.identifierNamed('c3', function* () {
             return (yield c1)
         })
 
-        const c4        = graph1.identifierId('c4', function* () {
+        const c4        = graph1.identifierNamed('c4', function* () {
             return (yield c3)
         })
 
-        const c5        = graph1.identifierId('c5', function* () {
+        const c5        = graph1.identifierNamed('c5', function* () {
             return (yield c3)
         })
 
-        const c6        = graph1.identifierId('c6', function* () {
+        const c6        = graph1.identifierNamed('c6', function* () {
             return (yield c5) + (yield i2)
         })
 
