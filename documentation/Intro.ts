@@ -1,20 +1,24 @@
 //-----------------------------------
+import { ProposedOrCurrent } from "../src/chrono/Effect.js"
+//-----------------------------------
+// example3
+import { ChronoIterator, MinimalChronoGraph } from "../src/chrono/Graph.js"
 // example1
 import { Identifier, Variable } from "../src/chrono/Identifier.js"
+//-----------------------------------
+// example2
+import { SyncEffectHandler } from "../src/chrono/Transaction.js"
+import { CalculationIterator } from "../src/primitives/Calculation.js"
+import { calculate, Entity, field } from "../src/replica/Entity.js"
+import { reference2 } from "../src/replica/Reference.js"
+import { bucket } from "../src/replica/ReferenceBucket.js"
+import { MinimalReplica } from "../src/replica/Replica.js"
 
 const identifier1 = Identifier.new({ calculation : () => 42 })
 
 
-//-----------------------------------
-// example2
-import { SyncEffectHandler } from "../src/chrono/Transaction.js"
-
 const identifier2 = Identifier.new({ calculation : (Y : SyncEffectHandler) => Y(identifier1) + 5 })
 
-
-//-----------------------------------
-// example3
-import { ChronoIterator, MinimalChronoGraph } from "../src/chrono/Graph.js"
 
 const identifier3 = Identifier.new({
     *calculation  (Y : SyncEffectHandler) : ChronoIterator<number> {
@@ -100,17 +104,6 @@ const value10 = graph.read(variable9)
 
 //-----------------------------------
 // example10
-const identifier10 = Identifier.new({
-    equality : (v1 : Date, v2 : Date) => v1.getTime() === v2.getTime(),
-
-    calculation (Y : SyncEffectHandler) : Date {
-        return new Date(2020, 1, 1)
-    },
-}) as Identifier<Date>
-
-
-//-----------------------------------
-// example11
 const variable11 : Variable<number> = graph.variable(5)
 const variable12 : Variable<number> = graph.variable(5)
 
@@ -125,3 +118,135 @@ graph.write(variable12, 7)
 
 // won't trigger the identifier14's calculation
 const value15 = graph.read(identifier14)
+
+
+//-----------------------------------
+// example11
+const identifier10 = Identifier.new({
+    equality : (v1 : Date, v2 : Date) => v1.getTime() === v2.getTime(),
+
+    calculation (Y : SyncEffectHandler) : Date {
+        return new Date(2020, 1, 1)
+    },
+}) as Identifier<Date>
+
+
+//-----------------------------------
+// example12
+const graph2 = MinimalChronoGraph.new()
+
+const variable13 : Variable<number> = graph2.variable(5)
+
+const branch2 = graph2.branch()
+
+branch2.write(variable13, 10)
+
+const value13_1 = graph2.read(variable13)  // 5
+const value13_2 = branch2.read(variable13) // 10
+
+
+//-----------------------------------
+// example13
+const graph3 = MinimalChronoGraph.new({ historyLimit : 5 })
+
+const variable14 : Variable<number> = graph2.variable(5)
+
+const value14_1 = graph2.read(variable14)  // 5
+
+graph3.write(variable14, 10)
+
+const value14_2 = graph2.read(variable14)  // 10
+
+graph2.undo()
+
+const value14_3 = graph2.read(variable14)  // 5
+
+graph2.redo()
+
+const value14_4 = graph2.read(variable14)  // 10
+
+
+//-----------------------------------
+// example14
+const graph4 = MinimalChronoGraph.new()
+
+const max           = graph4.variable(100)
+
+const identifier15  = graph4.identifier(function *calculation () : CalculationIterator<number> {
+    const proposedValue : number    = yield ProposedOrCurrent
+
+    const maxValue : number         = yield max
+
+    return proposedValue <= maxValue ? proposedValue : maxValue
+})
+
+graph4.write(identifier15, 18)
+
+const value15_1 = graph4.read(identifier15) // 18
+
+graph4.write(identifier15, 180)
+
+const value15_2 = graph4.read(identifier15) // 100
+
+graph4.write(max, 50)
+
+const value15_3 = graph4.read(identifier15) // 50
+
+
+//-----------------------------------
+// example15
+
+class Author extends Entity(Object) {
+    @field()
+    firstName       : string
+
+    @field()
+    lastName        : string
+
+    @field()
+    fullName        : string
+
+
+    @calculate('fullName')
+    calculateFullName (Y : SyncEffectHandler) : string {
+        return Y(this.$.firstName) + ' ' + Y(this.$.lastName)
+    }
+}
+
+const replica1          = MinimalReplica.new()
+
+const markTwain         = new Author
+
+replica1.addEntity(markTwain)
+
+markTwain.firstName     = 'Mark'
+markTwain.lastName      = 'Twain'
+
+console.log(markTwain.fullName) // Mark Twain
+
+
+//-----------------------------------
+// example16
+
+class Book extends Entity(Object) {
+    @field()
+    writtenBy       : Author
+}
+
+const tomSoyer          = new Book
+
+tomSoyer.writtenBy      = markTwain
+
+
+//-----------------------------------
+// example16
+
+class Author2 extends Entity(Object) {
+    @bucket()
+    books           : Set<Book2>
+}
+
+class Book2 extends Entity(Object) {
+    @reference2<Author2>({ bucket : 'books' })
+    writtenBy       : Author
+}
