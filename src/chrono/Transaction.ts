@@ -128,7 +128,13 @@ export class Transaction extends Base {
 
 
     onNewWrite () {
+        this.writes.forEach(writeInfo => {
+            const identifier    = writeInfo.identifier
 
+            identifier.write.call(identifier.context || identifier, identifier, this, null, ...writeInfo.proposedArgs)
+        })
+
+        this.writes.length = 0
     }
 
 

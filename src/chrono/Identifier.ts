@@ -40,6 +40,8 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     sync                : boolean   = false
     // no cancels
     total               : boolean   = true
+    // no "nested" writes
+    pure                : boolean   = true
 
     quarkClass          : QuarkConstructor
 
