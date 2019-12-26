@@ -230,6 +230,12 @@ const value15_3 = graph4.read(identifier15) // 50
 
 One thing to consider, is that if an identifier yields a `ProposedOrCurrent` effect and its computed value does not match the value of this effect, it will be re-calculated (computation function called) again on the next read. This is because the value of its `yield ProposedOrCurrent` input changes.
 
+Takes over:
+
+- The user input in ChronoGraph is actually represented with the special effect, `ProposedOrCurrent`
+- Identifier can yield this effect or choose to not do that, based on the values of external data. This may change the identifier's behavior from purely computed value to variable, with "validated" value in the middle
+
+
 
 Other effects
 -----------------
@@ -282,6 +288,12 @@ We introduce a new kind of data scope, that keeps entities information, called "
 
 Field properties creates auto-generated get/set accessors, which are tied to the `read/write` methods of the graph. For the outside world, entities behave very similar to regular TypeScript classes, however, important consideration to keep in mind, is, again, purity. Even that field calculation function has class instance as its `this` value, it should not refer anything other than `this.$` property, which is simply an immutable object collection of all fields of this entity. It should not modify any external state, or perform other effects. 
 
+Takes over:
+
+- Modeling complex data domains is easier, when data graph is represented with the entities - "records" of the individual "fields", which are represented with plain TypeScript classes
+- Fields of entities are regular TypeScript class properties with `@field()` decorator. They creates corresponding identifiers in the new type of the data scope, called "replica". One can assign a calculation function for the field using the `@calculate(fieldName)` decorator for class method
+- Fields creates get/set accessors, which are tied to the read/write methods of the replica 
+
 
 Reference. Reference bucket
 ----------------------
@@ -300,6 +312,38 @@ tomSoyer.writtenBy      = markTwain
 ```
 
 This is a simplest form of reference to another entity. To make it a bit smarter and to answer a question - "what are the books written by Mark Twain", we can use special types of identifiers - references and reference buckets.
+
+```ts
+class Author2 extends Entity(Object) {
+    @bucket()
+    books           : Set<Book2>
+}
+
+class Book2 extends Entity(Object) {
+    @reference2<Author2>({ bucket : 'books' })
+    writtenBy       : Author2
+}
+
+const replica2          = MinimalReplica.new()
+
+const markTwain2        = new Author2()
+
+const tomSawyer2        = new Book()
+const huckleberryFinn2  = new Book()
+
+replica2.addEntities([ markTwain2, tomSawyer2, huckleberryFinn2 ])
+
+tomSawyer2.writtenBy        = markTwain2
+huckleberryFinn2.writtenBy  = markTwain2
+
+markTwain2.books // new Set([ tomSawyer2, huckleberryFinn2 ])
+```
+
+Takes over:
+
+- References between the entities can be established with the special kind of fields - "reference" and "reference bucket", with `@reference<Entity>({ bucket : bucketName})` and `@bucket()` decorators.
+- Buckets are the `Set` collections with all entities, referencing the entity of the bucket  
+
 
 
 Mixins

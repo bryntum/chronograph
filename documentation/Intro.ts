@@ -233,9 +233,9 @@ class Book extends Entity(Object) {
     writtenBy       : Author
 }
 
-const tomSoyer          = new Book
+const tomSawyer         = new Book
 
-tomSoyer.writtenBy      = markTwain
+tomSawyer.writtenBy     = markTwain
 
 
 //-----------------------------------
@@ -248,5 +248,19 @@ class Author2 extends Entity(Object) {
 
 class Book2 extends Entity(Object) {
     @reference2<Author2>({ bucket : 'books' })
-    writtenBy       : Author
+    writtenBy       : Author2
 }
+
+const replica2          = MinimalReplica.new()
+
+const markTwain2        = new Author2()
+
+const tomSawyer2        = new Book()
+const huckleberryFinn2  = new Book()
+
+replica2.addEntities([ markTwain2, tomSawyer2, huckleberryFinn2 ])
+
+tomSawyer2.writtenBy        = markTwain2
+huckleberryFinn2.writtenBy  = markTwain2
+
+markTwain2.books // new Set([ tomSawyer2, huckleberryFinn2 ])
