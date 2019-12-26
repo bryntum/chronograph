@@ -56,11 +56,12 @@ class Checkout extends base {
     // how many revisions (except the `baseRevision`) to keep in memory for undo operation
     // minimal value is 0 (the `baseRevision` only, no undo/redo)
     // users supposed to opt-in for undo/redo by increasing this config
-    historyLimit            : number        = 0
+    historyLimit            : number            = 0
 
     listeners               : Map<Identifier, Listener> = new Map()
 
-    runningTransaction      : Transaction
+    $activeTransaction      : Transaction       = undefined
+    runningTransaction      : Transaction       = undefined
 
     enableProgressNotifications     : boolean   = false
 
@@ -83,7 +84,7 @@ class Checkout extends base {
         this.topRevision    = this.baseRevision
 
         clearLazyProperty(this, 'followingRevision')
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         this.markAndSweep()
     }
@@ -196,13 +197,10 @@ class Checkout extends base {
     }
 
 
-    _activeTransaction : Transaction    = undefined
-
-
     get activeTransaction () : Transaction {
-        if (this._activeTransaction) return this._activeTransaction
+        if (this.$activeTransaction) return this.$activeTransaction
 
-        return this._activeTransaction = MinimalTransaction.new({
+        return this.$activeTransaction = MinimalTransaction.new({
             baseRevision                : this.baseRevision,
             graph                       : this
         })
@@ -227,15 +225,15 @@ class Checkout extends base {
     }
 
 
-    propagateSync (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagateSync(args)
-
-        const result            = this.finalizePropagation(nextRevision)
-
-        this.runningTransaction = null
-
-        return result
-    }
+    // propagateSync (args? : PropagateArguments) : PropagateResult {
+    //     const nextRevision      = this.activeTransaction.propagateSync(args)
+    //
+    //     const result            = this.finalizePropagation(nextRevision)
+    //
+    //     this.runningTransaction = null
+    //
+    //     return result
+    // }
 
 
     async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
@@ -283,7 +281,7 @@ class Checkout extends base {
         this.markAndSweep()
 
         clearLazyProperty(this, 'followingRevision')
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return
     }
@@ -355,31 +353,55 @@ class Checkout extends base {
     }
 
 
-    // touch (identifier : Identifier) : Quark {
-    //     return this.activeTransaction.touch(identifier)
+    // keep if possible?
+    // pin (identifier : Identifier) : Quark {
+    //     return this.activeTransaction.pin(identifier)
     // }
 
 
-    readIfExists (identifier : Identifier) : any {
-        return this.baseRevision.readIfExists(identifier)
-    }
-
-
-    read<T> (identifier : Identifier<T>) : T {
+    // Synchronously read the "previous", "stable" value from the graph. If its a lazy entry, it will be calculated
+    // Synchronous read can not calculate lazy asynchronous identifiers and will throw exception
+    // Lazy identifiers supposed to be "total" (or accept repeating observes?)
+    readPrevious<T> (identifier : Identifier<T>) : T {
         return this.baseRevision.read(identifier)
     }
 
 
+    // Asynchronously read the "previous", "stable" value from the graph. If its a lazy entry, it will be calculated
+    // Asynchronous read can calculate both synchornous and asynchronous lazy identifiers.
+    // Lazy identifiers supposed to be "total" (or accept repeating observes?)
+    readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        return this.baseRevision.readAsync(identifier)
+    }
+
+
+    // Synchronously read the "current" value from the graph.
+    // Synchronous read can not calculate asynchronous identifiers and will throw exception
+    read<T> (identifier : Identifier<T>) : T {
+        return this.activeTransaction.read(identifier)
+    }
+
+
+    // Asynchronously read the "current" value from the graph.
+    // Asynchronous read can calculate both synchronous and asynchronous identifiers
     readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         return this.activeTransaction.readAsync(identifier)
     }
 
 
-    readDirty<T> (identifier : Identifier<T>) : T {
-        return this.activeTransaction.readDirty(identifier)
-    }
+    // read zoo, need to clarify the semantic precisely
+    // readIfExists (identifier : Identifier) : any {
+    //     return this.baseRevision.readIfExists(identifier)
+    // }
+    //
+    //
+    // // read zoo, need to clarify the semantic precisely
+    // readDirty<T> (identifier : Identifier<T>) : T {
+    //     return this.activeTransaction.readDirty(identifier)
+    // }
 
 
+    // read zoo, need to clarify the semantic precisely
     acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
         // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
 
@@ -452,7 +474,7 @@ class Checkout extends base {
         this.baseRevision       = previous
 
         // note: all unpropagated "writes" are lost
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return true
     }
@@ -468,7 +490,7 @@ class Checkout extends base {
         this.baseRevision       = nextRevision
 
         // note: all unpropagated "writes" are lost
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return true
     }

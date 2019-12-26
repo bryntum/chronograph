@@ -51,17 +51,6 @@ class Revision extends base {
     }
 
 
-    readIfExists (identifier : Identifier) : any {
-        const latestEntry   = this.getLatestEntryFor(identifier)
-
-        if (!latestEntry) return undefined
-
-        const value         = latestEntry.getValue()
-
-        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
-    }
-
-
     * previousAxis () : Generator<Revision> {
         let revision : Revision = this
 
@@ -73,24 +62,76 @@ class Revision extends base {
     }
 
 
+    // readIfExists (identifier : Identifier) : any {
+    //     const latestEntry   = this.getLatestEntryFor(identifier)
+    //
+    //     if (!latestEntry) return undefined
+    //
+    //     const value         = latestEntry.getValue()
+    //
+    //     return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
+    // }
+
+
     read (identifier : Identifier) : any {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
+        // && DEBUG?
         if (!latestEntry) throwUnknownIdentifier(identifier)
 
         const value         = latestEntry.getValue()
 
+        // && DEBUG?
         if (value === TombStone) throwUnknownIdentifier(identifier)
 
         if (value !== undefined) {
             return value
         } else {
-            return this.calculateLazyEntry(latestEntry)
+            const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
+
+            return transaction.read(identifier)
         }
     }
 
 
-    calculateLazyEntry (entry : QuarkI) : any {
+    async readAsync (identifier : Identifier) : Promise<any> {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        // && DEBUG?
+        if (!latestEntry) throwUnknownIdentifier(identifier)
+
+        const value         = latestEntry.getValue()
+
+        // && DEBUG?
+        if (value === TombStone) throwUnknownIdentifier(identifier)
+
+        if (value !== undefined) {
+            return value
+        } else {
+            return await this.calculateLazyQuarkEntryAsync(latestEntry)
+        }
+    }
+
+
+    calculateLazyQuarkEntry (entry : QuarkI) : any {
+        if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
+
+        const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
+
+        return transaction.read(entry.identifier)
+
+        // transaction.entries.set(entry.identifier, entry)
+        // transaction.stackGen.push(entry)
+        //
+        // entry.forceCalculation()
+        //
+        // transaction.propagate()
+        //
+        // return entry.getValue()
+    }
+
+
+    async calculateLazyQuarkEntryAsync (entry : QuarkI) : Promise<any> {
         const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
 
         transaction.entries.set(entry.identifier, entry)
@@ -98,10 +139,11 @@ class Revision extends base {
 
         entry.forceCalculation()
 
-        transaction.propagate()
+        await transaction.propagateAsync()
 
         return entry.getValue()
     }
+
 
 }
 

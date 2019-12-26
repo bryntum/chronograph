@@ -38,7 +38,7 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     // calculated on demand
     lazy                : boolean   = false
     // can also be a calculated property
-    sync                : boolean   = false
+    sync                : boolean   = true
     // no cancels
     total               : boolean   = true
     // no "nested" writes

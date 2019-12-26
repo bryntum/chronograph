@@ -7,17 +7,19 @@ export class LeveledQueue<T extends { level : number }> {
 
     levels          : T[][]             = []
 
-    currentLevel    : number            = MAX_SMI
+    lowestLevel     : number            = MAX_SMI
 
 
     takeLowestLevel () {
-        for (let i = 0; i < this.levels.length; i++) {
+        for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
             if (level) {
                 this.length         -= level.length
 
                 this.levels[ i ]    = null
+
+                this.lowestLevel    = i + 1
 
                 return level
             }
@@ -26,26 +28,28 @@ export class LeveledQueue<T extends { level : number }> {
 
 
     resetCachedPosition () {
-        this.currentLevel               = MAX_SMI
+        this.lowestLevel               = MAX_SMI
     }
 
 
-    last () {
-        for (let i = this.currentLevel !== MAX_SMI ? this.currentLevel : 0; i < this.levels.length; i++) {
-            const level     = this.levels[ i ]
-
-            if (level && level.length > 0) {
-                this.currentLevel   = i
-
-                return level[ level.length - 1 ]
-            }
-        }
-    }
+    // last () {
+    //     for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
+    //         const level     = this.levels[ i ]
+    //
+    //         if (level && level.length > 0) {
+    //             this.lowestLevel   = i
+    //
+    //             return level[ level.length - 1 ]
+    //         }
+    //     }
+    // }
 
 
     pop () : T {
-        for (let i = this.currentLevel !== MAX_SMI ? this.currentLevel : 0; i < this.levels.length; i++) {
+        for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
+
+            this.lowestLevel    = i
 
             if (level && level.length > 0) {
                 this.length--
@@ -53,6 +57,8 @@ export class LeveledQueue<T extends { level : number }> {
                 return level.pop()
             }
         }
+
+        this.lowestLevel   = MAX_SMI
     }
 
 
@@ -69,6 +75,6 @@ export class LeveledQueue<T extends { level : number }> {
 
         this.length++
 
-        if (elLevel < this.currentLevel) this.currentLevel = elLevel
+        if (elLevel < this.lowestLevel) this.lowestLevel = elLevel
     }
 }
