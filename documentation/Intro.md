@@ -236,6 +236,11 @@ Takes over:
 - Identifier can yield this effect or choose to not do that, based on the values of external data. This may change the identifier's behavior from purely computed value to variable, with "validated" value in the middle
 
 
+Observing the identifier in the scope
+-------------------------------------
+
+graph.observe()
+
 
 Other effects
 -----------------
