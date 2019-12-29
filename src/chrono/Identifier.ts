@@ -99,13 +99,13 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    readFromGraphSync (graph : CheckoutI) : ValueT {
-        return graph.read(this)
+    readFromGraphAsync (graph : CheckoutI) : Promise<ValueT> {
+        return graph.readAsync(this)
     }
 
 
-    readFromGraphDirtySync (graph : CheckoutI) : ValueT {
-        return graph.readDirty(this)
+    readFromGraphSync (graph : CheckoutI) : ValueT {
+        return graph.read(this)
     }
 
 
@@ -114,13 +114,13 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    readFromGraphAsync (graph : CheckoutI) : Promise<ValueT> {
-        return graph.readAsync(this)
+    readFromTransactionAsync (transaction : Transaction) : Promise<ValueT> {
+        return transaction.readAsync(this)
     }
 
 
-    readFromTransactionAsync (transaction : Transaction) : Promise<ValueT> {
-        return transaction.readAsync(this)
+    readFromGraphDirtySync (graph : CheckoutI) : ValueT {
+        return graph.readDirty(this)
     }
 
 
@@ -136,6 +136,9 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     leaveGraph (graph : CheckoutI) {
     }
 }
+
+export const IdentifierC = <ValueT, ContextT extends Context>(...args) : Identifier<ValueT, ContextT> =>
+    Identifier.new(...args) as Identifier<ValueT, ContextT>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -162,34 +165,8 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     }
 }
 
-export function VariableConstructor<ValueT> (...args) : Variable<ValueT> {
-    //@ts-ignore
-    return Variable.new(...args)
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class VariableGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
-    YieldT              : never
-
-    @prototypeValue(false)
-    sync                : boolean
-
-    @prototypeValue(buildClass(Map, CalculationGen, Quark))
-    quarkClass          : QuarkConstructor
-
-
-    * calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<ValueT, this[ 'YieldT' ]> {
-        throw new Error("The 'calculation' method of the variables will never be called. Instead the value will be set directly to quark")
-    }
-
-
-    write (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        quark                       = quark || transaction.getWriteTarget(me)
-
-        quark.value                 = proposedValue
-        quark.proposedArguments     = args.length > 0 ? args : undefined
-    }
+export function VariableC<ValueT> (...args) : Variable<ValueT> {
+    return Variable.new(...args) as Variable<ValueT>
 }
 
 
@@ -209,8 +186,7 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof
 }
 
 export function CalculatedValueSyncConstructor<ValueT> (...args) : CalculatedValueSync<ValueT> {
-    //@ts-ignore
-    return CalculatedValueSync.new(...args)
+    return CalculatedValueSync.new(...args) as CalculatedValueSync<ValueT>
 }
 
 
@@ -230,30 +206,8 @@ export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof 
 }
 
 export function CalculatedValueGenConstructor<ValueT> (...args) : CalculatedValueGen<ValueT> {
-    //@ts-ignore
-    return CalculatedValueGen.new(...args)
+    return CalculatedValueGen.new(...args) as CalculatedValueGen<ValueT>
 }
-
-
-// //---------------------------------------------------------------------------------------------------------------------
-// export class DispatchedIdentifierGen<ValueT = any> extends Identifier<typeof ContextGen, ValueT> {
-//
-//     @prototypeValue(buildClass(Map, CalculationGen, Quark))
-//     quarkClass          : QuarkConstructor
-//
-//
-//     @prototypeValue(buildClass(Map, CalculationGen, Quark))
-//     dispatcherClass          : QuarkConstructor
-//
-//
-//     * calculation (context : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<ValueT, this[ 'YieldT' ]> {
-//         // const dispatcher    = yield Dispatcher
-//         //
-//         // return yield* dispatcher.runFormulaFor(yield Self, context)
-//
-//         return
-//     }
-// }
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
-import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationFunction, CalculationIterator, Context, ContextGen, ContextSync } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
 import {
@@ -9,7 +9,7 @@ import {
     CalculatedValueSyncConstructor,
     Identifier,
     Variable,
-    VariableConstructor
+    VariableC
 } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
@@ -292,7 +292,7 @@ class Checkout extends base {
 
 
     variable<T> (value : T) : Variable<T> {
-        const variable      = VariableConstructor<T>()
+        const variable      = VariableC<T>()
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
@@ -300,7 +300,7 @@ class Checkout extends base {
 
 
     variableNamed<T> (name : any, value : T) : Variable<T> {
-        const variable      = VariableConstructor<T>({ name })
+        const variable      = VariableC<T>({ name })
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
