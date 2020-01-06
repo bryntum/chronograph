@@ -149,10 +149,10 @@ class Checkout extends base {
                     else if (prevQuark && entry.origin === prevQuark) {
                         entry.mergePreviousOrigin(newRev.scope)
                     }
-                    else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin && prevQuark.origin.usedProposedOrCurrent) {
+                    else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin) {
                         // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
                         // from the previous revision
-                        entry.startOrigin().proposedValue   = prevQuark.origin.value
+                        entry.startOrigin().proposedValue   = prevQuark.origin.usedProposedOrCurrent ? prevQuark.origin.value : prevQuark.origin.proposedValue
                     }
 
                     entry.previous  = undefined
@@ -335,8 +335,6 @@ class Checkout extends base {
 
 
     removeIdentifier (identifier : Identifier) {
-        identifier.leaveGraph(this)
-
         this.activeTransaction.removeIdentifier(identifier)
 
         this.listeners.delete(identifier)
@@ -344,7 +342,7 @@ class Checkout extends base {
 
 
     hasIdentifier (identifier : Identifier) : boolean {
-        return Boolean(this.baseRevision.getLatestEntryFor(identifier))
+        return this.activeTransaction.hasIdentifier(identifier)
     }
 
 
@@ -401,12 +399,12 @@ class Checkout extends base {
     // }
 
 
-    // read zoo, need to clarify the semantic precisely
-    acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
-
-        return this.activeTransaction.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
-    }
+    // // read zoo, need to clarify the semantic precisely
+    // acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
+    //     // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
+    //
+    //     return this.activeTransaction.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
+    // }
 
 
     observe

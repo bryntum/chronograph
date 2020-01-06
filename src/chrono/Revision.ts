@@ -62,18 +62,29 @@ class Revision extends base {
     }
 
 
-    // readIfExists (identifier : Identifier) : any {
-    //     const latestEntry   = this.getLatestEntryFor(identifier)
-    //
-    //     if (!latestEntry) return undefined
-    //
-    //     const value         = latestEntry.getValue()
-    //
-    //     return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
-    // }
+    readIfExists (identifier : Identifier) : any {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        if (!latestEntry) return undefined
+
+        const value         = latestEntry.getValue()
+
+        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
+    }
 
 
-    read (identifier : Identifier) : any {
+    readIfExistsAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        if (!latestEntry) return undefined
+
+        const value         = latestEntry.getValue()
+
+        return value !== TombStone ? (value !== undefined ? value : this.readAsync(identifier)) : undefined
+    }
+
+
+    read<T> (identifier : Identifier<T>) : T {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -87,14 +98,12 @@ class Revision extends base {
         if (value !== undefined) {
             return value
         } else {
-            const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
-
-            return transaction.read(identifier)
+            return this.calculateLazyQuarkEntry(latestEntry)
         }
     }
 
 
-    async readAsync (identifier : Identifier) : Promise<any> {
+    readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -108,7 +117,7 @@ class Revision extends base {
         if (value !== undefined) {
             return value
         } else {
-            return await this.calculateLazyQuarkEntryAsync(latestEntry)
+            return this.calculateLazyQuarkEntryAsync(latestEntry)
         }
     }
 
@@ -118,16 +127,13 @@ class Revision extends base {
 
         const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
 
-        return transaction.read(entry.identifier)
+        transaction.entries.set(entry.identifier, entry)
+        transaction.stackGen.push(entry)
+        entry.forceCalculation()
 
-        // transaction.entries.set(entry.identifier, entry)
-        // transaction.stackGen.push(entry)
-        //
-        // entry.forceCalculation()
-        //
-        // transaction.propagate()
-        //
-        // return entry.getValue()
+        transaction.propagate()
+
+        return entry.getValue()
     }
 
 
@@ -136,15 +142,12 @@ class Revision extends base {
 
         transaction.entries.set(entry.identifier, entry)
         transaction.stackGen.push(entry)
-
         entry.forceCalculation()
 
         await transaction.propagateAsync()
 
         return entry.getValue()
     }
-
-
 }
 
 export type Revision = Mixin<typeof Revision>

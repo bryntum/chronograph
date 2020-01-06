@@ -259,6 +259,7 @@ class Transaction extends base {
     // }
 
 
+    // this seems to be an optimistic version
     async readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
@@ -278,7 +279,6 @@ class Transaction extends base {
         if (activeEntry) {
             entry           = this.addEdge(identifier, activeEntry, EdgeTypeNormal)
         } else {
-
             entry           = this.entries.get(identifier)
 
             if (!entry) return this.baseRevision.read(identifier)
@@ -296,6 +296,7 @@ class Transaction extends base {
     }
 
 
+    // this seems to be an optimistic version
     read<T> (identifier : Identifier<T>) : T {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
@@ -315,7 +316,6 @@ class Transaction extends base {
         if (activeEntry) {
             entry           = this.addEdge(identifier, activeEntry, EdgeTypeNormal)
         } else {
-
             entry           = this.entries.get(identifier)
 
             if (!entry) return this.baseRevision.read(identifier)
@@ -386,6 +386,11 @@ class Transaction extends base {
     }
 
 
+    hasIdentifier (identifier : Identifier) : boolean {
+        return Boolean(this.entries.get(identifier) || this.baseRevision.getLatestEntryFor(identifier))
+    }
+
+
     // this is actually an optimized version of `write`, which skips the graph walk phase
     // (since the identifier is assumed to be new, there should be no dependent quarks)
     addIdentifier (identifier : Identifier, proposedValue? : any, ...args : any[]) : Quark {
@@ -414,16 +419,18 @@ class Transaction extends base {
 
 
     removeIdentifier (identifier : Identifier) {
+        identifier.leaveGraph(this.graph)
+
         const entry                 = this.touch(identifier).startOrigin()
 
         entry.setValue(TombStone)
     }
 
 
-    populateCandidateScopeFromTransitions (candidate : Revision, entries : Map<Identifier, Quark>) {
+    populateCandidateScopeFromTransitions (candidate : Revision, scope : Map<Identifier, Quark>) {
         if (candidate.scope.size === 0) {
             // in this branch we can overwrite the whole map
-            candidate.scope     = entries
+            candidate.scope     = scope
         } else {
             // in this branch candidate's scope already has some content - this is the case for calculating lazy values
 
@@ -432,16 +439,16 @@ class Transaction extends base {
             //     candidate.scope.set(identifier, entry)
             // })
 
-            for (const [ identifier, entry ] of entries) {
-                if (entry.isShadow()) {
+            for (const [ identifier, quark ] of scope) {
+                if (quark.isShadow()) {
                     const latestEntry   = candidate.getLatestEntryFor(identifier)
 
                     // TODO remove the origin/shadowing concepts? this line won't be needed then
                     // and we iterate over the edges from "origin" anyway
-                    entry.getOutgoing().forEach((toEntry, toIdentifier) => latestEntry.getOutgoing().set(toIdentifier, toEntry))
+                    quark.getOutgoing().forEach((toQuark, toIdentifier) => latestEntry.getOutgoing().set(toIdentifier, toQuark))
 
                 } else {
-                    candidate.scope.set(identifier, entry)
+                    candidate.scope.set(identifier, quark)
                 }
             }
         }
@@ -730,8 +737,13 @@ class Transaction extends base {
             })
 
             entry.setOrigin(previousEntry.origin)
-        } else
+
+            // this is to indicate that this entry should be recalculated (origin removed)
+            // see `resetToEpoch`
+            entry.value     = value
+        } else {
             entry.setValue(value)
+        }
 
         //--------------------
         let ignoreSelfDependency : boolean = false
@@ -808,6 +820,8 @@ class Transaction extends base {
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : Quark[]) : Generator<any, void, unknown> {
+        this.walkContext.startNewEpoch()
+
         const entries                       = this.entries
         const propagationStartDate          = this.propagationStartDate
 
@@ -939,6 +953,8 @@ class Transaction extends base {
 
     // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, stack : Quark[]) {
+        this.walkContext.startNewEpoch()
+
         const entries                       = this.entries
 
         const prevActiveStack               = this.activeStack

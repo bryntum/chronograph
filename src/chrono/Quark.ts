@@ -86,20 +86,36 @@ class Quark extends base {
 
 
     resetToEpoch (epoch : number) {
+        if (window.DEBUG) debugger
+
         this.visitEpoch     = epoch
 
         this.visitedAt      = NOT_VISITED
         this.edgesFlow      = 0
 
+        this.usedProposedOrCurrent          = false
+
         this.cleanupCalculation()
         this.clearOutgoing()
 
-        if (this.origin && this.origin === this) this.origin.value = undefined
+        if (this.origin && this.origin === this) {
+            this.origin.proposedArguments   = undefined
 
-        // TODO should not clear the origin of the "real" shadowing quarks - those
-        // that were created with only purpose to keep the edges
-        // need to distinguish them from the "shadow after calculating the same value" quarks
-        this.origin         = undefined
+            this.origin.proposedValue       = this.origin.value
+
+            this.origin.value               = undefined
+        }
+        else if (this.origin) {
+            if (this.value !== undefined) {
+                this.origin                 = undefined
+                this.value                  = undefined
+            }
+
+            // // TODO should not clear the origin of the "real" shadowing quarks - those
+            // // that were created with only purpose to keep the edges
+            // // need to distinguish them from the "shadow after calculating the same value" quarks
+            // this.origin         = undefined
+        }
     }
 
 

@@ -79,6 +79,7 @@ StartTest(t => {
         t.expect(spy2).toHaveBeenCalled(1)
     })
 
+
     t.it('Lazy identifier, sync', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
@@ -343,7 +344,7 @@ StartTest(t => {
         t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 0, 1, 1, 2, 3 ], "Correct result calculated")
 
         // ----------------
-        const c1Spy         = t.spyOn(MinimalRevision.prototype, 'calculateLazyEntry')
+        const c1Spy         = t.spyOn(MinimalRevision.prototype, 'calculateLazyQuarkEntry')
 
         graph1.write(i1, 1)
 
