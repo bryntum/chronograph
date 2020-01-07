@@ -1,6 +1,6 @@
 // No exports from this module
 //---------------------------------------------------------------------------------------------------------------------
-import { AnyConstructor, Base, Mixin } from "./BetterMixin.js"
+import { AnyConstructor, MixinStateExtension } from "./BetterMixin.js"
 
 type FilterFlags<Base, Condition> = {
     [Key in keyof Base] : Base[Key] extends Condition ? Key : never
@@ -14,6 +14,11 @@ export type OnlyPropertiesOfType<Base, Type> = Pick<Base, AllowedNames<Base, Typ
 //---------------------------------------------------------------------------------------------------------------------
 type ReplaceTypeOfProperty<Type, Property extends keyof Type, NewPropertyType> =
     NewPropertyType extends Type[ Property ] ? Omit<Type, Property> & { [ P in Property ] : NewPropertyType } : never
+
+
+
+export type MixinFunction   = <T extends AnyConstructor<object>, MClass extends object>(base : T) => AnyConstructor<T & MClass>
+    //AnyConstructor<Extract<MClass, T>>
 
 
 //
