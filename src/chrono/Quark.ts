@@ -86,8 +86,6 @@ class Quark extends base {
 
 
     resetToEpoch (epoch : number) {
-        if (window.DEBUG) debugger
-
         this.visitEpoch     = epoch
 
         this.visitedAt      = NOT_VISITED

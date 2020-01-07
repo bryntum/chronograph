@@ -321,15 +321,25 @@ class Transaction extends base {
             if (!entry) return this.baseRevision.read(identifier)
         }
 
-        if (entry.hasValue()) return entry.getValue()
+        const value1        = entry.getValue()
+
+        if (value1 === TombStone) throwUnknownIdentifier(identifier)
+        if (value1 !== undefined) return value1
+
+        // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
+        // now need to repeat the logic
+        if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
         //----------------------
         this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
 
-        // TODO review this exception
-        if (!entry.hasValue()) throw new Error('Cycle during synchronous computation')
+        const value     = entry.getValue()
 
-        return entry.getValue()
+        // TODO review this exception
+        if (value === undefined) throw new Error('Cycle during synchronous computation')
+        if (value === TombStone) throwUnknownIdentifier(identifier)
+
+        return value
     }
 
 
@@ -742,6 +752,7 @@ class Transaction extends base {
             // see `resetToEpoch`
             entry.value     = value
         } else {
+            entry.startOrigin()
             entry.setValue(value)
         }
 
@@ -785,6 +796,8 @@ class Transaction extends base {
         else {
             if (!requestedEntry.isCalculationStarted()) {
                 stack.push(requestedEntry)
+
+                if (!requestedEntry.previous || !requestedEntry.previous.hasValue()) requestedEntry.forceCalculation()
 
                 return undefined
             }
@@ -895,7 +908,7 @@ class Transaction extends base {
                 continue
             }
 
-            if (entry.isShadow() || entry.hasValue()) {
+            if (/*entry.isShadow() ||*/ entry.hasValue()) {
                 entry.cleanup()
 
                 stack.pop()
@@ -1002,7 +1015,7 @@ class Transaction extends base {
                 continue
             }
 
-            if (entry.isShadow() || entry.hasValue()) {
+            if (/*entry.isShadow() ||*/ entry.hasValue()) {
                 entry.cleanup()
 
                 stack.pop()

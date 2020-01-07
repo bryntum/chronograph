@@ -9,7 +9,7 @@ StartTest(t => {
 
         const var1      = graph1.variable(0)
 
-        t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
+        t.livesOk(() => graph1.read(var1))
 
         graph1.propagate()
 
@@ -38,7 +38,7 @@ StartTest(t => {
             yield var1
         })
 
-        t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
+        t.livesOk(() => graph1.read(var1))
 
         graph1.propagate()
 
@@ -50,9 +50,7 @@ StartTest(t => {
         //--------------
         graph1.removeIdentifier(var1)
 
-        t.is(graph1.read(var1), 0, 'Can still read the variable before the propagate happened')
-
-        t.throwsOk(() => graph1.propagate(), 'Unknown identifier')
+        t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
 
         //--------------
         t.is(graph2.read(var1), 0, 'Other branches not affected by removal')
