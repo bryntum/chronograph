@@ -152,7 +152,7 @@ class Checkout extends base {
                     else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin) {
                         // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
                         // from the previous revision
-                        entry.startOrigin().proposedValue   = prevQuark.origin.usedProposedOrCurrent ? prevQuark.origin.value : prevQuark.origin.proposedValue
+                        entry.startOrigin().proposedValue   = prevQuark.origin.value !== undefined ? prevQuark.origin.value : prevQuark.origin.proposedValue
                     }
 
                     entry.previous  = undefined

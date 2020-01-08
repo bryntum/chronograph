@@ -216,7 +216,8 @@ StartTest(t => {
         const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueGen.new({
-            lazy : true,
+            name    : 'var1',
+            lazy    : true,
 
             * calculation () : CalculationIterator<number> {
                 const proposedValue : number    = yield ProposedOrCurrent

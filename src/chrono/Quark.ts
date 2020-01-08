@@ -97,22 +97,16 @@ class Quark extends base {
         this.clearOutgoing()
 
         if (this.origin && this.origin === this) {
-            this.origin.proposedArguments   = undefined
+            this.proposedArguments          = undefined
 
-            this.origin.proposedValue       = this.origin.value
+            this.proposedValue              = this.value
 
-            this.origin.value               = undefined
+            this.value                      = undefined
         }
-        else if (this.origin) {
-            if (this.value !== undefined) {
-                this.origin                 = undefined
-                this.value                  = undefined
-            }
+        else {
+            this.origin                     = undefined
 
-            // // TODO should not clear the origin of the "real" shadowing quarks - those
-            // // that were created with only purpose to keep the edges
-            // // need to distinguish them from the "shadow after calculating the same value" quarks
-            // this.origin         = undefined
+            this.value                      = undefined
         }
     }
 
