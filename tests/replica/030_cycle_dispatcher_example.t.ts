@@ -126,7 +126,7 @@ class Event extends Entity(Base) {
 
     @build_proposed('dispatcher')
     buildProposedDispatcher (me : Identifier, quark : Quark, transaction : Transaction) : DispatcherValue {
-        const direction : Direction    = transaction.readDirty(this.$.direction)
+        const direction : Direction    = transaction.readProposedOrPrevious(this.$.direction)
 
         return new Map([
             [ FieldType.Start, direction === Direction.Forward ? CalculationMode.CalculateProposed : CalculationMode.CalculateProposed ],

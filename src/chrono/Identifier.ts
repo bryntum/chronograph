@@ -104,12 +104,12 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    readFromGraphSync (graph : CheckoutI) : ValueT {
+    readFromGraph (graph : CheckoutI) : ValueT {
         return graph.read(this)
     }
 
 
-    readFromTransactionSync (transaction : Transaction) : ValueT {
+    readFromTransaction (transaction : Transaction) : ValueT {
         return transaction.read(this)
     }
 
@@ -119,9 +119,9 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    readFromGraphDirtySync (graph : CheckoutI) : ValueT {
-        return graph.readDirty(this)
-    }
+    // readFromGraphDirtySync (graph : CheckoutI) : ValueT {
+    //     return graph.readDirty(this)
+    // }
 
 
     buildProposedValue (me : this, quark : InstanceType<this[ 'quarkClass' ]>, transaction : Transaction) : ValueT {

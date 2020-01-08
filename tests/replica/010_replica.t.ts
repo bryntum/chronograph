@@ -54,13 +54,9 @@ StartTest(t => {
         replica1.addEntity(markTwain)
         replica1.addEntity(tomSoyer)
 
-        replica1.propagate()
-
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 
         markTwain.firstName     = 'MARK'
-
-        replica1.propagate()
 
         t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
     })
@@ -95,8 +91,6 @@ StartTest(t => {
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
 
         replica1.addEntity(markTwain)
-
-        replica1.propagate()
 
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 

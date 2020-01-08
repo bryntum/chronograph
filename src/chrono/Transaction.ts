@@ -308,7 +308,6 @@ class Transaction extends base {
             this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
         }
 
-
         let entry : Quark
 
         const activeEntry   = this.getActiveEntry()
@@ -343,13 +342,23 @@ class Transaction extends base {
     }
 
 
-    readDirty <T> (identifier : Identifier<T>) : T {
+    readProposedOrPrevious<T> (identifier : Identifier<T>) : T {
         const dirtyQuark    = this.entries.get(identifier)
 
         if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
             return dirtyQuark.proposedValue
         } else
             return this.baseRevision.readIfExists(identifier)
+    }
+
+
+    readProposedOrPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        const dirtyQuark    = this.entries.get(identifier)
+
+        if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
+            return dirtyQuark.proposedValue
+        } else
+            return this.baseRevision.readIfExistsAsync(identifier)
     }
 
 
@@ -465,58 +474,15 @@ class Transaction extends base {
     }
 
 
-    prePropagate (args? : PropagateArguments) /*: LeveledQueue<Quark>*/ {
+    prePropagate (args? : PropagateArguments) {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
         this.isClosed               = true
         this.propagationStartDate   = Date.now()
 
-        // let stack : LeveledQueue<Quark>
-
-        // if (args && args.calculateOnly) {
-        //     const calculateOnly     = args.calculateOnly
-        //
-        //     stack                   = new LeveledQueue()
-        //
-        //     let maxLevel : number   = 0
-        //
-        //     for (let i = 0; i < calculateOnly.length; i++) {
-        //         const identifier    = calculateOnly[ i ]
-        //
-        //         if (identifier.level > maxLevel) maxLevel = identifier.level
-        //
-        //         const entry = this.entries.get(identifier) || identifier.newQuark(this.baseRevision.createdAt)
-        //
-        //         entry.forceCalculation()
-        //
-        //         stack.push(entry)
-        //     }
-        //
-        //     for (let i = 0; i < maxLevel; i++) {
-        //         const dirtyLayer    = this.stackGen.levels[ i ]
-        //
-        //         if (dirtyLayer) {
-        //             const existingLevel = stack.levels[ i ]
-        //
-        //             if (existingLevel) {
-        //                 existingLevel.push.apply(existingLevel, dirtyLayer)
-        //             } else {
-        //                 stack.levels[ i ] = dirtyLayer.slice()
-        //             }
-        //
-        //             stack.length        += dirtyLayer.length
-        //         }
-        //     }
-        //
-        //     // stack.resetCachedPosition()
-        // } else
-        //     stack                   = this.stackGen
-
         // for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
 
         this.plannedTotalIdentifiersToCalculate = this.stackGen.length
-
-        // return stack
     }
 
 
@@ -682,12 +648,12 @@ class Transaction extends base {
 
         this.addEdge(source, activeEntry, EdgeTypePast)
 
-        return this.readDirty(source)
+        return this.readProposedOrPrevious(source)
     }
 
 
     [UnsafeProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
-        return this.readDirty(effect.identifier)
+        return this.readProposedOrPrevious(effect.identifier)
     }
 
 

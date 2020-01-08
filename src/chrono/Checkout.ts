@@ -387,23 +387,15 @@ class Checkout extends base {
     }
 
 
-    // read zoo, need to clarify the semantic precisely
-    // readIfExists (identifier : Identifier) : any {
-    //     return this.baseRevision.readIfExists(identifier)
-    // }
-    //
-    //
-    // // read zoo, need to clarify the semantic precisely
+    // // read the identifier value, return the proposed value if no "current" value is calculated yet
     // readDirty<T> (identifier : Identifier<T>) : T {
     //     return this.activeTransaction.readDirty(identifier)
     // }
-
-
-    // // read zoo, need to clarify the semantic precisely
-    // acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-    //     // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
     //
-    //     return this.activeTransaction.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
+    //
+    // // read the identifier value, return the proposed value if no "current" value is calculated yet
+    // readDirtyAsync<T> (identifier : Identifier<T>) : Promise<T> {
+    //     return this.activeTransaction.readDirtyAsync(identifier)
     // }
 
 
