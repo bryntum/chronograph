@@ -835,6 +835,15 @@ class Transaction extends base {
             const entry             = stack[ stack.length - 1 ]
             const identifier        = entry.identifier
 
+            // TODO can avoid `.get()` call by comparing some another "epoch" counter on the entry
+            const ownEntry          = entries.get(identifier)
+            if (ownEntry !== entry) {
+                entry.cleanup()
+
+                stack.pop()
+                continue
+            }
+
             if (entry.edgesFlow == 0) {
                 // even if we delete the entry there might be other copies in stack, so reduce the `edgesFlow` to -1
                 // to indicate that those are already processed
@@ -941,6 +950,15 @@ class Transaction extends base {
         while (stack.length) {
             const entry             = stack[ stack.length - 1 ]
             const identifier        = entry.identifier
+
+            // TODO can avoid `.get()` call by comparing some another "epoch" counter on the entry
+            const ownEntry          = entries.get(identifier)
+            if (ownEntry !== entry) {
+                entry.cleanup()
+
+                stack.pop()
+                continue
+            }
 
             if (entry.edgesFlow == 0) {
                 // even if we delete the entry there might be other copies in stack, so reduce the `edgesFlow` to -1

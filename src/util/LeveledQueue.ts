@@ -36,9 +36,9 @@ export class LeveledQueue<T extends { level : number }> {
     }
 
 
-    resetCachedPosition () {
-        this.lowestLevel               = MAX_SMI
-    }
+    // resetCachedPosition () {
+    //     this.lowestLevel               = MAX_SMI
+    // }
 
 
     // last () {

@@ -89,7 +89,9 @@ class Quark extends base {
         this.visitEpoch     = epoch
 
         this.visitedAt      = NOT_VISITED
-        this.edgesFlow      = 0
+        // we were clearing the edgeFlow on epoch change, however see `030_propagation_2.t.ts` for a counter-example
+        // TODO needs some proper solution for edgesFlow + walk epoch combination
+        // this.edgesFlow      = 0
 
         this.usedProposedOrCurrent          = false
 
