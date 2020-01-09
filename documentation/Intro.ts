@@ -10,7 +10,7 @@ import { Identifier, Variable } from "../src/chrono/Identifier.js"
 import { SyncEffectHandler } from "../src/chrono/Transaction.js"
 import { CalculationIterator } from "../src/primitives/Calculation.js"
 import { calculate, Entity, field } from "../src/replica/Entity.js"
-import { reference2 } from "../src/replica/Reference.js"
+import { reference } from "../src/replica/Reference.js"
 import { bucket } from "../src/replica/ReferenceBucket.js"
 import { MinimalReplica } from "../src/replica/Replica.js"
 
@@ -247,7 +247,7 @@ class Author2 extends Entity(Object) {
 }
 
 class Book2 extends Entity(Object) {
-    @reference2<Author2>({ bucket : 'books' })
+    @reference({ bucket : 'books' })
     writtenBy       : Author2
 }
 
@@ -255,8 +255,8 @@ const replica2          = MinimalReplica.new()
 
 const markTwain2        = new Author2()
 
-const tomSawyer2        = new Book()
-const huckleberryFinn2  = new Book()
+const tomSawyer2        = new Book2()
+const huckleberryFinn2  = new Book2()
 
 replica2.addEntities([ markTwain2, tomSawyer2, huckleberryFinn2 ])
 
