@@ -37,8 +37,6 @@ StartTest(t => {
 
         const var1      = graph1.variable(0)
 
-        t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
-
         graph1.propagate()
 
         t.is(graph1.read(var1), 0, 'Correct value')

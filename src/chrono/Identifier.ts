@@ -19,9 +19,10 @@ import { Transaction, YieldableValue } from "./Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum Levels {
-    Constant                = 0,
-    DependsOnlyOnConstant   = 1,
-    DependsOnSelfKind       = 10
+    UserInput                               = 0,
+    DependsOnlyOnUserInput                  = 1,
+    DependsOnlyOnDependsOnlyOnUserInput     = 2,
+    DependsOnSelfKind                       = 3
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -37,7 +38,7 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     // calculated on demand
     lazy                : boolean   = false
     // can also be a calculated property
-    sync                : boolean   = false
+    sync                : boolean   = true
     // no cancels
     total               : boolean   = true
     // no "nested" writes
@@ -98,29 +99,29 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    readFromGraphSync (graph : Checkout) : ValueT {
+    readFromGraphAsync (graph : Checkout) : Promise<ValueT> {
+        return graph.readAsync(this)
+    }
+
+
+    readFromGraph (graph : Checkout) : ValueT {
         return graph.read(this)
     }
 
 
-    readFromGraphDirtySync (graph : Checkout) : ValueT {
-        return graph.readDirty(this)
-    }
-
-
-    readFromTransactionSync (transaction : Transaction) : ValueT {
+    readFromTransaction (transaction : Transaction) : ValueT {
         return transaction.read(this)
-    }
-
-
-    readFromGraphAsync (graph : Checkout) : Promise<ValueT> {
-        return graph.readAsync(this)
     }
 
 
     readFromTransactionAsync (transaction : Transaction) : Promise<ValueT> {
         return transaction.readAsync(this)
     }
+
+
+    // readFromGraphDirtySync (graph : CheckoutI) : ValueT {
+    //     return graph.readDirty(this)
+    // }
 
 
     buildProposedValue (me : this, quark : InstanceType<this[ 'quarkClass' ]>, transaction : Transaction) : ValueT {
@@ -136,13 +137,15 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 }
 
+export const IdentifierC = <ValueT, ContextT extends Context>(...args) : Identifier<ValueT, ContextT> =>
+    Identifier.new(...args) as Identifier<ValueT, ContextT>
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
 
-    @prototypeValue(true)
-    sync                : boolean
+    level               : number    = Levels.UserInput
 
     @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor
@@ -161,42 +164,13 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     }
 }
 
-export function VariableConstructor<ValueT> (...args) : Variable<ValueT> {
-    //@ts-ignore
-    return Variable.new(...args)
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class VariableGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
-    YieldT              : never
-
-    @prototypeValue(false)
-    sync                : boolean
-
-    @prototypeValue(Mixin([ CalculationGen, Quark, Map ], IdentityMixin<CalculationGen & Quark & Map<any, any>>()))
-    quarkClass          : QuarkConstructor
-
-
-    * calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : CalculationIterator<ValueT, this[ 'YieldT' ]> {
-        throw new Error("The 'calculation' method of the variables will never be called. Instead the value will be set directly to quark")
-    }
-
-
-    write (me : this, transaction : Transaction, quark : Quark, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        quark                       = quark || transaction.getWriteTarget(me)
-
-        quark.value                 = proposedValue
-        quark.proposedArguments     = args.length > 0 ? args : undefined
-    }
+export function VariableC<ValueT> (...args) : Variable<ValueT> {
+    return Variable.new(...args) as Variable<ValueT>
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
-
-    @prototypeValue(true)
-    sync                : boolean
 
     @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor
@@ -208,16 +182,12 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof
 }
 
 export function CalculatedValueSyncConstructor<ValueT> (...args) : CalculatedValueSync<ValueT> {
-    //@ts-ignore
-    return CalculatedValueSync.new(...args)
+    return CalculatedValueSync.new(...args) as CalculatedValueSync<ValueT>
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
-
-    @prototypeValue(false)
-    sync                : boolean
 
     @prototypeValue(Mixin([ CalculationGen, Quark, Map ], IdentityMixin<CalculationGen & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor
@@ -229,8 +199,7 @@ export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof 
 }
 
 export function CalculatedValueGenConstructor<ValueT> (...args) : CalculatedValueGen<ValueT> {
-    //@ts-ignore
-    return CalculatedValueGen.new(...args)
+    return CalculatedValueGen.new(...args) as CalculatedValueGen<ValueT>
 }
 
 

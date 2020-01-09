@@ -1,6 +1,6 @@
 import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
-import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationFunction, CalculationIterator, Context, ContextGen, ContextSync } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
 import {
@@ -9,7 +9,7 @@ import {
     CalculatedValueSyncConstructor,
     Identifier,
     Variable,
-    VariableConstructor
+    VariableC
 } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
@@ -54,11 +54,12 @@ export class Checkout extends Base {
     // how many revisions (except the `baseRevision`) to keep in memory for undo operation
     // minimal value is 0 (the `baseRevision` only, no undo/redo)
     // users supposed to opt-in for undo/redo by increasing this config
-    historyLimit            : number        = 0
+    historyLimit            : number            = 0
 
     listeners               : Map<Identifier, Listener> = new Map()
 
-    runningTransaction      : Transaction
+    $activeTransaction      : Transaction       = undefined
+    runningTransaction      : Transaction       = undefined
 
     enableProgressNotifications     : boolean   = false
 
@@ -81,7 +82,7 @@ export class Checkout extends Base {
         this.topRevision    = this.baseRevision
 
         clearLazyProperty(this, 'followingRevision')
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         this.markAndSweep()
     }
@@ -146,10 +147,10 @@ export class Checkout extends Base {
                     else if (prevQuark && entry.origin === prevQuark) {
                         entry.mergePreviousOrigin(newRev.scope)
                     }
-                    else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin && prevQuark.origin.usedProposedOrCurrent) {
+                    else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin) {
                         // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
                         // from the previous revision
-                        entry.startOrigin().proposedValue   = prevQuark.origin.value
+                        entry.startOrigin().proposedValue   = prevQuark.origin.value !== undefined ? prevQuark.origin.value : prevQuark.origin.proposedValue
                     }
 
                     entry.previous  = undefined
@@ -194,13 +195,10 @@ export class Checkout extends Base {
     }
 
 
-    _activeTransaction : Transaction    = undefined
-
-
     get activeTransaction () : Transaction {
-        if (this._activeTransaction) return this._activeTransaction
+        if (this.$activeTransaction) return this.$activeTransaction
 
-        return this._activeTransaction = Transaction.new({
+        return this.$activeTransaction = Transaction.new({
             baseRevision                : this.baseRevision,
             graph                       : this
         })
@@ -225,15 +223,15 @@ export class Checkout extends Base {
     }
 
 
-    propagateSync (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagateSync(args)
-
-        const result            = this.finalizePropagation(nextRevision)
-
-        this.runningTransaction = null
-
-        return result
-    }
+    // propagateSync (args? : PropagateArguments) : PropagateResult {
+    //     const nextRevision      = this.activeTransaction.propagateSync(args)
+    //
+    //     const result            = this.finalizePropagation(nextRevision)
+    //
+    //     this.runningTransaction = null
+    //
+    //     return result
+    // }
 
 
     async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
@@ -281,7 +279,7 @@ export class Checkout extends Base {
         this.markAndSweep()
 
         clearLazyProperty(this, 'followingRevision')
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return
     }
@@ -292,7 +290,7 @@ export class Checkout extends Base {
 
 
     variable<T> (value : T) : Variable<T> {
-        const variable      = VariableConstructor<T>()
+        const variable      = VariableC<T>()
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
@@ -300,7 +298,7 @@ export class Checkout extends Base {
 
 
     variableNamed<T> (name : any, value : T) : Variable<T> {
-        const variable      = VariableConstructor<T>({ name })
+        const variable      = VariableC<T>({ name })
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
@@ -335,8 +333,6 @@ export class Checkout extends Base {
 
 
     removeIdentifier (identifier : Identifier) {
-        identifier.leaveGraph(this)
-
         this.activeTransaction.removeIdentifier(identifier)
 
         this.listeners.delete(identifier)
@@ -344,7 +340,7 @@ export class Checkout extends Base {
 
 
     hasIdentifier (identifier : Identifier) : boolean {
-        return Boolean(this.baseRevision.getLatestEntryFor(identifier))
+        return this.activeTransaction.hasIdentifier(identifier)
     }
 
 
@@ -353,36 +349,52 @@ export class Checkout extends Base {
     }
 
 
-    // touch (identifier : Identifier) : Quark {
-    //     return this.activeTransaction.touch(identifier)
+    // keep if possible?
+    // pin (identifier : Identifier) : Quark {
+    //     return this.activeTransaction.pin(identifier)
     // }
 
 
-    readIfExists (identifier : Identifier) : any {
-        return this.baseRevision.readIfExists(identifier)
-    }
-
-
-    read<T> (identifier : Identifier<T>) : T {
+    // Synchronously read the "previous", "stable" value from the graph. If its a lazy entry, it will be calculated
+    // Synchronous read can not calculate lazy asynchronous identifiers and will throw exception
+    // Lazy identifiers supposed to be "total" (or accept repeating observes?)
+    readPrevious<T> (identifier : Identifier<T>) : T {
         return this.baseRevision.read(identifier)
     }
 
 
+    // Asynchronously read the "previous", "stable" value from the graph. If its a lazy entry, it will be calculated
+    // Asynchronous read can calculate both synchornous and asynchronous lazy identifiers.
+    // Lazy identifiers supposed to be "total" (or accept repeating observes?)
+    readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        return this.baseRevision.readAsync(identifier)
+    }
+
+
+    // Synchronously read the "current" value from the graph.
+    // Synchronous read can not calculate asynchronous identifiers and will throw exception
+    read<T> (identifier : Identifier<T>) : T {
+        return this.activeTransaction.read(identifier)
+    }
+
+
+    // Asynchronously read the "current" value from the graph.
+    // Asynchronous read can calculate both synchronous and asynchronous identifiers
     readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         return this.activeTransaction.readAsync(identifier)
     }
 
 
-    readDirty<T> (identifier : Identifier<T>) : T {
-        return this.activeTransaction.readDirty(identifier)
-    }
-
-
-    acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
-
-        return this.activeTransaction.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
-    }
+    // // read the identifier value, return the proposed value if no "current" value is calculated yet
+    // readDirty<T> (identifier : Identifier<T>) : T {
+    //     return this.activeTransaction.readDirty(identifier)
+    // }
+    //
+    //
+    // // read the identifier value, return the proposed value if no "current" value is calculated yet
+    // readDirtyAsync<T> (identifier : Identifier<T>) : Promise<T> {
+    //     return this.activeTransaction.readDirtyAsync(identifier)
+    // }
 
 
     observe
@@ -450,7 +462,7 @@ export class Checkout extends Base {
         this.baseRevision       = previous
 
         // note: all unpropagated "writes" are lost
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return true
     }
@@ -466,7 +478,7 @@ export class Checkout extends Base {
         this.baseRevision       = nextRevision
 
         // note: all unpropagated "writes" are lost
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return true
     }

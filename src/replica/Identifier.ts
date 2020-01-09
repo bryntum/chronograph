@@ -1,5 +1,5 @@
 import { Checkout } from "../chrono/Checkout.js"
-import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
+import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../chrono/Identifier.js"
 import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
@@ -28,15 +28,15 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
 
-    readFromGraphDirtySync (graph : Checkout) {
-        if (graph)
-            return graph.readDirty(this)
-        else
-            return this.DATA
-    }
+    // readFromGraphDirtySync (graph : Checkout) {
+    //     if (graph)
+    //         return graph.readDirty(this)
+    //     else
+    //         return this.DATA
+    // }
 
 
-    readFromGraphSync (graph : Checkout) : this[ 'ValueT' ] {
+    readFromGraph (graph : Checkout) : this[ 'ValueT' ] {
         if (graph)
             return graph.read(this)
         else
@@ -59,8 +59,9 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
 export type FieldIdentifierConstructor  = typeof FieldIdentifier
 
-export class MinimalFieldIdentifier extends FieldIdentifier.mix(CalculatedValueGen) {}
-
+export class MinimalFieldIdentifierSync extends FieldIdentifier(CalculatedValueSync) {}
+export class MinimalFieldIdentifierGen extends FieldIdentifier.mix(CalculatedValueGen) {}
+export class MinimalFieldVariable extends FieldIdentifier(Variable) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------

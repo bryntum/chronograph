@@ -47,7 +47,7 @@ export class ReferenceBucketIdentifier extends Mixin(
     [ FieldIdentifier ], <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
 
     class ReferenceBucketIdentifier extends base {
-        level               : number                = Levels.DependsOnlyOnConstant
+        level               : number                = Levels.DependsOnlyOnDependsOnlyOnUserInput
 
         ValueT              : Set<Entity>
 
@@ -58,7 +58,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
 
         addToBucket (transaction : Transaction, entity : Entity) {
-            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
+            const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
             if (!quark.newRefs) quark.newRefs = new Set()
 
@@ -71,7 +71,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
 
         removeFromBucket (transaction : Transaction, entity : Entity) {
-            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
+            const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
             if (!quark.oldRefs) quark.oldRefs = new Set()
 

@@ -39,7 +39,7 @@ export class ReferenceIdentifier extends Mixin(
     <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
 
     class ReferenceIdentifier extends base {
-        level           : number            = Levels.Constant
+        level           : number            = Levels.DependsOnlyOnUserInput
 
         field           : ReferenceField    = undefined
 
@@ -87,7 +87,7 @@ export class ReferenceIdentifier extends Mixin(
             if (this.hasBucket()) {
                 // here we only need to remove from the "previous", "stable" bucket, because
                 // the calculation for the removed reference won't be called - the possible `proposedValue` of reference will be ignored
-                const value  = graph.readIfExists(this) as Entity
+                const value  = graph.activeTransaction.readProposedOrPrevious(this) as Entity
 
                 if (value != null) {
                     this.getBucket(value).removeFromBucket(graph.activeTransaction, this.self)

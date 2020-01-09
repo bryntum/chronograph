@@ -154,13 +154,13 @@ export class Entity extends Mixin(
         }
 
 
-        propagateSync () : PropagateResult {
-            const graph     = this.graph
-
-            if (!graph) return
-
-            return graph.propagateSync()
-        }
+        // propagateSync () : PropagateResult {
+        //     const graph     = this.graph
+        //
+        //     if (!graph) return
+        //
+        //     return graph.propagateSync()
+        // }
 
         // async waitForPropagateCompleted () : Promise<PropagationResult | null> {
         //     return this.getGraph().waitForPropagateCompleted()
@@ -234,7 +234,7 @@ export class Entity extends Mixin(
             }
 
             //------------------
-            const template              = field.identifierCls.new(config)
+            const template              = field.getIdentifierClass(calculationFunction).new(config)
 
             const TemplateClass         = function () {} as any as typeof Identifier
 
@@ -311,7 +311,7 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             Object.defineProperty(target, propertyKey, {
                 get     : function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraphDirtySync(this.graph)
+                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraph(this.graph)
                 },
 
                 set     : function (this : Entity, value : any) {
@@ -325,7 +325,7 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraphDirtySync(this.graph)
+                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraph(this.graph)
                 }
             }
 

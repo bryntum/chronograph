@@ -126,7 +126,7 @@ class Event extends Entity.mix(Base) {
 
     @build_proposed('dispatcher')
     buildProposedDispatcher (me : Identifier, quark : Quark, transaction : Transaction) : DispatcherValue {
-        const direction : Direction    = transaction.readDirty(this.$.direction)
+        const direction : Direction    = transaction.readProposedOrPrevious(this.$.direction)
 
         return new Map([
             [ FieldType.Start, direction === Direction.Forward ? CalculationMode.CalculateProposed : CalculationMode.CalculateProposed ],
@@ -138,7 +138,9 @@ class Event extends Entity.mix(Base) {
 
     @calculate('dispatcher')
     * calculateDispatcher (YIELD : SyncEffectHandler) : CalculationIterator<DispatcherValue> {
-        yield ProposedOrCurrent
+        const proposedOrCurrent                 = yield ProposedOrCurrent
+
+        // if (window.DEBUG) debugger
 
         const directionValue : Direction        = yield this.$.direction
 
@@ -284,10 +286,11 @@ StartTest(t => {
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
 
-        t.expect(spyDispatcher).toHaveBeenCalled(1)
-        t.expect(spyStart).toHaveBeenCalled(1)
-        t.expect(spyEnd).toHaveBeenCalled(1)
-        t.expect(spyDuration).toHaveBeenCalled(1)
+        // 1st time calculation is done during the propagate - 2nd during read
+        t.expect(spyDispatcher).toHaveBeenCalled(2)
+        t.expect(spyStart).toHaveBeenCalled(2)
+        t.expect(spyEnd).toHaveBeenCalled(2)
+        t.expect(spyDuration).toHaveBeenCalled(2)
 
         //----------------
         // tslint:disable-next-line
@@ -297,10 +300,11 @@ StartTest(t => {
 
         replica.propagate()
 
-        t.expect(spyDispatcher).toHaveBeenCalled(1)
-        t.expect(spyStart).toHaveBeenCalled(1)
-        t.expect(spyEnd).toHaveBeenCalled(1)
-        t.expect(spyDuration).toHaveBeenCalled(1)
+        // no calculations during the propagate, as those were already done during the read
+        t.expect(spyDispatcher).toHaveBeenCalled(0)
+        t.expect(spyStart).toHaveBeenCalled(0)
+        t.expect(spyEnd).toHaveBeenCalled(0)
+        t.expect(spyDuration).toHaveBeenCalled(0)
     })
 
 

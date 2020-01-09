@@ -233,7 +233,12 @@ export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends
     let iteration   = gen.next()
 
     while (!iteration.done) {
-        iteration   = gen.next(await effect(iteration.value))
+        const effectResolution  = effect(iteration.value)
+
+        if (effectResolution instanceof Promise)
+            iteration   = gen.next(await effectResolution)
+        else
+            iteration   = gen.next(effectResolution)
     }
 
     return iteration.value

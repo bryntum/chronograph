@@ -49,17 +49,6 @@ export class Revision extends Base {
     }
 
 
-    readIfExists (identifier : Identifier) : any {
-        const latestEntry   = this.getLatestEntryFor(identifier)
-
-        if (!latestEntry) return undefined
-
-        const value         = latestEntry.getValue()
-
-        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
-    }
-
-
     * previousAxis () : Generator<Revision> {
         let revision : Revision = this
 
@@ -71,32 +60,89 @@ export class Revision extends Base {
     }
 
 
-    read (identifier : Identifier) : any {
+    readIfExists (identifier : Identifier) : any {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
+        if (!latestEntry) return undefined
+
+        const value         = latestEntry.getValue()
+
+        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
+    }
+
+
+    readIfExistsAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        if (!latestEntry) return undefined
+
+        const value         = latestEntry.getValue()
+
+        return value !== TombStone ? (value !== undefined ? value : this.readAsync(identifier)) : undefined
+    }
+
+
+    read<T> (identifier : Identifier<T>) : T {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        // && DEBUG?
         if (!latestEntry) throwUnknownIdentifier(identifier)
 
         const value         = latestEntry.getValue()
 
+        // && DEBUG?
         if (value === TombStone) throwUnknownIdentifier(identifier)
 
         if (value !== undefined) {
             return value
         } else {
-            return this.calculateLazyEntry(latestEntry)
+            return this.calculateLazyQuarkEntry(latestEntry)
         }
     }
 
 
-    calculateLazyEntry (entry : Quark) : any {
+    readAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        // && DEBUG?
+        if (!latestEntry) throwUnknownIdentifier(identifier)
+
+        const value         = latestEntry.getValue()
+
+        // && DEBUG?
+        if (value === TombStone) throwUnknownIdentifier(identifier)
+
+        if (value !== undefined) {
+            return value
+        } else {
+            return this.calculateLazyQuarkEntryAsync(latestEntry)
+        }
+    }
+
+
+    calculateLazyQuarkEntry (entry : Quark) : any {
+        if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
+
         const transaction   = Transaction.new({ baseRevision : this, candidate : this })
 
         transaction.entries.set(entry.identifier, entry)
         transaction.stackGen.push(entry)
-
         entry.forceCalculation()
 
         transaction.propagate()
+
+        return entry.getValue()
+    }
+
+
+    async calculateLazyQuarkEntryAsync (entry : Quark) : Promise<any> {
+        const transaction   = Transaction.new({ baseRevision : this, candidate : this })
+
+        transaction.entries.set(entry.identifier, entry)
+        transaction.stackGen.push(entry)
+        entry.forceCalculation()
+
+        await transaction.propagateAsync()
 
         return entry.getValue()
     }

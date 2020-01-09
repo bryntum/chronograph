@@ -46,6 +46,7 @@ project.start(
             'chrono/017_identifier_listener.t.js',
             'chrono/020_graph_branching.t.js',
             'chrono/030_propagation.t.js',
+            'chrono/030_propagation_2.t.js',
             'chrono/031_garbage_collection.t.js',
             'chrono/032_propagation_options.t.js',
             'chrono/040_add_remove.t.js',

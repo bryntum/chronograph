@@ -57,7 +57,7 @@ StartTest(t => {
 
         replica1.addEntity(tomSoyer2)
 
-        replica1.propagate({ calculateOnly : [ markTwain.$.booksCount ] })
+        // replica1.propagate({ calculateOnly : [ markTwain.$.booksCount ] })
 
         t.is(replica1.read(markTwain.$.booksCount), 2, 'Correctly taken new reference into account with `calculateOnly` option')
     })
