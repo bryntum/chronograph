@@ -32,7 +32,7 @@ export const bucket : FieldDecorator<typeof MinimalReferenceBucketField> =
 export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceBucketIdentifier extends base {
-        level               : number                = Levels.DependsOnlyOnConstant
+        level               : number                = Levels.DependsOnlyOnDependsOnlyOnUserInput
 
         ValueT              : Set<Entity>
 
@@ -43,7 +43,7 @@ export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<Fi
 
 
         addToBucket (transaction : Transaction, entity : Entity) {
-            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
+            const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
             if (!quark.newRefs) quark.newRefs = new Set()
 

@@ -1,5 +1,5 @@
 import { CheckoutI } from "../chrono/Checkout.js"
-import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
+import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../chrono/Identifier.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
@@ -63,8 +63,9 @@ export type FieldIdentifierConstructor  = MixinConstructor<typeof FieldIdentifie
 export interface FieldIdentifierI extends FieldIdentifier {}
 
 
-export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) {}
-
+export class MinimalFieldIdentifierSync extends FieldIdentifier(CalculatedValueSync) {}
+export class MinimalFieldIdentifierGen extends FieldIdentifier(CalculatedValueGen) {}
+export class MinimalFieldVariable extends FieldIdentifier(Variable) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------

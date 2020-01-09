@@ -39,7 +39,7 @@ export const reference : FieldDecorator<typeof MinimalReferenceField> =
 export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceIdentifier extends base {
-        level           : number            = Levels.Constant
+        level           : number            = Levels.DependsOnlyOnUserInput
 
         field           : ReferenceField    = undefined
 

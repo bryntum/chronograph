@@ -1,3 +1,4 @@
+import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { Base } from "../../src/class/Mixin.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { calculate, Entity, field } from "../../src/replica/Entity.js"
@@ -100,6 +101,31 @@ StartTest(t => {
     })
 
 
+    t.it('Should set the variable fields to `null`', async t => {
+        const schema            = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = schema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity(Base) {
+            @field()
+            firstName       : string
+
+            @field()
+            lastName        : string
+        }
+
+        const replica1          = MinimalReplica.new({ schema : schema })
+
+        const markTwain         = Author.new({ lastName : 'Twain' })
+
+        replica1.addEntity(markTwain)
+
+        t.isStrict(markTwain.firstName, null, 'Correctly set uninitialized field to `null`')
+        t.isStrict(markTwain.lastName, 'Twain', 'Correctly set config value')
+    })
+
+
     t.it('Should set the uninitialized fields to `null` without recomputing them on next propagation', async t => {
         const schema            = Schema.new({ name : 'Cool data schema' })
 
@@ -112,6 +138,17 @@ StartTest(t => {
 
             @field()
             lastName        : string
+
+            @calculate('firstName')
+            calculateFirstName (Y) : string {
+                return Y(ProposedOrCurrent)
+            }
+
+            @calculate('lastName')
+            calculateLastName (Y) : string {
+                return Y(ProposedOrCurrent)
+            }
+
         }
 
         const replica1          = MinimalReplica.new({ schema : schema })

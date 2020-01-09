@@ -1,7 +1,7 @@
 import { Base } from "../class/Mixin.js"
 import { NOT_VISITED, OnCycleAction, VISITED_TOPOLOGICALLY, WalkSource } from "../graph/WalkDepth.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { Identifier } from "./Identifier.js"
+import { Identifier, Levels } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 
@@ -41,7 +41,7 @@ export class TransactionWalkDepth extends Base {
 
 
     onTopologicalNode (identifier : Identifier, visitInfo : Quark) {
-        if (!identifier.lazy) this.pushTo.push(visitInfo)
+        if (!identifier.lazy && identifier.level !== Levels.UserInput) this.pushTo.push(visitInfo)
     }
 
 

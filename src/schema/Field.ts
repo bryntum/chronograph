@@ -1,5 +1,5 @@
-import { Base } from "../class/Mixin.js"
-import { FieldIdentifierConstructor, MinimalFieldIdentifier } from "../replica/Identifier.js"
+import { AnyFunction, Base } from "../class/Mixin.js"
+import { FieldIdentifierConstructor, MinimalFieldIdentifierGen, MinimalFieldIdentifierSync, MinimalFieldVariable } from "../replica/Identifier.js"
 import { EntityMeta } from "./EntityMeta.js"
 
 export type Name    = string
@@ -22,6 +22,15 @@ export class Field extends Base {
 
     lazy                : boolean
 
-    identifierCls       : FieldIdentifierConstructor  = MinimalFieldIdentifier
+    identifierCls       : FieldIdentifierConstructor
+
+
+    getIdentifierClass (calculationFunction : AnyFunction) : FieldIdentifierConstructor {
+        if (this.identifierCls) return this.identifierCls
+
+        if (!calculationFunction) return MinimalFieldVariable
+
+        return calculationFunction.constructor.name === 'GeneratorFunction' ? MinimalFieldIdentifierGen : MinimalFieldIdentifierSync
+    }
 }
 

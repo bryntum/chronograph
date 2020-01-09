@@ -1,10 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
-import {
-    CalculationContext,
-    runGeneratorAsyncWithEffect,
-    runGeneratorSyncWithEffect,
-    SynchronousCalculationStarted
-} from "../primitives/Calculation.js"
+import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
 import { CheckoutI, PropagateArguments } from "./Checkout.js"
@@ -22,12 +17,12 @@ import {
     ProposedValueOfSymbol,
     TransactionSymbol,
     UnsafeProposedOrPreviousValueOfSymbol,
-    WriteEffect, WriteInfo,
+    WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
     WriteSymbol
 } from "./Effect.js"
-import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
+import { Identifier, Levels, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision, Scope } from "./Revision.js"
 import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
@@ -304,7 +299,7 @@ class Transaction extends base {
         if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
 
         //----------------------
-        while (this.stackGen.lowestLevel < identifier.level) {
+        while (this.stackGen.getLowestLevel() < identifier.level) {
             this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
         }
 
@@ -417,6 +412,8 @@ class Transaction extends base {
         // of some other identifier writes to this identifier
         let entry : Quark           = this.entries.get(identifier)
 
+        const isVariable            = identifier.level === Levels.UserInput
+
         if (!entry) {
             entry                   = identifier.newQuark(this.baseRevision.createdAt)
 
@@ -425,12 +422,13 @@ class Transaction extends base {
             entry.forceCalculation()
 
             this.entries.set(identifier, entry)
-            if (!identifier.lazy) this.stackGen.push(entry)
+            if (!identifier.lazy && !isVariable) this.stackGen.push(entry)
         }
 
-        if (proposedValue !== undefined) {
+        if (proposedValue !== undefined || isVariable) {
+            // TODO change to `this.write()`
             entry.startOrigin()
-            identifier.write.call(identifier.context || identifier, identifier, this, entry, proposedValue, ...args)
+            identifier.write.call(identifier.context || identifier, identifier, this, entry, proposedValue === undefined && isVariable ? null : proposedValue, ...args)
         }
 
         return entry

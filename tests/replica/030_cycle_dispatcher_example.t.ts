@@ -86,8 +86,6 @@ class Event extends Entity(Base) {
 
     @calculate('end')
     * calculateEnd () : CalculationIterator<number> {
-        if (window.DEBUG) debugger
-
         const dispatch : DispatcherValue = yield this.$.dispatcher
 
         const instruction : CalculationMode = dispatch.get(FieldType.End)

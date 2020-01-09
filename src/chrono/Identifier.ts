@@ -20,9 +20,10 @@ import { Transaction, YieldableValue } from "./Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum Levels {
-    Constant                = 0,
-    DependsOnlyOnConstant   = 1,
-    DependsOnSelfKind       = 10
+    UserInput                               = 0,
+    DependsOnlyOnUserInput                  = 1,
+    DependsOnlyOnDependsOnlyOnUserInput     = 2,
+    DependsOnSelfKind                       = 3
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -145,8 +146,7 @@ export const IdentifierC = <ValueT, ContextT extends Context>(...args) : Identif
 export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
 
-    @prototypeValue(true)
-    sync                : boolean
+    level               : number    = Levels.UserInput
 
     @prototypeValue(buildClass(Map, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
@@ -173,9 +173,6 @@ export function VariableC<ValueT> (...args) : Variable<ValueT> {
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
 
-    @prototypeValue(true)
-    sync                : boolean
-
     @prototypeValue(buildClass(Map, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
 
@@ -192,9 +189,6 @@ export function CalculatedValueSyncConstructor<ValueT> (...args) : CalculatedVal
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
-
-    @prototypeValue(false)
-    sync                : boolean
 
     @prototypeValue(buildClass(Map, CalculationGen, Quark))
     quarkClass          : QuarkConstructor
