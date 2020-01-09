@@ -160,7 +160,7 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class TreeNode extends Entity(Base) {
+        class TreeNode extends Entity.mix(Base) {
             @bucket()
             children            : Set<TreeNode>
 
@@ -168,7 +168,7 @@ StartTest(t => {
             parent              : TreeNode
         }
 
-        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const replica1          = Replica.new({ schema : SomeSchema })
         const node1             = TreeNode.new()
 
         replica1.addEntity(node1)

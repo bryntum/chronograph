@@ -16,7 +16,7 @@ StartTest(t => {
 
 
     t.it('Observe variable', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph.variable(0)
 

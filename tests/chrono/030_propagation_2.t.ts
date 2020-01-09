@@ -1,11 +1,11 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Should be smart about counting incoming edges from different walk epoch', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableNamed('i1', 0)
         const i2        = graph.variableNamed('i2', 10)
@@ -49,7 +49,7 @@ StartTest(t => {
 
 
     t.it('Should ignore eliminated quarks from previous calculations, which still remains in stack', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableNamed('i1', 0)
         const i2        = graph.variableNamed('i2', 10)

@@ -59,9 +59,9 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
 export type FieldIdentifierConstructor  = typeof FieldIdentifier
 
-export class MinimalFieldIdentifierSync extends FieldIdentifier(CalculatedValueSync) {}
+export class MinimalFieldIdentifierSync extends FieldIdentifier.mix(CalculatedValueSync) {}
 export class MinimalFieldIdentifierGen extends FieldIdentifier.mix(CalculatedValueGen) {}
-export class MinimalFieldVariable extends FieldIdentifier(Variable) {}
+export class MinimalFieldVariable extends FieldIdentifier.mix(Variable) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
