@@ -56,7 +56,7 @@ export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<Fi
 
 
         removeFromBucket (transaction : Transaction, entity : Entity) {
-            const quark         = transaction.acquireQuark(this) as ReferenceBucketQuark
+            const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
             if (!quark.oldRefs) quark.oldRefs = new Set()
 

@@ -371,9 +371,9 @@ class Transaction extends base {
     }
 
 
-    acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        return this.touch(identifier).startOrigin() as InstanceType<T[ 'quarkClass' ]>
-    }
+    // acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
+    //     return this.touch(identifier).startOrigin() as InstanceType<T[ 'quarkClass' ]>
+    // }
 
 
     getWriteTarget<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {

@@ -154,6 +154,41 @@ StartTest(t => {
     })
 
 
+    t.it('TreeNode w/o propagate', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class TreeNode extends Entity(Base) {
+            @bucket()
+            children            : Set<TreeNode>
+
+            @reference({ bucket : 'children'})
+            parent              : TreeNode
+        }
+
+        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const node1             = TreeNode.new()
+
+        replica1.addEntity(node1)
+
+        // early read to fill the bucket quark with value which needs to be overriden after adding other nodes
+        t.isDeeply(node1.children, new Set([]), 'Correctly resolved `children` reference')
+
+        const node2             = TreeNode.new({ parent : node1 })
+        const node3             = TreeNode.new({ parent : node1 })
+        const node4             = TreeNode.new({ parent : node2 })
+
+        replica1.addEntities([ node2, node3, node4 ])
+
+        t.isDeeply(node1.children, new Set([ node2, node3 ]), 'Correctly resolved `children` reference')
+        t.isDeeply(node2.children, new Set([ node4 ]), 'Correctly resolved `children` reference')
+        t.isDeeply(node3.children, new Set(), 'Correctly resolved `children` reference')
+        t.isDeeply(node4.children, new Set(), 'Correctly resolved `children` reference')
+    })
+
+
     t.it('Resolver for reference should work', async t => {
         const authors       = new Map<string, Author>()
 

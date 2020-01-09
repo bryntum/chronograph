@@ -108,6 +108,10 @@ class Quark extends base {
 
             this.value                      = undefined
         }
+
+        if (this.identifier.proposedValueIsBuilt) {
+            this.needToBuildProposedValue   = true
+        }
     }
 
 
