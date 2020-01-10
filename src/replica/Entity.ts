@@ -4,7 +4,7 @@ import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { DEBUG, debug } from "../environment/Debug.js"
+import { DEBUG, debug, SourceLinePoint } from "../environment/Debug.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
@@ -47,6 +47,8 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 const proxy = new Proxy($, {
                     get (entity : Entity, property : string | number | symbol, receiver : any) : any {
                         if (!entity[ property ]) debug(new Error(`Attempt to read a missing field ${String(property)} on ${entity}`))
+
+                        entity[ property ].SOURCE_POINT = SourceLinePoint.fromCurrentCall()
 
                         return entity[ property ]
                     }
@@ -389,3 +391,8 @@ export const build_proposed = function (fieldName : Name) : MethodDecorator {
     }
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export const getSourcePointFromIdentifier = (identifier : Identifier) : SourceLinePoint => {
+    return (identifier as any).SOURCE_POINT
+}
