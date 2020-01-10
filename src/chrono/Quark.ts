@@ -185,19 +185,26 @@ class Quark extends base {
     }
 
 
-    // TODO: handle `type`
+    $outgoingPast       : Map<Identifier, Quark>        = undefined
+
+    getOutgoingPast () : Map<Identifier, Quark> {
+        if (this.$outgoingPast !== undefined) return this.$outgoingPast
+
+        return this.$outgoingPast = new Map()
+    }
+
+
     addOutgoingTo (toQuark : Quark, type : EdgeType) {
-        const self      = this as Map<Identifier, Quark>
+        const outgoing      = type === EdgeType.Normal ? this as Map<Identifier, Quark> : this.getOutgoingPast()
 
-        // const existing  = self.get(toQuark.identifier)
-        // self.set(toQuark, existing ? existing | type : type)
-
-        self.set(toQuark.identifier, toQuark)
+        outgoing.set(toQuark.identifier, toQuark)
     }
 
 
     clearOutgoing () {
         this.clear()
+
+        if (this.$outgoingPast !== undefined) this.$outgoingPast.clear()
     }
 
 
@@ -271,6 +278,28 @@ class Quark extends base {
         while (current) {
             for (const outgoing of current.getOutgoing().values()) {
                 if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+            }
+
+            if (current.isShadow())
+                current     = current.previous
+            else
+                current     = null
+        }
+    }
+
+
+    outgoingInTheFutureAndPastCb (revision : RevisionI, forEach : (quark : Quark) => any) {
+        let current : Quark = this
+
+        while (current) {
+            for (const outgoing of current.getOutgoing().values()) {
+                if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+            }
+
+            if (current.$outgoingPast !== undefined) {
+                for (const outgoing of current.$outgoingPast.values()) {
+                    if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                }
             }
 
             if (current.isShadow())

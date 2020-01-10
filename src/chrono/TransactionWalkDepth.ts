@@ -76,7 +76,7 @@ export class TransactionWalkDepth extends Base {
             // will have the `previous` property populated
             visitInfo.previous      = latestEntry
 
-            latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
+            latestEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoingEntry => {
                 this.doCollectNext(from, outgoingEntry.identifier, toVisit)
             })
         }

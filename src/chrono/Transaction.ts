@@ -715,7 +715,7 @@ class Transaction extends base {
         const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
         if (sameAsPrevious) {
-            previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
+            previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, previousOutgoingEntry => {
                 const outgoingEntry = this.entries.get(previousOutgoingEntry.identifier)
 
                 if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -882,7 +882,7 @@ class Transaction extends base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -998,7 +998,7 @@ class Transaction extends base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--
