@@ -1,4 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
@@ -25,6 +26,7 @@ import {
 import { Identifier, Levels, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { MinimalRevision, Revision, Scope } from "./Revision.js"
+import { ComputationCycle, TransactionCycleDetectionWalkContext } from "./TransactionCycleDetectionWalkContext.js"
 import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
 
 
@@ -285,7 +287,7 @@ class Transaction extends base {
         await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
 
         // TODO review this exception
-        if (!entry.hasValue()) throw new Error('Cycle during asynchronous computation')
+        if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
 
         return entry.getValue()
     }
@@ -666,6 +668,15 @@ class Transaction extends base {
     }
 
 
+    getLatestEntryFor (identifier : Identifier) : Quark {
+        let entry : Quark             = this.entries.get(identifier) || this.baseRevision.getLatestEntryFor(identifier)
+
+        if (entry.getValue() === TombStone) return undefined
+
+        return entry
+    }
+
+
     addEdge (identifierRead : Identifier, activeEntry : Quark, type : EdgeType) : Quark {
         const identifier    = activeEntry.identifier
 
@@ -766,10 +777,30 @@ class Transaction extends base {
                 return undefined
             }
             else {
-                // debugger
-                throw new Error("Computation cycle")
-                // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                // cycle - the requested quark has started calculation (means it was encountered in the calculation loop before)
                 // but the calculation did not complete yet (even that requested quark is calculated before the current)
+
+                let cycle : ComputationCycle
+
+                const walkContext = TransactionCycleDetectionWalkContext.new({
+                    transaction         : this,
+                    onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
+                        cycle       = ComputationCycle.new({ cycle : cycleInfo(stack) })
+
+                        return OnCycleAction.Cancel
+                    }
+                })
+
+                walkContext.startFrom([ requestedEntry.identifier ])
+
+                if (!cycle) debugger
+
+                // debugger
+
+                console.log(cycle)
+
+                // debugger
+                throw new Error("Computation cycle: " + cycle)
                 // yield GraphCycleDetectedEffect.new()
             }
         }
