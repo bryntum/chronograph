@@ -78,14 +78,12 @@ export class SourceLinePoint extends Base {
 
 
 const parseErrorStack = (stack : string) : StackEntry[] => {
-    const matches = CI(matchAll(/^   +at\s*(.*?)\s*\((http:\/\/.*?):(\d+):(\d+)/gm, stack))
-
-    return matches.map(match => {
-        return StackEntry.new({
+    return CI(matchAll(/^   +at\s*(.*?)\s*\((http:\/\/.*?):(\d+):(\d+)/gm, stack))
+        .map(match => StackEntry.new({
             statement       : match[ 1 ],
             sourceFile      : match[ 2 ],
             sourceLine      : Number(match[ 3 ]),
             sourceCharPos   : Number(match[ 4 ])
-        })
-    }).toArray()
+        }))
+        .toArray()
 }
