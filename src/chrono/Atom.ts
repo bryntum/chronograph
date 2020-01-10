@@ -103,7 +103,7 @@ class ChronoAtom extends base {
 
 
     hasProposedValue () : boolean {
-        return this.proposedArgs !== undefined
+        return this.proposedArgs !== undefined && this.proposedArgs[ 0 ] !== undefined
     }
 
 
