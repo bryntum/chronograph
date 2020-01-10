@@ -279,6 +279,23 @@ class Quark extends base {
                 current     = null
         }
     }
+
+
+    outgoingInTheFutureTransactionCb (transaction /*: TransactionI*/, forEach : (quark : Quark) => any) {
+        let current : Quark = this
+
+        while (current) {
+            for (const outgoing of current.getOutgoing().values()) {
+                if (outgoing.originId === transaction.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+            }
+
+            if (current.isShadow())
+                current     = current.previous
+            else
+                current     = null
+        }
+    }
+
 }
 
 export type Quark = Mixin<typeof Quark>
