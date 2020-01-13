@@ -32,7 +32,8 @@ export const bucket : FieldDecorator<typeof MinimalReferenceBucketField> =
 export const ReferenceBucketIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceBucketIdentifier extends base {
-        level               : number                = Levels.DependsOnlyOnDependsOnlyOnUserInput
+        @prototypeValue(Levels.DependsOnlyOnDependsOnlyOnUserInput)
+        level               : number
 
         ValueT              : Set<Entity>
 

@@ -34,14 +34,16 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     YieldT              : YieldableValue
     ValueT              : ValueT
 
-    level               : number    = Levels.DependsOnSelfKind
+    @prototypeValue(Levels.DependsOnSelfKind)
+    level               : number
 
-    // calculated on demand
     lazy                : boolean   = false
-    // can also be a calculated property
+
     sync                : boolean   = true
+
     // no cancels
     total               : boolean   = true
+
     // no "nested" writes
     pure                : boolean   = true
 
@@ -146,7 +148,8 @@ export const IdentifierC = <ValueT, ContextT extends Context>(...args) : Identif
 export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
 
-    level               : number    = Levels.UserInput
+    @prototypeValue(Levels.UserInput)
+    level               : number
 
     @prototypeValue(buildClass(Map, CalculationSync, Quark))
     quarkClass          : QuarkConstructor
