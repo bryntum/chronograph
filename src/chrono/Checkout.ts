@@ -213,6 +213,11 @@ class Checkout extends base {
     }
 
 
+    propagate (args? : CommitArguments) : CommitResult {
+        return this.commit(args)
+    }
+    
+    
     commit (args? : CommitArguments) : CommitResult {
         const nextRevision      = this.activeTransaction.commit(args)
 
@@ -235,6 +240,11 @@ class Checkout extends base {
     // }
 
 
+    async propagateAsync (args? : CommitArguments) : Promise<CommitResult> {
+        return this.commitAsync(args)
+    }
+    
+    
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
         const nextRevision      = await this.activeTransaction.commitAsync(args)
 

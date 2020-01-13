@@ -134,12 +134,22 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         // }
 
 
+        propagate () : CommitResult {
+            return this.commit()
+        }
+
+
         commit () : CommitResult {
             const graph     = this.graph
 
             if (!graph) return
 
             return graph.commit()
+        }
+
+
+        async propagateAsync () : Promise<CommitResult> {
+            return this.commitAsync()
         }
 
 
