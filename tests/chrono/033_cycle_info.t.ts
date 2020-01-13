@@ -22,7 +22,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should show the detailed information about the cyclic computation', async t => {
+    t.it('Should show the detailed information about the cyclic computation, which involves edges from the past', async t => {
         const graph : ChronoGraph       = MinimalChronoGraph.new()
 
         const dispatcher    = graph.identifierNamed('dispatcher', function* (Y) {

@@ -3,7 +3,7 @@ import { CI } from "../collection/Iterator.js"
 import { matchAll } from "../util/Helpers.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const DEBUG = true
+export const DEBUG = false
 
 export const DEBUG_MODE = 'THROW'
 
@@ -53,6 +53,8 @@ export class SourceLinePoint extends Base {
 
     static fromCurrentCall () : SourceLinePoint {
         const constructor   = this as typeof SourceLinePoint
+
+        // TODO should skip the stack entries from the DEBUG to Entity (first 4 lines in the example below)
 
         return constructor.fromError(exceptionCatcher())
     }
