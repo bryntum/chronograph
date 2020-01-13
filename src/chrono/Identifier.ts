@@ -20,9 +20,11 @@ import { Transaction, YieldableValue } from "./Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum Levels {
+    // must be sync
     UserInput                               = 0,
     DependsOnlyOnUserInput                  = 1,
     DependsOnlyOnDependsOnlyOnUserInput     = 2,
+    // asynchronicity starts from here
     DependsOnSelfKind                       = 3
 }
 
@@ -39,7 +41,8 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
 
     lazy                : boolean   = false
 
-    sync                : boolean   = true
+    @prototypeValue(true)
+    sync                : boolean
 
     // no cancels
     total               : boolean   = true

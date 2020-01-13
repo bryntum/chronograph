@@ -84,6 +84,25 @@ class Revision extends base {
     }
 
 
+    get<T> (identifier : Identifier<T>) : T {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        // && DEBUG?
+        if (!latestEntry) throwUnknownIdentifier(identifier)
+
+        const value         = latestEntry.getValue()
+
+        // && DEBUG?
+        if (value === TombStone) throwUnknownIdentifier(identifier)
+
+        if (value !== undefined) {
+            return value
+        } else {
+            return this.calculateLazyQuarkEntry(latestEntry)
+        }
+    }
+
+
     read<T> (identifier : Identifier<T>) : T {
         const latestEntry   = this.getLatestEntryFor(identifier)
 

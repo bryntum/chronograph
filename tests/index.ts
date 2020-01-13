@@ -50,6 +50,7 @@ project.start(
             'chrono/030_propagation_2.t.js',
             'chrono/031_garbage_collection.t.js',
             'chrono/032_propagation_options.t.js',
+            'chrono/032_commit_async.t.js',
             'chrono/033_cycle_info.t.js',
             'chrono/040_add_remove.t.js',
             'chrono/050_undo_redo.t.js',

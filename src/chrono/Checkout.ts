@@ -394,7 +394,11 @@ class Checkout extends base {
     readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         return this.activeTransaction.readAsync(identifier)
     }
-
+    
+    
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
+        return this.activeTransaction.get(identifier)
+    }
 
     // // read the identifier value, return the proposed value if no "current" value is calculated yet
     // readDirty<T> (identifier : Identifier<T>) : T {

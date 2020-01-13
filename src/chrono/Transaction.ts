@@ -226,6 +226,9 @@ class Transaction extends base {
 
 
     async yieldAsync (effect : Effect) : Promise<any> {
+        if (effect instanceof Promise) return effect
+            // throw new Error("Effect resolved to promise in the synchronous context, check that you marked the asynchronous calculations accordingly")
+
         return this[ effect.handler ](effect, this.getActiveEntry())
     }
 
@@ -259,9 +262,7 @@ class Transaction extends base {
     // this seems to be an optimistic version
     async readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         // see the comment for the `onEffectSync`
-        if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
-
-        if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
+        if (!(identifier instanceof Identifier)) return this.yieldAsync(identifier as Effect)
 
         //----------------------
         while (this.stackGen.lowestLevel < identifier.level) {
@@ -278,7 +279,7 @@ class Transaction extends base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.read(identifier)
+            if (!entry) return this.baseRevision.readAsync(identifier)
         }
 
         if (entry.hasValue()) return entry.getValue()
@@ -293,12 +294,67 @@ class Transaction extends base {
     }
 
 
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
+        // see the comment for the `onEffectSync`
+        if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
+
+        //----------------------
+        while (this.stackGen.getLowestLevel() < identifier.level) {
+            // here we force the computations for lower level identifiers should be sync
+            this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
+        }
+
+        let entry : Quark
+
+        const activeEntry   = this.getActiveEntry()
+
+        if (activeEntry) {
+            entry           = this.addEdge(identifier, activeEntry, EdgeTypeNormal)
+        } else {
+            entry           = this.entries.get(identifier)
+
+            if (!entry) return this.baseRevision.get(identifier)
+        }
+
+        const value1        = entry.getValue()
+
+        if (value1 === TombStone) throwUnknownIdentifier(identifier)
+
+        if (value1 !== undefined) return value1
+
+        // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
+        // now need to repeat the logic
+        if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
+
+        //----------------------
+        if (identifier.sync) {
+            this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
+
+            const value     = entry.getValue()
+
+            // TODO review this exception
+            if (value === undefined) throw new Error('Cycle during synchronous computation')
+            if (value === TombStone) throwUnknownIdentifier(identifier)
+
+            return value
+        } else {
+            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this).then(() => {
+                const value     = entry.getValue()
+
+                // TODO review this exception
+                if (value === undefined) throw new Error('Cycle during synchronous computation')
+                if (value === TombStone) throwUnknownIdentifier(identifier)
+
+                return value
+            })
+        }
+    }
+
+
     // this seems to be an optimistic version
     read<T> (identifier : Identifier<T>) : T {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
-
-        if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
 
         //----------------------
         while (this.stackGen.getLowestLevel() < identifier.level) {
@@ -321,6 +377,8 @@ class Transaction extends base {
 
         if (value1 === TombStone) throwUnknownIdentifier(identifier)
         if (value1 !== undefined) return value1
+
+        if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
 
         // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
         // now need to repeat the logic
@@ -1065,6 +1123,9 @@ class Transaction extends base {
                 else {
                     // bypass the unrecognized effect to the outer context
                     const effectResult          = context(value)
+
+                    if (effectResult instanceof Promise)
+                        throw new Error("Effect resolved to promise in the synchronous context, check that you marked the asynchronous calculations accordingly")
 
                     // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
                     // in such case we can not continue calculation and just exit the inner loop
