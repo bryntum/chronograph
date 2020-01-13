@@ -47,7 +47,7 @@ StartTest(t => {
         replica1.addEntity(tomSoyer)
 
         //--------------------
-        replica1.propagate()
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
         t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')

@@ -3,7 +3,7 @@ import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { CheckoutI, PropagateArguments } from "./Checkout.js"
+import { CheckoutI, CommitArguments } from "./Checkout.js"
 import {
     Effect,
     HasProposedValueSymbol,
@@ -127,7 +127,7 @@ const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type TransactionPropagateResult = { revision : Revision, entries : Scope }
+export type TransactionCommitResult = { revision : Revision, entries : Scope }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ class Transaction extends base {
     }
 
 
-    prePropagate (args? : PropagateArguments) {
+    preCommit (args? : CommitArguments) {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
         this.isClosed               = true
@@ -486,7 +486,7 @@ class Transaction extends base {
     }
 
 
-    postPropagate () : TransactionPropagateResult {
+    postCommit () : TransactionCommitResult {
         this.populateCandidateScopeFromTransitions(this.candidate, this.entries)
 
         // won't be available after next line
@@ -499,13 +499,13 @@ class Transaction extends base {
     }
 
 
-    propagate (args? : PropagateArguments) : TransactionPropagateResult {
-        this.prePropagate(args)
+    commit (args? : CommitArguments) : TransactionCommitResult {
+        this.preCommit(args)
 
         this.calculateTransitionsSync(this.onEffectSync)
         // runGeneratorSyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
-        return this.postPropagate()
+        return this.postCommit()
     }
 
 
@@ -520,12 +520,12 @@ class Transaction extends base {
     // }
 
 
-    async propagateAsync (args? : PropagateArguments) : Promise<TransactionPropagateResult> {
-        this.prePropagate(args)
+    async commitAsync (args? : CommitArguments) : Promise<TransactionCommitResult> {
+        this.preCommit(args)
 
         await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
 
-        return this.postPropagate()
+        return this.postCommit()
     }
 
 

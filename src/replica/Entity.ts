@@ -1,4 +1,4 @@
-import { PropagateResult, PropagateZero } from "../chrono/Checkout.js"
+import { CommitResult, CommitZero } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
@@ -134,21 +134,21 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         // }
 
 
-        propagate () : PropagateResult {
+        commit () : CommitResult {
             const graph     = this.graph
 
             if (!graph) return
 
-            return graph.propagate()
+            return graph.commit()
         }
 
 
-        async propagateAsync () : Promise<PropagateResult> {
+        async commitAsync () : Promise<CommitResult> {
             const graph     = this.graph
 
-            if (!graph) return Promise.resolve(PropagateZero)
+            if (!graph) return Promise.resolve(CommitZero)
 
-            return graph.propagateAsync()
+            return graph.commitAsync()
         }
 
 
@@ -330,10 +330,10 @@ export const generic_field : FieldDecorator<typeof Field> =
             }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<PropagateResult> {
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<CommitResult> {
                     (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
 
-                    return this.graph ? this.graph.propagateAsync() : Promise.resolve(PropagateZero)
+                    return this.graph ? this.graph.commitAsync() : Promise.resolve(CommitZero)
                 }
             }
 

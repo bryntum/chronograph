@@ -33,7 +33,7 @@ StartTest(t => {
         const spy1                  = t.spyOn(ident1, 'calculation')
         const spy2                  = t.spyOn(ident2, 'calculation')
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(0)
         t.expect(spy2).toHaveBeenCalled(0)
@@ -68,7 +68,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(0)
         t.expect(spy2).toHaveBeenCalled(0)
@@ -105,7 +105,7 @@ StartTest(t => {
         const spy1                  = t.spyOn(ident1, 'calculation')
         const spy2                  = t.spyOn(ident2, 'calculation')
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(0)
         t.expect(spy2).toHaveBeenCalled(0)
@@ -140,7 +140,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(0)
         t.expect(spy2).toHaveBeenCalled(0)
@@ -167,7 +167,7 @@ StartTest(t => {
             }
         }))
 
-        graph1.propagate()
+        graph1.commit()
 
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
 
@@ -176,7 +176,7 @@ StartTest(t => {
 
         graph1.write(dispatcher, i2)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
@@ -189,7 +189,7 @@ StartTest(t => {
 
         graph1.write(i1, 10)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
@@ -221,7 +221,7 @@ StartTest(t => {
             }
         }))
 
-        graph1.propagate()
+        graph1.commit()
 
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'pure', 1 ], "Correct result calculated")
 
@@ -231,7 +231,7 @@ StartTest(t => {
         graph1.write(dispatcher, 'proposed')
         graph1.write(c1, 10)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
@@ -244,7 +244,7 @@ StartTest(t => {
 
         graph1.write(i1, 10)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
@@ -276,7 +276,7 @@ StartTest(t => {
             }
         }))
 
-        graph1.propagate()
+        graph1.commit()
 
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'pure', 1 ], "Correct result calculated")
 
@@ -286,7 +286,7 @@ StartTest(t => {
         graph1.write(dispatcher, 'proposed')
         graph1.write(c1, 10)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
@@ -299,7 +299,7 @@ StartTest(t => {
 
         graph1.write(i1, 10)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
@@ -339,7 +339,7 @@ StartTest(t => {
             }
         }))
 
-        graph1.propagate()
+        graph1.commit()
 
         t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 0, 1, 1, 2, 3 ], "Correct result calculated")
 
@@ -348,7 +348,7 @@ StartTest(t => {
 
         graph1.write(i1, 1)
 
-        graph1.propagate()
+        graph1.commit()
 
         // reading `c3` should calculate `c2` and `c1` inside the `calculateTransitionsStack`, not as separate
         // calls to `calculateLazyEntry`

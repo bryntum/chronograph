@@ -101,7 +101,7 @@ StartTest(t => {
         //------------------
         spy.reset()
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
 
@@ -182,7 +182,7 @@ StartTest(t => {
         //------------------
         spy.reset()
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
 
@@ -265,14 +265,14 @@ StartTest(t => {
 
         graph.write(max, 100)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
         //------------------
         graph.write(max, 101)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -305,7 +305,7 @@ StartTest(t => {
 
         graph.write(var1, 18)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -318,7 +318,7 @@ StartTest(t => {
 
         graph.write(var1, 180)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -332,7 +332,7 @@ StartTest(t => {
 
         graph.write(max, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -346,13 +346,13 @@ StartTest(t => {
 
         graph.write(max, 100)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
         graph.write(max, 101)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 

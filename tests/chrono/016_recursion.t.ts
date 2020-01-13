@@ -28,7 +28,7 @@ StartTest(t => {
         const spy1      = t.spyOn(idenSum, 'calculation')
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(1)
 
@@ -41,7 +41,7 @@ StartTest(t => {
         graph.write(var0, 5)
         graph.write(var1, 7)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(2)
 
@@ -84,7 +84,7 @@ StartTest(t => {
         const spy2      = t.spyOn(iden2, 'calculation')
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(1)
         t.expect(spy2).toHaveBeenCalled(1)
@@ -97,7 +97,7 @@ StartTest(t => {
         graph.write(var0, 5)
         graph.write(var1, 7)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy1).toHaveBeenCalled(2)
         t.expect(spy2).toHaveBeenCalled(1)

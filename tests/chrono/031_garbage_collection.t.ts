@@ -24,14 +24,14 @@ StartTest(t => {
         })
 
         // ----------------
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.baseRevision.previous, null, "No extra revisions")
 
         // ----------------
         graph.write(box1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.baseRevision.previous, null, "No extra revisions")
     })
@@ -54,7 +54,7 @@ StartTest(t => {
         }))
 
         //------------------
-        graph.propagate()
+        graph.commit()
 
         // create a revision with `var1 -> var2` edge
         t.is(graph.read(var2), 101, 'Correct value')
@@ -64,18 +64,18 @@ StartTest(t => {
         //------------------
         graph.write(var0, 2)
 
-        graph.propagate()
+        graph.commit()
 
         //------------------
         graph.write(var0, 3)
 
-        graph.propagate()
+        graph.commit()
 
         // and now making sure the dependency is still alive
         //------------------
         graph.write(var1, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(var2), 11, 'Correct value')
     })

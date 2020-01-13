@@ -197,7 +197,7 @@ StartTest(t => {
         //------------------
         const spy       = t.spyOn(markTwain.$.firstName, 'calculation')
 
-        replica1.propagate()
+        replica1.commit()
 
         t.expect(spy).toHaveBeenCalled(1)
 
@@ -208,7 +208,7 @@ StartTest(t => {
 
         markTwain.lastName      = 'Twain'
 
-        replica1.propagate()
+        replica1.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
     })

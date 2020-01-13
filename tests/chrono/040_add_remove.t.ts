@@ -11,7 +11,7 @@ StartTest(t => {
 
         t.livesOk(() => graph1.read(var1))
 
-        graph1.propagate()
+        graph1.commit()
 
         t.is(graph1.read(var1), 0, 'Correct value')
 
@@ -20,7 +20,7 @@ StartTest(t => {
 
         const var2      = graph2.variable(1)
 
-        graph2.propagate()
+        graph2.commit()
 
         t.is(graph2.read(var2), 1, 'Correct value')
 
@@ -40,7 +40,7 @@ StartTest(t => {
 
         t.livesOk(() => graph1.read(var1))
 
-        graph1.propagate()
+        graph1.commit()
 
         t.is(graph1.read(var1), 0, 'Correct value')
 

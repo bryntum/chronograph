@@ -33,7 +33,7 @@ StartTest(t => {
             yield var1
         })
 
-        t.throwsOk(() => graph.propagate(), 'Unknown identifier')
+        t.throwsOk(() => graph.commit(), 'Unknown identifier')
     })
 
 

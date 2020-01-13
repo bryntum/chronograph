@@ -30,7 +30,7 @@ class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchI
 
         graph.write(boxes[ 0 ], iteration + cycle)
 
-        graph.propagate()
+        graph.commit()
         // for (let k = 0; k < boxes.length; k++) graph.read(boxes[ k ])
     }
 }

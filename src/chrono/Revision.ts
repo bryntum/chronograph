@@ -131,7 +131,7 @@ class Revision extends base {
         transaction.stackGen.push(entry)
         entry.forceCalculation()
 
-        transaction.propagate()
+        transaction.commit()
 
         return entry.getValue()
     }
@@ -144,7 +144,7 @@ class Revision extends base {
         transaction.stackGen.push(entry)
         entry.forceCalculation()
 
-        await transaction.propagateAsync()
+        await transaction.commitAsync()
 
         return entry.getValue()
     }

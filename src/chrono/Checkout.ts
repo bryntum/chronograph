@@ -13,19 +13,18 @@ import {
 } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
-import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
+import { MinimalTransaction, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type PropagateArguments = {
-    calculateOnly?      : Identifier[]
+export type CommitArguments = {
 }
 
-export type PropagateResult = {
+export type CommitResult = {
 }
 
 
-export const PropagateZero : PropagateResult = {
+export const CommitZero : CommitResult = {
 }
 
 
@@ -214,10 +213,10 @@ class Checkout extends base {
     }
 
 
-    propagate (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagate(args)
+    commit (args? : CommitArguments) : CommitResult {
+        const nextRevision      = this.activeTransaction.commit(args)
 
-        const result            = this.finalizePropagation(nextRevision)
+        const result            = this.finalizeCommit(nextRevision)
 
         this.runningTransaction = null
 
@@ -236,12 +235,12 @@ class Checkout extends base {
     // }
 
 
-    async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
-        const nextRevision      = await this.activeTransaction.propagateAsync(args)
+    async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        const nextRevision      = await this.activeTransaction.commitAsync(args)
 
-        const result            = this.finalizePropagation(nextRevision)
+        const result            = this.finalizeCommit(nextRevision)
 
-        await this.finalizePropagationAsync(nextRevision)
+        await this.finalizeCommitAsync(nextRevision)
 
         this.runningTransaction = null
 
@@ -249,7 +248,7 @@ class Checkout extends base {
     }
 
 
-    finalizePropagation (transactionResult : TransactionPropagateResult) : PropagateResult {
+    finalizeCommit (transactionResult : TransactionCommitResult) : CommitResult {
         const { revision, entries } = transactionResult
 
         if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
@@ -287,7 +286,7 @@ class Checkout extends base {
     }
 
 
-    async finalizePropagationAsync (transactionResult : TransactionPropagateResult) {
+    async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
 

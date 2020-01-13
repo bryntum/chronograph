@@ -23,7 +23,7 @@ StartTest(t => {
             return (yield c2) + (yield i3)
         })
 
-        graph.propagate()
+        graph.commit()
 
         // ----------------
         const nodes             = [ i1, i2, i3, c1, c2, c3 ]
@@ -67,7 +67,7 @@ StartTest(t => {
             return (yield c2) + 1
         })
 
-        graph.propagate()
+        graph.commit()
 
         // ----------------
         const nodes             = [ i1, i2, i3, c1, c2, c3 ]
@@ -88,7 +88,7 @@ StartTest(t => {
 
         graph.write(i2, 4)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 4, 1, 9, 10, 11 ], "Correct result calculated #2")
     })
