@@ -63,6 +63,43 @@ StartTest(t => {
     })
 
 
+    t.it('Simplified calculation methods', async t => {
+        const schema            = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = schema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity(Base) {
+            @field()
+            firstName       : string
+
+            @field()
+            lastName        : string
+
+            @field()
+            fullName        : string
+
+
+            @calculate('fullName')
+            calculateFullName () : string {
+                return this.firstName + ' ' + this.lastName
+            }
+        }
+
+        const replica1          = MinimalReplica.new({ schema : schema })
+
+        const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
+
+        replica1.addEntity(markTwain)
+
+        t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
+
+        markTwain.firstName     = 'MARK'
+
+        t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
+    })
+
+
     t.it('Helper methods', async t => {
 
         class Author extends Entity(Base) {
