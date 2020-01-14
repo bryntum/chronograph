@@ -1,4 +1,5 @@
 import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { DEBUG } from "../environment/Debug.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
@@ -171,6 +172,8 @@ class Transaction extends base {
 
     ongoing                 : Promise<any>          = Promise.resolve()
 
+    selfDependedMarked      : boolean               = false
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -191,6 +194,13 @@ class Transaction extends base {
         // instead inside of `read` delegate to `yieldSync` for non-identifiers
         this.onEffectSync   = /*this.onEffectAsync =*/ this.read.bind(this)
         this.onEffectAsync  = this.readAsync.bind(this)
+    }
+
+
+    markSelfDependent () {
+        if (this.selfDependedMarked) return
+
+        this.selfDependedMarked = true
 
         for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
     }
@@ -292,6 +302,8 @@ class Transaction extends base {
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
+        this.markSelfDependent()
+
         return this.ongoing = entry.promise = this.ongoing.then(() => {
             return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
         }).then(() => {
@@ -337,6 +349,8 @@ class Transaction extends base {
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
+        this.markSelfDependent()
+
         if (identifier.sync) {
             this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
 
@@ -348,7 +362,7 @@ class Transaction extends base {
 
             return value
         } else {
-            return this.ongoing = entry.promise = this.ongoing.then(() => {
+            const promise = this.ongoing = entry.promise = this.ongoing.then(() => {
                 return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
             }).then(() => {
                 const value     = entry.getValue()
@@ -363,6 +377,14 @@ class Transaction extends base {
                 //
                 // return entry.getValue()
             })
+
+            if (DEBUG) {
+                // @ts-ignore
+                promise.quark = entry
+            }
+
+            return promise
+
 
 
             // return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this).then(() => {
@@ -412,6 +434,8 @@ class Transaction extends base {
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
         //----------------------
+        this.markSelfDependent()
+
         this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
 
         const value     = entry.getValue()
@@ -562,10 +586,10 @@ class Transaction extends base {
     preCommit (args? : CommitArguments) {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
 
+        this.markSelfDependent()
+
         this.isClosed               = true
         this.propagationStartDate   = Date.now()
-
-        // for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
 
         this.plannedTotalIdentifiersToCalculate = this.stackGen.length
     }

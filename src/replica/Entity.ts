@@ -216,13 +216,13 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
             const config : Partial<FieldIdentifierI> = {
                 name                : `${me.$$.name}/${name}`,
-                field               : field,
-                lazy                : field.lazy,
-                sync                : field.sync
+                field               : field
             }
 
             //------------------
-            if (field.equality) config.equality = field.equality
+            if (field.hasOwnProperty('sync')) config.sync = field.sync
+            if (field.hasOwnProperty('lazy')) config.lazy = field.lazy
+            if (field.hasOwnProperty('equality')) config.equality = field.equality
 
             //------------------
             const calculationFunction   = me.$calculations && me[ me.$calculations[ name ] ]

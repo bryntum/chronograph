@@ -54,6 +54,8 @@ class Quark extends base {
     visitedAt       : number = NOT_VISITED
     visitEpoch      : number = 0
 
+    promise         : Promise<any>      = undefined
+
 
     get level () : number {
         return this.identifier.level
