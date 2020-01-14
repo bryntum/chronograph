@@ -169,6 +169,8 @@ class Transaction extends base {
 
     // writes                  : WriteInfo[]           = []
 
+    ongoing                 : Promise<any>          = Promise.resolve()
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -283,14 +285,21 @@ class Transaction extends base {
         }
 
         if (entry.hasValue()) return entry.getValue()
+        if (entry.promise) return entry.promise
 
         //----------------------
-        await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+        // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
+        // now need to repeat the logic
+        if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
-        // TODO review this exception
-        if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
+        return this.ongoing = entry.promise = this.ongoing.then(() => {
+            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+        }).then(() => {
+            // TODO review this exception
+            if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
 
-        return entry.getValue()
+            return entry.getValue()
+        })
     }
 
 
@@ -321,12 +330,13 @@ class Transaction extends base {
         if (value1 === TombStone) throwUnknownIdentifier(identifier)
 
         if (value1 !== undefined) return value1
+        if (entry.promise) return entry.promise
 
+        //----------------------
         // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
-        //----------------------
         if (identifier.sync) {
             this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
 
@@ -338,15 +348,32 @@ class Transaction extends base {
 
             return value
         } else {
-            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this).then(() => {
+            return this.ongoing = entry.promise = this.ongoing.then(() => {
+                return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+            }).then(() => {
                 const value     = entry.getValue()
 
                 // TODO review this exception
-                if (value === undefined) throw new Error('Cycle during synchronous computation')
+                if (value === undefined) throw new Error('Computation cycle. Async get')
                 if (value === TombStone) throwUnknownIdentifier(identifier)
 
                 return value
+                // // TODO review this exception
+                // if (!entry.hasValue()) throw new Error('Computation cycle. Async get')
+                //
+                // return entry.getValue()
             })
+
+
+            // return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this).then(() => {
+            //     const value     = entry.getValue()
+            //
+            //     // TODO review this exception
+            //     if (value === undefined) throw new Error('Cycle during synchronous computation')
+            //     if (value === TombStone) throwUnknownIdentifier(identifier)
+            //
+            //     return value
+            // })
         }
     }
 
@@ -427,7 +454,7 @@ class Transaction extends base {
         //
         // this.onNewWrite()
 
-        identifier.write.call(identifier.context || identifier, identifier, this, null, proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, identifier, this, null, /*this.getWriteTarget(identifier),*/ proposedValue, ...args)
     }
 
 
@@ -475,7 +502,7 @@ class Transaction extends base {
         const isVariable            = identifier.level === Levels.UserInput
 
         if (!entry) {
-            entry                   = identifier.newQuark(this.baseRevision.createdAt)
+            entry                   = identifier.newQuark(this.baseRevision)
 
             entry.previous          = this.baseRevision.getLatestEntryFor(identifier)
 
@@ -580,6 +607,8 @@ class Transaction extends base {
 
     async commitAsync (args? : CommitArguments) : Promise<TransactionCommitResult> {
         this.preCommit(args)
+
+        await this.ongoing
 
         await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
 
@@ -748,7 +777,7 @@ class Transaction extends base {
 
             if (!previousEntry) throwUnknownIdentifier(identifierRead)
 
-            entry               = identifierRead.newQuark(this.baseRevision.createdAt)
+            entry               = identifierRead.newQuark(this.baseRevision)
 
             previousEntry.origin && entry.setOrigin(previousEntry.origin)
             entry.previous      = previousEntry

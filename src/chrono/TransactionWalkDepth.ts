@@ -57,7 +57,7 @@ export class TransactionWalkDepth extends Base {
         let quark : Quark   = this.visited.get(to)
 
         if (!quark) {
-            quark               = to.newQuark(this.baseRevision.createdAt)
+            quark               = to.newQuark(this.baseRevision)
 
             quark.visitEpoch    = this.currentEpoch
 
@@ -125,7 +125,7 @@ export class TransactionWalkDepth extends Base {
                 const lengthBefore  = toVisit.length
 
                 if (!visitInfo) {
-                    visitInfo               = node.newQuark(this.baseRevision.createdAt)
+                    visitInfo               = node.newQuark(this.baseRevision)
 
                     visitInfo.visitEpoch    = this.currentEpoch
 

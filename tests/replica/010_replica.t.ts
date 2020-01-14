@@ -215,7 +215,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Replica async', async t => {
+    t.it('Replica async', async t => {
         const schema            = Schema.new({ name : 'Cool data schema' })
 
         const entity            = schema.getEntityDecorator()

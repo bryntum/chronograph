@@ -88,6 +88,8 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
 
 
     write (me : this, transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+        quark                       = quark || transaction.getWriteTarget(me)
+
         quark.proposedValue         = proposedValue
         quark.proposedArguments     = args.length > 0 ? args : undefined
     }

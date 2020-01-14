@@ -35,7 +35,7 @@ StartTest(t => {
         replica1.addEntity(tomSoyer)
 
         //--------------------
-        replica1.commit()
+        // replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
         t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
@@ -45,6 +45,8 @@ StartTest(t => {
 
         replica1.addEntity(tomSoyer2)
 
+        // comment to see a failure related to the unordered processing of added/removed entries in the bucket
+        // bucket should have a single, ordered queue for add/remove mutations instead of 2 props `newRefs`, `oldRefs`
         replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
@@ -52,14 +54,14 @@ StartTest(t => {
         //--------------------
         tomSoyer2.writtenBy     = null
 
-        replica1.commit()
+        // replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
 
         //--------------------
         replica1.removeEntity(tomSoyer)
 
-        replica1.commit()
+        // replica1.commit()
 
         t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
     })

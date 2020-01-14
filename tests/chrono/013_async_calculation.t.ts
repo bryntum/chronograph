@@ -32,7 +32,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should not re-entry async gen calculations that has been partially read already', async t => {
+    t.it('Should not re-entry async gen calculations that has been partially read already', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
         const var1      = graph.variableNamed('var1', 1)
