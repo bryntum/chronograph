@@ -33,7 +33,7 @@ class Quark extends base {
     }
 
     // required
-    createdAt       : RevisionClock     = MAX_SMI
+    createdAt       : RevisionI         = undefined
 
     identifier      : Identifier        = undefined
 
@@ -157,6 +157,38 @@ class Quark extends base {
         // some help for garbage collector
         origin.clearProperties()
         origin.clear()
+    }
+
+
+    mergePreviousIntoItself () {
+        const origin                = this.origin
+
+        if (origin === this.previous) {
+            this.mergePreviousOrigin(this)
+        } else {
+
+        }
+
+        // this.copyFrom(origin)
+        //
+        // const outgoing              = this.getOutgoing()
+        //
+        // for (const [ identifier, quark ] of origin.getOutgoing()) {
+        //     const ownOutgoing       = outgoing.get(identifier)
+        //
+        //     if (!ownOutgoing) {
+        //         const latest        = latestScope.get(identifier)
+        //
+        //         if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
+        //     }
+        // }
+        //
+        // // changing `origin`, but keeping `originId`
+        // this.origin                 = this
+        //
+        // // some help for garbage collector
+        // origin.clearProperties()
+        // origin.clear()
     }
 
 

@@ -14,7 +14,7 @@ import { prototypeValue } from "../util/Helpers.js"
 import { CheckoutI } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
-import { RevisionClock } from "./Revision.js"
+import { RevisionClock, RevisionI } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
@@ -74,7 +74,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     context             : this[ 'CalcContextT' ]       = undefined
 
 
-    newQuark (createdAt : RevisionClock) : InstanceType<this[ 'quarkClass' ]> {
+    newQuark (createdAt : RevisionI) : InstanceType<this[ 'quarkClass' ]> {
         // micro-optimization - we don't pass a config object to the `new` constructor
         // but instead assign directly to instance
         const newQuark                      = this.quarkClass.new() as InstanceType<this[ 'quarkClass' ]>
@@ -88,8 +88,6 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
 
 
     write (me : this, transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
-        quark                       = quark || transaction.getWriteTarget(me)
-
         quark.proposedValue         = proposedValue
         quark.proposedArguments     = args.length > 0 ? args : undefined
     }

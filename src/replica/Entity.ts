@@ -218,6 +218,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 name                : `${me.$$.name}/${name}`,
                 field               : field,
                 lazy                : field.lazy,
+                sync                : field.sync
             }
 
             //------------------
@@ -321,7 +322,7 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             Object.defineProperty(target, propertyKey, {
                 get     : function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraph(this.graph)
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
                 },
 
                 set     : function (this : Entity, value : any) {
@@ -335,7 +336,7 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraph(this.graph)
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
                 }
             }
 

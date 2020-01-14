@@ -84,7 +84,7 @@ class Revision extends base {
     }
 
 
-    get<T> (identifier : Identifier<T>) : T {
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -167,6 +167,15 @@ class Revision extends base {
 
         return entry.getValue()
     }
+
+
+    mergePrevious () {
+    }
+
+
+    mergeNext () {
+    }
+
 }
 
 export type Revision = Mixin<typeof Revision>
