@@ -4,6 +4,7 @@ import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { calculate, Entity, field } from "../../src/replica/Entity.js"
 import { MinimalReplica } from "../../src/replica/Replica.js"
 import { Schema } from "../../src/schema/Schema.js"
+import { delay } from "../../src/util/Helpers.js"
 
 declare const StartTest : any
 
@@ -214,4 +215,52 @@ StartTest(t => {
     })
 
 
+    t.iit('Replica async', async t => {
+        const schema            = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = schema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity(Base) {
+            @field()
+            id              : string
+
+            @field()
+            firstName       : string
+
+            @field()
+            lastName        : string
+
+            @field({ sync : false })
+            fullName        : string
+
+
+            @calculate('fullName')
+            * calculateFullName () : CalculationIterator<string> {
+                yield delay(100)
+
+                return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
+            }
+        }
+
+        const replica1          = MinimalReplica.new({ schema : schema })
+
+        const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
+
+        replica1.addEntity(markTwain)
+
+        const fullName1         = markTwain.fullName
+
+        t.isInstanceOf(fullName1, Promise)
+
+        // t.is(await fullName1, 'Mark Twain', 'Correct name calculated')
+
+        t.is(await markTwain.fullName, 'Mark Twain', 'Correct name calculated')
+
+        // markTwain.firstName     = 'MARK'
+        //
+        // await markTwain.commitAsync()
+        //
+        // t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
+    })
 })
