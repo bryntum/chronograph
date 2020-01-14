@@ -287,10 +287,10 @@ StartTest(t => {
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
 
         // 1st time calculation is done during the propagate - 2nd during read
-        t.expect(spyDispatcher).toHaveBeenCalled(2)
-        t.expect(spyStart).toHaveBeenCalled(2)
-        t.expect(spyEnd).toHaveBeenCalled(2)
-        t.expect(spyDuration).toHaveBeenCalled(2)
+        t.expect(spyDispatcher).toHaveBeenCalled(1)
+        t.expect(spyStart).toHaveBeenCalled(1)
+        t.expect(spyEnd).toHaveBeenCalled(1)
+        t.expect(spyDuration).toHaveBeenCalled(1)
 
         //----------------
         // tslint:disable-next-line
@@ -301,10 +301,10 @@ StartTest(t => {
         replica.commit()
 
         // no calculations during the propagate, as those were already done during the read
-        t.expect(spyDispatcher).toHaveBeenCalled(0)
-        t.expect(spyStart).toHaveBeenCalled(0)
-        t.expect(spyEnd).toHaveBeenCalled(0)
-        t.expect(spyDuration).toHaveBeenCalled(0)
+        t.expect(spyDispatcher).toHaveBeenCalled(1)
+        t.expect(spyStart).toHaveBeenCalled(1)
+        t.expect(spyEnd).toHaveBeenCalled(1)
+        t.expect(spyDuration).toHaveBeenCalled(1)
     })
 
 

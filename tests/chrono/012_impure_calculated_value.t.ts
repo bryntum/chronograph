@@ -103,7 +103,14 @@ StartTest(t => {
 
         graph.commit()
 
-        t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
+        t.is(graph.read(var1), 100, 'Calculation _has_ not been invoked, because immediately after commit all reads are pure')
+
+        t.expect(spy).toHaveBeenCalled(0)
+
+        //------------------
+        spy.reset()
+
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(1)
 
@@ -184,7 +191,14 @@ StartTest(t => {
 
         graph.commit()
 
-        t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
+        t.is(graph.read(var1), 100, 'Calculation _has_ not been invoked, because immediately after commit all reads are pure')
+
+        t.expect(spy).toHaveBeenCalled(0)
+
+        //------------------
+        spy.reset()
+
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(1)
 
