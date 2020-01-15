@@ -62,7 +62,11 @@ class Checkout extends base {
     $activeTransaction      : Transaction       = undefined
     runningTransaction      : Transaction       = undefined
 
+    isCommitting            : boolean           = false
+
     enableProgressNotifications     : boolean   = false
+
+    ongoing                 : Promise<any>      = Promise.resolve()
 
 
     initialize (...args) {
@@ -216,14 +220,14 @@ class Checkout extends base {
     propagate (args? : CommitArguments) : CommitResult {
         return this.commit(args)
     }
-    
-    
+
+
     commit (args? : CommitArguments) : CommitResult {
         const nextRevision      = this.activeTransaction.commit(args)
 
         const result            = this.finalizeCommit(nextRevision)
 
-        this.runningTransaction = null
+        // this.runningTransaction = null
 
         return result
     }
@@ -243,18 +247,39 @@ class Checkout extends base {
     async propagateAsync (args? : CommitArguments) : Promise<CommitResult> {
         return this.commitAsync(args)
     }
-    
-    
+
+
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
-        const nextRevision      = await this.activeTransaction.commitAsync(args)
+        if (this.isCommitting) return this.ongoing
 
-        const result            = this.finalizeCommit(nextRevision)
+        this.isCommitting       = true
 
-        await this.finalizeCommitAsync(nextRevision)
+        let result
 
-        this.runningTransaction = null
+        return this.ongoing = this.ongoing.then(() => {
+            return this.activeTransaction.commitAsync(args)
+        }).then(nextRevision => {
+            result          = this.finalizeCommit(nextRevision)
 
-        return result
+            return this.finalizeCommitAsync(nextRevision)
+        }).then(() => {
+            // this.runningTransaction = null
+            this.isCommitting       = false
+
+            return result
+        })
+
+        //
+        // const nextRevision      = await this.activeTransaction.commitAsync(args)
+        //
+        // const result            = this.finalizeCommit(nextRevision)
+        //
+        // await this.finalizeCommitAsync(nextRevision)
+        //
+        // this.runningTransaction = null
+        // this.isCommitting       = false
+        //
+        // return result
     }
 
 
@@ -394,8 +419,8 @@ class Checkout extends base {
     readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         return this.activeTransaction.readAsync(identifier)
     }
-    
-    
+
+
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
         return this.activeTransaction.get(identifier)
     }

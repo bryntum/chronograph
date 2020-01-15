@@ -632,11 +632,15 @@ class Transaction extends base {
     async commitAsync (args? : CommitArguments) : Promise<TransactionCommitResult> {
         this.preCommit(args)
 
-        await this.ongoing
+        return this.ongoing = this.ongoing.then(() => {
+            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
+        }).then(() => {
+            return this.postCommit()
+        })
 
-        await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
-
-        return this.postCommit()
+        // await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
+        //
+        // return this.postCommit()
     }
 
 
