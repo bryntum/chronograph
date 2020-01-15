@@ -912,7 +912,7 @@ class Transaction extends base {
 
                 // debugger
 
-                console.log(cycle)
+                // console.log(cycle)
 
                 // debugger
                 throw new Error("Computation cycle: " + cycle)
