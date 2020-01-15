@@ -35,7 +35,7 @@ class Quark extends base {
     }
 
     // required
-    createdAt       : RevisionI         = undefined
+    createdAt       : Revision          = undefined
 
     identifier      : Identifier        = undefined
 
@@ -325,7 +325,7 @@ class Quark extends base {
     }
 
 
-    outgoingInTheFutureAndPastCb (revision : RevisionI, forEach : (quark : Quark) => any) {
+    outgoingInTheFutureAndPastCb (revision : Revision, forEach : (quark : Quark) => any) {
         let current : Quark = this
 
         while (current) {

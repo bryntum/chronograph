@@ -70,7 +70,7 @@ StartTest(t => {
         const entity            = schema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @field()
             firstName       : string
 
@@ -87,7 +87,7 @@ StartTest(t => {
             }
         }
 
-        const replica1          = MinimalReplica.new({ schema : schema })
+        const replica1          = Replica.new({ schema : schema })
 
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
 
@@ -221,7 +221,7 @@ StartTest(t => {
         const entity            = schema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @field()
             id              : string
 
@@ -243,7 +243,7 @@ StartTest(t => {
             }
         }
 
-        const replica1          = MinimalReplica.new({ schema : schema })
+        const replica1          = Replica.new({ schema : schema })
 
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
 

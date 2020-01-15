@@ -1,19 +1,10 @@
 import { Base, IdentityMixin, Mixin } from "../class/BetterMixin.js"
-import {
-    CalculationContext,
-    CalculationGen,
-    CalculationIterator,
-    CalculationSync,
-    Context,
-    ContextGen,
-    Contexts,
-    ContextSync
-} from "../primitives/Calculation.js"
+import { CalculationContext, CalculationGen, CalculationSync, Context, ContextGen, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Checkout } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
-import { RevisionClock, RevisionI } from "./Revision.js"
+import { Revision } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
@@ -73,7 +64,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     context             : this[ 'CalcContextT' ]       = undefined
 
 
-    newQuark (createdAt : RevisionI) : InstanceType<this[ 'quarkClass' ]> {
+    newQuark (createdAt : Revision) : InstanceType<this[ 'quarkClass' ]> {
         // micro-optimization - we don't pass a config object to the `new` constructor
         // but instead assign directly to instance
         const newQuark                      = this.quarkClass.new() as InstanceType<this[ 'quarkClass' ]>

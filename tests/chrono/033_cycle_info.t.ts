@@ -1,5 +1,5 @@
 import { HasProposedValue } from "../../src/chrono/Effect.js"
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
@@ -7,7 +7,7 @@ StartTest(t => {
 
 
     t.it('Should show the detailed information about the cyclic computation', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const iden1     = graph.identifierNamed('iden1', function* (Y) {
             return yield iden2
@@ -23,7 +23,7 @@ StartTest(t => {
 
 
     t.it('Should show the detailed information about the cyclic computation, which involves edges from the past', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const dispatcher    = graph.identifierNamed('dispatcher', function* (Y) {
             const iden1HasProposed  = yield HasProposedValue(iden1)

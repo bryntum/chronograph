@@ -1,5 +1,5 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueGen, CalculatedValueGenConstructor } from "../../src/chrono/Identifier.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
+import { CalculatedValueGen } from "../../src/chrono/Identifier.js"
 import { delay } from "../../src/util/Helpers.js"
 
 declare const StartTest : any
@@ -9,7 +9,7 @@ const randomDelay = () => delay(Math.random() * 50)
 StartTest(t => {
 
     t.it('Should support the asynchronous calculations flow', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableNamed('i1', 0)
         const i2        = graph.variableNamed('i2', 10)
@@ -82,7 +82,7 @@ StartTest(t => {
 
 
     t.it('Repeating calls to `commitAsync` should wait till previous one to complete', async t => {
-        const graph : ChronoGraph       = MinimalChronoGraph.new()
+        const graph : ChronoGraph       = ChronoGraph.new()
 
         const i1        = graph.variableNamed('i1', 0)
         const i2        = graph.variableNamed('i2', 10)

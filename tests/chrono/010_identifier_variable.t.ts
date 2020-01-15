@@ -1,6 +1,6 @@
 import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueGen, CalculatedValueSync, Variable, VariableC } from "../../src/chrono/Identifier.js"
+import { CalculatedValueSync, Variable, VariableC } from "../../src/chrono/Identifier.js"
 
 declare const StartTest : any
 
@@ -241,7 +241,7 @@ StartTest(t => {
 
 
     t.it('Should throw error on cyclic computation', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const iden1     = graph.identifier(function (Y) {
             return Y(iden2)
@@ -256,7 +256,7 @@ StartTest(t => {
 
 
     t.it('Should throw error on cyclic computation', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const iden1     = graph.identifier(function* (Y) {
             return yield iden2
