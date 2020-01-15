@@ -19,7 +19,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -30,7 +30,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -41,7 +41,7 @@ StartTest(t => {
 
         graph.write(var0, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })
@@ -50,14 +50,14 @@ StartTest(t => {
     t.it('Should not trigger listener for "shadow" entries', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 0)
-        const var1      = graph.variableId('var1', 10)
+        const var0      = graph.variableNamed('var0', 0)
+        const var1      = graph.variableNamed('var1', 10)
 
-        const iden1     = graph.identifierId('iden1', function* () {
+        const iden1     = graph.identifierNamed('iden1', function* () {
             return (yield var1) + 1
         })
 
-        const iden2     = graph.identifierId('iden2', function* () {
+        const iden2     = graph.identifierNamed('iden2', function* () {
             return (yield iden1) + (yield var0)
         })
 
@@ -66,7 +66,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -76,7 +76,7 @@ StartTest(t => {
         graph.write(var0, 1)
 
         // this propagate will create a "shadowing" entry for the `iden1`, containing new edges and reference to previous quark
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })
@@ -85,10 +85,10 @@ StartTest(t => {
     t.it('Should not trigger listener for the entries with the same value', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 0)
-        const var1      = graph.variableId('var1', 10)
+        const var0      = graph.variableNamed('var0', 0)
+        const var1      = graph.variableNamed('var1', 10)
 
-        const iden1     = graph.identifierId('iden1', function* () {
+        const iden1     = graph.identifierNamed('iden1', function* () {
             return (yield var0) + (yield var1)
         })
 
@@ -97,7 +97,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -108,7 +108,7 @@ StartTest(t => {
         graph.write(var1, 5)
 
         // this propagate will create a "shadowing" entry for the `iden1`, containing new edges and reference to previous quark
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })
@@ -117,10 +117,10 @@ StartTest(t => {
     t.it('Should not trigger listener after the identifier removal', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 0)
-        const var1      = graph.variableId('var1', 10)
+        const var0      = graph.variableNamed('var0', 0)
+        const var1      = graph.variableNamed('var1', 10)
 
-        const iden1     = graph.identifierId('iden1', function* () {
+        const iden1     = graph.identifierNamed('iden1', function* () {
             return (yield var0) + (yield var1)
         })
 
@@ -129,7 +129,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -141,7 +141,7 @@ StartTest(t => {
         graph.write(var0, 5)
         graph.write(var1, 5)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })

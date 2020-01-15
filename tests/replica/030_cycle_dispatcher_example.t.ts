@@ -126,7 +126,7 @@ class Event extends Entity(Base) {
 
     @build_proposed('dispatcher')
     buildProposedDispatcher (me : Identifier, quark : Quark, transaction : Transaction) : DispatcherValue {
-        const direction : Direction    = transaction.readDirty(this.$.direction)
+        const direction : Direction    = transaction.readProposedOrPrevious(this.$.direction)
 
         return new Map([
             [ FieldType.Start, direction === Direction.Forward ? CalculationMode.CalculateProposed : CalculationMode.CalculateProposed ],
@@ -138,7 +138,9 @@ class Event extends Entity(Base) {
 
     @calculate('dispatcher')
     * calculateDispatcher (YIELD : SyncEffectHandler) : CalculationIterator<DispatcherValue> {
-        yield ProposedOrCurrent
+        const proposedOrCurrent                 = yield ProposedOrCurrent
+
+        // if (window.DEBUG) debugger
 
         const directionValue : Direction        = yield this.$.direction
 
@@ -218,7 +220,7 @@ StartTest(t => {
 
 
     t.it('Should keep all-null state', async t => {
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ null, null, null ], 'Initial propagation is ok')
     })
@@ -227,7 +229,7 @@ StartTest(t => {
     t.it('Should keep partial data - start', async t => {
         event.start = 10
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 10, null, null ], 'Initial propagation is ok')
     })
@@ -236,7 +238,7 @@ StartTest(t => {
     t.it('Should keep partial data - end', async t => {
         event.end = 10
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ null, 10, null ], 'Initial propagation is ok')
     })
@@ -245,7 +247,7 @@ StartTest(t => {
     t.it('Should keep partial data - duration', async t => {
         event.duration = 10
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ null, null, 10 ], 'Initial propagation is ok')
     })
@@ -255,7 +257,7 @@ StartTest(t => {
         event.start = 10
         event.duration = 5
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
     })
@@ -265,7 +267,7 @@ StartTest(t => {
         event.start = 10
         event.end = 15
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
     })
@@ -280,10 +282,11 @@ StartTest(t => {
         event.end = 15
         event.duration = 5
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
 
+        // 1st time calculation is done during the propagate - 2nd during read
         t.expect(spyDispatcher).toHaveBeenCalled(1)
         t.expect(spyStart).toHaveBeenCalled(1)
         t.expect(spyEnd).toHaveBeenCalled(1)
@@ -295,8 +298,9 @@ StartTest(t => {
 
         replica.write(var0, 1)
 
-        replica.propagate()
+        replica.commit()
 
+        // no calculations during the propagate, as those were already done during the read
         t.expect(spyDispatcher).toHaveBeenCalled(1)
         t.expect(spyStart).toHaveBeenCalled(1)
         t.expect(spyEnd).toHaveBeenCalled(1)
@@ -309,7 +313,7 @@ StartTest(t => {
         event.end = 18
         event.duration = 5
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
     })
@@ -322,7 +326,7 @@ StartTest(t => {
         event.end = 18
         event.duration = 5
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
 
@@ -333,7 +337,7 @@ StartTest(t => {
 
         replica.write(var0, 1)
 
-        replica.propagate()
+        replica.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
     })
@@ -343,28 +347,28 @@ StartTest(t => {
         event.start = 10
         event.duration = 5
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
 
         //-----------------------
         await event.setDuration(1, Instruction.KeepEnd)
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 14, 15, 1 ], 'Edges rebuilt correctly')
 
         //-----------------------
         await event.setDuration(3, Instruction.KeepStart)
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 14, 17, 3 ], 'Edges rebuilt correctly')
 
         //-----------------------
         await event.setStart(5, Instruction.KeepDuration)
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(read(), [ 5, 8, 3 ], 'Edges rebuilt correctly')
     })

@@ -10,52 +10,37 @@ StartTest(t => {
     t.it('`ProposedOrCurrent` effect', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const max       = graph.variableId('variable', 100)
+        const max       = graph.variableNamed('variable', 100)
 
-        const var1      = graph.addIdentifier(CalculatedValueGen.new({
-            * calculation () : CalculationIterator<number> {
-                const proposedValue : number    = yield ProposedOrCurrent
+        const var1      = graph.identifier(function * () : CalculationIterator<number> {
+            const proposedValue : number    = yield ProposedOrCurrent
 
-                const maxValue : number         = yield max
+            const maxValue : number         = yield max
 
-                return proposedValue <= maxValue ? proposedValue : maxValue
-            }
-        }))
+            return proposedValue <= maxValue ? proposedValue : maxValue
+        })
 
         graph.write(var1, 18)
 
-        graph.propagate()
-
-        t.is(graph.read(var1), 18, 'Correct value')
+        t.is(graph.read(var1), 18, 'Correct value #1')
 
         //------------------
         graph.write(var1, 180)
 
-        graph.propagate()
-
-        t.is(graph.read(var1), 100, 'Correct value')
-
+        t.is(graph.read(var1), 100, 'Correct value #2')
 
         //------------------
         graph.write(max, 1000)
 
-        graph.propagate()
-
-        t.is(graph.read(var1), 100, 'Correct value')
-
+        t.is(graph.read(var1), 100, 'Correct value #3')
 
         //------------------
         graph.write(max, 50)
 
-        graph.propagate()
-
         t.is(graph.read(var1), 50, 'Correct value')
-
 
         //------------------
         graph.write(max, 100)
-
-        graph.propagate()
 
         t.is(graph.read(var1), 50, 'Correct value')
     })
@@ -64,9 +49,9 @@ StartTest(t => {
     t.it('ProposedOrCurrent - caching, generators', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueGen.new({
             * calculation () : CalculationIterator<number> {
@@ -82,75 +67,79 @@ StartTest(t => {
 
         graph.write(var1, 18)
 
-        graph.propagate()
+        t.is(graph.read(var1), 18, 'Regular case #1')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 18, 'Regular case')
 
         //------------------
         spy.reset()
 
         graph.write(var0, 2)
 
-        graph.propagate()
+        t.is(graph.read(var1), 18, 'Calculation has not been invoked, because the calculated value is same as proposed')
 
         t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 18, 'Calculation has not been invoked, because the calculated value is same as proposed')
 
         //------------------
         spy.reset()
 
         graph.write(var1, 110)
 
-        graph.propagate()
+        t.is(graph.read(var1), 100, 'Restricted by max value')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 100, 'Regular case')
 
         //------------------
         spy.reset()
 
         graph.write(var0, 3)
 
-        graph.propagate()
+        t.is(graph.read(var1), 100, 'Calculation _has not_ been invoked, because its still the same transaction')
+
+        t.expect(spy).toHaveBeenCalled(0)
+
+        //------------------
+        spy.reset()
+
+        graph.commit()
+
+        t.is(graph.read(var1), 100, 'Calculation _has_ not been invoked, because immediately after commit all reads are pure')
+
+        t.expect(spy).toHaveBeenCalled(0)
+
+        //------------------
+        spy.reset()
+
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
 
         //------------------
         spy.reset()
 
         graph.write(max, 50)
 
-        graph.propagate()
+        t.is(graph.read(var1), 50, 'Regular case')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 50, 'Regular case')
 
         //------------------
         spy.reset()
 
         graph.write(max, 100)
 
-        graph.propagate()
+        t.is(graph.read(var1), 50, 'Regular case')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 50, 'Regular case')
     })
 
 
     t.it('ProposedOrCurrent - caching, sync', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueSync.new({
             calculation (YIELD) : number {
@@ -166,78 +155,83 @@ StartTest(t => {
 
         graph.write(var1, 18)
 
-        graph.propagate()
+        t.is(graph.read(var1), 18, 'Regular case #1')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 18, 'Regular case')
 
         //------------------
         spy.reset()
 
         graph.write(var0, 2)
 
-        graph.propagate()
+        t.is(graph.read(var1), 18, 'Calculation has not been invoked, because the calculated value is same as proposed')
 
         t.expect(spy).toHaveBeenCalled(0)
-
-        t.is(graph.read(var1), 18, 'Calculation has not been invoked, because the calculated value is same as proposed')
 
         //------------------
         spy.reset()
 
         graph.write(var1, 110)
 
-        graph.propagate()
+        t.is(graph.read(var1), 100, 'Restricted by max value')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 100, 'Regular case')
 
         //------------------
         spy.reset()
 
         graph.write(var0, 3)
 
-        graph.propagate()
+        t.is(graph.read(var1), 100, 'Calculation _has not_ been invoked, because its still the same transaction')
+
+        t.expect(spy).toHaveBeenCalled(0)
+
+        //------------------
+        spy.reset()
+
+        graph.commit()
+
+        t.is(graph.read(var1), 100, 'Calculation _has_ not been invoked, because immediately after commit all reads are pure')
+
+        t.expect(spy).toHaveBeenCalled(0)
+
+        //------------------
+        spy.reset()
+
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 100, 'Calculation _has_ been invoked, because the calculated value on the previous revision is _not_ the same as proposed')
 
         //------------------
         spy.reset()
 
         graph.write(max, 50)
 
-        graph.propagate()
+        t.is(graph.read(var1), 50, 'Regular case')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 50, 'Regular case')
 
         //------------------
         spy.reset()
 
         graph.write(max, 100)
 
-        graph.propagate()
+        t.is(graph.read(var1), 50, 'Regular case')
 
         t.expect(spy).toHaveBeenCalled(1)
-
-        t.is(graph.read(var1), 50, 'Regular case')
     })
 
 
     t.it('Lazily calculated impure identifier, generators', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueGen.new({
-            lazy : true,
+            name    : 'var1',
+            lazy    : true,
 
             * calculation () : CalculationIterator<number> {
                 const proposedValue : number    = yield ProposedOrCurrent
@@ -252,11 +246,9 @@ StartTest(t => {
 
         graph.write(var1, 18)
 
-        graph.propagate()
-
         t.expect(spy).toHaveBeenCalled(0)
 
-        t.is(graph.read(var1), 18, 'Correct value')
+        t.is(graph.read(var1), 18, 'Correct value #1')
 
         t.expect(spy).toHaveBeenCalled(1)
 
@@ -265,41 +257,36 @@ StartTest(t => {
 
         graph.write(var1, 180)
 
-        graph.propagate()
-
         t.expect(spy).toHaveBeenCalled(0)
 
-        t.is(graph.read(var1), 100, 'Correct value')
+        t.is(graph.read(var1), 100, 'Correct value #2')
 
         t.expect(spy).toHaveBeenCalled(1)
-
 
         //------------------
         spy.reset()
 
         graph.write(max, 10)
 
-        graph.propagate()
-
         t.expect(spy).toHaveBeenCalled(0)
 
-        t.is(graph.read(var1), 10, 'Correct value')
+        t.is(graph.read(var1), 10, 'Correct value #3')
 
         t.expect(spy).toHaveBeenCalled(1)
-
 
         //------------------
         spy.reset()
 
         graph.write(max, 100)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
+        //------------------
         graph.write(max, 101)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -312,9 +299,9 @@ StartTest(t => {
     t.it('Lazily calculated impure identifier, sync', async t => {
         const graph : ChronoGraph   = MinimalChronoGraph.new()
 
-        const var0      = graph.variableId('var0', 1)
+        const var0      = graph.variableNamed('var0', 1)
 
-        const max       = graph.variableId('max', 100)
+        const max       = graph.variableNamed('max', 100)
 
         const var1      = graph.addIdentifier(CalculatedValueSync.new({
             lazy : true,
@@ -332,7 +319,7 @@ StartTest(t => {
 
         graph.write(var1, 18)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -345,7 +332,7 @@ StartTest(t => {
 
         graph.write(var1, 180)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -359,7 +346,7 @@ StartTest(t => {
 
         graph.write(max, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
@@ -373,13 +360,13 @@ StartTest(t => {
 
         graph.write(max, 100)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 
         graph.write(max, 101)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spy).toHaveBeenCalled(0)
 

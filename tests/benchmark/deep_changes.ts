@@ -30,7 +30,8 @@ class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchI
 
         graph.write(boxes[ 0 ], iteration + cycle)
 
-        graph.propagateSync()
+        graph.commit()
+        // for (let k = 0; k < boxes.length; k++) graph.read(boxes[ k ])
     }
 }
 
@@ -69,7 +70,7 @@ export const deepChangesGenSmall = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - generators',
 
     setup       : async () => {
-        return deepGraphGen(1300)
+        return deepGraphGen(1000)
     }
 })
 

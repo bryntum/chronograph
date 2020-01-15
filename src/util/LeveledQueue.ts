@@ -7,11 +7,20 @@ export class LeveledQueue<T extends { level : number }> {
 
     levels          : T[][]             = []
 
-    currentLevel    : number            = MAX_SMI
+    lowestLevel     : number            = MAX_SMI
+
+
+    getLowestLevel () {
+        for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
+            if (this.levels[ i ]) return this.lowestLevel = i
+        }
+
+        return this.lowestLevel = MAX_SMI
+    }
 
 
     takeLowestLevel () {
-        for (let i = 0; i < this.levels.length; i++) {
+        for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
             if (level) {
@@ -19,33 +28,37 @@ export class LeveledQueue<T extends { level : number }> {
 
                 this.levels[ i ]    = null
 
+                this.lowestLevel    = i + 1
+
                 return level
             }
         }
     }
 
 
-    resetCachedPosition () {
-        this.currentLevel               = MAX_SMI
-    }
+    // resetCachedPosition () {
+    //     this.lowestLevel               = MAX_SMI
+    // }
 
 
-    last () {
-        for (let i = this.currentLevel !== MAX_SMI ? this.currentLevel : 0; i < this.levels.length; i++) {
-            const level     = this.levels[ i ]
-
-            if (level && level.length > 0) {
-                this.currentLevel   = i
-
-                return level[ level.length - 1 ]
-            }
-        }
-    }
+    // last () {
+    //     for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
+    //         const level     = this.levels[ i ]
+    //
+    //         if (level && level.length > 0) {
+    //             this.lowestLevel   = i
+    //
+    //             return level[ level.length - 1 ]
+    //         }
+    //     }
+    // }
 
 
     pop () : T {
-        for (let i = this.currentLevel !== MAX_SMI ? this.currentLevel : 0; i < this.levels.length; i++) {
+        for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
+
+            this.lowestLevel    = i
 
             if (level && level.length > 0) {
                 this.length--
@@ -53,6 +66,8 @@ export class LeveledQueue<T extends { level : number }> {
                 return level.pop()
             }
         }
+
+        this.lowestLevel   = MAX_SMI
     }
 
 
@@ -62,6 +77,9 @@ export class LeveledQueue<T extends { level : number }> {
         let level : T[]     = this.levels[ elLevel ]
 
         if (!level) {
+            // avoid holes in the array
+            for (let i = this.levels.length; i < elLevel; i++) this.levels[ i ] = null
+
             level           = this.levels[ elLevel ] = []
         }
 
@@ -69,6 +87,6 @@ export class LeveledQueue<T extends { level : number }> {
 
         this.length++
 
-        if (elLevel < this.currentLevel) this.currentLevel = elLevel
+        if (elLevel < this.lowestLevel) this.lowestLevel = elLevel
     }
 }

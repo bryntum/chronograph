@@ -27,14 +27,19 @@ StartTest(t => {
         const calculation1Spy   = t.spyOn(iden1, 'calculation')
         const calculation2Spy   = t.spyOn(iden2, 'calculation')
 
-        graph.propagate({ calculateOnly : [ iden1 ] })
+        graph.read(iden1)
 
         t.expect(calculation1Spy).toHaveBeenCalled(1)
         t.expect(calculation2Spy).toHaveBeenCalled(0)
 
+        // ----------------
+        calculation1Spy.reset()
+        calculation2Spy.reset()
+
         t.is(graph.read(iden1), 3, "Correct result calculated")
         t.is(graph.read(iden2), 6, "Correct result calculated")
 
+        t.expect(calculation1Spy).toHaveBeenCalled(0)
         t.expect(calculation2Spy).toHaveBeenCalled(1)
     })
 })

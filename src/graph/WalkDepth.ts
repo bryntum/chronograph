@@ -95,6 +95,8 @@ export class WalkContext<Walkable, Label = any> extends Base {
 
             const visitedInfo       = this.getVisitedInfo(node)
 
+            // this supports the "ahead-of-time" creation of the "visited" entries, which actually lead to improved benchmarks,
+            // so it might be a default
             if (visitedInfo && visitedInfo.visitedAt === VISITED_TOPOLOGICALLY && visitedInfo.visitEpoch === this.currentEpoch) {
                 toVisit.pop()
                 continue

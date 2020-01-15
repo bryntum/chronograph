@@ -31,7 +31,7 @@ class ShallowChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBen
         graph.write(boxes[ 0 ], iteration + cycle)
         graph.write(boxes[ 1 ], 15 - (iteration + cycle))
 
-        graph.propagateSync()
+        graph.commit()
     }
 }
 

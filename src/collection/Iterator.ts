@@ -83,6 +83,16 @@ export function* filter<Element> (iterator : Iterable<Element>, func : (el : Ele
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export function* drop<Element> (iterator : Iterable<Element>, howMany : number) : Iterable<Element> {
+    let i   = 0
+
+    for (const el of iterator) {
+        if (++i > howMany) yield el
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export function every<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => boolean) : boolean {
     let i   = 0
 
@@ -261,6 +271,11 @@ export class ChainedIteratorClass<T> {
 
     filter (func : (el : T, index : number) => boolean) : ChainedIteratorClass<T> {
         return this.derive(filter(this.iterable, func))
+    }
+
+
+    drop (howMany : number) : ChainedIteratorClass<T> {
+        return this.derive(drop(this.iterable, howMany))
     }
 
 
