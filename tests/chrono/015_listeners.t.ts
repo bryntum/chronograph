@@ -19,7 +19,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -30,7 +30,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -41,7 +41,7 @@ StartTest(t => {
 
         graph.write(var0, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })
@@ -66,7 +66,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -76,7 +76,7 @@ StartTest(t => {
         graph.write(var0, 1)
 
         // this propagate will create a "shadowing" entry for the `iden1`, containing new edges and reference to previous quark
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })
@@ -97,7 +97,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -108,7 +108,7 @@ StartTest(t => {
         graph.write(var1, 5)
 
         // this propagate will create a "shadowing" entry for the `iden1`, containing new edges and reference to previous quark
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })
@@ -129,7 +129,7 @@ StartTest(t => {
         graph.addListener(iden1, spyListener)
 
         //-------------------
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(1)
 
@@ -141,7 +141,7 @@ StartTest(t => {
         graph.write(var0, 5)
         graph.write(var1, 5)
 
-        graph.propagate()
+        graph.commit()
 
         t.expect(spyListener).toHaveBeenCalled(0)
     })

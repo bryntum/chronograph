@@ -13,19 +13,18 @@ import {
 } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
-import { Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
+import { Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type PropagateArguments = {
-    calculateOnly?      : Identifier[]
+export type CommitArguments = {
 }
 
-export type PropagateResult = {
+export type CommitResult = {
 }
 
 
-export const PropagateZero : PropagateResult = {
+export const CommitZero : CommitResult = {
 }
 
 
@@ -61,7 +60,11 @@ export class Checkout extends Base {
     $activeTransaction      : Transaction       = undefined
     runningTransaction      : Transaction       = undefined
 
+    isCommitting            : boolean           = false
+
     enableProgressNotifications     : boolean   = false
+
+    ongoing                 : Promise<any>      = Promise.resolve()
 
 
     initialize (...args) {
@@ -212,12 +215,17 @@ export class Checkout extends Base {
     }
 
 
-    propagate (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagate(args)
+    propagate (args? : CommitArguments) : CommitResult {
+        return this.commit(args)
+    }
 
-        const result            = this.finalizePropagation(nextRevision)
 
-        this.runningTransaction = null
+    commit (args? : CommitArguments) : CommitResult {
+        const nextRevision      = this.activeTransaction.commit(args)
+
+        const result            = this.finalizeCommit(nextRevision)
+
+        // this.runningTransaction = null
 
         return result
     }
@@ -234,20 +242,46 @@ export class Checkout extends Base {
     // }
 
 
-    async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
-        const nextRevision      = await this.activeTransaction.propagateAsync(args)
-
-        const result            = this.finalizePropagation(nextRevision)
-
-        await this.finalizePropagationAsync(nextRevision)
-
-        this.runningTransaction = null
-
-        return result
+    async propagateAsync (args? : CommitArguments) : Promise<CommitResult> {
+        return this.commitAsync(args)
     }
 
 
-    finalizePropagation (transactionResult : TransactionPropagateResult) : PropagateResult {
+    async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        if (this.isCommitting) return this.ongoing
+
+        this.isCommitting       = true
+
+        let result
+
+        return this.ongoing = this.ongoing.then(() => {
+            return this.activeTransaction.commitAsync(args)
+        }).then(nextRevision => {
+            result          = this.finalizeCommit(nextRevision)
+
+            return this.finalizeCommitAsync(nextRevision)
+        }).then(() => {
+            // this.runningTransaction = null
+            this.isCommitting       = false
+
+            return result
+        })
+
+        //
+        // const nextRevision      = await this.activeTransaction.commitAsync(args)
+        //
+        // const result            = this.finalizeCommit(nextRevision)
+        //
+        // await this.finalizeCommitAsync(nextRevision)
+        //
+        // this.runningTransaction = null
+        // this.isCommitting       = false
+        //
+        // return result
+    }
+
+
+    finalizeCommit (transactionResult : TransactionCommitResult) : CommitResult {
         const { revision, entries } = transactionResult
 
         if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
@@ -285,7 +319,7 @@ export class Checkout extends Base {
     }
 
 
-    async finalizePropagationAsync (transactionResult : TransactionPropagateResult) {
+    async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
 
@@ -384,6 +418,10 @@ export class Checkout extends Base {
         return this.activeTransaction.readAsync(identifier)
     }
 
+
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
+        return this.activeTransaction.get(identifier)
+    }
 
     // // read the identifier value, return the proposed value if no "current" value is calculated yet
     // readDirty<T> (identifier : Identifier<T>) : T {

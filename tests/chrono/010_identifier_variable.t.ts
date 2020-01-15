@@ -33,7 +33,7 @@ StartTest(t => {
             yield var1
         })
 
-        t.throwsOk(() => graph.propagate(), 'Unknown identifier')
+        t.throwsOk(() => graph.commit(), 'Unknown identifier')
     })
 
 
@@ -238,4 +238,36 @@ StartTest(t => {
 
         t.is(graph.read(iden1), 10, 'Initial proposed value was not overwritten')
     })
+
+
+    t.it('Should throw error on cyclic computation', async t => {
+        const graph : ChronoGraph = MinimalChronoGraph.new()
+
+        const iden1     = graph.identifier(function (Y) {
+            return Y(iden2)
+        })
+
+        const iden2     = graph.identifier(function (Y) {
+            return Y(iden1)
+        })
+
+        t.throwsOk(() => graph.read(iden1), 'Cycle')
+    })
+
+
+    t.it('Should throw error on cyclic computation', async t => {
+        const graph : ChronoGraph = MinimalChronoGraph.new()
+
+        const iden1     = graph.identifier(function* (Y) {
+            return yield iden2
+        })
+
+        const iden2     = graph.identifier(function* (Y) {
+            return yield iden1
+        })
+
+        t.throwsOk(() => graph.read(iden1), 'Computation cycle')
+    })
+
+
 })

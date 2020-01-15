@@ -1,5 +1,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 // assume 32-bit platform (https://v8.dev/blog/react-cliff)
+import { CI } from "../collection/Iterator.js"
+
 export const MIN_SMI = -Math.pow(2, 30)
 export const MAX_SMI = Math.pow(2, 30) - 1
 
@@ -74,3 +76,21 @@ export const copySetInto = <V>(sourceSet : Set<V>, targetSet : Set<V>) : Set<V> 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const delay = (timeout : number) : Promise<any> => new Promise(resolve => setTimeout(resolve, timeout))
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const matchAll = function* (regexp : RegExp, testStr : string) : Generator<string[]> {
+    let match : string[]
+
+    while ((match = regexp.exec(testStr)) !== null) {
+        yield match
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const allMatches = function (regexp : RegExp, testStr : string) : string[] {
+    return CI(matchAll(regexp, testStr)).map(match => CI(match).drop(1)).concat().toArray()
+}
+
+

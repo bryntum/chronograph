@@ -36,6 +36,16 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // }
 
 
+    // returns the value itself if there were no affecting writes for it
+    // otherwise - promise
+    getFromGraph (graph : CheckoutI) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
+        if (graph)
+            return graph.get(this)
+        else
+            return this.DATA
+    }
+
+
     readFromGraph (graph : Checkout) : this[ 'ValueT' ] {
         if (graph)
             return graph.read(this)

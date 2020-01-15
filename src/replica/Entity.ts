@@ -1,9 +1,9 @@
-import { PropagateResult, PropagateZero } from "../chrono/Checkout.js"
+import { CommitResult, CommitZero } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
-import { DEBUG, debug } from "../environment/Debug.js"
+import { DEBUG, debug, SourceLinePoint } from "../environment/Debug.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
@@ -51,6 +51,8 @@ export class Entity extends Mixin(
                 const proxy = new Proxy($, {
                     get (entity : Entity, property : string | number | symbol, receiver : any) : any {
                         if (!entity[ property ]) debug(new Error(`Attempt to read a missing field ${String(property)} on ${entity}`))
+
+                        entity[ property ].SOURCE_POINT = SourceLinePoint.fromCurrentCall()
 
                         return entity[ property ]
                     }
@@ -136,21 +138,31 @@ export class Entity extends Mixin(
         // }
 
 
-        propagate () : PropagateResult {
+        propagate () : CommitResult {
+            return this.commit()
+        }
+
+
+        commit () : CommitResult {
             const graph     = this.graph
 
             if (!graph) return
 
-            return graph.propagate()
+            return graph.commit()
         }
 
 
-        async propagateAsync () : Promise<PropagateResult> {
+        async propagateAsync () : Promise<CommitResult> {
+            return this.commitAsync()
+        }
+
+
+        async commitAsync () : Promise<CommitResult> {
             const graph     = this.graph
 
-            if (!graph) return Promise.resolve(PropagateZero)
+            if (!graph) return Promise.resolve(CommitZero)
 
-            return graph.propagateAsync()
+            return graph.commitAsync()
         }
 
 
@@ -208,12 +220,13 @@ export class Entity extends Mixin(
 
             const config : Partial<FieldIdentifier> = {
                 name                : `${me.$$.name}/${name}`,
-                field               : field,
-                lazy                : field.lazy,
+                field               : field
             }
 
             //------------------
-            if (field.equality) config.equality = field.equality
+            if (field.hasOwnProperty('sync')) config.sync = field.sync
+            if (field.hasOwnProperty('lazy')) config.lazy = field.lazy
+            if (field.hasOwnProperty('equality')) config.equality = field.equality
 
             //------------------
             const calculationFunction   = me.$calculations && me[ me.$calculations[ name ] ]
@@ -311,7 +324,7 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             Object.defineProperty(target, propertyKey, {
                 get     : function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraph(this.graph)
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
                 },
 
                 set     : function (this : Entity, value : any) {
@@ -325,15 +338,15 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).readFromGraph(this.graph)
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
                 }
             }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<PropagateResult> {
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<CommitResult> {
                     (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
 
-                    return this.graph ? this.graph.propagateAsync() : Promise.resolve(PropagateZero)
+                    return this.graph ? this.graph.commitAsync() : Promise.resolve(CommitZero)
                 }
             }
 
@@ -391,3 +404,8 @@ export const build_proposed = function (fieldName : Name) : MethodDecorator {
     }
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export const getSourcePointFromIdentifier = (identifier : Identifier) : SourceLinePoint => {
+    return (identifier as any).SOURCE_POINT
+}

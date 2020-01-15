@@ -24,7 +24,7 @@ StartTest(t => {
         const calculation1Spy   = t.spyOn(box1p2, 'calculation')
         const calculation2Spy   = t.spyOn(res, 'calculation')
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(box1p2), 0, "Correct result calculated")
         t.is(graph.read(res), 1, "Correct result calculated")
@@ -38,7 +38,7 @@ StartTest(t => {
 
         graph.write(box1, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(box1p2), 10, "Correct result calculated")
         t.is(graph.read(res), 11, "Correct result calculated")
@@ -53,7 +53,7 @@ StartTest(t => {
 
         graph.write(box3, 2)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(box1p2), 10, "Correct result calculated")
         t.is(graph.read(res), 12, "Correct result calculated")
@@ -98,7 +98,7 @@ StartTest(t => {
 
         const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
 
@@ -110,7 +110,7 @@ StartTest(t => {
         graph.write(i1, 5)
         graph.write(i2, 5)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
 
@@ -137,14 +137,14 @@ StartTest(t => {
             return (yield atom0) + (yield atom2)
         })
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(atom2), 2, "Correct result calculated for atom2")
         t.is(graph.read(atom3), 2, "Correct result calculated for atom3")
 
         graph.write(atom0, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(atom2), 3, "Correct result calculated for atom2")
         t.is(graph.read(atom3), 4, "Correct result calculated for atom3")
@@ -174,7 +174,7 @@ StartTest(t => {
 
         const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10, 11, 12 ], "Correct result calculated #1")
 
@@ -186,7 +186,7 @@ StartTest(t => {
         graph.write(i1, 5)
         graph.write(i2, 5)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 10, 11, 12 ], "Correct result calculated #2")
 
@@ -198,7 +198,7 @@ StartTest(t => {
         graph.write(i1, 3)
         graph.write(i2, 7)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 7, 10, 11, 12 ], "Correct result calculated #3")
 
@@ -210,7 +210,7 @@ StartTest(t => {
         graph.write(i1, 7)
         graph.write(i2, 7)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 7, 7, 14, 15, 16 ], "Correct result calculated #4")
 
@@ -244,7 +244,7 @@ StartTest(t => {
 
         const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 20, 10, 11, 20 ], "Correct result calculated #1")
 
@@ -258,7 +258,7 @@ StartTest(t => {
         graph.write(i1, 5)
         graph.write(i2, 5)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 5, 20, 10, 11, 11 ], "Correct result calculated #2")
 
@@ -270,7 +270,7 @@ StartTest(t => {
         graph.write(i1, 7)
         graph.write(i2, 7)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 7, 7, 20, 14, 15, 15 ], "Correct result calculated #4")
 
@@ -298,7 +298,7 @@ StartTest(t => {
 
         const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 1, 2, 3, 3, 5 ], "Correct result calculated #1")
 
@@ -309,7 +309,7 @@ StartTest(t => {
 
         graph.write(i1, 2)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 2, 2, 3, 4, 5 ], "Correct result calculated #2")
 
@@ -320,7 +320,7 @@ StartTest(t => {
 
         graph.write(i2, 3)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 2, 3, 3, 5, 6 ], "Correct result calculated #3")
 
@@ -350,7 +350,7 @@ StartTest(t => {
 
         const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 1, 2, 3, 3, 3 ], "Correct result calculated - step 1")
 
@@ -362,7 +362,7 @@ StartTest(t => {
         graph.write(i1, 2)
         graph.write(dispatcher, i2)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 2, 2, 3, 4, 2 ], "Correct result calculated - step 2")
 
@@ -373,7 +373,7 @@ StartTest(t => {
 
         graph.write(i1, 3)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 2, 3, 5, 2 ], "Correct result calculated - step 3")
 
@@ -384,7 +384,7 @@ StartTest(t => {
 
         graph.write(i2, 3)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 3, 3, 3, 6, 3 ], "Correct result calculated - step 4")
 
@@ -416,7 +416,7 @@ StartTest(t => {
 
         const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 1, 0, 1, 1 ], "Correct result calculated - step 1")
 
@@ -427,7 +427,7 @@ StartTest(t => {
 
         graph.write(i2, 2)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 2, 0, 2, 2 ], "Correct result calculated - step 2")
 
@@ -438,7 +438,7 @@ StartTest(t => {
 
         graph.write(i1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.isDeeply(nodes.map(node => graph.read(node)), [ 1, 2, 1, 2, 3 ], "Correct result calculated - step 3")
 

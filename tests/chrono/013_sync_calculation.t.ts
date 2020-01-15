@@ -38,7 +38,7 @@ StartTest(t => {
             }
         }))
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(iden1), 2, 'Correct value')
         t.is(graph.read(iden2), 3, 'Correct value')
@@ -79,7 +79,7 @@ StartTest(t => {
             }
         }))
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(iden1), 2, 'Correct value')
         t.is(graph.read(iden2), 3, 'Correct value')

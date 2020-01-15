@@ -82,6 +82,25 @@ export class Revision extends Base {
     }
 
 
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
+        const latestEntry   = this.getLatestEntryFor(identifier)
+
+        // && DEBUG?
+        if (!latestEntry) throwUnknownIdentifier(identifier)
+
+        const value         = latestEntry.getValue()
+
+        // && DEBUG?
+        if (value === TombStone) throwUnknownIdentifier(identifier)
+
+        if (value !== undefined) {
+            return value
+        } else {
+            return this.calculateLazyQuarkEntry(latestEntry)
+        }
+    }
+
+
     read<T> (identifier : Identifier<T>) : T {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
@@ -121,7 +140,7 @@ export class Revision extends Base {
 
 
     calculateLazyQuarkEntry (entry : Quark) : any {
-        if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
+        // if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
 
         const transaction   = Transaction.new({ baseRevision : this, candidate : this })
 
@@ -129,7 +148,7 @@ export class Revision extends Base {
         transaction.stackGen.push(entry)
         entry.forceCalculation()
 
-        transaction.propagate()
+        transaction.commit()
 
         return entry.getValue()
     }
@@ -142,8 +161,17 @@ export class Revision extends Base {
         transaction.stackGen.push(entry)
         entry.forceCalculation()
 
-        await transaction.propagateAsync()
+        await transaction.commitAsync()
 
         return entry.getValue()
     }
+
+
+    mergePrevious () {
+    }
+
+
+    mergeNext () {
+    }
+
 }

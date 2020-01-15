@@ -1,8 +1,10 @@
 import { Base } from "../class/BetterMixin.js"
+import { DEBUG } from "../environment/Debug.js"
+import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { Checkout, PropagateArguments } from "./Checkout.js"
+import { Checkout, CommitArguments } from "./Checkout.js"
 import {
     Effect,
     HasProposedValueSymbol,
@@ -25,6 +27,7 @@ import {
 import { Identifier, Levels, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { Revision, Scope } from "./Revision.js"
+import { ComputationCycle, TransactionCycleDetectionWalkContext } from "./TransactionCycleDetectionWalkContext.js"
 import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
 
 
@@ -47,7 +50,7 @@ const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type TransactionPropagateResult = { revision : Revision, entries : Scope }
+export type TransactionCommitResult = { revision : Revision, entries : Scope }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -87,6 +90,10 @@ export class Transaction extends Base {
 
     // writes                  : WriteInfo[]           = []
 
+    ongoing                 : Promise<any>          = Promise.resolve()
+
+    selfDependedMarked      : boolean               = false
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -107,6 +114,13 @@ export class Transaction extends Base {
         // instead inside of `read` delegate to `yieldSync` for non-identifiers
         this.onEffectSync   = /*this.onEffectAsync =*/ this.read.bind(this)
         this.onEffectAsync  = this.readAsync.bind(this)
+    }
+
+
+    markSelfDependent () {
+        if (this.selfDependedMarked) return
+
+        this.selfDependedMarked = true
 
         for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
     }
@@ -144,6 +158,9 @@ export class Transaction extends Base {
 
 
     async yieldAsync (effect : Effect) : Promise<any> {
+        if (effect instanceof Promise) return effect
+            // throw new Error("Effect resolved to promise in the synchronous context, check that you marked the asynchronous calculations accordingly")
+
         return this[ effect.handler ](effect, this.getActiveEntry())
     }
 
@@ -177,9 +194,7 @@ export class Transaction extends Base {
     // this seems to be an optimistic version
     async readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         // see the comment for the `onEffectSync`
-        if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
-
-        if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
+        if (!(identifier instanceof Identifier)) return this.yieldAsync(identifier as Effect)
 
         //----------------------
         while (this.stackGen.lowestLevel < identifier.level) {
@@ -196,18 +211,112 @@ export class Transaction extends Base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.read(identifier)
+            if (!entry) return this.baseRevision.readAsync(identifier)
         }
 
         if (entry.hasValue()) return entry.getValue()
+        if (entry.promise) return entry.promise
 
         //----------------------
-        await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+        // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
+        // now need to repeat the logic
+        if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
-        // TODO review this exception
-        if (!entry.hasValue()) throw new Error('Cycle during asynchronous computation')
+        this.markSelfDependent()
 
-        return entry.getValue()
+        return this.ongoing = entry.promise = this.ongoing.then(() => {
+            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+        }).then(() => {
+            // TODO review this exception
+            if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
+
+            return entry.getValue()
+        })
+    }
+
+
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
+        // see the comment for the `onEffectSync`
+        if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
+
+        //----------------------
+        while (this.stackGen.getLowestLevel() < identifier.level) {
+            // here we force the computations for lower level identifiers should be sync
+            this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
+        }
+
+        let entry : Quark
+
+        const activeEntry   = this.getActiveEntry()
+
+        if (activeEntry) {
+            entry           = this.addEdge(identifier, activeEntry, EdgeTypeNormal)
+        } else {
+            entry           = this.entries.get(identifier)
+
+            if (!entry) return this.baseRevision.get(identifier)
+        }
+
+        const value1        = entry.getValue()
+
+        if (value1 === TombStone) throwUnknownIdentifier(identifier)
+
+        if (value1 !== undefined) return value1
+        if (entry.promise) return entry.promise
+
+        //----------------------
+        // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
+        // now need to repeat the logic
+        if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
+
+        this.markSelfDependent()
+
+        if (identifier.sync) {
+            this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
+
+            const value     = entry.getValue()
+
+            // TODO review this exception
+            if (value === undefined) throw new Error('Cycle during synchronous computation')
+            if (value === TombStone) throwUnknownIdentifier(identifier)
+
+            return value
+        } else {
+            const promise = this.ongoing = entry.promise = this.ongoing.then(() => {
+                return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+            }).then(() => {
+                const value     = entry.getValue()
+
+                // TODO review this exception
+                if (value === undefined) throw new Error('Computation cycle. Async get')
+                if (value === TombStone) throwUnknownIdentifier(identifier)
+
+                return value
+                // // TODO review this exception
+                // if (!entry.hasValue()) throw new Error('Computation cycle. Async get')
+                //
+                // return entry.getValue()
+            })
+
+            if (DEBUG) {
+                // @ts-ignore
+                promise.quark = entry
+            }
+
+            return promise
+
+
+
+            // return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this).then(() => {
+            //     const value     = entry.getValue()
+            //
+            //     // TODO review this exception
+            //     if (value === undefined) throw new Error('Cycle during synchronous computation')
+            //     if (value === TombStone) throwUnknownIdentifier(identifier)
+            //
+            //     return value
+            // })
+        }
     }
 
 
@@ -215,8 +324,6 @@ export class Transaction extends Base {
     read<T> (identifier : Identifier<T>) : T {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
-
-        if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
 
         //----------------------
         while (this.stackGen.getLowestLevel() < identifier.level) {
@@ -240,11 +347,15 @@ export class Transaction extends Base {
         if (value1 === TombStone) throwUnknownIdentifier(identifier)
         if (value1 !== undefined) return value1
 
+        if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
+
         // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
         //----------------------
+        this.markSelfDependent()
+
         this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
 
         const value     = entry.getValue()
@@ -287,7 +398,7 @@ export class Transaction extends Base {
         //
         // this.onNewWrite()
 
-        identifier.write.call(identifier.context || identifier, identifier, this, null, proposedValue, ...args)
+        identifier.write.call(identifier.context || identifier, identifier, this, null, /*this.getWriteTarget(identifier),*/ proposedValue, ...args)
     }
 
 
@@ -335,7 +446,7 @@ export class Transaction extends Base {
         const isVariable            = identifier.level === Levels.UserInput
 
         if (!entry) {
-            entry                   = identifier.newQuark(this.baseRevision.createdAt)
+            entry                   = identifier.newQuark(this.baseRevision)
 
             entry.previous          = this.baseRevision.getLatestEntryFor(identifier)
 
@@ -392,19 +503,19 @@ export class Transaction extends Base {
     }
 
 
-    prePropagate (args? : PropagateArguments) {
+    preCommit (args? : CommitArguments) {
         if (this.isClosed) throw new Error('Can not propagate closed revision')
+
+        this.markSelfDependent()
 
         this.isClosed               = true
         this.propagationStartDate   = Date.now()
-
-        // for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
 
         this.plannedTotalIdentifiersToCalculate = this.stackGen.length
     }
 
 
-    postPropagate () : TransactionPropagateResult {
+    postCommit () : TransactionCommitResult {
         this.populateCandidateScopeFromTransitions(this.candidate, this.entries)
 
         // won't be available after next line
@@ -417,13 +528,13 @@ export class Transaction extends Base {
     }
 
 
-    propagate (args? : PropagateArguments) : TransactionPropagateResult {
-        this.prePropagate(args)
+    commit (args? : CommitArguments) : TransactionCommitResult {
+        this.preCommit(args)
 
         this.calculateTransitionsSync(this.onEffectSync)
         // runGeneratorSyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
-        return this.postPropagate()
+        return this.postCommit()
     }
 
 
@@ -438,12 +549,18 @@ export class Transaction extends Base {
     // }
 
 
-    async propagateAsync (args? : PropagateArguments) : Promise<TransactionPropagateResult> {
-        this.prePropagate(args)
+    async commitAsync (args? : CommitArguments) : Promise<TransactionCommitResult> {
+        this.preCommit(args)
 
-        await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
+        return this.ongoing = this.ongoing.then(() => {
+            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
+        }).then(() => {
+            return this.postCommit()
+        })
 
-        return this.postPropagate()
+        // await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
+        //
+        // return this.postCommit()
     }
 
 
@@ -586,6 +703,15 @@ export class Transaction extends Base {
     }
 
 
+    getLatestEntryFor (identifier : Identifier) : Quark {
+        let entry : Quark             = this.entries.get(identifier) || this.baseRevision.getLatestEntryFor(identifier)
+
+        if (entry.getValue() === TombStone) return undefined
+
+        return entry
+    }
+
+
     addEdge (identifierRead : Identifier, activeEntry : Quark, type : EdgeType) : Quark {
         const identifier    = activeEntry.identifier
 
@@ -599,7 +725,7 @@ export class Transaction extends Base {
 
             if (!previousEntry) throwUnknownIdentifier(identifierRead)
 
-            entry               = identifierRead.newQuark(this.baseRevision.createdAt)
+            entry               = identifierRead.newQuark(this.baseRevision)
 
             previousEntry.origin && entry.setOrigin(previousEntry.origin)
             entry.previous      = previousEntry
@@ -624,7 +750,7 @@ export class Transaction extends Base {
         const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
         if (sameAsPrevious) {
-            previousEntry.outgoingInTheFutureCb(this.baseRevision, previousOutgoingEntry => {
+            previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, previousOutgoingEntry => {
                 const outgoingEntry = this.entries.get(previousOutgoingEntry.identifier)
 
                 if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -686,10 +812,30 @@ export class Transaction extends Base {
                 return undefined
             }
             else {
-                // debugger
-                throw new Error("Computation cycle")
-                // cycle - the requested quark has started calculation (means it was encountered in this loop before)
+                // cycle - the requested quark has started calculation (means it was encountered in the calculation loop before)
                 // but the calculation did not complete yet (even that requested quark is calculated before the current)
+
+                let cycle : ComputationCycle
+
+                const walkContext = TransactionCycleDetectionWalkContext.new({
+                    transaction         : this,
+                    onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
+                        cycle       = ComputationCycle.new({ cycle : cycleInfo(stack) })
+
+                        return OnCycleAction.Cancel
+                    }
+                })
+
+                walkContext.startFrom([ requestedEntry.identifier ])
+
+                if (!cycle) debugger
+
+                // debugger
+
+                // console.log(cycle)
+
+                // debugger
+                throw new Error("Computation cycle: " + cycle)
                 // yield GraphCycleDetectedEffect.new()
             }
         }
@@ -771,7 +917,7 @@ export class Transaction extends Base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -887,7 +1033,7 @@ export class Transaction extends Base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -954,6 +1100,9 @@ export class Transaction extends Base {
                 else {
                     // bypass the unrecognized effect to the outer context
                     const effectResult          = context(value)
+
+                    if (effectResult instanceof Promise)
+                        throw new Error("Effect resolved to promise in the synchronous context, check that you marked the asynchronous calculations accordingly")
 
                     // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
                     // in such case we can not continue calculation and just exit the inner loop

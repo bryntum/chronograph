@@ -1,12 +1,12 @@
 import { Base } from "../class/BetterMixin.js"
-import { NOT_VISITED, OnCycleAction, VISITED_TOPOLOGICALLY, WalkSource } from "../graph/WalkDepth.js"
+import { NOT_VISITED, OnCycleAction, VISITED_TOPOLOGICALLY } from "../graph/WalkDepth.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
 import { Identifier, Levels } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 
 
-export type WalkStep = { from : Identifier | typeof WalkSource, to : Identifier }
+export type WalkStep = Identifier
 
 //---------------------------------------------------------------------------------------------------------------------
 export class TransactionWalkDepth extends Base {
@@ -27,7 +27,7 @@ export class TransactionWalkDepth extends Base {
 
 
     continueFrom (sourceNodes : Identifier[]) {
-        this.toVisit.push.apply(this.toVisit, sourceNodes.map(node => { return { from : WalkSource, to : node } }))
+        this.toVisit.push.apply(this.toVisit, sourceNodes)
 
         this.walkDepth()
     }
@@ -57,14 +57,14 @@ export class TransactionWalkDepth extends Base {
         let quark : Quark   = this.visited.get(to)
 
         if (!quark) {
-            quark               = to.newQuark(this.baseRevision.createdAt)
+            quark               = to.newQuark(this.baseRevision)
 
             quark.visitEpoch    = this.currentEpoch
 
             this.visited.set(to, quark)
         }
 
-        toVisit.push({ to, from })
+        toVisit.push(to)
     }
 
 
@@ -76,7 +76,7 @@ export class TransactionWalkDepth extends Base {
             // will have the `previous` property populated
             visitInfo.previous      = latestEntry
 
-            latestEntry.outgoingInTheFutureCb(this.baseRevision, outgoingEntry => {
+            latestEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoingEntry => {
                 this.doCollectNext(from, outgoingEntry.identifier, toVisit)
             })
         }
@@ -94,7 +94,7 @@ export class TransactionWalkDepth extends Base {
         let depth
 
         while (depth = toVisit.length) {
-            const node          = toVisit[ depth - 1 ].to
+            const node          = toVisit[ depth - 1 ]
 
             let visitInfo       = visited.get(node)
 
@@ -125,7 +125,7 @@ export class TransactionWalkDepth extends Base {
                 const lengthBefore  = toVisit.length
 
                 if (!visitInfo) {
-                    visitInfo               = node.newQuark(this.baseRevision.createdAt)
+                    visitInfo               = node.newQuark(this.baseRevision)
 
                     visitInfo.visitEpoch    = this.currentEpoch
 

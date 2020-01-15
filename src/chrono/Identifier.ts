@@ -13,15 +13,17 @@ import { prototypeValue } from "../util/Helpers.js"
 import { Checkout } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
-import { RevisionClock } from "./Revision.js"
+import { RevisionClock, RevisionI } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum Levels {
+    // must be sync
     UserInput                               = 0,
     DependsOnlyOnUserInput                  = 1,
     DependsOnlyOnDependsOnlyOnUserInput     = 2,
+    // asynchronicity starts from here
     DependsOnSelfKind                       = 3
 }
 
@@ -33,14 +35,17 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     YieldT              : YieldableValue
     ValueT              : ValueT
 
-    level               : number    = Levels.DependsOnSelfKind
+    @prototypeValue(Levels.DependsOnSelfKind)
+    level               : number
 
-    // calculated on demand
     lazy                : boolean   = false
-    // can also be a calculated property
-    sync                : boolean   = true
+
+    @prototypeValue(true)
+    sync                : boolean
+
     // no cancels
     total               : boolean   = true
+
     // no "nested" writes
     pure                : boolean   = true
 
@@ -68,7 +73,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     context             : this[ 'CalcContextT' ]       = undefined
 
 
-    newQuark (createdAt : RevisionClock) : InstanceType<this[ 'quarkClass' ]> {
+    newQuark (createdAt : RevisionI) : InstanceType<this[ 'quarkClass' ]> {
         // micro-optimization - we don't pass a config object to the `new` constructor
         // but instead assign directly to instance
         const newQuark                      = this.quarkClass.new() as InstanceType<this[ 'quarkClass' ]>
@@ -145,7 +150,8 @@ export const IdentifierC = <ValueT, ContextT extends Context>(...args) : Identif
 export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
 
-    level               : number    = Levels.UserInput
+    @prototypeValue(Levels.UserInput)
+    level               : number
 
     @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
     quarkClass          : QuarkConstructor

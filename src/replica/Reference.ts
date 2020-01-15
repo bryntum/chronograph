@@ -39,7 +39,8 @@ export class ReferenceIdentifier extends Mixin(
     <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
 
     class ReferenceIdentifier extends base {
-        level           : number            = Levels.DependsOnlyOnUserInput
+        @prototypeValue(Levels.DependsOnlyOnUserInput)
+        level           : number        
 
         field           : ReferenceField    = undefined
 

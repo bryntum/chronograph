@@ -18,7 +18,7 @@ export const shadowingQuarksMemoryLeak = Benchmark.new({
 
         graph.write(boxes[ 0 ], iteration + cycle)
 
-        graph.propagate()
+        graph.commit()
     }
 })
 
@@ -47,11 +47,11 @@ export const tombStonesMemoryLeak = Benchmark.new({
             graph.addIdentifier(iden2)
         }
 
-        graph.propagate()
+        graph.commit()
 
         boxes.forEach(identifier => graph.removeIdentifier(identifier))
 
-        graph.propagate()
+        graph.commit()
     }
 })
 

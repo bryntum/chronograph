@@ -47,7 +47,8 @@ export class ReferenceBucketIdentifier extends Mixin(
     [ FieldIdentifier ], <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
 
     class ReferenceBucketIdentifier extends base {
-        level               : number                = Levels.DependsOnlyOnDependsOnlyOnUserInput
+        @prototypeValue(Levels.DependsOnlyOnDependsOnlyOnUserInput)
+        level               : number
 
         ValueT              : Set<Entity>
 

@@ -28,6 +28,9 @@ export class RejectEffect extends Effect {
     handler         : symbol    = RejectSymbol
 
     reason          : string
+
+    @prototypeValue(false)
+    pure            : boolean
 }
 
 export const Reject = (reason : string) : RejectEffect => RejectEffect.new({ reason })

@@ -35,7 +35,7 @@ class Quark extends base {
     }
 
     // required
-    createdAt       : RevisionClock     = MAX_SMI
+    createdAt       : RevisionI         = undefined
 
     identifier      : Identifier        = undefined
 
@@ -55,6 +55,8 @@ class Quark extends base {
     edgesFlow       : number = 0
     visitedAt       : number = NOT_VISITED
     visitEpoch      : number = 0
+
+    promise         : Promise<any>      = undefined
 
 
     get level () : number {
@@ -115,6 +117,7 @@ class Quark extends base {
 
         if (this.identifier.proposedValueIsBuilt) {
             this.needToBuildProposedValue   = true
+            this.proposedValue              = undefined
         }
     }
 
@@ -162,6 +165,38 @@ class Quark extends base {
     }
 
 
+    mergePreviousIntoItself () {
+        const origin                = this.origin
+
+        if (origin === this.previous) {
+            this.mergePreviousOrigin(this)
+        } else {
+
+        }
+
+        // this.copyFrom(origin)
+        //
+        // const outgoing              = this.getOutgoing()
+        //
+        // for (const [ identifier, quark ] of origin.getOutgoing()) {
+        //     const ownOutgoing       = outgoing.get(identifier)
+        //
+        //     if (!ownOutgoing) {
+        //         const latest        = latestScope.get(identifier)
+        //
+        //         if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
+        //     }
+        // }
+        //
+        // // changing `origin`, but keeping `originId`
+        // this.origin                 = this
+        //
+        // // some help for garbage collector
+        // origin.clearProperties()
+        // origin.clear()
+    }
+
+
     setOrigin (origin : Quark) {
         this.origin     = origin
         this.originId   = origin.originId
@@ -187,19 +222,26 @@ class Quark extends base {
     }
 
 
-    // TODO: handle `type`
+    $outgoingPast       : Map<Identifier, Quark>        = undefined
+
+    getOutgoingPast () : Map<Identifier, Quark> {
+        if (this.$outgoingPast !== undefined) return this.$outgoingPast
+
+        return this.$outgoingPast = new Map()
+    }
+
+
     addOutgoingTo (toQuark : Quark, type : EdgeType) {
-        const self      = this as Map<Identifier, Quark>
+        const outgoing      = type === EdgeType.Normal ? this as Map<Identifier, Quark> : this.getOutgoingPast()
 
-        // const existing  = self.get(toQuark.identifier)
-        // self.set(toQuark, existing ? existing | type : type)
-
-        self.set(toQuark.identifier, toQuark)
+        outgoing.set(toQuark.identifier, toQuark)
     }
 
 
     clearOutgoing () {
         this.clear()
+
+        if (this.$outgoingPast !== undefined) this.$outgoingPast.clear()
     }
 
 
@@ -281,6 +323,45 @@ class Quark extends base {
                 current     = null
         }
     }
+
+
+    outgoingInTheFutureAndPastCb (revision : RevisionI, forEach : (quark : Quark) => any) {
+        let current : Quark = this
+
+        while (current) {
+            for (const outgoing of current.getOutgoing().values()) {
+                if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+            }
+
+            if (current.$outgoingPast !== undefined) {
+                for (const outgoing of current.$outgoingPast.values()) {
+                    if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                }
+            }
+
+            if (current.isShadow())
+                current     = current.previous
+            else
+                current     = null
+        }
+    }
+
+
+    outgoingInTheFutureTransactionCb (transaction /*: TransactionI*/, forEach : (quark : Quark) => any) {
+        let current : Quark = this
+
+        while (current) {
+            for (const outgoing of current.getOutgoing().values()) {
+                if (outgoing.originId === transaction.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+            }
+
+            if (current.isShadow())
+                current     = current.previous
+            else
+                current     = null
+        }
+    }
+
 }){}
 
 export type QuarkConstructor    = typeof Quark
