@@ -142,7 +142,7 @@ class Revision extends base {
 
 
     calculateLazyQuarkEntry (entry : QuarkI) : any {
-        if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
+        // if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
 
         const transaction   = MinimalTransaction.new({ baseRevision : this, candidate : this })
 
