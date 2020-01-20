@@ -210,6 +210,11 @@ class Checkout extends base {
     }
 
 
+    isCommitted () : boolean {
+        return this.activeTransaction.isEmpty()
+    }
+
+
     branch () : this {
         const Constructor = this.constructor as CheckoutConstructor
 
