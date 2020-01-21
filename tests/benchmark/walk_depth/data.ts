@@ -1,9 +1,9 @@
-import { Base } from "../../../src/class/Mixin.js"
+import { Base } from "../../../src/class/BetterMixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Node extends Base {
     count           : number        = 0
-    
+
     outgoing        : Node[]        = []
 }
 

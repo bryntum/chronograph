@@ -1,4 +1,4 @@
-import { Base } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 import { CI } from "../collection/Iterator.js"
 import { matchAll } from "../util/Helpers.js"
 
