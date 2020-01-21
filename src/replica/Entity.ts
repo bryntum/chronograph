@@ -16,7 +16,7 @@ const isEntityMarker      = Symbol('isEntity')
 //---------------------------------------------------------------------------------------------------------------------
 export class Entity extends Mixin(
     [],
-    <T extends AnyConstructor<object>>(base : T) => {
+    (base : AnyConstructor) => {
 
     class Entity extends base {
         // marker in the prototype to identify whether the parent class is Entity mixin itself

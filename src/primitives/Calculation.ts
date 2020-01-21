@@ -47,8 +47,8 @@ export interface GenericCalculation<ContextT extends Context, ResultT, YieldT, A
 export class CalculationGen extends Mixin(
     [],
     <
-        T extends AnyConstructor<object>, ResultT = any, YieldT = any, ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
-    >(base : T) =>
+        ResultT = any, YieldT = any, ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
+    >(base : AnyConstructor) =>
 
 class CalculationGen extends base implements GenericCalculation<typeof ContextGen, ResultT, YieldT, ArgsT> {
     context             : any
@@ -133,11 +133,10 @@ const calculationStartedConstant : { value : typeof SynchronousCalculationStarte
 export class CalculationSync extends Mixin(
     [],
     <
-        T extends AnyConstructor<object>,
         ResultT = any,
         YieldT = any,
         ArgsT extends [ CalculationContext<YieldT>, ...any[] ] = [ CalculationContext<YieldT>, ...any[] ]
-    >(base : T) =>
+    >(base : AnyConstructor) =>
 
 class CalculationSync extends base implements GenericCalculation<typeof ContextSync, ResultT, YieldT, ArgsT> {
     context             : any

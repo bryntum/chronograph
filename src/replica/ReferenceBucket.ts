@@ -1,7 +1,7 @@
 import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
-import { AnyConstructor, IdentityMixin, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, ClassUnion, identity, Mixin } from "../class/BetterMixin.js"
 import { CalculationSync } from "../primitives/Calculation.js"
 import { Field } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
@@ -11,7 +11,7 @@ import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketField extends Mixin(
     [ Field ],
-    <T extends AnyConstructor<Field>>(base : T) =>
+    (base : AnyConstructor<Field, typeof Field>) =>
 
 class ReferenceBucketField extends base {
     persistent          : boolean   = false
@@ -28,7 +28,7 @@ export const bucket : FieldDecorator<typeof ReferenceBucketField> =
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketQuark extends Mixin(
     [ Quark ],
-    <T extends AnyConstructor<Quark>>(base : T) =>
+    (base : ClassUnion<typeof Quark>) =>
 
 class ReferenceBucketQuark extends base {
     oldRefs             : Set<Entity>   = undefined
@@ -44,7 +44,8 @@ class ReferenceBucketQuark extends base {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketIdentifier extends Mixin(
-    [ FieldIdentifier ], <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
+    [ FieldIdentifier ],
+    (base : AnyConstructor<FieldIdentifier, typeof FieldIdentifier>) => {
 
     class ReferenceBucketIdentifier extends base {
         @prototypeValue(Levels.DependsOnlyOnDependsOnlyOnUserInput)
@@ -54,7 +55,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
         proposedValueIsBuilt    : boolean   = true
 
-        @prototypeValue(Mixin([ ReferenceBucketQuark, CalculationSync, Quark, Map ], IdentityMixin<ReferenceBucketQuark & CalculationSync & Quark & Map<any, any>>()))
+        @prototypeValue(Mixin([ ReferenceBucketQuark, CalculationSync, Quark, Map ], identity))
         quarkClass          : QuarkConstructor
 
 

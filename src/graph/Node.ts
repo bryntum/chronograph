@@ -1,4 +1,4 @@
-import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { WalkContext, WalkStep } from "./WalkDepth.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ export class WalkBackwardContext<Label = any> extends WalkContext<WalkableBackwa
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkableForwardNode extends Mixin(
     [],
-    <T extends AnyConstructor<object>>(base : T) =>
+    (base : AnyConstructor) =>
 
 class WalkableForwardNode extends base implements WalkableForward {
     LabelT          : any
@@ -72,7 +72,7 @@ class WalkableForwardNode extends base implements WalkableForward {
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkableBackwardNode extends Mixin(
     [],
-    <T extends AnyConstructor<object>>(base : T) =>
+    (base : AnyConstructor) =>
 
 class WalkableBackwardNode extends base implements WalkableBackward {
     LabelT          : any
@@ -110,7 +110,7 @@ class WalkableBackwardNode extends base implements WalkableBackward {
 //---------------------------------------------------------------------------------------------------------------------
 export class Node extends Mixin(
     [ WalkableForwardNode, WalkableBackwardNode ],
-    <T extends AnyConstructor<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
+    (base : ClassUnion<typeof WalkableForwardNode, typeof WalkableBackwardNode>) =>
 
 class Node extends base {
     LabelT          : any

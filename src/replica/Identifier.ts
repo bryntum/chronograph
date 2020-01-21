@@ -1,6 +1,6 @@
 import { Checkout } from "../chrono/Checkout.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../chrono/Identifier.js"
-import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"
@@ -14,7 +14,7 @@ export interface PartOfEntityIdentifier {
 //---------------------------------------------------------------------------------------------------------------------
 export class FieldIdentifier extends Mixin(
     [ Identifier ],
-    <T extends AnyConstructor<Identifier>>(base : T) =>
+    (base : AnyConstructor<Identifier, typeof Identifier>) =>
 
 class FieldIdentifier extends base implements PartOfEntityIdentifier {
     field       : Field             = undefined
@@ -77,7 +77,7 @@ export class MinimalFieldVariable extends FieldIdentifier.mix(Variable) {}
 //---------------------------------------------------------------------------------------------------------------------
 export class EntityIdentifier extends Mixin(
     [ Identifier ],
-    <T extends AnyConstructor<Identifier>>(base : T) =>
+    (base : AnyConstructor<Identifier, typeof Identifier>) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta        = undefined

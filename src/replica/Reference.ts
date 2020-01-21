@@ -2,7 +2,7 @@ import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
-import { AnyConstructor, IdentityMixin, isInstanceOf, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, ClassUnion, identity, isInstanceOf, Mixin } from "../class/BetterMixin.js"
 import { CalculationSync } from "../primitives/Calculation.js"
 import { Field, Name } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
@@ -14,10 +14,12 @@ import { ReferenceBucketIdentifier } from "./ReferenceBucket.js"
 export type ResolverFunc    = (locator : any) => Entity
 
 
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceField extends Mixin(
     [ Field ],
-    <T extends AnyConstructor<Field>>(base : T) =>
+    (base : AnyConstructor<Field, typeof Field>) =>
 
 class ReferenceField extends base {
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceIdentifier
@@ -36,11 +38,11 @@ export const reference : FieldDecorator<typeof ReferenceField> =
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceIdentifier extends Mixin(
     [ FieldIdentifier ],
-    <T extends AnyConstructor<FieldIdentifier>>(base : T) => {
+    (base : AnyConstructor<FieldIdentifier, typeof FieldIdentifier>) => {
 
     class ReferenceIdentifier extends base {
         @prototypeValue(Levels.DependsOnlyOnUserInput)
-        level           : number        
+        level           : number
 
         field           : ReferenceField    = undefined
 
@@ -48,7 +50,7 @@ export class ReferenceIdentifier extends Mixin(
 
         proposedValueIsBuilt    : boolean   = true
 
-        @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
+        @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
         quarkClass          : QuarkConstructor
 
 

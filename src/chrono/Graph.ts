@@ -1,4 +1,4 @@
-import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
+import { ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { CalculationIterator } from "../primitives/Calculation.js"
 import { Checkout } from "./Checkout.js"
 import { Revision } from "./Revision.js"
@@ -9,7 +9,7 @@ export type ChronoIterator<ResultT, YieldT = any> = CalculationIterator<ResultT,
 //---------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Mixin(
     [ Checkout ],
-    <T extends AnyConstructor<Checkout>>(base : T) =>
+    (base : ClassUnion<typeof Checkout>) =>
 
 class ChronoGraph extends base {
     baseRevision        : Revision      = Revision.new()

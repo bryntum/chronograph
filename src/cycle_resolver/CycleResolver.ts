@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/BetterMixin.js"
+import { Base, ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { required, validateRequiredProperties } from "../class/RequiredProperty.js"
 import { ChainedIterator, CI, concatIterable, map, uniqueOnly } from "../collection/Iterator.js"
 import { DEBUG } from "../environment/Debug.js"
@@ -49,7 +49,7 @@ export class VariableWalkContext extends WalkContext<Variable | Formula> {
 //---------------------------------------------------------------------------------------------------------------------
 export class FormulasCache extends Mixin(
     [ Base ],
-    <T extends AnyConstructor<Base>>(base : T) =>
+    (base : ClassUnion<typeof Base>) =>
 
     class FormulasCache extends base {
         variables           : Set<Variable>     = new Set()

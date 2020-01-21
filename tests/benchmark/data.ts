@@ -1,7 +1,7 @@
 import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
-import { AnyConstructor, Base, IdentityMixin, Mixin, MixinAny } from "../../src/class/BetterMixin.js"
+import { AnyConstructor, Base, ClassUnion, Mixin, MixinAny } from "../../src/class/BetterMixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
 import { Replica } from "../../src/replica/Replica.js"
 
@@ -288,7 +288,7 @@ export type ReplicaGenerationResult  = { replica : Replica, entities : Entity[] 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin1 extends Mixin(
-    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
 
     class Mixin1 extends base {
         @field()
@@ -312,7 +312,7 @@ export class Mixin1 extends Mixin(
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin2 extends Mixin(
-    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
 
     class Mixin2 extends base {
         @field()
@@ -336,7 +336,7 @@ export class Mixin2 extends Mixin(
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin3 extends Mixin(
-    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
 
     class Mixin3 extends base {
         @field()
@@ -361,7 +361,7 @@ export class Mixin3 extends Mixin(
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin4 extends Mixin(
-    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
 
     class Mixin4 extends base {
         @field()
@@ -385,7 +385,7 @@ export class Mixin4 extends Mixin(
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin5 extends Mixin(
-    [ Entity ], <T extends AnyConstructor<Entity>>(base : T) => {
+    [ Entity ], (base : ClassUnion<typeof Entity>) => {
 
     class Mixin5 extends base {
         @field()
@@ -409,13 +409,13 @@ export class Mixin5 extends Mixin(
 
 class TestEntity5 extends MixinAny(
     [ Mixin5, Mixin4, Mixin3, Mixin2, Mixin1, Entity, Base ],
-    IdentityMixin<Mixin5 & Mixin4 & Mixin3 & Mixin2 & Mixin1 & Entity & Base>()
+    (base : AnyConstructor<Mixin5 & Mixin4 & Mixin3 & Mixin2 & Mixin1 & Entity & Base, typeof Mixin5 & typeof Mixin4 & typeof Mixin3 & typeof Mixin2 & typeof Mixin1 & typeof Entity & typeof Base>) => base
 ){}
 
 
 class TestEntity1 extends Mixin(
     [ Mixin1, Entity, Base ],
-    IdentityMixin<Mixin1 & Entity & Base>()
+    (base : AnyConstructor<Mixin1 & Entity & Base, typeof Mixin1 & typeof Entity & typeof Base>) => base
 ) {}
 
 

@@ -1,9 +1,9 @@
-import { AnyConstructor, Mixin, MixinAny } from "../class/BetterMixin.js"
+import { AnyConstructor, MixinAny } from "../class/BetterMixin.js"
 import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI, MIN_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
-import { Revision, RevisionClock, Scope } from "./Revision.js"
+import { Revision, Scope } from "./Revision.js"
 import { YieldableValue } from "./Transaction.js"
 
 

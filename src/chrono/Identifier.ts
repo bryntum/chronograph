@@ -1,4 +1,4 @@
-import { Base, IdentityMixin, Mixin } from "../class/BetterMixin.js"
+import { Base, ClassUnion, identity, Mixin } from "../class/BetterMixin.js"
 import { CalculationContext, CalculationGen, CalculationSync, Context, ContextGen, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Checkout } from "./Checkout.js"
@@ -144,7 +144,7 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     @prototypeValue(Levels.UserInput)
     level               : number
 
-    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
+    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
     quarkClass          : QuarkConstructor
 
 
@@ -169,7 +169,7 @@ export function VariableC<ValueT> (...args) : Variable<ValueT> {
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
 
-    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], IdentityMixin<CalculationSync & Quark & Map<any, any>>()))
+    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
     quarkClass          : QuarkConstructor
 
 
@@ -186,7 +186,7 @@ export function CalculatedValueSyncConstructor<ValueT> (...args) : CalculatedVal
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
 
-    @prototypeValue(Mixin([ CalculationGen, Quark, Map ], IdentityMixin<CalculationGen & Quark & Map<any, any>>()))
+    @prototypeValue(Mixin([ CalculationGen, Quark, Map ], identity))
     quarkClass          : QuarkConstructor
 
 

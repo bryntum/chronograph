@@ -1,16 +1,9 @@
 import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
-import { CalculationContext, CalculationFunction, CalculationIterator, Context, ContextGen, ContextSync } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
-import {
-    CalculatedValueGen,
-    CalculatedValueGenConstructor,
-    CalculatedValueSyncConstructor,
-    Identifier,
-    Variable,
-    VariableC
-} from "./Identifier.js"
+import { CalculatedValueGen, CalculatedValueGenConstructor, CalculatedValueSyncConstructor, Identifier, Variable, VariableC } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"

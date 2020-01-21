@@ -1,10 +1,10 @@
-import { AnyConstructor, Base, IdentityMixin, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, Base, Mixin } from "../class/BetterMixin.js"
 import { Node, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext } from "./Node.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Graph extends Mixin(
     [],
-    <T extends AnyConstructor<object>>(base : T) =>
+    (base : AnyConstructor) =>
 
 class Graph extends base implements WalkableForward, WalkableBackward {
     LabelT          : any

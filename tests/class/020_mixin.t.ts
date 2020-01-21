@@ -1,11 +1,11 @@
-import { AnyConstructor, Base, isInstanceOf, Mixin } from "../../src/class/BetterMixin.js"
+import { AnyConstructor, Base, ClassUnion, isInstanceOf, Mixin } from "../../src/class/BetterMixin.js"
 
 declare const StartTest : any
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin1 extends Mixin(
     [ Base ],
-    <T extends AnyConstructor<Base>>(base : T) =>
+    (base : ClassUnion<typeof Base>) =>
 
         class SomeMixin1 extends base {
             prop1       : string    = '1'
@@ -13,14 +13,18 @@ export class SomeMixin1 extends Mixin(
             method1 (p1 : boolean) : string {
                 return this.prop1
             }
+
+            static s1 : number = 1
         }
 ){}
 
+SomeMixin1.s1
+SomeMixin1.new
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin2 extends Mixin(
     [ Base ],
-    <T extends AnyConstructor<Base>>(base : T) =>
+    (base : ClassUnion<typeof Base>) =>
 
         class SomeMixin2 extends base {
             prop2       : string    = '2'
@@ -28,14 +32,19 @@ export class SomeMixin2 extends Mixin(
             method2 (p2 : boolean) : string {
                 return this.prop2
             }
+
+            static s2 : number = 1
         }
 ){}
+
+SomeMixin2.s2
+SomeMixin2.new
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin3 extends Mixin(
     [ Base ],
-    <T extends AnyConstructor<Base>>(base : T) =>
+    (base : ClassUnion<typeof Base>) =>
 
         class SomeMixin3 extends base {
             prop3       : string    = '3'
@@ -43,14 +52,19 @@ export class SomeMixin3 extends Mixin(
             method3 (p3 : boolean) : string {
                 return this.prop3
             }
+
+            static s3 : number = 1
         }
 ){}
+
+SomeMixin3.s3
+SomeMixin3.new
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin12 extends Mixin(
     [ SomeMixin1, SomeMixin2 ],
-    <T extends AnyConstructor<SomeMixin1 & SomeMixin2>>(base : T) =>
+    (base : ClassUnion<typeof SomeMixin1, typeof SomeMixin2>) =>
 
         class SomeMixin12 extends base {
             prop12       : string   = '12'
@@ -63,13 +77,21 @@ export class SomeMixin12 extends Mixin(
 
                 return this.prop12
             }
+
+            static s12 : number = 1
         }
 ){}
+
+SomeMixin12.s1
+SomeMixin12.s2
+SomeMixin12.s12
+SomeMixin12.new
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin23 extends Mixin(
     [ SomeMixin2, SomeMixin3 ],
-    <T extends AnyConstructor<SomeMixin2 & SomeMixin3>>(base : T) =>
+    (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin3>) =>
 
         class SomeMixin23 extends base {
             prop23       : string   = '23'
@@ -82,13 +104,21 @@ export class SomeMixin23 extends Mixin(
 
                 return this.prop23
             }
+
+            static s23 : number = 1
         }
 ){}
+
+SomeMixin23.s2
+SomeMixin23.s3
+SomeMixin23.s23
+SomeMixin23.new
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin13 extends Mixin(
     [ SomeMixin1, SomeMixin3 ],
-    <T extends AnyConstructor<SomeMixin1 & SomeMixin3>>(base : T) =>
+    (base : ClassUnion<typeof SomeMixin1, typeof SomeMixin3>) =>
 
         class SomeMixin13 extends base {
             prop13      : string    = '13'
@@ -103,26 +133,42 @@ export class SomeMixin13 extends Mixin(
 
                 return this.prop13
             }
+
+            static s13 : number = 1
         }
 ){}
+
+SomeMixin13.s1
+SomeMixin13.s3
+SomeMixin13.s13
+SomeMixin13.new
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin123_1 extends Mixin(
     [ SomeMixin12, SomeMixin3 ],
-    <T extends AnyConstructor<SomeMixin12 & SomeMixin3>>(base : T) =>
+    (base : ClassUnion<typeof SomeMixin12, typeof SomeMixin3>) =>
 
         class SomeMixin123_1 extends base {
             prop123_1     : string    = '123_1'
         }
 ){}
 
+SomeMixin123_1.s1
+SomeMixin123_1.s2
+SomeMixin123_1.s3
+SomeMixin123_1.new
 
 //---------------------------------------------------------------------------------------------------------------------
 export class SomeMixin123_2 extends Mixin(
     [ SomeMixin13, SomeMixin2 ],
-    <T extends AnyConstructor<SomeMixin13 & SomeMixin2>>(base : T) => base
+    (base : ClassUnion<typeof SomeMixin13, typeof SomeMixin2>) => base
 ){}
+
+SomeMixin123_2.s1
+SomeMixin123_2.s2
+SomeMixin123_2.s3
+SomeMixin123_2.new
 
 
 export class SomeMixin123_3 extends SomeMixin3.mix(SomeMixin2.mix(SomeMixin1.mix(Base))) {
@@ -131,6 +177,11 @@ export class SomeMixin123_3 extends SomeMixin3.mix(SomeMixin2.mix(SomeMixin1.mix
         // this.zxc
     }
 }
+
+SomeMixin123_3.s1
+SomeMixin123_3.s2
+SomeMixin123_3.s3
+SomeMixin123_3.new
 
 
 StartTest(t => {
