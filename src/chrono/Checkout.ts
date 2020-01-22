@@ -67,6 +67,8 @@ class Checkout extends base {
     enableProgressNotifications     : boolean   = false
 
     ongoing                 : Promise<any>      = Promise.resolve()
+    
+    isInitialCommit         : boolean           = true
 
 
     initialize (...args) {
@@ -110,6 +112,8 @@ class Checkout extends base {
 
 
     markAndSweep () {
+        this.isInitialCommit        = false
+        
         let lastReferencedRevision : Revision
 
         const unreachableRevisions : Revision[]     = []
