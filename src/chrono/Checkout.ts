@@ -167,7 +167,8 @@ class Checkout extends base {
             copySetInto(newRev.selfDependent, prevRev.selfDependent)
 
             // some help for garbage collector
-            newRev.scope.clear()
+            // this clears the "entries" in the transaction commit result in the "finalizeCommitAsync"
+            // newRev.scope.clear()
             newRev.scope            = prevRev.scope
 
             // make sure the previous revision won't be used inconsistently
