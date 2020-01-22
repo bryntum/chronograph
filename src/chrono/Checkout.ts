@@ -233,6 +233,8 @@ class Checkout extends base {
 
         const result            = this.finalizeCommit(nextRevision)
 
+        this.markAndSweep()
+
         // this.runningTransaction = null
 
         return result
@@ -269,6 +271,7 @@ class Checkout extends base {
 
             return this.finalizeCommitAsync(nextRevision)
         }).then(() => {
+            this.markAndSweep()
             // this.runningTransaction = null
             this.isCommitting       = false
 
@@ -317,8 +320,6 @@ class Checkout extends base {
 
             if (listener) listener.trigger(quarkEntry.getValue())
         }
-
-        this.markAndSweep()
 
         clearLazyProperty(this, 'followingRevision')
         this.$activeTransaction = undefined
