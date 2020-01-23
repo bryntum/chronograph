@@ -184,6 +184,43 @@ SomeMixin123_3.s3
 SomeMixin123_3.new
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export class M1 extends Mixin(
+    [],
+    (base : AnyConstructor) =>
+
+    class M1 extends base {
+        prop1       : string    = '1'
+    }
+){}
+
+//---------------------------------------------------------------------------------------------------------------------
+export class M2 extends Mixin(
+    [ M1 ],
+    (base : AnyConstructor<M1, typeof M1>) =>
+
+    class M2 extends base {
+        prop2       : string    = '2'
+    }
+){}
+
+//---------------------------------------------------------------------------------------------------------------------
+export class M3 extends Mixin(
+    [ M2 ],
+    (base : AnyConstructor<M2, typeof M2>) =>
+
+    class M3 extends base {
+        prop3       : string    = '3'
+
+        method3 () {
+            this.prop1
+            this.prop2
+            this.prop3
+        }
+    }
+){}
+
+
 StartTest(t => {
 
     t.it('Basic case should work', t => {
