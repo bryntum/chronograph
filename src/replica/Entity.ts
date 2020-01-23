@@ -29,8 +29,6 @@ export class Entity extends Mixin(
         $writes         : { [s in keyof this] : string }
         $buildProposed  : { [s in keyof this] : string }
 
-        static $skeleton       : object = {}
-
         graph           : ChronoGraph
 
         // lazy meta instance creation - will work even w/o any @field or @entity decorator
@@ -85,8 +83,9 @@ export class Entity extends Mixin(
 
         createFieldIdentifier (field : Field) : FieldIdentifier {
             const name                  = field.name
+            const entity                = this.$entity
             const constructor           = this.constructor as EntityConstructor
-            const skeleton              = constructor.$skeleton
+            const skeleton              = entity.$skeleton
 
             if (!skeleton[ name ]) skeleton[ name ] = constructor.getIdentifierTemplateClass(this, field)
 

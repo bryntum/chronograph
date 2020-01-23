@@ -12,6 +12,8 @@ export class EntityMeta extends Base {
 
     parentEntity        : EntityMeta
 
+    $skeleton           : object                = {}
+
 
     hasField (name : Name) : boolean {
         return this.getField(name) !== undefined
