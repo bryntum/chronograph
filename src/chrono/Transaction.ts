@@ -131,9 +131,9 @@ export class Transaction extends Base {
     }
 
 
-    // isEmpty () : boolean {
-    //     return this.entries.size === 0
-    // }
+    isEmpty () : boolean {
+        return this.entries.size === 0
+    }
 
 
     // onNewWrite () {
