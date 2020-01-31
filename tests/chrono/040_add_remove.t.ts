@@ -1,11 +1,11 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Add variable', async t => {
-        const graph1 : ChronoGraph   = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph1.variable(0)
 
@@ -30,7 +30,7 @@ StartTest(t => {
 
 
     t.it('Remove variable', async t => {
-        const graph1 : ChronoGraph   = MinimalChronoGraph.new()
+        const graph1 : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph1.variable(0)
 

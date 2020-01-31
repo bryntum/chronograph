@@ -1,9 +1,11 @@
-import { MinimalNode, WalkForwardContext } from "../../src/graph/Node.js"
+import { Base } from "../../src/class/BetterMixin.js"
+import { Node, WalkForwardContext } from "../../src/graph/Node.js"
 
 declare const StartTest : any
 
-class WalkerNode extends MinimalNode {
+class WalkerNode extends Node.derive(Base) {
     id          : number
+    NodeT       : WalkerNode
 }
 
 

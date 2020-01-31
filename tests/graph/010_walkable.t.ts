@@ -1,14 +1,14 @@
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { WalkableBackward, WalkableBackwardNode, WalkableForwardNode, WalkBackwardContext, WalkForwardContext } from "../../src/graph/Node.js"
 
 declare const StartTest : any
 
-class WalkerForwardNode extends WalkableForwardNode(Base) {
+class WalkerForwardNode extends WalkableForwardNode.mix(Base) {
     id              : number
     NodeT           : WalkableForwardNode
     outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
 }
-class WalkerBackwardNode extends WalkableBackwardNode(Base) {
+class WalkerBackwardNode extends WalkableBackwardNode.mix(Base) {
     id              : number
     NodeT           : WalkableBackwardNode
     incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()

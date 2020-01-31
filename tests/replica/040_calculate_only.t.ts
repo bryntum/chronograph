@@ -1,9 +1,9 @@
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { calculate, Entity, field } from "../../src/replica/Entity.js"
 import { reference } from "../../src/replica/Reference.js"
 import { bucket } from "../../src/replica/ReferenceBucket.js"
-import { MinimalReplica } from "../../src/replica/Replica.js"
+import { Replica } from "../../src/replica/Replica.js"
 import { Schema } from "../../src/schema/Schema.js"
 
 declare const StartTest : any
@@ -16,7 +16,7 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class Author extends Entity(Base) {
+        class Author extends Entity.mix(Base) {
             @bucket()
             books           : Set<Book>
 
@@ -33,12 +33,12 @@ StartTest(t => {
         }
 
         @entity
-        class Book extends Entity(Base) {
+        class Book extends Entity.mix(Base) {
             @reference({ bucket : 'books' })
             writtenBy       : Author
         }
 
-        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const replica1          = Replica.new({ schema : SomeSchema })
 
         const markTwain         = Author.new()
         const tomSoyer          = Book.new({ writtenBy : markTwain })

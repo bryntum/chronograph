@@ -1,4 +1,4 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen } from "../../src/chrono/Identifier.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
@@ -8,7 +8,7 @@ StartTest(t => {
 
     t.it('Should garbage collect unneeded revisions', async t => {
         // explicitly set that we don't track history
-        const graph : ChronoGraph       = MinimalChronoGraph.new({ historyLimit : 0 })
+        const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
         const box1      = graph.variable(0)
         const box2      = graph.variable(0)
@@ -39,7 +39,7 @@ StartTest(t => {
 
     t.it('Garbage collecting should keep data dependencies', async t => {
         // explicitly set that we don't track history
-        const graph : ChronoGraph   = MinimalChronoGraph.new({ historyLimit : 0 })
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
         const var0      = graph.variableNamed('var0', 1)
 

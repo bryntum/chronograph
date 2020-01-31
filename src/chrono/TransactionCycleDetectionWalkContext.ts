@@ -1,6 +1,5 @@
-import { Base } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 import { NOT_VISITED, OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
-import { getSourcePointFromIdentifier } from "../replica/Entity.js"
 import { Identifier } from "./Identifier.js"
 import { Transaction } from "./Transaction.js"
 

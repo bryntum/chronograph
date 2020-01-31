@@ -1,13 +1,13 @@
 import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueGen, CalculatedValueSync, Variable, VariableC } from "../../src/chrono/Identifier.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
+import { CalculatedValueSync, Variable, VariableC } from "../../src/chrono/Identifier.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Observe unknown identifier', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var1      = VariableC({ name : 'var1' })
 
@@ -16,7 +16,7 @@ StartTest(t => {
 
 
     t.it('Observe variable', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph.variable(0)
 
@@ -25,7 +25,7 @@ StartTest(t => {
 
 
     t.it('Observe unknown identifier in calculation', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var1      = Variable.new({ name : 'var1' })
 
@@ -38,7 +38,7 @@ StartTest(t => {
 
 
     t.it('Observe variable', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph.variable(0)
 
@@ -51,7 +51,7 @@ StartTest(t => {
 
 
     t.it('Observe generator calculation result', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const iden1     = graph.identifier(function * () {
             return 1
@@ -62,7 +62,7 @@ StartTest(t => {
 
 
     t.it('Observe synchronous calculation result', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const iden1     = graph.identifier(function () {
             return 1
@@ -73,7 +73,7 @@ StartTest(t => {
 
 
     t.it('Observe variable in generator calculation', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph.variableNamed('variable', 0)
 
@@ -92,7 +92,7 @@ StartTest(t => {
 
 
     t.it('Observe variable in synchronous calculation', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var1      = graph.variable(0)
 
@@ -111,7 +111,7 @@ StartTest(t => {
 
 
     t.it('Observe calculation in generator calculation', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const var1      = graph.variable(0)
         const var2      = graph.variable(1)
@@ -140,7 +140,7 @@ StartTest(t => {
 
 
     t.it('Observe calculation in synchronous calculation', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const var1      = graph.variable(0)
         const var2      = graph.variable(1)
@@ -169,7 +169,7 @@ StartTest(t => {
 
 
     t.it('Observe mixed calculation', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const var1      = graph.variable(0)
         const var2      = graph.variable(1)
@@ -205,7 +205,7 @@ StartTest(t => {
 
 
     t.it('`undefined` as a result of calculation is converted to `null`', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const var1      = graph.variable(undefined)
 
@@ -224,7 +224,7 @@ StartTest(t => {
 
 
     t.it('Adding already added identifier should not overwrite the initial proposed value', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const iden1     = graph.addIdentifier(CalculatedValueSync.new({
             calculation : function (YIELD) {
@@ -241,7 +241,7 @@ StartTest(t => {
 
 
     t.it('Should throw error on cyclic computation', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const iden1     = graph.identifier(function (Y) {
             return Y(iden2)
@@ -256,7 +256,7 @@ StartTest(t => {
 
 
     t.it('Should throw error on cyclic computation', async t => {
-        const graph : ChronoGraph = MinimalChronoGraph.new()
+        const graph : ChronoGraph = ChronoGraph.new()
 
         const iden1     = graph.identifier(function* (Y) {
             return yield iden2

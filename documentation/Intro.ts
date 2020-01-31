@@ -2,7 +2,7 @@
 import { ProposedOrCurrent } from "../src/chrono/Effect.js"
 //-----------------------------------
 // example3
-import { ChronoIterator, MinimalChronoGraph } from "../src/chrono/Graph.js"
+import { ChronoIterator, ChronoGraph } from "../src/chrono/Graph.js"
 // example1
 import { Identifier, Variable } from "../src/chrono/Identifier.js"
 //-----------------------------------
@@ -12,13 +12,16 @@ import { CalculationIterator } from "../src/primitives/Calculation.js"
 import { calculate, Entity, field } from "../src/replica/Entity.js"
 import { reference } from "../src/replica/Reference.js"
 import { bucket } from "../src/replica/ReferenceBucket.js"
-import { MinimalReplica } from "../src/replica/Replica.js"
+import { Replica } from "../src/replica/Replica.js"
 
 const identifier1 = Identifier.new({ calculation : () => 42 })
 
 
 const identifier2 = Identifier.new({ calculation : (Y : SyncEffectHandler) => Y(identifier1) + 5 })
 
+
+//-----------------------------------
+// example3
 
 const identifier3 = Identifier.new({
     *calculation  (Y : SyncEffectHandler) : ChronoIterator<number> {
@@ -74,7 +77,7 @@ const identifier7 = Identifier.new({
 //-----------------------------------
 // example6
 
-const graph = MinimalChronoGraph.new()
+const graph = ChronoGraph.new()
 
 graph.addIdentifier(identifier1)
 
@@ -133,7 +136,7 @@ const identifier10 = Identifier.new({
 
 //-----------------------------------
 // example12
-const graph2 = MinimalChronoGraph.new()
+const graph2 = ChronoGraph.new()
 
 const variable13 : Variable<number> = graph2.variable(5)
 
@@ -147,7 +150,7 @@ const value13_2 = branch2.read(variable13) // 10
 
 //-----------------------------------
 // example13
-const graph3 = MinimalChronoGraph.new({ historyLimit : 5 })
+const graph3 = ChronoGraph.new({ historyLimit : 5 })
 
 const variable14 : Variable<number> = graph2.variable(5)
 
@@ -168,7 +171,7 @@ const value14_4 = graph2.read(variable14)  // 10
 
 //-----------------------------------
 // example14
-const graph4 = MinimalChronoGraph.new()
+const graph4 = ChronoGraph.new()
 
 const max           = graph4.variable(100)
 
@@ -196,7 +199,7 @@ const value15_3 = graph4.read(identifier15) // 50
 //-----------------------------------
 // example15
 
-class Author extends Entity(Object) {
+class Author extends Entity.mix(Object) {
     @field()
     firstName       : string
 
@@ -213,7 +216,7 @@ class Author extends Entity(Object) {
     }
 }
 
-const replica1          = MinimalReplica.new()
+const replica1          = Replica.new()
 
 const markTwain         = new Author
 
@@ -228,7 +231,7 @@ console.log(markTwain.fullName) // Mark Twain
 //-----------------------------------
 // example16
 
-class Book extends Entity(Object) {
+class Book extends Entity.mix(Object) {
     @field()
     writtenBy       : Author
 }
@@ -241,17 +244,17 @@ tomSawyer.writtenBy     = markTwain
 //-----------------------------------
 // example16
 
-class Author2 extends Entity(Object) {
+class Author2 extends Entity.mix(Object) {
     @bucket()
     books           : Set<Book2>
 }
 
-class Book2 extends Entity(Object) {
+class Book2 extends Entity.mix(Object) {
     @reference({ bucket : 'books' })
     writtenBy       : Author2
 }
 
-const replica2          = MinimalReplica.new()
+const replica2          = Replica.new()
 
 const markTwain2        = new Author2()
 

@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "../class/Mixin.js"
+import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { WalkContext, WalkStep } from "./WalkDepth.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -31,7 +31,9 @@ export class WalkBackwardContext<Label = any> extends WalkContext<WalkableBackwa
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableForwardNode = <T extends AnyConstructor<object>>(base : T) =>
+export class WalkableForwardNode extends Mixin(
+    [],
+    (base : AnyConstructor) =>
 
 class WalkableForwardNode extends base implements WalkableForward {
     LabelT          : any
@@ -63,13 +65,14 @@ class WalkableForwardNode extends base implements WalkableForward {
     forEachOutgoing (context : WalkForwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
         this.outgoing.forEach(func)
     }
-}
+}){}
 
-export type WalkableForwardNode = Mixin<typeof WalkableForwardNode>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const WalkableBackwardNode = <T extends AnyConstructor<object>>(base : T) =>
+export class WalkableBackwardNode extends Mixin(
+    [],
+    (base : AnyConstructor) =>
 
 class WalkableBackwardNode extends base implements WalkableBackward {
     LabelT          : any
@@ -101,18 +104,20 @@ class WalkableBackwardNode extends base implements WalkableBackward {
     forEachIncoming (context : WalkBackwardContext, func : (label : this[ 'LabelT' ], node : this[ 'NodeT' ]) => any) {
         this.incoming.forEach(func)
     }
-}
-
-export type WalkableBackwardNode = Mixin<typeof WalkableBackwardNode>
-
+}){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Node = <T extends AnyConstructor<WalkableForwardNode & WalkableBackwardNode>>(base : T) =>
+export class Node extends Mixin(
+    [ WalkableForwardNode, WalkableBackwardNode ],
+    (base : ClassUnion<typeof WalkableForwardNode, typeof WalkableBackwardNode>) =>
 
 class Node extends base {
     LabelT          : any
     NodeT           : Node
+
+    incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]> = new Map()
+    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]> = new Map()
 
 
     addEdgeTo (toNode : this[ 'NodeT' ], label : this[ 'LabelT' ] = null, calledFromPartner? : boolean) {
@@ -139,20 +144,4 @@ class Node extends base {
 
         if (!calledFromPartner) fromNode.removeEdgeTo(this, true)
     }
-}
-
-export type Node = Mixin<typeof Node>
-
-export class MinimalNode extends
-    Node(
-    WalkableForwardNode(
-    WalkableBackwardNode(
-        Base
-    )))
-{
-    LabelT          : any
-    NodeT           : Node
-
-    outgoing        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
-    incoming        : Map<this[ 'NodeT' ], this[ 'LabelT' ]>   = new Map()
-}
+}){}

@@ -1,4 +1,4 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { Identifier } from "../../src/chrono/Identifier.js"
 
 declare const StartTest : any
@@ -6,7 +6,7 @@ declare const StartTest : any
 type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[] }
 
 export const deepGraphGen = (atomNum : number = 1000) : GraphGenerationResult => {
-    const graph : ChronoGraph   = MinimalChronoGraph.new()
+    const graph : ChronoGraph   = ChronoGraph.new()
 
     let boxes       = []
 

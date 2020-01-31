@@ -1,11 +1,11 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Basic', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variable(0)
         const var1      = graph.variable(0)
@@ -48,7 +48,7 @@ StartTest(t => {
 
 
     t.it('Should not trigger listener for "shadow" entries', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableNamed('var0', 0)
         const var1      = graph.variableNamed('var1', 10)
@@ -83,7 +83,7 @@ StartTest(t => {
 
 
     t.it('Should not trigger listener for the entries with the same value', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableNamed('var0', 0)
         const var1      = graph.variableNamed('var1', 10)
@@ -115,7 +115,7 @@ StartTest(t => {
 
 
     t.it('Should not trigger listener after the identifier removal', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableNamed('var0', 0)
         const var1      = graph.variableNamed('var1', 10)

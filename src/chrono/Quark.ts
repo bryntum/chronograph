@@ -1,9 +1,9 @@
-import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, MixinAny } from "../class/BetterMixin.js"
 import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI, MIN_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
-import { RevisionClock, RevisionI, Scope } from "./Revision.js"
+import { Revision, Scope } from "./Revision.js"
 import { YieldableValue } from "./Transaction.js"
 
 
@@ -20,7 +20,9 @@ export type OriginId    = number
 let ORIGIN_ID : OriginId    = 0
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Quark = <T extends AnyConstructor<Map<any, any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>>(base : T) =>
+export class Quark extends MixinAny(
+    [ Map ],
+    (base : AnyConstructor<Map<any, any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>) =>
 
 class Quark extends base {
 
@@ -33,7 +35,7 @@ class Quark extends base {
     }
 
     // required
-    createdAt       : RevisionI         = undefined
+    createdAt       : Revision          = undefined
 
     identifier      : Identifier        = undefined
 
@@ -307,7 +309,7 @@ class Quark extends base {
     // }
 
 
-    outgoingInTheFutureCb (revision : RevisionI, forEach : (quark : Quark) => any) {
+    outgoingInTheFutureCb (revision : Revision, forEach : (quark : Quark) => any) {
         let current : Quark = this
 
         while (current) {
@@ -323,7 +325,7 @@ class Quark extends base {
     }
 
 
-    outgoingInTheFutureAndPastCb (revision : RevisionI, forEach : (quark : Quark) => any) {
+    outgoingInTheFutureAndPastCb (revision : Revision, forEach : (quark : Quark) => any) {
         let current : Quark = this
 
         while (current) {
@@ -360,13 +362,9 @@ class Quark extends base {
         }
     }
 
-}
+}){}
 
-export type Quark = Mixin<typeof Quark>
-
-export type QuarkConstructor = MixinConstructor<typeof Quark>
-
-export interface QuarkI extends Mixin<typeof Quark> {}
+export type QuarkConstructor    = typeof Quark
 
 //---------------------------------------------------------------------------------------------------------------------
 export const TombStone = Symbol('Tombstone')

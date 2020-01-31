@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
 import { Name } from "../../src/schema/Field.js"
 
@@ -8,7 +8,7 @@ StartTest(t => {
 
     t.it('Child class fields should stay at child level', async t => {
 
-       class Vehicle extends Entity(Base) {
+       class Vehicle extends Entity.mix(Base) {
            @field()
            name : string
        }

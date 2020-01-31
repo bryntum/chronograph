@@ -1,7 +1,6 @@
-import { CheckoutI } from "../chrono/Checkout.js"
+import { Checkout } from "../chrono/Checkout.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../chrono/Identifier.js"
-import { instanceOf } from "../class/InstanceOf.js"
-import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"
@@ -13,7 +12,9 @@ export interface PartOfEntityIdentifier {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const FieldIdentifier = instanceOf(<T extends AnyConstructor<Identifier>>(base : T) =>
+export class FieldIdentifier extends Mixin(
+    [ Identifier ],
+    (base : AnyConstructor<Identifier, typeof Identifier>) =>
 
 class FieldIdentifier extends base implements PartOfEntityIdentifier {
     field       : Field             = undefined
@@ -27,7 +28,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
 
-    // readFromGraphDirtySync (graph : CheckoutI) {
+    // readFromGraphDirtySync (graph : Checkout) {
     //     if (graph)
     //         return graph.readDirty(this)
     //     else
@@ -37,7 +38,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
     // returns the value itself if there were no affecting writes for it
     // otherwise - promise
-    getFromGraph (graph : CheckoutI) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
+    getFromGraph (graph : Checkout) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
         if (graph)
             return graph.get(this)
         else
@@ -45,7 +46,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     }
 
 
-    readFromGraph (graph : CheckoutI) : this[ 'ValueT' ] {
+    readFromGraph (graph : Checkout) : this[ 'ValueT' ] {
         if (graph)
             return graph.read(this)
         else
@@ -53,7 +54,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     }
 
 
-    writeToGraph (graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    writeToGraph (graph : Checkout, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         if (graph)
             graph.write(this, proposedValue, ...args)
         else
@@ -64,22 +65,19 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     toString () : string {
         return `[${ this.field.name }] of [${ this.self }]`
     }
-})
+}){}
 
-export type FieldIdentifier = Mixin<typeof FieldIdentifier>
+export type FieldIdentifierConstructor  = typeof FieldIdentifier
 
-export type FieldIdentifierConstructor  = MixinConstructor<typeof FieldIdentifier>
-
-export interface FieldIdentifierI extends FieldIdentifier {}
-
-
-export class MinimalFieldIdentifierSync extends FieldIdentifier(CalculatedValueSync) {}
-export class MinimalFieldIdentifierGen extends FieldIdentifier(CalculatedValueGen) {}
-export class MinimalFieldVariable extends FieldIdentifier(Variable) {}
+export class MinimalFieldIdentifierSync extends FieldIdentifier.mix(CalculatedValueSync) {}
+export class MinimalFieldIdentifierGen extends FieldIdentifier.mix(CalculatedValueGen) {}
+export class MinimalFieldVariable extends FieldIdentifier.mix(Variable) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityIdentifier = <T extends AnyConstructor<Identifier>>(base : T) =>
+export class EntityIdentifier extends Mixin(
+    [ Identifier ],
+    (base : AnyConstructor<Identifier, typeof Identifier>) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta        = undefined
@@ -98,11 +96,6 @@ class EntityIdentifier extends base implements PartOfEntityIdentifier {
     toString () : string {
         return `Entity identifier [${ this.self }]`
     }
-}
+}){}
 
-export type EntityIdentifier = Mixin<typeof EntityIdentifier>
-
-export interface EntityIdentifierI extends EntityIdentifier {}
-
-
-export class MinimalEntityIdentifier extends EntityIdentifier(CalculatedValueGen) {}
+export class MinimalEntityIdentifier extends EntityIdentifier.mix(CalculatedValueGen) {}

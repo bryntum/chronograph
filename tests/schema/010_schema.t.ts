@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
 import { FieldIdentifier } from "../../src/replica/Identifier.js"
 import { Schema } from "../../src/schema/Schema.js"
@@ -15,7 +15,7 @@ StartTest(t => {
         const entity            = SomeSchema.getEntityDecorator()
 
         @entity
-        class SomeEntity extends Entity(Base) {
+        class SomeEntity extends Entity.mix(Base) {
             @field()
             someField1      : string        = 'someField'
 

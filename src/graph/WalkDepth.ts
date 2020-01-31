@@ -1,4 +1,4 @@
-import { Base } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 
 export enum OnCycleAction {
     Cancel  = "Cancel",

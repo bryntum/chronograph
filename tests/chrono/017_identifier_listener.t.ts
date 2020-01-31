@@ -1,5 +1,5 @@
 import { PreviousValueOf, ProposedArgumentsOf, ProposedOrCurrent, ProposedOrPreviousValueOf, ProposedValueOf } from "../../src/chrono/Effect.js"
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueSync } from "../../src/chrono/Identifier.js"
 import { SyncEffectHandler } from "../../src/chrono/Transaction.js"
 
@@ -8,7 +8,7 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it('Should be able to read the past of the identifier which is being listened - PreviousValueOf', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         let result
 
@@ -87,7 +87,7 @@ StartTest(t => {
 
 
     t.it('Should be able to read the past of the identifier which is being listened - ProposedValueOf', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         let result
 
@@ -166,7 +166,7 @@ StartTest(t => {
 
 
     t.it('Should be able to read the past of the identifier which is being listened - ProposedOrPreviousValueOf', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         const listener      = graph.addIdentifier(CalculatedValueSync.new({
             calculation (YIELD : SyncEffectHandler) : any {
@@ -241,7 +241,7 @@ StartTest(t => {
 
 
     t.it('Should be able to read the past of the identifier which is being listened - ProposedArgumentsOf', async t => {
-        const graph : ChronoGraph   = MinimalChronoGraph.new()
+        const graph : ChronoGraph   = ChronoGraph.new()
 
         let result
 

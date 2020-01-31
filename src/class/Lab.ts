@@ -1,6 +1,6 @@
 // No exports from this module
 //---------------------------------------------------------------------------------------------------------------------
-import { AnyConstructor, MixinStateExtension } from "./BetterMixin.js"
+import { AnyConstructor } from "./BetterMixin.js"
 
 type FilterFlags<Base, Condition> = {
     [Key in keyof Base] : Base[Key] extends Condition ? Key : never

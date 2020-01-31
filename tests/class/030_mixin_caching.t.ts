@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, isInstanceOf, Mixin } from "../../src/class/BetterMixin.js"
+import { AnyConstructor, Base, ClassUnion, Mixin } from "../../src/class/BetterMixin.js"
 
 declare const StartTest : any
 
@@ -11,7 +11,7 @@ StartTest(t => {
 
         class SomeMixin1 extends Mixin(
             [ Base ],
-            <T extends AnyConstructor<Base>>(base : T) => {
+            (base : ClassUnion<typeof Base>) => {
                 count1++
 
                 class SomeMixin1 extends base {
@@ -24,7 +24,7 @@ StartTest(t => {
 
         class SomeMixin2 extends Mixin(
             [ Base ],
-            <T extends AnyConstructor<Base>>(base : T) => {
+            (base : ClassUnion<typeof Base>) => {
                 count2++
 
                 class SomeMixin2 extends base {
@@ -37,7 +37,7 @@ StartTest(t => {
 
         class SomeMixin3 extends Mixin(
             [ Base ],
-            <T extends AnyConstructor<Base>>(base : T) => {
+            (base : ClassUnion<typeof Base>) => {
                 count3++
 
                 class SomeMixin3 extends base {
@@ -55,7 +55,7 @@ StartTest(t => {
 
         class SomeMixin12 extends Mixin(
             [ SomeMixin2, SomeMixin1 ],
-            <T extends AnyConstructor<SomeMixin2 & SomeMixin1>>(base : T) =>
+            (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin1>) =>
 
                 class SomeMixin12 extends base {
                     prop12      : string   = '12'
@@ -69,7 +69,7 @@ StartTest(t => {
 
         class SomeMixin123 extends Mixin(
             [ SomeMixin3, SomeMixin2, SomeMixin1 ],
-            <T extends AnyConstructor<SomeMixin3 & SomeMixin2 & SomeMixin1>>(base : T) =>
+            (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin1, typeof SomeMixin3>) =>
 
                 class SomeMixin123 extends base {
                     prop123     : string   = '123'
@@ -83,7 +83,7 @@ StartTest(t => {
 
         class SomeMixin123_2 extends Mixin(
             [ SomeMixin3, SomeMixin2, SomeMixin1 ],
-            <T extends AnyConstructor<SomeMixin3 & SomeMixin2 & SomeMixin1>>(base : T) =>
+            (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin1, typeof SomeMixin3>) =>
 
                 class SomeMixin123_2 extends base {
                     prop123_2     : string   = '123_2'
@@ -100,7 +100,7 @@ StartTest(t => {
 
         class SomeMixin1 extends Mixin(
             [],
-            <T extends AnyConstructor>(base : T) => {
+            (base : ClassUnion<AnyConstructor>) => {
                 count1++
 
                 class SomeMixin1 extends base {
@@ -113,7 +113,7 @@ StartTest(t => {
 
         class SomeMixin2 extends Mixin(
             [],
-            <T extends AnyConstructor>(base : T) => {
+            (base : ClassUnion<AnyConstructor>) => {
                 count2++
 
                 class SomeMixin2 extends base {
@@ -131,7 +131,7 @@ StartTest(t => {
 
         class SomeMixin12 extends Mixin(
             [ SomeMixin2, SomeMixin1 ],
-            <T extends AnyConstructor<SomeMixin2 & SomeMixin1>>(base : T) =>
+            (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin1>) =>
 
                 class SomeMixin12 extends base {
                     prop12      : string   = '12'
@@ -145,7 +145,7 @@ StartTest(t => {
 
         class SomeMixin12_2 extends Mixin(
             [ SomeMixin2, SomeMixin1 ],
-            <T extends AnyConstructor<SomeMixin2 & SomeMixin1>>(base : T) =>
+            (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin1>) =>
 
                 class SomeMixin12_2 extends base {
                     prop12_2      : string   = '12_2'
@@ -159,7 +159,7 @@ StartTest(t => {
 
         class SomeMixin12_3 extends Mixin(
             [ SomeMixin2, SomeMixin1, Base ],
-            <T extends AnyConstructor<SomeMixin2 & SomeMixin1 & Base>>(base : T) =>
+            (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin1, typeof Base>) =>
 
                 class SomeMixin12_3 extends base {
                     prop12_3      : string   = '12_3'
@@ -173,7 +173,7 @@ StartTest(t => {
 
         class SomeMixin12_4 extends Mixin(
             [ SomeMixin2, SomeMixin1, Base ],
-            <T extends AnyConstructor<SomeMixin2 & SomeMixin1 & Base>>(base : T) =>
+            (base : ClassUnion<typeof SomeMixin2, typeof SomeMixin1, typeof Base>) =>
 
                 class SomeMixin12_4 extends base {
                     prop12_4      : string   = '12_4'

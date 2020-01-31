@@ -1,11 +1,11 @@
-import { ChronoGraph, MinimalChronoGraph } from "../../src/chrono/Graph.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Undo/redo of variable value', async t => {
-        const graph1 : ChronoGraph   = MinimalChronoGraph.new({ historyLimit : 2 })
+        const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
         const var1      = graph1.variable(0)
 
@@ -33,7 +33,7 @@ StartTest(t => {
 
 
     t.it('Undo/redo of new identifier', async t => {
-        const graph1 : ChronoGraph   = MinimalChronoGraph.new({ historyLimit : 2 })
+        const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
         const var1      = graph1.variable(0)
 
@@ -54,7 +54,7 @@ StartTest(t => {
 
 
     t.it('Undo/redo of identifier removal', async t => {
-        const graph1 : ChronoGraph   = MinimalChronoGraph.new({ historyLimit : 2 })
+        const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
         const var1      = graph1.variable(0)
 

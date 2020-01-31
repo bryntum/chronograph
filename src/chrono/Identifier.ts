@@ -1,20 +1,10 @@
-import { buildClass } from "../class/InstanceOf.js"
-import { Base } from "../class/Mixin.js"
-import {
-    CalculationContext,
-    CalculationGen,
-    CalculationIterator,
-    CalculationSync,
-    Context,
-    ContextGen,
-    Contexts,
-    ContextSync
-} from "../primitives/Calculation.js"
+import { Base, ClassUnion, identity, Mixin } from "../class/BetterMixin.js"
+import { CalculationContext, CalculationGen, CalculationSync, Context, ContextGen, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { CheckoutI } from "./Checkout.js"
+import { Checkout } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
-import { RevisionClock, RevisionI } from "./Revision.js"
+import { Revision } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
@@ -74,7 +64,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     context             : this[ 'CalcContextT' ]       = undefined
 
 
-    newQuark (createdAt : RevisionI) : InstanceType<this[ 'quarkClass' ]> {
+    newQuark (createdAt : Revision) : InstanceType<this[ 'quarkClass' ]> {
         // micro-optimization - we don't pass a config object to the `new` constructor
         // but instead assign directly to instance
         const newQuark                      = this.quarkClass.new() as InstanceType<this[ 'quarkClass' ]>
@@ -100,17 +90,17 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    writeToGraph (graph : CheckoutI, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+    writeToGraph (graph : Checkout, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         graph.write(this, proposedValue, ...args)
     }
 
 
-    readFromGraphAsync (graph : CheckoutI) : Promise<ValueT> {
+    readFromGraphAsync (graph : Checkout) : Promise<ValueT> {
         return graph.readAsync(this)
     }
 
 
-    readFromGraph (graph : CheckoutI) : ValueT {
+    readFromGraph (graph : Checkout) : ValueT {
         return graph.read(this)
     }
 
@@ -135,11 +125,11 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
-    enterGraph (graph : CheckoutI) {
+    enterGraph (graph : Checkout) {
     }
 
 
-    leaveGraph (graph : CheckoutI) {
+    leaveGraph (graph : Checkout) {
     }
 }
 
@@ -154,7 +144,7 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     @prototypeValue(Levels.UserInput)
     level               : number
 
-    @prototypeValue(buildClass(Map, CalculationSync, Quark))
+    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
     quarkClass          : QuarkConstructor
 
 
@@ -179,7 +169,7 @@ export function VariableC<ValueT> (...args) : Variable<ValueT> {
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
 
-    @prototypeValue(buildClass(Map, CalculationSync, Quark))
+    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
     quarkClass          : QuarkConstructor
 
 
@@ -196,7 +186,7 @@ export function CalculatedValueSyncConstructor<ValueT> (...args) : CalculatedVal
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
 
-    @prototypeValue(buildClass(Map, CalculationGen, Quark))
+    @prototypeValue(Mixin([ CalculationGen, Quark, Map ], identity))
     quarkClass          : QuarkConstructor
 
 

@@ -2,10 +2,10 @@ import { ProposedArgumentsOf, ProposedOrCurrent, ProposedValueOf } from "../../s
 import { Identifier } from "../../src/chrono/Identifier.js"
 import { Quark } from "../../src/chrono/Quark.js"
 import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
-import { Base } from "../../src/class/Mixin.js"
+import { Base } from "../../src/class/BetterMixin.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { build_proposed, calculate, Entity, field } from "../../src/replica/Entity.js"
-import { MinimalReplica, Replica } from "../../src/replica/Replica.js"
+import { Replica } from "../../src/replica/Replica.js"
 
 declare const StartTest : any
 
@@ -43,7 +43,7 @@ enum Direction {
 }
 
 
-class Event extends Entity(Base) {
+class Event extends Entity.mix(Base) {
     @field()
     start       : number
 
@@ -210,7 +210,7 @@ StartTest(t => {
     const read = () => [ event.start, event.end, event.duration ]
 
     t.beforeEach(t => {
-        replica = MinimalReplica.new()
+        replica = Replica.new()
         event   = Event.new()
 
         var0    = replica.variable(0)

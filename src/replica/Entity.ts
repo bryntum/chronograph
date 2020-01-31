@@ -2,30 +2,32 @@ import { CommitResult, CommitZero } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
-import { instanceOf } from "../class/InstanceOf.js"
-import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
+import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 import { DEBUG, debug, SourceLinePoint } from "../environment/Debug.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
 import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
-import { EntityIdentifierI, FieldIdentifier, FieldIdentifierI, MinimalEntityIdentifier } from "./Identifier.js"
+import { EntityIdentifier, FieldIdentifier, MinimalEntityIdentifier } from "./Identifier.js"
 
 
 const isEntityMarker      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
-export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) => {
+export class Entity extends Mixin(
+    [],
+    (base : AnyConstructor) => {
 
     class Entity extends base {
         // marker in the prototype to identify whether the parent class is Entity mixin itself
+        // it is not used for `instanceof` purposes and not be confused with the [MixinInstanceOfProperty]
+        // (though it is possible to use MixinInstanceOfProperty for this purpose, that would require to
+        // make it public
         [isEntityMarker] () {}
 
         $calculations   : { [s in keyof this] : string }
         $writes         : { [s in keyof this] : string }
         $buildProposed  : { [s in keyof this] : string }
-
-        static $skeleton       : object = {}
 
         graph           : ChronoGraph
 
@@ -36,7 +38,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
-        get $ () : { [s in keyof this] : FieldIdentifierI } {
+        get $ () : { [s in keyof this] : FieldIdentifier } {
             const $ = {}
 
             this.$entity.forEachField((field, name) => {
@@ -61,7 +63,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
-        get $$ () : EntityIdentifierI {
+        get $$ () : EntityIdentifier {
             return defineProperty(this, '$$', MinimalEntityIdentifier.new({
                 name                : this.$entity.name,
                 entity              : this.$entity,
@@ -79,10 +81,11 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
-        createFieldIdentifier (field : Field) : FieldIdentifierI {
+        createFieldIdentifier (field : Field) : FieldIdentifier {
             const name                  = field.name
+            const entity                = this.$entity
             const constructor           = this.constructor as EntityConstructor
-            const skeleton              = constructor.$skeleton
+            const skeleton              = entity.$skeleton
 
             if (!skeleton[ name ]) skeleton[ name ] = constructor.getIdentifierTemplateClass(this, field)
 
@@ -95,7 +98,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         }
 
 
-        forEachFieldIdentifier<T extends this> (func : (field : FieldIdentifierI, name : string) => any) {
+        forEachFieldIdentifier<T extends this> (func : (field : FieldIdentifier, name : string) => any) {
             this.$entity.forEachField((field, name) => func(this.$[ name ], name))
         }
 
@@ -214,7 +217,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         static getIdentifierTemplateClass (me : Entity, field : Field) : typeof Identifier {
             const name                  = field.name
 
-            const config : Partial<FieldIdentifierI> = {
+            const config : Partial<FieldIdentifier> = {
                 name                : `${me.$$.name}/${name}`,
                 field               : field
             }
@@ -270,11 +273,9 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
     }
 
     return Entity
-})
+}){}
 
-export type Entity = Mixin<typeof Entity>
-
-export type EntityConstructor = MixinConstructor<typeof Entity>
+export type EntityConstructor = typeof Entity
 
 
 //---------------------------------------------------------------------------------------------------------------------

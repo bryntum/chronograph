@@ -1,4 +1,4 @@
-import { Base } from "../class/Mixin.js"
+import { Base } from "../class/BetterMixin.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 
