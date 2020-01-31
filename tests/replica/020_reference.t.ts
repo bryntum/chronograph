@@ -35,7 +35,7 @@ StartTest(t => {
         replica1.addEntity(tomSoyer)
 
         //--------------------
-        replica1.propagate()
+        // replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
         t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
@@ -45,21 +45,23 @@ StartTest(t => {
 
         replica1.addEntity(tomSoyer2)
 
-        replica1.propagate()
+        // comment to see a failure related to the unordered processing of added/removed entries in the bucket
+        // bucket should have a single, ordered queue for add/remove mutations instead of 2 props `newRefs`, `oldRefs`
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
 
         //--------------------
         tomSoyer2.writtenBy     = null
 
-        replica1.propagate()
+        // replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
 
         //--------------------
         replica1.removeEntity(tomSoyer)
 
-        replica1.propagate()
+        // replica1.commit()
 
         t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
     })
@@ -91,7 +93,7 @@ StartTest(t => {
         replica1.addEntities([ markTwain, markTwain2, tomSoyer ])
 
         //--------------------
-        replica1.propagate()
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
         t.isDeeply(markTwain2.books, new Set(), 'Correctly resolved reference')
@@ -103,7 +105,7 @@ StartTest(t => {
         // overwrite previous write
         tomSoyer.writtenBy      = markTwain
 
-        replica1.propagate()
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
         t.isDeeply(markTwain2.books, new Set(), 'Correctly resolved reference')
@@ -115,7 +117,7 @@ StartTest(t => {
         // remove modified reference
         replica1.removeEntity(tomSoyer)
 
-        replica1.propagate()
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
         t.isDeeply(markTwain2.books, new Set(), 'Correctly resolved reference')
@@ -145,7 +147,42 @@ StartTest(t => {
 
         replica1.addEntities([ node1, node2, node3, node4 ])
 
-        replica1.propagate()
+        replica1.commit()
+
+        t.isDeeply(node1.children, new Set([ node2, node3 ]), 'Correctly resolved `children` reference')
+        t.isDeeply(node2.children, new Set([ node4 ]), 'Correctly resolved `children` reference')
+        t.isDeeply(node3.children, new Set(), 'Correctly resolved `children` reference')
+        t.isDeeply(node4.children, new Set(), 'Correctly resolved `children` reference')
+    })
+
+
+    t.it('TreeNode w/o propagate', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class TreeNode extends Entity(Base) {
+            @bucket()
+            children            : Set<TreeNode>
+
+            @reference({ bucket : 'children'})
+            parent              : TreeNode
+        }
+
+        const replica1          = MinimalReplica.new({ schema : SomeSchema })
+        const node1             = TreeNode.new()
+
+        replica1.addEntity(node1)
+
+        // early read to fill the bucket quark with value which needs to be overriden after adding other nodes
+        t.isDeeply(node1.children, new Set([]), 'Correctly resolved `children` reference')
+
+        const node2             = TreeNode.new({ parent : node1 })
+        const node3             = TreeNode.new({ parent : node1 })
+        const node4             = TreeNode.new({ parent : node2 })
+
+        replica1.addEntities([ node2, node3, node4 ])
 
         t.isDeeply(node1.children, new Set([ node2, node3 ]), 'Correctly resolved `children` reference')
         t.isDeeply(node2.children, new Set([ node4 ]), 'Correctly resolved `children` reference')
@@ -190,7 +227,7 @@ StartTest(t => {
         //------------------
         const spy       = t.spyOn(tomSoyer.$.writtenBy, 'calculation')
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
 
@@ -201,7 +238,7 @@ StartTest(t => {
 
         tomSoyer.someField  = 11
 
-        replica.propagate()
+        replica.commit()
 
         // the reference should be resolved at the proposed value stage, to not be recalculated again
         t.expect(spy).toHaveBeenCalled(0)
@@ -234,7 +271,7 @@ StartTest(t => {
         replica.addEntity(markTwain)
         replica.addEntity(tomSoyer)
 
-        replica.propagate()
+        replica.commit()
 
         t.is(tomSoyer.writtenBy, markTwain, 'Correctly resolved reference')
     })
@@ -283,7 +320,7 @@ StartTest(t => {
 
         replica.addEntities([ entity1, entity2 ])
 
-        replica.propagate()
+        replica.commit()
 
         t.isDeeply(entity1.referencingEntity2, entity2, 'Correctly resolved reference')
         t.isDeeply(entity2.referencingEntity1, entity1, 'Correctly resolved reference')

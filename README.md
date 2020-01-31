@@ -44,8 +44,6 @@ const author            = Author.new({ firstName : 'Mark', lastName : 'Twain' })
 
 replica.addEntity(markTwain)
 
-replica.propagate()
-
 console.log(author.fullName) // "Mark Twain"
     
 ```

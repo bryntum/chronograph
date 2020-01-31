@@ -1,20 +1,30 @@
 import { AnyConstructor, AnyFunction, Base, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
-import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
+import { CalculationContext, CalculationFunction, CalculationIterator, Context, ContextGen, ContextSync } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import { ProgressNotificationEffect } from "./Effect.js"
-import { CalculatedValueGen, Identifier, Variable } from "./Identifier.js"
+import {
+    CalculatedValueGen,
+    CalculatedValueGenConstructor,
+    CalculatedValueSyncConstructor,
+    Identifier,
+    Variable,
+    VariableC
+} from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { MinimalRevision, Revision } from "./Revision.js"
-import { MinimalTransaction, Transaction, TransactionPropagateResult, YieldableValue } from "./Transaction.js"
+import { MinimalTransaction, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type PropagateArguments = {
-    calculateOnly?      : Identifier[]
+export type CommitArguments = {
 }
 
-export type PropagateResult = {
+export type CommitResult = {
+}
+
+
+export const CommitZero : CommitResult = {
 }
 
 
@@ -45,13 +55,18 @@ class Checkout extends base {
     // how many revisions (except the `baseRevision`) to keep in memory for undo operation
     // minimal value is 0 (the `baseRevision` only, no undo/redo)
     // users supposed to opt-in for undo/redo by increasing this config
-    historyLimit            : number        = 0
+    historyLimit            : number            = 0
 
     listeners               : Map<Identifier, Listener> = new Map()
 
-    runningTransaction      : Transaction
+    $activeTransaction      : Transaction       = undefined
+    runningTransaction      : Transaction       = undefined
+
+    isCommitting            : boolean           = false
 
     enableProgressNotifications     : boolean   = false
+
+    ongoing                 : Promise<any>      = Promise.resolve()
 
 
     initialize (...args) {
@@ -72,7 +87,7 @@ class Checkout extends base {
         this.topRevision    = this.baseRevision
 
         clearLazyProperty(this, 'followingRevision')
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         this.markAndSweep()
     }
@@ -137,10 +152,10 @@ class Checkout extends base {
                     else if (prevQuark && entry.origin === prevQuark) {
                         entry.mergePreviousOrigin(newRev.scope)
                     }
-                    else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin && prevQuark.origin.usedProposedOrCurrent) {
+                    else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin) {
                         // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
                         // from the previous revision
-                        entry.startOrigin().proposedValue   = prevQuark.origin.value
+                        entry.startOrigin().proposedValue   = prevQuark.origin.value !== undefined ? prevQuark.origin.value : prevQuark.origin.proposedValue
                     }
 
                     entry.previous  = undefined
@@ -185,13 +200,10 @@ class Checkout extends base {
     }
 
 
-    _activeTransaction : Transaction    = undefined
-
-
     get activeTransaction () : Transaction {
-        if (this._activeTransaction) return this._activeTransaction
+        if (this.$activeTransaction) return this.$activeTransaction
 
-        return this._activeTransaction = MinimalTransaction.new({
+        return this.$activeTransaction = MinimalTransaction.new({
             baseRevision                : this.baseRevision,
             graph                       : this
         })
@@ -205,42 +217,73 @@ class Checkout extends base {
     }
 
 
-    propagate (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagate(args)
+    propagate (args? : CommitArguments) : CommitResult {
+        return this.commit(args)
+    }
 
-        const result            = this.finalizePropagation(nextRevision)
 
-        this.runningTransaction = null
+    commit (args? : CommitArguments) : CommitResult {
+        const nextRevision      = this.activeTransaction.commit(args)
+
+        const result            = this.finalizeCommit(nextRevision)
+
+        // this.runningTransaction = null
 
         return result
     }
 
 
-    propagateSync (args? : PropagateArguments) : PropagateResult {
-        const nextRevision      = this.activeTransaction.propagateSync(args)
+    // propagateSync (args? : PropagateArguments) : PropagateResult {
+    //     const nextRevision      = this.activeTransaction.propagateSync(args)
+    //
+    //     const result            = this.finalizePropagation(nextRevision)
+    //
+    //     this.runningTransaction = null
+    //
+    //     return result
+    // }
 
-        const result            = this.finalizePropagation(nextRevision)
 
-        this.runningTransaction = null
-
-        return result
+    async propagateAsync (args? : CommitArguments) : Promise<CommitResult> {
+        return this.commitAsync(args)
     }
 
 
-    async propagateAsync (args? : PropagateArguments) : Promise<PropagateResult> {
-        const nextRevision      = await this.activeTransaction.propagateAsync(args)
+    async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        if (this.isCommitting) return this.ongoing
 
-        const result            = this.finalizePropagation(nextRevision)
+        this.isCommitting       = true
 
-        await this.finalizePropagationAsync(nextRevision)
+        let result
 
-        this.runningTransaction = null
+        return this.ongoing = this.ongoing.then(() => {
+            return this.activeTransaction.commitAsync(args)
+        }).then(nextRevision => {
+            result          = this.finalizeCommit(nextRevision)
 
-        return result
+            return this.finalizeCommitAsync(nextRevision)
+        }).then(() => {
+            // this.runningTransaction = null
+            this.isCommitting       = false
+
+            return result
+        })
+
+        //
+        // const nextRevision      = await this.activeTransaction.commitAsync(args)
+        //
+        // const result            = this.finalizeCommit(nextRevision)
+        //
+        // await this.finalizeCommitAsync(nextRevision)
+        //
+        // this.runningTransaction = null
+        // this.isCommitting       = false
+        //
+        // return result
     }
 
 
-    finalizePropagation (transactionResult : TransactionPropagateResult) : PropagateResult {
+    finalizeCommit (transactionResult : TransactionCommitResult) : CommitResult {
         const { revision, entries } = transactionResult
 
         if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
@@ -272,42 +315,47 @@ class Checkout extends base {
         this.markAndSweep()
 
         clearLazyProperty(this, 'followingRevision')
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return
     }
 
 
-    async finalizePropagationAsync (transactionResult : TransactionPropagateResult) {
+    async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
 
-
-    variable (value : any) : Variable {
-        const variable      = Variable.new()
+    variable<T> (value : T) : Variable<T> {
+        const variable      = VariableC<T>()
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
     }
 
 
-    variableId (name : any, value : any) : Variable {
-        const variable      = Variable.new({ name })
+    variableNamed<T> (name : any, value : T) : Variable<T> {
+        const variable      = VariableC<T>({ name })
 
         // always initialize variables with `null`
         return this.addIdentifier(variable, value === undefined ? null : value)
     }
 
 
-    identifier<ContextT extends Context> (calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = CalculatedValueGen.new({ calculation, context })
+    identifier<ContextT extends Context, ValueT> (calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
+        const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
+            CalculatedValueGenConstructor<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
+            :
+            CalculatedValueSyncConstructor<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
 
         return this.addIdentifier(identifier)
     }
 
 
-    identifierId<ContextT extends Context> (name : any, calculation : CalculationFunction<ContextT, any, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier {
-        const identifier    = CalculatedValueGen.new({ calculation, context, name })
+    identifierNamed<ContextT extends Context, ValueT> (name : any, calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
+        const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
+            CalculatedValueGenConstructor<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
+            :
+            CalculatedValueSyncConstructor<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
 
         return this.addIdentifier(identifier)
     }
@@ -321,8 +369,6 @@ class Checkout extends base {
 
 
     removeIdentifier (identifier : Identifier) {
-        identifier.leaveGraph(this)
-
         this.activeTransaction.removeIdentifier(identifier)
 
         this.listeners.delete(identifier)
@@ -330,42 +376,65 @@ class Checkout extends base {
 
 
     hasIdentifier (identifier : Identifier) : boolean {
-        return Boolean(this.baseRevision.getLatestEntryFor(identifier))
+        return this.activeTransaction.hasIdentifier(identifier)
     }
 
 
     write<T> (identifier : Identifier<T>, proposedValue : T, ...args : any[]) {
-        if (proposedValue === undefined) proposedValue = null
-
-        identifier.write.call(identifier.context || identifier, identifier, this.activeTransaction, null, proposedValue, ...args)
+        this.activeTransaction.write(identifier, proposedValue, ...args)
     }
 
 
-    // touch (identifier : Identifier) : Quark {
-    //     return this.activeTransaction.touch(identifier)
+    // keep if possible?
+    // pin (identifier : Identifier) : Quark {
+    //     return this.activeTransaction.pin(identifier)
     // }
 
 
-    readIfExists (identifier : Identifier) : any {
-        return this.baseRevision.readIfExists(identifier)
-    }
-
-
-    read<T> (identifier : Identifier<T>) : T {
+    // Synchronously read the "previous", "stable" value from the graph. If its a lazy entry, it will be calculated
+    // Synchronous read can not calculate lazy asynchronous identifiers and will throw exception
+    // Lazy identifiers supposed to be "total" (or accept repeating observes?)
+    readPrevious<T> (identifier : Identifier<T>) : T {
         return this.baseRevision.read(identifier)
     }
 
 
-    readDirty (identifier : Identifier) : any {
-        return this.activeTransaction.readDirty(identifier)
+    // Asynchronously read the "previous", "stable" value from the graph. If its a lazy entry, it will be calculated
+    // Asynchronous read can calculate both synchornous and asynchronous lazy identifiers.
+    // Lazy identifiers supposed to be "total" (or accept repeating observes?)
+    readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        return this.baseRevision.readAsync(identifier)
     }
 
 
-    acquireQuark<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        // if (this.activeTransaction.isClosed) throw new Error("Can not acquire quark from closed transaction")
-
-        return this.activeTransaction.touch(identifier).getOrigin() as InstanceType<T[ 'quarkClass' ]>
+    // Synchronously read the "current" value from the graph.
+    // Synchronous read can not calculate asynchronous identifiers and will throw exception
+    read<T> (identifier : Identifier<T>) : T {
+        return this.activeTransaction.read(identifier)
     }
+
+
+    // Asynchronously read the "current" value from the graph.
+    // Asynchronous read can calculate both synchronous and asynchronous identifiers
+    readAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        return this.activeTransaction.readAsync(identifier)
+    }
+
+
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
+        return this.activeTransaction.get(identifier)
+    }
+
+    // // read the identifier value, return the proposed value if no "current" value is calculated yet
+    // readDirty<T> (identifier : Identifier<T>) : T {
+    //     return this.activeTransaction.readDirty(identifier)
+    // }
+    //
+    //
+    // // read the identifier value, return the proposed value if no "current" value is calculated yet
+    // readDirtyAsync<T> (identifier : Identifier<T>) : Promise<T> {
+    //     return this.activeTransaction.readDirtyAsync(identifier)
+    // }
 
 
     observe
@@ -433,7 +502,7 @@ class Checkout extends base {
         this.baseRevision       = previous
 
         // note: all unpropagated "writes" are lost
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return true
     }
@@ -449,7 +518,7 @@ class Checkout extends base {
         this.baseRevision       = nextRevision
 
         // note: all unpropagated "writes" are lost
-        this._activeTransaction = undefined
+        this.$activeTransaction = undefined
 
         return true
     }

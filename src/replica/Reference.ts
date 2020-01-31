@@ -39,7 +39,8 @@ export const reference : FieldDecorator<typeof MinimalReferenceField> =
 export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIdentifier & CalculatedValueSync>>(base : T) => {
 
     class ReferenceIdentifier extends base {
-        level           : number            = Levels.Constant
+        @prototypeValue(Levels.DependsOnlyOnUserInput)
+        level           : number        
 
         field           : ReferenceField    = undefined
 
@@ -87,7 +88,7 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
             if (this.hasBucket()) {
                 // here we only need to remove from the "previous", "stable" bucket, because
                 // the calculation for the removed reference won't be called - the possible `proposedValue` of reference will be ignored
-                const value  = graph.readIfExists(this) as Entity
+                const value  = graph.activeTransaction.readProposedOrPrevious(this) as Entity
 
                 if (value != null) {
                     this.getBucket(value).removeFromBucket(graph.activeTransaction, this.self)
@@ -98,7 +99,7 @@ export const ReferenceIdentifier = instanceOf(<T extends AnyConstructor<FieldIde
         }
 
 
-        write (me : this, transaction : Transaction, quark : Quark, proposedValue : this[ 'ValueT' ]) {
+        write (me : this, transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ]) {
             quark           = quark || transaction.acquireQuarkIfExists(me)
 
             if (me.hasBucket()) {

@@ -1,4 +1,5 @@
-import { CalculatedValueGen, Identifier } from "../chrono/Identifier.js"
+import { CheckoutI } from "../chrono/Checkout.js"
+import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../chrono/Identifier.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
@@ -25,9 +26,39 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
-    // put (proposedValue : ChronoValue, ...args) {
-    //     return super.put(this.field.converter ? this.field.converter(proposedValue, this.field) : proposedValue, ...args)
+
+    // readFromGraphDirtySync (graph : CheckoutI) {
+    //     if (graph)
+    //         return graph.readDirty(this)
+    //     else
+    //         return this.DATA
     // }
+
+
+    // returns the value itself if there were no affecting writes for it
+    // otherwise - promise
+    getFromGraph (graph : CheckoutI) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
+        if (graph)
+            return graph.get(this)
+        else
+            return this.DATA
+    }
+
+
+    readFromGraph (graph : CheckoutI) : this[ 'ValueT' ] {
+        if (graph)
+            return graph.read(this)
+        else
+            return this.DATA
+    }
+
+
+    writeToGraph (graph : CheckoutI, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+        if (graph)
+            graph.write(this, proposedValue, ...args)
+        else
+            this.DATA = proposedValue
+    }
 
 
     toString () : string {
@@ -42,17 +73,26 @@ export type FieldIdentifierConstructor  = MixinConstructor<typeof FieldIdentifie
 export interface FieldIdentifierI extends FieldIdentifier {}
 
 
-export class MinimalFieldIdentifier extends FieldIdentifier(CalculatedValueGen) {}
-
+export class MinimalFieldIdentifierSync extends FieldIdentifier(CalculatedValueSync) {}
+export class MinimalFieldIdentifierGen extends FieldIdentifier(CalculatedValueGen) {}
+export class MinimalFieldVariable extends FieldIdentifier(Variable) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const EntityIdentifier = <T extends AnyConstructor<CalculatedValueGen>>(base : T) =>
+export const EntityIdentifier = <T extends AnyConstructor<Identifier>>(base : T) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
     entity      : EntityMeta        = undefined
 
     self        : Entity            = undefined
+
+
+    // entity atom is considered changed if any of its incoming atoms has changed
+    // this just means if it's calculation method has been called, it should always
+    // assign a new value
+    equality () : boolean {
+        return false
+    }
 
 
     toString () : string {

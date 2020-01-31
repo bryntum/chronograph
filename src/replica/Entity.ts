@@ -1,10 +1,10 @@
-import { PropagateResult } from "../chrono/Checkout.js"
+import { CommitResult, CommitZero } from "../chrono/Checkout.js"
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { instanceOf } from "../class/InstanceOf.js"
 import { AnyConstructor, Mixin, MixinConstructor } from "../class/Mixin.js"
-import { DEBUG, debug } from "../environment/Debug.js"
+import { DEBUG, debug, SourceLinePoint } from "../environment/Debug.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
@@ -48,6 +48,8 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                     get (entity : Entity, property : string | number | symbol, receiver : any) : any {
                         if (!entity[ property ]) debug(new Error(`Attempt to read a missing field ${String(property)} on ${entity}`))
 
+                        entity[ property ].SOURCE_POINT = SourceLinePoint.fromCurrentCall()
+
                         return entity[ property ]
                     }
                 })
@@ -64,15 +66,10 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
                 name                : this.$entity.name,
                 entity              : this.$entity,
 
-                self                : this,
-
-                // entity atom is considered changed if any of its incoming atoms has changed
-                // this just means if it's calculation method has been called, it should always
-                // assign a new value
-                equality            : () => false,
-
                 calculation         : this.calculateSelf,
-                context             : this
+
+                context             : this,
+                self                : this,
             }))
         }
 
@@ -137,31 +134,41 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
         // }
 
 
-        propagate () : PropagateResult {
+        propagate () : CommitResult {
+            return this.commit()
+        }
+
+
+        commit () : CommitResult {
             const graph     = this.graph
 
             if (!graph) return
 
-            return graph.propagate()
+            return graph.commit()
         }
 
 
-        async propagateAsync () : Promise<PropagateResult> {
+        async propagateAsync () : Promise<CommitResult> {
+            return this.commitAsync()
+        }
+
+
+        async commitAsync () : Promise<CommitResult> {
             const graph     = this.graph
 
-            if (!graph) return
+            if (!graph) return Promise.resolve(CommitZero)
 
-            return graph.propagateAsync()
+            return graph.commitAsync()
         }
 
 
-        propagateSync () : PropagateResult {
-            const graph     = this.graph
-
-            if (!graph) return
-
-            return graph.propagateSync()
-        }
+        // propagateSync () : PropagateResult {
+        //     const graph     = this.graph
+        //
+        //     if (!graph) return
+        //
+        //     return graph.propagateSync()
+        // }
 
         // async waitForPropagateCompleted () : Promise<PropagationResult | null> {
         //     return this.getGraph().waitForPropagateCompleted()
@@ -209,12 +216,13 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
 
             const config : Partial<FieldIdentifierI> = {
                 name                : `${me.$$.name}/${name}`,
-                field               : field,
-                lazy                : field.lazy,
+                field               : field
             }
 
             //------------------
-            if (field.equality) config.equality = field.equality
+            if (field.hasOwnProperty('sync')) config.sync = field.sync
+            if (field.hasOwnProperty('lazy')) config.lazy = field.lazy
+            if (field.hasOwnProperty('equality')) config.equality = field.equality
 
             //------------------
             const calculationFunction   = me.$calculations && me[ me.$calculations[ name ] ]
@@ -235,7 +243,7 @@ export const Entity = instanceOf(<T extends AnyConstructor<object>>(base : T) =>
             }
 
             //------------------
-            const template              = field.identifierCls.new(config)
+            const template              = field.getIdentifierClass(calculationFunction).new(config)
 
             const TemplateClass         = function () {} as any as typeof Identifier
 
@@ -313,20 +321,12 @@ export const generic_field : FieldDecorator<typeof Field> =
             )
 
             Object.defineProperty(target, propertyKey, {
-                get     : function (this : Entity) {
-                    if (this.graph) {
-                        return this.graph.readDirty(this.$[ propertyKey ])
-                    } else {
-                        return this.$[ propertyKey ].DATA
-                    }
+                get     : function (this : Entity) : any {
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
                 },
 
                 set     : function (this : Entity, value : any) {
-                    if (this.graph) {
-                        return this.graph.write(this.$[ propertyKey ], value)
-                    } else {
-                        this.$[ propertyKey ].DATA = value
-                    }
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value)
                 }
             })
 
@@ -336,33 +336,21 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
-                    if (this.graph) {
-                        return this.graph.readDirty(this.$[ propertyKey ])
-                    } else {
-                        return this.$[ propertyKey ].DATA
-                    }
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
                 }
             }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : any {
-                    if (this.graph) {
-                        this.graph.write(this.$[ propertyKey ], value, ...args)
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<CommitResult> {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
 
-                        return this.graph.propagateAsync()
-                    } else {
-                        this.$[ propertyKey ].DATA = value
-                    }
+                    return this.graph ? this.graph.commitAsync() : Promise.resolve(CommitZero)
                 }
             }
 
             if (!(putterFnName in target)) {
                 target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
-                    if (this.graph) {
-                        this.graph.write(this.$[ propertyKey ], value, ...args)
-                    } else {
-                        this.$[ propertyKey ].DATA = value
-                    }
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
                 }
             }
         }
@@ -414,3 +402,8 @@ export const build_proposed = function (fieldName : Name) : MethodDecorator {
     }
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+export const getSourcePointFromIdentifier = (identifier : Identifier) : SourceLinePoint => {
+    return (identifier as any).SOURCE_POINT
+}

@@ -9,14 +9,14 @@ StartTest(t => {
 
         const var1      = graph1.variable(0)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.is(graph1.read(var1), 0, 'Correct value')
 
         //--------------
         graph1.write(var1, 1)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.is(graph1.read(var1), 1, 'Correct value')
 
@@ -37,9 +37,7 @@ StartTest(t => {
 
         const var1      = graph1.variable(0)
 
-        t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
-
-        graph1.propagate()
+        graph1.commit()
 
         t.is(graph1.read(var1), 0, 'Correct value')
 
@@ -60,14 +58,14 @@ StartTest(t => {
 
         const var1      = graph1.variable(0)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.is(graph1.read(var1), 0, 'Correct value')
 
         //--------------
         graph1.removeIdentifier(var1)
 
-        graph1.propagate()
+        graph1.commit()
 
         t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
 

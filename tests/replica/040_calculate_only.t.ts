@@ -47,7 +47,7 @@ StartTest(t => {
         replica1.addEntity(tomSoyer)
 
         //--------------------
-        replica1.propagate()
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
         t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
@@ -57,7 +57,7 @@ StartTest(t => {
 
         replica1.addEntity(tomSoyer2)
 
-        replica1.propagate({ calculateOnly : [ markTwain.$.booksCount ] })
+        // replica1.propagate({ calculateOnly : [ markTwain.$.booksCount ] })
 
         t.is(replica1.read(markTwain.$.booksCount), 2, 'Correctly taken new reference into account with `calculateOnly` option')
     })

@@ -38,7 +38,7 @@ StartTest(t => {
         //----------------
         graph.write(source, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 10, 'Source value correct #1')
         t.is(graph.read(listener), null, 'Listener value correct #1')
@@ -50,7 +50,7 @@ StartTest(t => {
 
         graph.write(sourceMode, 'pure')
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 1, 'Source value correct #2')
         t.isStrict(graph.read(listener), 10, 'Listener value correct #2')
@@ -63,7 +63,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 2, 'Source value correct #3')
         t.isStrict(graph.read(listener), 1, 'Listener value correct #2')
@@ -77,7 +77,7 @@ StartTest(t => {
         graph.write(sourceMode, 'proposed')
         graph.write(source, 14)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 14, 'Source value correct #4')
         t.is(graph.read(listener), 2, 'Listener value correct #4')
@@ -117,7 +117,7 @@ StartTest(t => {
         //----------------
         graph.write(source, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 10, 'Source value correct #1')
         t.is(graph.read(listener), 10, 'Listener value correct #1')
@@ -129,7 +129,7 @@ StartTest(t => {
 
         graph.write(sourceMode, 'pure')
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 1, 'Source value correct #2')
         t.isStrict(graph.read(listener), null, 'Listener value correct #2')
@@ -142,7 +142,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 2, 'Source value correct #3')
         t.isStrict(graph.read(listener), null, 'Listener value correct #2')
@@ -156,7 +156,7 @@ StartTest(t => {
         graph.write(sourceMode, 'proposed')
         graph.write(source, 14)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 14, 'Source value correct #4')
         t.is(graph.read(listener), 14, 'Listener value correct #4')
@@ -194,7 +194,7 @@ StartTest(t => {
         //----------------
         graph.write(source, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 10, 'Source value correct #1')
         t.is(graph.read(listener), 10, 'Listener value correct #1')
@@ -206,7 +206,7 @@ StartTest(t => {
 
         graph.write(sourceMode, 'pure')
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 1, 'Source value correct #2')
         t.is(graph.read(listener), 10, 'Listener value correct #2')
@@ -218,7 +218,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 2, 'Source value correct #3')
         t.is(graph.read(listener), 1, 'Listener value correct #3')
@@ -231,7 +231,7 @@ StartTest(t => {
         graph.write(sourceMode, 'proposed')
         graph.write(source, 14)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 14, 'Source value correct #4')
         t.is(graph.read(listener), 14, 'Listener value correct #4')
@@ -271,7 +271,7 @@ StartTest(t => {
         //----------------
         graph.write(source, 10)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 10, 'Source value correct #1')
         t.isDeeply(graph.read(listener), null, 'Listener value correct #1')
@@ -283,7 +283,7 @@ StartTest(t => {
 
         graph.write(source, 11, 1, 2, 3)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 11, 'Source value correct #1.5')
         t.isDeeply(graph.read(listener), [ 1, 2, 3 ], 'Listener value correct #1.5')
@@ -295,7 +295,7 @@ StartTest(t => {
 
         graph.write(sourceMode, 'pure')
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 1, 'Source value correct #2')
         t.isStrict(graph.read(listener), null, 'Listener value correct #2')
@@ -308,7 +308,7 @@ StartTest(t => {
 
         graph.write(var1, 1)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 2, 'Source value correct #3')
         t.isStrict(graph.read(listener), null, 'Listener value correct #2')
@@ -322,7 +322,7 @@ StartTest(t => {
         graph.write(sourceMode, 'proposed')
         graph.write(source, 14)
 
-        graph.propagate()
+        graph.commit()
 
         t.is(graph.read(source), 14, 'Source value correct #4')
         t.is(graph.read(listener), null, 'Listener value correct #4')
