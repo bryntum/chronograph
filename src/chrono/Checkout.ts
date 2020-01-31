@@ -68,6 +68,8 @@ class Checkout extends base {
 
     ongoing                 : Promise<any>      = Promise.resolve()
 
+    isInitialCommit         : boolean           = true
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -167,7 +169,8 @@ class Checkout extends base {
             copySetInto(newRev.selfDependent, prevRev.selfDependent)
 
             // some help for garbage collector
-            newRev.scope.clear()
+            // this clears the "entries" in the transaction commit result in the "finalizeCommitAsync"
+            // newRev.scope.clear()
             newRev.scope            = prevRev.scope
 
             // make sure the previous revision won't be used inconsistently
@@ -210,6 +213,11 @@ class Checkout extends base {
     }
 
 
+    isCommitted () : boolean {
+        return this.activeTransaction.isEmpty()
+    }
+
+
     branch () : this {
         const Constructor = this.constructor as CheckoutConstructor
 
@@ -226,6 +234,10 @@ class Checkout extends base {
         const nextRevision      = this.activeTransaction.commit(args)
 
         const result            = this.finalizeCommit(nextRevision)
+
+        this.isInitialCommit    = false
+
+        this.markAndSweep()
 
         // this.runningTransaction = null
 
@@ -263,8 +275,11 @@ class Checkout extends base {
 
             return this.finalizeCommitAsync(nextRevision)
         }).then(() => {
+            this.isInitialCommit        = false
+
+            this.markAndSweep()
             // this.runningTransaction = null
-            this.isCommitting       = false
+            this.isCommitting           = false
 
             return result
         })
@@ -311,8 +326,6 @@ class Checkout extends base {
 
             if (listener) listener.trigger(quarkEntry.getValue())
         }
-
-        this.markAndSweep()
 
         clearLazyProperty(this, 'followingRevision')
         this.$activeTransaction = undefined
