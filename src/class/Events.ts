@@ -1,8 +1,26 @@
-import { AnyConstructor, Base, Mixin, MixinAny } from "./BetterMixin.js"
+import { AnyConstructor, Base, Mixin } from "./BetterMixin.js"
+
+// //---------------------------------------------------------------------------------------------------------------------
+// export const ContextSync    = Symbol('ContextSync')
+// export const ContextAsync   = Symbol('ContextSync')
+//
+// export type Context         = typeof ContextSync | typeof ContextAsync
+//
+// export type Contexts<ResultT> = {
+//     [ContextSync]   : ResultT,
+//     [ContextAsync]  : Promise<ResultT>
+// }
 
 //---------------------------------------------------------------------------------------------------------------------
 class EventMeta<Payload> extends Array<(payload : Payload, event : Event<Payload>) => any> {
     Payload     : Payload
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+class Listener<Payload> extends Base {
+    listener    : (payload : Payload, event : Event<Payload>) => any = undefined
+    scope       : any   = undefined
 }
 
 
