@@ -2,7 +2,7 @@ import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
-import { ProgressNotificationEffect } from "./Effect.js"
+import { ProgressNotificationEffect, RejectEffect } from "./Effect.js"
 import { CalculatedValueGen, CalculatedValueGenConstructor, CalculatedValueSyncConstructor, Identifier, Variable, VariableC } from "./Identifier.js"
 import { TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
@@ -13,11 +13,14 @@ import { Transaction, TransactionCommitResult, YieldableValue } from "./Transact
 export type CommitArguments = {
 }
 
+
 export type CommitResult = {
+    rejectedWith        : RejectEffect<unknown> | null
 }
 
 
 export const CommitZero : CommitResult = {
+    rejectedWith        : null
 }
 
 
@@ -221,16 +224,22 @@ export class Checkout extends Base {
     }
 
 
+    reject<Reason> (reason? : Reason) {
+        this.activeTransaction.reject(RejectEffect.new({ reason }))
+
+        this.$activeTransaction = undefined
+    }
+
+
     commit (args? : CommitArguments) : CommitResult {
-        const nextRevision      = this.activeTransaction.commit(args)
+        const activeTransaction = this.activeTransaction
+        const nextRevision      = activeTransaction.commit(args)
 
         const result            = this.finalizeCommit(nextRevision)
 
         this.isInitialCommit    = false
 
-        this.markAndSweep()
-
-        // this.runningTransaction = null
+        if (!activeTransaction.rejectedWith) this.markAndSweep()
 
         return result
     }
@@ -259,8 +268,10 @@ export class Checkout extends Base {
 
         let result
 
+        const activeTransaction = this.activeTransaction
+
         return this.ongoing = this.ongoing.then(() => {
-            return this.activeTransaction.commitAsync(args)
+            return activeTransaction.commitAsync(args)
         }).then(nextRevision => {
             result          = this.finalizeCommit(nextRevision)
 
@@ -268,8 +279,8 @@ export class Checkout extends Base {
         }).then(() => {
             this.isInitialCommit        = false
 
-            this.markAndSweep()
-            // this.runningTransaction = null
+            if (!activeTransaction.rejectedWith) this.markAndSweep()
+
             this.isCommitting           = false
 
             return result
@@ -290,38 +301,41 @@ export class Checkout extends Base {
 
 
     finalizeCommit (transactionResult : TransactionCommitResult) : CommitResult {
-        const { revision, entries } = transactionResult
+        const { revision, entries, transaction } = transactionResult
 
         if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
 
-        // dereference all revisions
-        for (const [ revision, isReachable ] of this.eachReachableRevision()) {
-            if (isReachable) revision.reachableCount--
+        if (!transaction.rejectedWith) {
+            // dereference all revisions
+            for (const [ revision, isReachable ] of this.eachReachableRevision()) {
+                if (isReachable) revision.reachableCount--
 
-            revision.referenceCount--
+                revision.referenceCount--
+            }
+
+            // const previousRevision  = this.baseRevision
+
+            this.baseRevision       = this.topRevision = revision
+
+            // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
+            // might be already merged with previous
+            for (const [ identifier, quarkEntry ] of entries) {
+                quarkEntry.cleanup()
+
+                // ignore "shadowing" and lazy entries
+                if (quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
+
+                const listener  = this.listeners.get(identifier)
+
+                if (listener) listener.trigger(quarkEntry.getValue())
+            }
+
+            clearLazyProperty(this, 'followingRevision')
         }
 
-        // const previousRevision  = this.baseRevision
-
-        this.baseRevision       = this.topRevision = revision
-
-        // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
-        // might be already merged with previous
-        for (const [ identifier, quarkEntry ] of entries) {
-            quarkEntry.cleanup()
-
-            // ignore "shadowing" and lazy entries
-            if (quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
-
-            const listener  = this.listeners.get(identifier)
-
-            if (listener) listener.trigger(quarkEntry.getValue())
-        }
-
-        clearLazyProperty(this, 'followingRevision')
         this.$activeTransaction = undefined
 
-        return
+        return { rejectedWith : transaction.rejectedWith }
     }
 
 

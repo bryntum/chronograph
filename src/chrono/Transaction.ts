@@ -16,7 +16,7 @@ import {
     ProposedOrCurrentSymbol,
     ProposedOrPreviousValueOfSymbol,
     ProposedValueOfEffect,
-    ProposedValueOfSymbol,
+    ProposedValueOfSymbol, RejectEffect, RejectSymbol,
     TransactionSymbol,
     UnsafeProposedOrPreviousValueOfSymbol,
     WriteEffect,
@@ -50,7 +50,7 @@ const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type TransactionCommitResult = { revision : Revision, entries : Scope }
+export type TransactionCommitResult = { revision : Revision, entries : Scope, transaction : Transaction }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -64,6 +64,8 @@ export class Transaction extends Base {
     isClosed                : boolean               = false
 
     walkContext             : TransactionWalkDepth   = undefined
+
+    entries                 : Map<Identifier, Quark> = new Map()
 
     // // we use 2 different stacks, because they support various effects
     // stackSync               : LeveledQueue<Quark>  = new LeveledQueue()
@@ -94,11 +96,14 @@ export class Transaction extends Base {
 
     selfDependedMarked      : boolean               = false
 
+    rejectedWith            : RejectEffect<unknown> = undefined
+
 
     initialize (...args) {
         super.initialize(...args)
 
         this.walkContext    = TransactionWalkDepth.new({
+            visited         : this.entries,
             baseRevision    : this.baseRevision,
             pushTo          : this.stackGen
         })
@@ -123,11 +128,6 @@ export class Transaction extends Base {
         this.selfDependedMarked = true
 
         for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
-    }
-
-
-    get entries () : Map<Identifier, Quark> {
-        return this.walkContext.visited
     }
 
 
@@ -227,6 +227,8 @@ export class Transaction extends Base {
         return this.ongoing = entry.promise = this.ongoing.then(() => {
             return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
         }).then(() => {
+            if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
+
             // TODO review this exception
             if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
 
@@ -285,6 +287,8 @@ export class Transaction extends Base {
             const promise = this.ongoing = entry.promise = this.ongoing.then(() => {
                 return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
             }).then(() => {
+                if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
+
                 const value     = entry.getValue()
 
                 // TODO review this exception
@@ -524,7 +528,7 @@ export class Transaction extends Base {
         // for some reason need to cleanup the `walkContext` manually, otherwise the extra revisions hangs in memory
         this.walkContext            = undefined
 
-        return { revision : this.candidate, entries }
+        return { revision : this.candidate, entries, transaction : this }
     }
 
 
@@ -535,6 +539,19 @@ export class Transaction extends Base {
         // runGeneratorSyncWithEffect(this.onEffectSync, this.calculateTransitionsStackGen, [ this.onEffectSync, stack ], this)
 
         return this.postCommit()
+    }
+
+
+    reject (rejection : RejectEffect<unknown> = RejectEffect.new()) {
+        this.rejectedWith           = rejection
+
+        for (const [ identifier, quark ] of this.entries) {
+            quark.cleanup()
+            quark.clearOutgoing()
+        }
+
+        this.entries.clear()
+        this.walkContext            = undefined
     }
 
 
@@ -580,6 +597,13 @@ export class Transaction extends Base {
         } else {
             return latestEntry ? baseRevision.read(identifier) : undefined
         }
+    }
+
+
+    [RejectSymbol] (effect : RejectEffect<any>, activeEntry : Quark) : any {
+        this.reject(effect)
+
+        return BreakCurrentStackExecution
     }
 
 
@@ -876,7 +900,7 @@ export class Transaction extends Base {
 
         this.activeStack = stack
 
-        while (stack.length) {
+        while (stack.length && !this.rejectedWith) {
             if (enableProgressNotifications && !(counter++ % this.emitProgressNotificationsEveryCalculations)) {
                 const now               = Date.now()
                 const elapsed           = now - propagationStartDate
@@ -1013,7 +1037,7 @@ export class Transaction extends Base {
 
         this.activeStack = stack
 
-        while (stack.length) {
+        while (stack.length && !this.rejectedWith) {
             const entry             = stack[ stack.length - 1 ]
             const identifier        = entry.identifier
 

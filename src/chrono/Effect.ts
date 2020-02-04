@@ -24,16 +24,16 @@ export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurre
 //---------------------------------------------------------------------------------------------------------------------
 export const RejectSymbol    = Symbol('RejectSymbol')
 
-export class RejectEffect extends Effect {
+export class RejectEffect<Reason> extends Effect {
     handler         : symbol    = RejectSymbol
 
-    reason          : string
+    reason          : Reason
 
     @prototypeValue(false)
     pure            : boolean
 }
 
-export const Reject = (reason : string) : RejectEffect => RejectEffect.new({ reason })
+export const Reject = <Reason>(reason : Reason) : RejectEffect<Reason> => RejectEffect.new({ reason }) as RejectEffect<Reason>
 
 
 
