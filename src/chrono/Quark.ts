@@ -4,7 +4,7 @@ import { CalculationContext, Context, GenericCalculation } from "../primitives/C
 import { MAX_SMI, MIN_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 import { Revision, Scope } from "./Revision.js"
-import { YieldableValue } from "./Transaction.js"
+import { Transaction, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -281,7 +281,7 @@ class Quark extends base {
     // }
 
 
-    getProposedValue (transaction /*: TransactionI*/) : any {
+    getProposedValue (transaction : Transaction) : any {
         if (this.needToBuildProposedValue) {
             this.needToBuildProposedValue   = false
 
@@ -347,7 +347,7 @@ class Quark extends base {
     }
 
 
-    outgoingInTheFutureTransactionCb (transaction /*: TransactionI*/, forEach : (quark : Quark) => any) {
+    outgoingInTheFutureTransactionCb (transaction : Transaction, forEach : (quark : Quark) => any) {
         let current : Quark = this
 
         while (current) {

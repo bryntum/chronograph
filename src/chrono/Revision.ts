@@ -1,4 +1,5 @@
 import { Base } from "../class/BetterMixin.js"
+import { Checkout } from "./Checkout.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { Quark, TombStone } from "./Quark.js"
 import { Transaction } from "./Transaction.js"
@@ -60,29 +61,29 @@ export class Revision extends Base {
     }
 
 
-    readIfExists (identifier : Identifier) : any {
+    readIfExists (identifier : Identifier, graph : Checkout) : any {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         if (!latestEntry) return undefined
 
         const value         = latestEntry.getValue()
 
-        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
+        return value !== TombStone ? (value !== undefined ? value : this.read(identifier, graph)) : undefined
     }
 
 
-    readIfExistsAsync<T> (identifier : Identifier<T>) : Promise<T> {
+    readIfExistsAsync<T> (identifier : Identifier<T>, graph : Checkout) : Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         if (!latestEntry) return undefined
 
         const value         = latestEntry.getValue()
 
-        return value !== TombStone ? (value !== undefined ? value : this.readAsync(identifier)) : undefined
+        return value !== TombStone ? (value !== undefined ? value : this.readAsync(identifier, graph)) : undefined
     }
 
 
-    get<T> (identifier : Identifier<T>) : T | Promise<T> {
+    get<T> (identifier : Identifier<T>, graph : Checkout) : T | Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -96,12 +97,12 @@ export class Revision extends Base {
         if (value !== undefined) {
             return value
         } else {
-            return this.calculateLazyQuarkEntry(latestEntry)
+            return this.calculateLazyQuarkEntry(latestEntry, graph)
         }
     }
 
 
-    read<T> (identifier : Identifier<T>) : T {
+    read<T> (identifier : Identifier<T>, graph : Checkout) : T {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -115,12 +116,12 @@ export class Revision extends Base {
         if (value !== undefined) {
             return value
         } else {
-            return this.calculateLazyQuarkEntry(latestEntry)
+            return this.calculateLazyQuarkEntry(latestEntry, graph)
         }
     }
 
 
-    readAsync<T> (identifier : Identifier<T>) : Promise<T> {
+    readAsync<T> (identifier : Identifier<T>, graph : Checkout) : Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -134,15 +135,15 @@ export class Revision extends Base {
         if (value !== undefined) {
             return value
         } else {
-            return this.calculateLazyQuarkEntryAsync(latestEntry)
+            return this.calculateLazyQuarkEntryAsync(latestEntry, graph)
         }
     }
 
 
-    calculateLazyQuarkEntry (entry : Quark) : any {
+    calculateLazyQuarkEntry (entry : Quark, graph : Checkout) : any {
         // if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
 
-        const transaction   = Transaction.new({ baseRevision : this, candidate : this })
+        const transaction   = Transaction.new({ baseRevision : this, candidate : this, graph })
 
         transaction.entries.set(entry.identifier, entry)
         transaction.stackGen.push(entry)
@@ -154,8 +155,8 @@ export class Revision extends Base {
     }
 
 
-    async calculateLazyQuarkEntryAsync (entry : Quark) : Promise<any> {
-        const transaction   = Transaction.new({ baseRevision : this, candidate : this })
+    async calculateLazyQuarkEntryAsync (entry : Quark, graph : Checkout) : Promise<any> {
+        const transaction   = Transaction.new({ baseRevision : this, candidate : this, graph })
 
         transaction.entries.set(entry.identifier, entry)
         transaction.stackGen.push(entry)

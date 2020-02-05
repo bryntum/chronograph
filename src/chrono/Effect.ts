@@ -2,6 +2,9 @@ import { Base } from "../class/BetterMixin.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 
+//---------------------------------------------------------------------------------------------------------------------
+export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Effect extends Base {

@@ -68,7 +68,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
             const baseRevision  = transaction.baseRevision
 
-            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
+            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this, transaction.graph)
         }
 
 
@@ -81,7 +81,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
             const baseRevision  = transaction.baseRevision
 
-            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
+            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this, transaction.graph)
         }
 
 

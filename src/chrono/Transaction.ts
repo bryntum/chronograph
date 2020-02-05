@@ -5,25 +5,7 @@ import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculation
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
 import { Checkout, CommitArguments } from "./Checkout.js"
-import {
-    Effect,
-    HasProposedValueSymbol,
-    OwnIdentifierSymbol,
-    OwnQuarkSymbol,
-    PreviousValueOfEffect,
-    PreviousValueOfSymbol,
-    ProposedArgumentsOfSymbol,
-    ProposedOrCurrentSymbol,
-    ProposedOrPreviousValueOfSymbol,
-    ProposedValueOfEffect,
-    ProposedValueOfSymbol, RejectEffect, RejectSymbol,
-    TransactionSymbol,
-    UnsafeProposedOrPreviousValueOfSymbol,
-    WriteEffect,
-    WriteSeveralEffect,
-    WriteSeveralSymbol,
-    WriteSymbol
-} from "./Effect.js"
+import { BreakCurrentStackExecution, Effect, RejectEffect } from "./Effect.js"
 import { Identifier, Levels, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { Revision, Scope } from "./Revision.js"
@@ -45,8 +27,6 @@ export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Pro
 
 export const EdgeTypeNormal    = EdgeType.Normal
 export const EdgeTypePast      = EdgeType.Past
-
-const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -157,38 +137,18 @@ export class Transaction extends Base {
     }
 
 
-    async yieldAsync (effect : Effect) : Promise<any> {
+    yieldAsync (effect : Effect) : Promise<any> {
         if (effect instanceof Promise) return effect
             // throw new Error("Effect resolved to promise in the synchronous context, check that you marked the asynchronous calculations accordingly")
 
-        return this[ effect.handler ](effect, this.getActiveEntry())
+        return this.graph[ effect.handler ](effect, this)
     }
 
 
     // see the comment for the `onEffectSync`
     yieldSync (effect : Effect) : any {
-        return this[ effect.handler ](effect, this.getActiveEntry())
+        return this.graph[ effect.handler ](effect, this)
     }
-
-
-    // readOptmistically <T> (identifier : Identifier<T>) : T {
-    //     // see the comment for the `onEffectSync`
-    //     if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
-    //
-    //     //----------------------
-    //     const entry         = this.addEdge(identifier, this.getActiveEntry(), EdgeTypeNormal)
-    //
-    //     if (entry.hasValue()) return entry.getValue()
-    //
-    //     //----------------------
-    //     this.stackSync.push(entry)
-    //
-    //     this.calculateTransitionsStackSync(this.onEffectSync, this.stackSync)
-    //
-    //     if (!entry.hasValue()) throw new Error('Cycle during synchronous computation')
-    //
-    //     return entry.getValue()
-    // }
 
 
     // this seems to be an optimistic version
@@ -211,7 +171,7 @@ export class Transaction extends Base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.readAsync(identifier)
+            if (!entry) return this.baseRevision.readAsync(identifier, this.graph)
         }
 
         if (entry.hasValue()) return entry.getValue()
@@ -256,7 +216,7 @@ export class Transaction extends Base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.get(identifier)
+            if (!entry) return this.baseRevision.get(identifier, this.graph)
         }
 
         const value1        = entry.getValue()
@@ -343,7 +303,7 @@ export class Transaction extends Base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.read(identifier)
+            if (!entry) return this.baseRevision.read(identifier, this.graph)
         }
 
         const value1        = entry.getValue()
@@ -378,7 +338,7 @@ export class Transaction extends Base {
         if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
             return dirtyQuark.proposedValue
         } else
-            return this.baseRevision.readIfExists(identifier)
+            return this.baseRevision.readIfExists(identifier, this.graph)
     }
 
 
@@ -388,7 +348,7 @@ export class Transaction extends Base {
         if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
             return dirtyQuark.proposedValue
         } else
-            return this.baseRevision.readIfExistsAsync(identifier)
+            return this.baseRevision.readIfExistsAsync(identifier, this.graph)
     }
 
 
@@ -545,7 +505,7 @@ export class Transaction extends Base {
     reject (rejection : RejectEffect<unknown> = RejectEffect.new()) {
         this.rejectedWith           = rejection
 
-        for (const [ identifier, quark ] of this.entries) {
+        for (const quark of this.entries.values()) {
             quark.cleanup()
             quark.clearOutgoing()
         }
@@ -578,152 +538,6 @@ export class Transaction extends Base {
         // await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
         //
         // return this.postCommit()
-    }
-
-
-    [ProposedOrCurrentSymbol] (effect : Effect, activeEntry : Quark) : any {
-        activeEntry.usedProposedOrCurrent = true
-
-        const proposedValue     = activeEntry.getProposedValue(this)
-
-        if (proposedValue !== undefined) return proposedValue
-
-        const baseRevision      = this.baseRevision
-        const identifier        = activeEntry.identifier
-        const latestEntry       = baseRevision.getLatestEntryFor(identifier)
-
-        if (latestEntry === activeEntry) {
-            return baseRevision.previous ? baseRevision.previous.read(identifier) : undefined
-        } else {
-            return latestEntry ? baseRevision.read(identifier) : undefined
-        }
-    }
-
-
-    [RejectSymbol] (effect : RejectEffect<any>, activeEntry : Quark) : any {
-        this.reject(effect)
-
-        return BreakCurrentStackExecution
-    }
-
-
-    [TransactionSymbol] (effect : Effect, activeEntry : Quark) : any {
-        return this
-    }
-
-
-    [OwnQuarkSymbol] (effect : Effect, activeEntry : Quark) : any {
-        return activeEntry
-    }
-
-
-    [OwnIdentifierSymbol] (effect : Effect, activeEntry : Quark) : any {
-        return activeEntry.identifier
-    }
-
-
-    [WriteSymbol] (effect : WriteEffect, activeEntry : Quark) : undefined | typeof BreakCurrentStackExecution {
-        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
-
-        const writeToHigherLevel    = effect.identifier.level > activeEntry.identifier.level
-
-        if (!writeToHigherLevel) this.walkContext.startNewEpoch()
-
-        this.write(effect.identifier, ...effect.proposedArgs)
-
-        // // this.writes.push(effect)
-        //
-        // // const writeTo   = effect.identifier
-        // //
-        // // writeTo.write.call(writeTo.context || writeTo, writeTo, this, null, ...effect.proposedArgs)
-        //
-        // this.onNewWrite()
-        return writeToHigherLevel ? undefined : BreakCurrentStackExecution
-    }
-
-
-    [WriteSeveralSymbol] (effect : WriteSeveralEffect, activeEntry : Quark) : undefined | typeof BreakCurrentStackExecution {
-        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
-
-        let writeToHigherLevel    = true
-
-        // effect.writes.forEach(writeInfo => {
-        effect.writes.forEach(writeInfo => {
-            if (writeInfo.identifier.level <= activeEntry.identifier.level && writeToHigherLevel) {
-                this.walkContext.startNewEpoch()
-
-                writeToHigherLevel = false
-            }
-
-            this.write(writeInfo.identifier, ...writeInfo.proposedArgs)
-        })
-
-            // const identifier    = writeInfo.identifier
-            //
-            // identifier.write.call(identifier.context || identifier, identifier, this, null, ...writeInfo.proposedArgs)
-        // })
-
-        // this.onNewWrite()
-
-        return writeToHigherLevel ? undefined : BreakCurrentStackExecution
-    }
-
-
-    [PreviousValueOfSymbol] (effect : PreviousValueOfEffect, activeEntry : Quark) : any {
-        const source    = effect.identifier
-
-        this.addEdge(source, activeEntry, EdgeTypePast)
-
-        return this.baseRevision.readIfExists(source)
-    }
-
-
-    [ProposedValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
-        const source    = effect.identifier
-
-        this.addEdge(source, activeEntry, EdgeTypePast)
-
-        const quark     = this.entries.get(source)
-
-        const proposedValue = quark && !quark.isShadow() ? quark.getProposedValue(this) : undefined
-
-        return proposedValue
-    }
-
-
-    [HasProposedValueSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
-        const source    = effect.identifier
-
-        this.addEdge(source, activeEntry, EdgeTypePast)
-
-        const quark     = this.entries.get(source)
-
-        return quark ? quark.hasProposedValue() : false
-    }
-
-
-    [ProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
-        const source    = effect.identifier
-
-        this.addEdge(source, activeEntry, EdgeTypePast)
-
-        return this.readProposedOrPrevious(source)
-    }
-
-
-    [UnsafeProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
-        return this.readProposedOrPrevious(effect.identifier)
-    }
-
-
-    [ProposedArgumentsOfSymbol] (effect : ProposedValueOfEffect, activeEntry : Quark) : any {
-        const source    = effect.identifier
-
-        this.addEdge(source, activeEntry, EdgeTypePast)
-
-        const quark     = this.entries.get(source)
-
-        return quark && !quark.isShadow() ? quark.proposedArguments : undefined
     }
 
 

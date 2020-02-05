@@ -2,11 +2,20 @@ import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
-import { ProgressNotificationEffect, RejectEffect } from "./Effect.js"
+import {
+    BreakCurrentStackExecution,
+    Effect, HasProposedValueSymbol, OwnIdentifierSymbol,
+    OwnQuarkSymbol, PreviousValueOfEffect, PreviousValueOfSymbol,
+    ProgressNotificationEffect, ProposedArgumentsOfSymbol,
+    ProposedOrCurrentSymbol, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol,
+    RejectEffect,
+    RejectSymbol,
+    TransactionSymbol, UnsafeProposedOrPreviousValueOfSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol
+} from "./Effect.js"
 import { CalculatedValueGen, CalculatedValueGenConstructor, CalculatedValueSyncConstructor, Identifier, Variable, VariableC } from "./Identifier.js"
-import { TombStone } from "./Quark.js"
+import { Quark, TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
-import { Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
+import { EdgeTypePast, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -413,7 +422,7 @@ export class Checkout extends Base {
     // Synchronous read can not calculate lazy asynchronous identifiers and will throw exception
     // Lazy identifiers supposed to be "total" (or accept repeating observes?)
     readPrevious<T> (identifier : Identifier<T>) : T {
-        return this.baseRevision.read(identifier)
+        return this.baseRevision.read(identifier, this)
     }
 
 
@@ -421,7 +430,7 @@ export class Checkout extends Base {
     // Asynchronous read can calculate both synchornous and asynchronous lazy identifiers.
     // Lazy identifiers supposed to be "total" (or accept repeating observes?)
     readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
-        return this.baseRevision.readAsync(identifier)
+        return this.baseRevision.readAsync(identifier, this)
     }
 
 
@@ -543,6 +552,163 @@ export class Checkout extends Base {
 
 
     onPropagationProgressNotification (notification : ProgressNotificationEffect) {
+    }
+
+
+    [ProposedOrCurrentSymbol] (effect : Effect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        activeEntry.usedProposedOrCurrent = true
+
+        const proposedValue     = activeEntry.getProposedValue(transaction)
+
+        if (proposedValue !== undefined) return proposedValue
+
+        const baseRevision      = transaction.baseRevision
+        const identifier        = activeEntry.identifier
+        const latestEntry       = baseRevision.getLatestEntryFor(identifier)
+
+        if (latestEntry === activeEntry) {
+            return baseRevision.previous ? baseRevision.previous.read(identifier, this) : undefined
+        } else {
+            return latestEntry ? baseRevision.read(identifier, this) : undefined
+        }
+    }
+
+
+    [RejectSymbol] (effect : RejectEffect<any>, transaction : Transaction) : any {
+        transaction.reject(effect)
+
+        return BreakCurrentStackExecution
+    }
+
+
+    [TransactionSymbol] (effect : Effect, transaction : Transaction) : any {
+        return transaction
+    }
+
+
+    [OwnQuarkSymbol] (effect : Effect, transaction : Transaction) : any {
+        return transaction.getActiveEntry()
+    }
+
+
+    [OwnIdentifierSymbol] (effect : Effect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        return activeEntry.identifier
+    }
+
+
+    [WriteSymbol] (effect : WriteEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+
+        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+
+        const writeToHigherLevel    = effect.identifier.level > activeEntry.identifier.level
+
+        if (!writeToHigherLevel) transaction.walkContext.startNewEpoch()
+
+        transaction.write(effect.identifier, ...effect.proposedArgs)
+
+        // // transaction.writes.push(effect)
+        //
+        // // const writeTo   = effect.identifier
+        // //
+        // // writeTo.write.call(writeTo.context || writeTo, writeTo, transaction, null, ...effect.proposedArgs)
+        //
+        // transaction.onNewWrite()
+        return writeToHigherLevel ? undefined : BreakCurrentStackExecution
+    }
+
+
+    [WriteSeveralSymbol] (effect : WriteSeveralEffect, transaction : Transaction) : any {
+
+        const activeEntry   = transaction.getActiveEntry()
+        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+
+        let writeToHigherLevel    = true
+
+        // effect.writes.forEach(writeInfo => {
+        effect.writes.forEach(writeInfo => {
+            if (writeInfo.identifier.level <= activeEntry.identifier.level && writeToHigherLevel) {
+                transaction.walkContext.startNewEpoch()
+
+                writeToHigherLevel = false
+            }
+
+            transaction.write(writeInfo.identifier, ...writeInfo.proposedArgs)
+        })
+
+            // const identifier    = writeInfo.identifier
+            //
+            // identifier.write.call(identifier.context || identifier, identifier, transaction, null, ...writeInfo.proposedArgs)
+        // })
+
+        // transaction.onNewWrite()
+
+        return writeToHigherLevel ? undefined : BreakCurrentStackExecution
+    }
+
+
+    [PreviousValueOfSymbol] (effect : PreviousValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        return transaction.baseRevision.readIfExists(source, this)
+    }
+
+
+    [ProposedValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark     = transaction.entries.get(source)
+
+        const proposedValue = quark && !quark.isShadow() ? quark.getProposedValue(transaction) : undefined
+
+        return proposedValue
+    }
+
+
+    [HasProposedValueSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark     = transaction.entries.get(source)
+
+        return quark ? quark.hasProposedValue() : false
+    }
+
+
+    [ProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        return transaction.readProposedOrPrevious(source)
+    }
+
+
+    [UnsafeProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        return transaction.readProposedOrPrevious(effect.identifier)
+    }
+
+
+    [ProposedArgumentsOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark         = transaction.entries.get(source)
+
+        return quark && !quark.isShadow() ? quark.proposedArguments : undefined
     }
 }
 
