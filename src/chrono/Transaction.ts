@@ -666,15 +666,12 @@ export class Transaction extends Base {
 
                 walkContext.startFrom([ requestedEntry.identifier ])
 
-                if (!cycle) debugger
+                const exception = new Error("Computation cycle: " + cycle)
 
-                // debugger
+                //@ts-ignore
+                exception.cycle = cycle
 
-                // console.log(cycle)
-
-                // debugger
-                throw new Error("Computation cycle: " + cycle)
-                // yield GraphCycleDetectedEffect.new()
+                throw exception
             }
         }
     }
