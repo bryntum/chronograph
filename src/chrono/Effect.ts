@@ -170,6 +170,18 @@ export const UnsafeProposedOrPreviousValueOf = (identifier : Identifier) : Unsaf
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const UnsafePreviousValueOfSymbol    = Symbol('UnsafePreviousValueOfSymbol')
+
+export class UnsafePreviousValueOfEffect extends Effect {
+    handler         : symbol    = UnsafePreviousValueOfSymbol
+
+    identifier      : Identifier
+}
+
+export const UnsafePreviousValueOf = (identifier : Identifier) : UnsafePreviousValueOfEffect => UnsafePreviousValueOfEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export type ProgressNotificationEffect = {
     total           : number
 

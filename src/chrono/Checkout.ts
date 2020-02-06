@@ -4,13 +4,27 @@ import { CalculationContext, CalculationFunction, Context } from "../primitives/
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import {
     BreakCurrentStackExecution,
-    Effect, HasProposedValueSymbol, OwnIdentifierSymbol,
-    OwnQuarkSymbol, PreviousValueOfEffect, PreviousValueOfSymbol,
-    ProgressNotificationEffect, ProposedArgumentsOfSymbol,
-    ProposedOrCurrentSymbol, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol,
+    Effect,
+    HasProposedValueSymbol,
+    OwnIdentifierSymbol,
+    OwnQuarkSymbol,
+    PreviousValueOfEffect,
+    PreviousValueOfSymbol,
+    ProgressNotificationEffect,
+    ProposedArgumentsOfSymbol,
+    ProposedOrCurrentSymbol,
+    ProposedOrPreviousValueOfSymbol,
+    ProposedValueOfEffect,
+    ProposedValueOfSymbol,
     RejectEffect,
     RejectSymbol,
-    TransactionSymbol, UnsafeProposedOrPreviousValueOfSymbol, WriteEffect, WriteSeveralEffect, WriteSeveralSymbol, WriteSymbol
+    TransactionSymbol,
+    UnsafePreviousValueOfSymbol,
+    UnsafeProposedOrPreviousValueOfSymbol,
+    WriteEffect,
+    WriteSeveralEffect,
+    WriteSeveralSymbol,
+    WriteSymbol
 } from "./Effect.js"
 import { CalculatedValueGen, CalculatedValueGenConstructor, CalculatedValueSyncConstructor, Identifier, Variable, VariableC } from "./Identifier.js"
 import { Quark, TombStone } from "./Quark.js"
@@ -697,6 +711,11 @@ export class Checkout extends Base {
 
     [UnsafeProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
         return transaction.readProposedOrPrevious(effect.identifier)
+    }
+
+
+    [UnsafePreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        return transaction.baseRevision.readIfExistsAsync(effect.identifier, transaction.graph)
     }
 
 
