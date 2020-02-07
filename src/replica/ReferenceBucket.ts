@@ -17,6 +17,8 @@ class ReferenceBucketField extends base {
     persistent          : boolean   = false
 
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceBucketIdentifier
+    // see comment for `ReferenceBucketIdentifier` declaration
+    // identifierCls       : FieldIdentifierConstructor    = ReferenceBucketIdentifier
 }){}
 
 
@@ -56,6 +58,9 @@ class ReferenceBucketQuark extends base {
 export class ReferenceBucketIdentifier extends Mixin(
     [ FieldIdentifier ],
     (base : AnyConstructor<FieldIdentifier, typeof FieldIdentifier>) => {
+    // Base class mismatch - should allow subclasses for base class requirements
+    // [ FieldIdentifier, CalculatedValueSync ],
+    // (base : AnyConstructor<FieldIdentifier & CalculatedValueSync, typeof FieldIdentifier & typeof CalculatedValueSync>) => {
 
     class ReferenceBucketIdentifier extends base {
         @prototypeValue(Levels.DependsOnlyOnDependsOnlyOnUserInput)
@@ -118,3 +123,4 @@ export class ReferenceBucketIdentifier extends Mixin(
 
 //---------------------------------------------------------------------------------------------------------------------
 export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier.mix(FieldIdentifier.mix(CalculatedValueSync)) {}
+// export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier.derive(CalculatedValueSync) {}
