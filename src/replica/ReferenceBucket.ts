@@ -17,6 +17,8 @@ class ReferenceBucketField extends base {
     persistent          : boolean   = false
 
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceBucketIdentifier
+    // see comment for `ReferenceBucketIdentifier` declaration
+    // identifierCls       : FieldIdentifierConstructor    = ReferenceBucketIdentifier
 }){}
 
 
@@ -25,19 +27,29 @@ export const bucket : FieldDecorator<typeof ReferenceBucketField> =
     (fieldConfig?, fieldCls = ReferenceBucketField) => generic_field(fieldConfig, fieldCls)
 
 
+export enum BucketMutationType {
+    'Add'       = 'Add',
+    'Remove'    = 'Remove'
+}
+
+export type BucketMutation  = {
+    type        : BucketMutationType,
+    entity      : Entity
+}
+
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketQuark extends Mixin(
     [ Quark ],
     (base : ClassUnion<typeof Quark>) =>
 
 class ReferenceBucketQuark extends base {
-    oldRefs             : Set<Entity>   = undefined
-    newRefs             : Set<Entity>   = undefined
+    mutations           : BucketMutation[]  = []
+
     previousValue       : Set<Entity>   = undefined
 
 
     hasProposedValueInner () : boolean {
-        return Boolean(this.oldRefs || this.newRefs)
+        return this.mutations.length > 0
     }
 }){}
 
@@ -46,6 +58,9 @@ class ReferenceBucketQuark extends base {
 export class ReferenceBucketIdentifier extends Mixin(
     [ FieldIdentifier ],
     (base : AnyConstructor<FieldIdentifier, typeof FieldIdentifier>) => {
+    // Base class mismatch - should allow subclasses for base class requirements
+    // [ FieldIdentifier, CalculatedValueSync ],
+    // (base : AnyConstructor<FieldIdentifier & CalculatedValueSync, typeof FieldIdentifier & typeof CalculatedValueSync>) => {
 
     class ReferenceBucketIdentifier extends base {
         @prototypeValue(Levels.DependsOnlyOnDependsOnlyOnUserInput)
@@ -62,26 +77,22 @@ export class ReferenceBucketIdentifier extends Mixin(
         addToBucket (transaction : Transaction, entity : Entity) {
             const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
-            if (!quark.newRefs) quark.newRefs = new Set()
-
-            quark.newRefs.add(entity)
+            quark.mutations.push({ type : BucketMutationType.Add, entity })
 
             const baseRevision  = transaction.baseRevision
 
-            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
+            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this, transaction.graph)
         }
 
 
         removeFromBucket (transaction : Transaction, entity : Entity) {
             const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
-            if (!quark.oldRefs) quark.oldRefs = new Set()
-
-            quark.oldRefs.add(entity)
+            quark.mutations.push({ type : BucketMutationType.Remove, entity })
 
             const baseRevision  = transaction.baseRevision
 
-            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this)
+            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this, transaction.graph)
         }
 
 
@@ -89,10 +100,16 @@ export class ReferenceBucketIdentifier extends Mixin(
             const quark                         = quarkArg as ReferenceBucketQuark
             const newValue : Set<Entity>        = new Set(quark.previousValue)
 
-            // need to remove the old references first and then add new - to allow re-adding just removed reference
-            if (quark.oldRefs) quark.oldRefs.forEach(entity => newValue.delete(entity))
+            for (let i = 0; i < quark.mutations.length; i++) {
+                const { type, entity } = quark.mutations[ i ]
 
-            if (quark.newRefs) quark.newRefs.forEach(entity => newValue.add(entity))
+                if (type === BucketMutationType.Remove) {
+                    newValue.delete(entity)
+                }
+                else if (type === BucketMutationType.Add) {
+                    newValue.add(entity)
+                }
+            }
 
             return newValue
         }
@@ -106,3 +123,4 @@ export class ReferenceBucketIdentifier extends Mixin(
 
 //---------------------------------------------------------------------------------------------------------------------
 export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier.mix(FieldIdentifier.mix(CalculatedValueSync)) {}
+// export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier.derive(CalculatedValueSync) {}

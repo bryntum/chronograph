@@ -185,6 +185,18 @@ SomeMixin123_3.new
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export class SomeMixin123_4 extends SomeMixin3.derive(Base) {
+    method123_4 () {
+        this.prop3
+        // this.zxc
+    }
+}
+
+SomeMixin123_4.s3
+SomeMixin123_4.new
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export class M1 extends Mixin(
     [],
     (base : AnyConstructor) =>

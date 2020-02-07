@@ -2,6 +2,9 @@ import { Base } from "../class/BetterMixin.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 
+//---------------------------------------------------------------------------------------------------------------------
+export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Effect extends Base {
@@ -24,16 +27,16 @@ export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurre
 //---------------------------------------------------------------------------------------------------------------------
 export const RejectSymbol    = Symbol('RejectSymbol')
 
-export class RejectEffect extends Effect {
+export class RejectEffect<Reason> extends Effect {
     handler         : symbol    = RejectSymbol
 
-    reason          : string
+    reason          : Reason
 
     @prototypeValue(false)
     pure            : boolean
 }
 
-export const Reject = (reason : string) : RejectEffect => RejectEffect.new({ reason })
+export const Reject = <Reason>(reason : Reason) : RejectEffect<Reason> => RejectEffect.new({ reason }) as RejectEffect<Reason>
 
 
 
@@ -164,6 +167,18 @@ export class UnsafeProposedOrPreviousValueOfEffect extends Effect {
 }
 
 export const UnsafeProposedOrPreviousValueOf = (identifier : Identifier) : UnsafeProposedOrPreviousValueOfEffect => UnsafeProposedOrPreviousValueOfEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const UnsafePreviousValueOfSymbol    = Symbol('UnsafePreviousValueOfSymbol')
+
+export class UnsafePreviousValueOfEffect extends Effect {
+    handler         : symbol    = UnsafePreviousValueOfSymbol
+
+    identifier      : Identifier
+}
+
+export const UnsafePreviousValueOf = (identifier : Identifier) : UnsafePreviousValueOfEffect => UnsafePreviousValueOfEffect.new({ identifier })
 
 
 //---------------------------------------------------------------------------------------------------------------------

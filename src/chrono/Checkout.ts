@@ -2,22 +2,48 @@ import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
-import { ProgressNotificationEffect } from "./Effect.js"
+import {
+    BreakCurrentStackExecution,
+    Effect,
+    HasProposedValueSymbol,
+    OwnIdentifierSymbol,
+    OwnQuarkSymbol,
+    PreviousValueOfEffect,
+    PreviousValueOfSymbol,
+    ProgressNotificationEffect,
+    ProposedArgumentsOfSymbol,
+    ProposedOrCurrentSymbol,
+    ProposedOrPreviousValueOfSymbol,
+    ProposedValueOfEffect,
+    ProposedValueOfSymbol,
+    RejectEffect,
+    RejectSymbol,
+    TransactionSymbol,
+    UnsafePreviousValueOfSymbol,
+    UnsafeProposedOrPreviousValueOfSymbol,
+    WriteEffect,
+    WriteSeveralEffect,
+    WriteSeveralSymbol,
+    WriteSymbol
+} from "./Effect.js"
 import { CalculatedValueGen, CalculatedValueGenConstructor, CalculatedValueSyncConstructor, Identifier, Variable, VariableC } from "./Identifier.js"
-import { TombStone } from "./Quark.js"
+import { Quark, TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
-import { Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
+import { EdgeTypePast, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export type CommitArguments = {
 }
 
+
 export type CommitResult = {
+    rejectedWith        : RejectEffect<unknown> | null
 }
 
 
 export const CommitZero : CommitResult = {
+    rejectedWith        : null
 }
 
 
@@ -221,16 +247,22 @@ export class Checkout extends Base {
     }
 
 
+    reject<Reason> (reason? : Reason) {
+        this.activeTransaction.reject(RejectEffect.new({ reason }))
+
+        this.$activeTransaction = undefined
+    }
+
+
     commit (args? : CommitArguments) : CommitResult {
-        const nextRevision      = this.activeTransaction.commit(args)
+        const activeTransaction = this.activeTransaction
+        const nextRevision      = activeTransaction.commit(args)
 
         const result            = this.finalizeCommit(nextRevision)
 
         this.isInitialCommit    = false
 
-        this.markAndSweep()
-
-        // this.runningTransaction = null
+        if (!activeTransaction.rejectedWith) this.markAndSweep()
 
         return result
     }
@@ -259,8 +291,10 @@ export class Checkout extends Base {
 
         let result
 
+        const activeTransaction = this.activeTransaction
+
         return this.ongoing = this.ongoing.then(() => {
-            return this.activeTransaction.commitAsync(args)
+            return activeTransaction.commitAsync(args)
         }).then(nextRevision => {
             result          = this.finalizeCommit(nextRevision)
 
@@ -268,8 +302,8 @@ export class Checkout extends Base {
         }).then(() => {
             this.isInitialCommit        = false
 
-            this.markAndSweep()
-            // this.runningTransaction = null
+            if (!activeTransaction.rejectedWith) this.markAndSweep()
+
             this.isCommitting           = false
 
             return result
@@ -290,38 +324,41 @@ export class Checkout extends Base {
 
 
     finalizeCommit (transactionResult : TransactionCommitResult) : CommitResult {
-        const { revision, entries } = transactionResult
+        const { revision, entries, transaction } = transactionResult
 
         if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
 
-        // dereference all revisions
-        for (const [ revision, isReachable ] of this.eachReachableRevision()) {
-            if (isReachable) revision.reachableCount--
+        if (!transaction.rejectedWith) {
+            // dereference all revisions
+            for (const [ revision, isReachable ] of this.eachReachableRevision()) {
+                if (isReachable) revision.reachableCount--
 
-            revision.referenceCount--
+                revision.referenceCount--
+            }
+
+            // const previousRevision  = this.baseRevision
+
+            this.baseRevision       = this.topRevision = revision
+
+            // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
+            // might be already merged with previous
+            for (const [ identifier, quarkEntry ] of entries) {
+                quarkEntry.cleanup()
+
+                // ignore "shadowing" and lazy entries
+                if (quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
+
+                const listener  = this.listeners.get(identifier)
+
+                if (listener) listener.trigger(quarkEntry.getValue())
+            }
+
+            clearLazyProperty(this, 'followingRevision')
         }
 
-        // const previousRevision  = this.baseRevision
-
-        this.baseRevision       = this.topRevision = revision
-
-        // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
-        // might be already merged with previous
-        for (const [ identifier, quarkEntry ] of entries) {
-            quarkEntry.cleanup()
-
-            // ignore "shadowing" and lazy entries
-            if (quarkEntry.isShadow() || !quarkEntry.hasValue()) continue
-
-            const listener  = this.listeners.get(identifier)
-
-            if (listener) listener.trigger(quarkEntry.getValue())
-        }
-
-        clearLazyProperty(this, 'followingRevision')
         this.$activeTransaction = undefined
 
-        return
+        return { rejectedWith : transaction.rejectedWith }
     }
 
 
@@ -399,7 +436,7 @@ export class Checkout extends Base {
     // Synchronous read can not calculate lazy asynchronous identifiers and will throw exception
     // Lazy identifiers supposed to be "total" (or accept repeating observes?)
     readPrevious<T> (identifier : Identifier<T>) : T {
-        return this.baseRevision.read(identifier)
+        return this.baseRevision.read(identifier, this)
     }
 
 
@@ -407,7 +444,7 @@ export class Checkout extends Base {
     // Asynchronous read can calculate both synchornous and asynchronous lazy identifiers.
     // Lazy identifiers supposed to be "total" (or accept repeating observes?)
     readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
-        return this.baseRevision.readAsync(identifier)
+        return this.baseRevision.readAsync(identifier, this)
     }
 
 
@@ -529,6 +566,168 @@ export class Checkout extends Base {
 
 
     onPropagationProgressNotification (notification : ProgressNotificationEffect) {
+    }
+
+
+    [ProposedOrCurrentSymbol] (effect : Effect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        activeEntry.usedProposedOrCurrent = true
+
+        const proposedValue     = activeEntry.getProposedValue(transaction)
+
+        if (proposedValue !== undefined) return proposedValue
+
+        const baseRevision      = transaction.baseRevision
+        const identifier        = activeEntry.identifier
+        const latestEntry       = baseRevision.getLatestEntryFor(identifier)
+
+        if (latestEntry === activeEntry) {
+            return baseRevision.previous ? baseRevision.previous.read(identifier, this) : undefined
+        } else {
+            return latestEntry ? baseRevision.read(identifier, this) : undefined
+        }
+    }
+
+
+    [RejectSymbol] (effect : RejectEffect<any>, transaction : Transaction) : any {
+        transaction.reject(effect)
+
+        return BreakCurrentStackExecution
+    }
+
+
+    [TransactionSymbol] (effect : Effect, transaction : Transaction) : any {
+        return transaction
+    }
+
+
+    [OwnQuarkSymbol] (effect : Effect, transaction : Transaction) : any {
+        return transaction.getActiveEntry()
+    }
+
+
+    [OwnIdentifierSymbol] (effect : Effect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        return activeEntry.identifier
+    }
+
+
+    [WriteSymbol] (effect : WriteEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+
+        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+
+        const writeToHigherLevel    = effect.identifier.level > activeEntry.identifier.level
+
+        if (!writeToHigherLevel) transaction.walkContext.startNewEpoch()
+
+        transaction.write(effect.identifier, ...effect.proposedArgs)
+
+        // // transaction.writes.push(effect)
+        //
+        // // const writeTo   = effect.identifier
+        // //
+        // // writeTo.write.call(writeTo.context || writeTo, writeTo, transaction, null, ...effect.proposedArgs)
+        //
+        // transaction.onNewWrite()
+        return writeToHigherLevel ? undefined : BreakCurrentStackExecution
+    }
+
+
+    [WriteSeveralSymbol] (effect : WriteSeveralEffect, transaction : Transaction) : any {
+
+        const activeEntry   = transaction.getActiveEntry()
+        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+
+        let writeToHigherLevel    = true
+
+        // effect.writes.forEach(writeInfo => {
+        effect.writes.forEach(writeInfo => {
+            if (writeInfo.identifier.level <= activeEntry.identifier.level && writeToHigherLevel) {
+                transaction.walkContext.startNewEpoch()
+
+                writeToHigherLevel = false
+            }
+
+            transaction.write(writeInfo.identifier, ...writeInfo.proposedArgs)
+        })
+
+            // const identifier    = writeInfo.identifier
+            //
+            // identifier.write.call(identifier.context || identifier, identifier, transaction, null, ...writeInfo.proposedArgs)
+        // })
+
+        // transaction.onNewWrite()
+
+        return writeToHigherLevel ? undefined : BreakCurrentStackExecution
+    }
+
+
+    [PreviousValueOfSymbol] (effect : PreviousValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        return transaction.baseRevision.readIfExists(source, this)
+    }
+
+
+    [ProposedValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark     = transaction.entries.get(source)
+
+        const proposedValue = quark && !quark.isShadow() ? quark.getProposedValue(transaction) : undefined
+
+        return proposedValue
+    }
+
+
+    [HasProposedValueSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark     = transaction.entries.get(source)
+
+        return quark ? quark.hasProposedValue() : false
+    }
+
+
+    [ProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        return transaction.readProposedOrPrevious(source)
+    }
+
+
+    [UnsafeProposedOrPreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        return transaction.readProposedOrPrevious(effect.identifier)
+    }
+
+
+    [UnsafePreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        return transaction.baseRevision.readIfExistsAsync(effect.identifier, transaction.graph)
+    }
+
+
+    [ProposedArgumentsOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark         = transaction.entries.get(source)
+
+        return quark && !quark.isShadow() ? quark.proposedArguments : undefined
     }
 }
 

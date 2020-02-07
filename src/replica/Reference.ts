@@ -113,7 +113,7 @@ export class ReferenceIdentifier extends Mixin(
                     }
                 }
                 else if (transaction.baseRevision.hasIdentifier(me)) {
-                    const value  = transaction.baseRevision.read(me) as Entity
+                    const value  = transaction.baseRevision.read(me, transaction.graph) as Entity
 
                     if (value != null) {
                         me.getBucket(value).removeFromBucket(transaction, me.self)
