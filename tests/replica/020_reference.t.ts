@@ -9,7 +9,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Author/Book', async t => {
+    t.it('Author/Book no commits', async t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
@@ -35,7 +35,55 @@ StartTest(t => {
         replica1.addEntity(tomSoyer)
 
         //--------------------
-        // replica1.commit()
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
+        t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
+
+        //--------------------
+        const tomSoyer2         = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(tomSoyer2)
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference #1')
+
+        //--------------------
+        tomSoyer2.writtenBy     = null
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference #2')
+
+        //--------------------
+        replica1.removeEntity(tomSoyer)
+
+        t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
+    })
+
+
+    t.it('Author/Book with commits', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity.mix(Base) {
+            @bucket()
+            books           : Set<Book>
+        }
+
+        @entity
+        class Book extends Entity.mix(Base) {
+            @reference({ bucket : 'books' })
+            writtenBy       : Author
+        }
+
+        const replica1          = Replica.new({ schema : SomeSchema })
+
+        const markTwain         = Author.new()
+        const tomSoyer          = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(markTwain)
+        replica1.addEntity(tomSoyer)
+
+        //--------------------
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
         t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
@@ -49,19 +97,19 @@ StartTest(t => {
         // bucket should have a single, ordered queue for add/remove mutations instead of 2 props `newRefs`, `oldRefs`
         replica1.commit()
 
-        t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference')
+        t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference #1')
 
         //--------------------
         tomSoyer2.writtenBy     = null
 
-        // replica1.commit()
+        replica1.commit()
 
-        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference #2')
 
         //--------------------
         replica1.removeEntity(tomSoyer)
 
-        // replica1.commit()
+        replica1.commit()
 
         t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
     })
