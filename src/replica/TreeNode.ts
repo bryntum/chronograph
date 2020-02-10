@@ -55,7 +55,28 @@ export class TreeNode extends Mixin(
 
 
         @write('nextSibling')
-        write (me : TreeNodeReferenceIdentifier, transaction : Transaction, quark : TreeNodeBucketQuark, proposedValue : TreeNode) {
+        write (transaction : Transaction, proposedValue : TreeNode) {
+            const previousValue         = transaction.read(this.$.nextSibling)
+
+            if (previousValue) {
+
+            }
+
+            if (proposedValue) {
+                const previousSibling = transaction.read(proposedValue.$.previousSibling)
+
+                if (previousSibling) {
+                    transaction.write(previousSibling.$.nextSibling, proposedValue)
+                }
+
+                transaction.write(this.$.previousSibling, previousSibling)
+
+                transaction.write(proposedValue.$.previousSibling, this)
+            }
+
+            transaction.write(this.$.nextSibling, proposedValue)
+
+
             // quark           = quark || transaction.acquireQuarkIfExists(me)
             //
             // if (quark) {
@@ -82,30 +103,21 @@ export class TreeNode extends Mixin(
 
 
 export class TreeNodeBucket extends Base {
-    first       : TreeNode          = null
-    last        : TreeNode          = null
+    children        : Set<TreeNode>     = new Set()
 
-    $children    : Set<TreeNode>    = undefined
-
-
-    get children () : Set<TreeNode> {
-        if (this.$children !== undefined) return this.$children
-
-        return this.$children = new Set()
-    }
-
-
-    $asArray    : TreeNode[]    = undefined
-
-    get asArray () : TreeNode[] {
-        if (this.$asArray !== undefined) return this.$asArray
-
-        return this.$asArray = Array.from(this.children)
-    }
+    childrenArray   : TreeNode[]        = []
 
 
     register (mutation : BucketMutation) {
-        const newNode   = mutation.node
+        const mutationNode   = mutation.node
+
+        if (this.children.has(mutationNode)) {
+
+        } else {
+
+        }
+
+
 
         if (!mutation.position.previous && !mutation.position.next) {
             this.last   = this.last

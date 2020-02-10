@@ -26,22 +26,26 @@ class Listener<Payload> extends Base {
 
 //---------------------------------------------------------------------------------------------------------------------
 class EventInstance<Payload> extends EventMeta<Payload> {
+    listeners   : Array<(payload : Payload, event : Event<Payload>) => any>
+
+    emitter     : EventEmitter      = undefined
+
     Payload     : Payload
 
     on (listener : (payload : Payload, event : Event<Payload>) => any) {
-        this.push(listener)
-
-        return () => {}
+        return () => this.un(listener)
     }
 
 
     un (listener : (payload : Payload, event : Event<Payload>) => any) {
+        const index = this.indexOf(listener)
 
+        this.splice(index, 1)
     }
 
 
     trigger (payload : Payload) : Event<Payload> {
-        const event     = EventC<Payload>({ payload })
+        const event     = EventC<Payload>({ payload, source : this.emitter })
 
         this.reduce((event, listener) => listener(payload, event), event)
 
@@ -52,28 +56,31 @@ class EventInstance<Payload> extends EventMeta<Payload> {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// export type EventDecorator<T> = <T extends AnyConstructor> (fieldConfig? : Partial<InstanceType<T>>, fieldCls? : T) => PropertyDecorator
-
 export const event = <T extends EventMeta<Payload>, Payload>(eventConfig? : Partial<T>, eventCls : typeof EventInstance = EventInstance) : PropertyDecorator => {
 
     return function (target : EventEmitter, propertyKey : string) : void {
-        // const hooks     = []
-        //
-        // target[ propertyKey ] = function (this : EventEmitter, data) {
-        //     const hooks     = this.getHooks(propertyKey)
-        //
-        //     for (let i = 0; i < hooks.length; i++) hooks[ i ].call(this, data)
-        // }
-        //
-        // target[ propertyKey ].hook = function (listener) {
-        //     hooks.push(listener)
-        //
-        //     return function () {
-        //         const index = hooks.indexOf(listener)
-        //
-        //         hooks.splice(index, 1)
-        //     }
-        // }
+        const eventNames        = target.eventNames
+
+        if (!target.hasOwnProperty(propertyKey)) {
+            target.eventNames   = target.eventNames.slice()
+        }
+
+        eventNames.push(propertyKey)
+
+        const storageKey        = '$' + propertyKey
+
+        Object.defineProperty(target, propertyKey, {
+            // generate a new Function where the storageKey will be encoded directly into source code?
+            get     : function (this : EventEmitter) : any {
+                if (this[ storageKey ] !== undefined) return this[ storageKey ]
+
+                const newEventInstance  = new EventInstance()
+
+                newEventInstance.emitter    = this
+
+                return this[ storageKey ] = newEventInstance
+            }
+        })
     }
 }
 
@@ -83,6 +90,13 @@ export class EventEmitter extends Mixin(
     (base : AnyConstructor) => {
 
     class EventEmitter extends base {
+        eventNames  : string[]
+
+        initEvents () {
+            for (let i = 0; i < this.eventNames.length; i++) {
+                this[ '$' + this.eventNames[ i ] ]    = undefined
+            }
+        }
     }
 
     return EventEmitter
@@ -109,11 +123,11 @@ export interface Event<Payload> {
     Payload : Payload
 }
 
-const EventC = <Payload>(...args) => Event.new(...args) as Event<Payload>
+const EventC = <Payload>(config : Partial<Event<Payload>>) => Event.new(config) as Event<Payload>
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type EventT<Payload, EventClass extends EventInstance<Payload> = EventInstance<Payload>> = ((arg : Payload) => void) & EventInstance<Payload>
+// export type EventT<Payload, EventClass extends EventInstance<Payload> = EventInstance<Payload>> = ((arg : Payload) => void) & EventInstance<Payload>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -127,7 +141,7 @@ export class ManagedArray<Element> extends Mixin(
         slice : (start? : number, end? : number) => this[ 'Element' ][]
 
         @event()
-        newElement              : EventT<{ pos : number }>
+        newElement              : EventInstance<{ pos : number }>
 
 
         push (...args : this[ 'Element' ][]) : number {
@@ -142,7 +156,6 @@ export class ManagedArray<Element> extends Mixin(
     return ManagedArray
 }){}
 
-//@ts-ignore
 export interface ManagedArray<Element> {
     Element : Element
 }
