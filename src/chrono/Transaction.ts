@@ -189,6 +189,8 @@ export class Transaction extends Base {
         }).then(() => {
             if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
 
+            entry.promise = undefined
+
             // TODO review this exception
             if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
 
@@ -248,6 +250,8 @@ export class Transaction extends Base {
                 return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
             }).then(() => {
                 if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
+
+                entry.promise   = undefined
 
                 const value     = entry.getValue()
 
