@@ -102,17 +102,17 @@ export class Transaction extends Base {
     }
 
 
+    get dirty () : boolean {
+        return this.entries.size > 0
+    }
+
+
     markSelfDependent () {
         if (this.selfDependedMarked) return
 
         this.selfDependedMarked = true
 
         for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
-    }
-
-
-    isEmpty () : boolean {
-        return this.entries.size === 0
     }
 
 

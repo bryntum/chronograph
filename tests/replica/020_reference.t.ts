@@ -1,5 +1,5 @@
 import { Base } from "../../src/class/BetterMixin.js"
-import { Entity, field } from "../../src/replica/Entity.js"
+import { calculate, Entity, field } from "../../src/replica/Entity.js"
 import { reference } from "../../src/replica/Reference.js"
 import { bucket } from "../../src/replica/ReferenceBucket.js"
 import { Replica } from "../../src/replica/Replica.js"
@@ -411,4 +411,69 @@ StartTest(t => {
         t.pass('No exception thrown')
     })
 
+
+    t.it('Author/Book auto-commit', async t => {
+        class Author extends Entity.mix(Base) {
+            @field()
+            firstName       : string
+
+            @field()
+            lastName        : string
+
+            @field()
+            fullName        : string
+
+
+            @calculate('fullName')
+            calculateFullName () : string {
+                return this.firstName + ' ' + this.lastName
+            }
+
+            @bucket()
+            books           : Set<Book>
+        }
+
+        class Book extends Entity.mix(Base) {
+            @reference({ bucket : 'books' })
+            writtenBy       : Author
+        }
+
+        const replica1          = Replica.new()
+
+        const markTwain         = Author.new()
+        const tomSoyer          = Book.new({ writtenBy : markTwain })
+
+        t.is(replica1.hasPendingAutoCommit(), false, 'No pending commit')
+        t.is(replica1.dirty, false, 'Replica is clean')
+
+        replica1.addEntity(markTwain)
+
+        t.is(replica1.hasPendingAutoCommit(), true, 'Pending commit after entity addition')
+        t.is(replica1.dirty, true, 'Replica is dirty after adding an entity')
+
+        replica1.addEntity(tomSoyer)
+
+        await t.waitFor(() => !replica1.dirty)
+        t.is(replica1.hasPendingAutoCommit(), false, 'No pending commit')
+
+        //--------------------
+        tomSoyer.writtenBy     = null
+
+        t.is(replica1.hasPendingAutoCommit(), true, 'Pending commit')
+        t.is(replica1.dirty, true, 'Replica is dirty')
+
+        await t.waitFor(() => !replica1.dirty)
+        t.is(replica1.hasPendingAutoCommit(), false, 'No pending commit')
+
+        t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
+
+        //--------------------
+        replica1.removeEntity(tomSoyer)
+
+        t.is(replica1.hasPendingAutoCommit(), true, 'Pending commit')
+        t.is(replica1.dirty, true, 'Replica is dirty')
+
+        await t.waitFor(() => !replica1.dirty)
+        t.is(replica1.hasPendingAutoCommit(), false, 'No pending commit')
+    })
 })
