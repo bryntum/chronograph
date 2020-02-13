@@ -1,5 +1,6 @@
 import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
+import { warn } from "../environment/Debug.js"
 import { CalculationContext, CalculationFunction, Context } from "../primitives/Calculation.js"
 import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
 import {
@@ -87,13 +88,34 @@ export class Checkout extends Base {
 
     isInitialCommit         : boolean           = true
 
+    //-------------------------------------
+    // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
+    autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
+
+    autoCommit              : boolean           = false
+
+    autoCommitMode          : 'sync' | 'async'  = 'sync'
+
+    autoCommitHandler       : AnyFunction       = null
+
+    onWriteDuringCommit     : 'throw' | 'warn' | 'ignore' = 'throw'
+
 
     initialize (...args) {
         super.initialize(...args)
 
         if (!this.topRevision) this.topRevision = this.baseRevision
 
+        if (this.autoCommit) {
+            this.autoCommitHandler = this.autoCommitMode === 'sync' ? arg => this.commit(arg) : async arg => this.commitAsync(arg)
+        }
+
         this.markAndSweep()
+    }
+
+
+    hasPendingAutoCommit () : boolean {
+        return this.autoCommitTimeoutId !== null
     }
 
 
@@ -255,6 +277,8 @@ export class Checkout extends Base {
 
 
     commit (args? : CommitArguments) : CommitResult {
+        this.unScheduleAutoCommit()
+
         const activeTransaction = this.activeTransaction
         const nextRevision      = activeTransaction.commit(args)
 
@@ -285,6 +309,8 @@ export class Checkout extends Base {
 
 
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        this.unScheduleAutoCommit()
+
         if (this.isCommitting) return this.ongoing
 
         this.isCommitting       = true
@@ -366,6 +392,21 @@ export class Checkout extends Base {
     }
 
 
+    scheduleAutoCommit () {
+        if (this.autoCommitTimeoutId === null) {
+            this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, 10)
+        }
+    }
+
+
+    unScheduleAutoCommit () {
+        if (this.autoCommitTimeoutId !== null) {
+            clearTimeout(this.autoCommitTimeoutId)
+            this.autoCommitTimeoutId    = null
+        }
+    }
+
+
     variable<T> (value : T) : Variable<T> {
         const variable      = VariableC<T>()
 
@@ -405,6 +446,8 @@ export class Checkout extends Base {
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
         this.activeTransaction.addIdentifier(identifier, proposedValue, ...args)
 
+        if (this.autoCommit) this.scheduleAutoCommit()
+
         return identifier
     }
 
@@ -413,6 +456,8 @@ export class Checkout extends Base {
         this.activeTransaction.removeIdentifier(identifier)
 
         this.listeners.delete(identifier)
+
+        if (this.autoCommit) this.scheduleAutoCommit()
     }
 
 
@@ -422,7 +467,16 @@ export class Checkout extends Base {
 
 
     write<T> (identifier : Identifier<T>, proposedValue : T, ...args : any[]) {
+        if (this.isCommitting) {
+            if (this.onWriteDuringCommit === 'throw')
+                throw new Error('Write during commit')
+            else if (this.onWriteDuringCommit === 'warn')
+                warn(new Error('Write during commit'))
+        }
+
         this.activeTransaction.write(identifier, proposedValue, ...args)
+
+        if (this.autoCommit) this.scheduleAutoCommit()
     }
 
 

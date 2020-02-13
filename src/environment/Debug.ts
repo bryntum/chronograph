@@ -7,13 +7,19 @@ export const DEBUG = false
 
 export const DEBUG_MODE = 'THROW'
 
-export const debug = (e) => {
+export const debug = (e : Error) => {
     if (!DEBUG) return
 
     if (DEBUG_MODE === 'THROW')
         throw e
     else
         debugger
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const warn = (e : Error) => {
+    if (typeof console !== 'undefined') console.warn(e)
 }
 
 
@@ -55,6 +61,7 @@ export class SourceLinePoint extends Base {
         const constructor   = this as typeof SourceLinePoint
 
         // TODO should skip the stack entries from the DEBUG to Entity (first 4 lines in the example below)
+        // no need for `exceptionCatcher` ? just `new Error()` ?
 
         return constructor.fromError(exceptionCatcher())
     }

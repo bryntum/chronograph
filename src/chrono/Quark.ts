@@ -102,6 +102,8 @@ class Quark extends base {
         this.cleanupCalculation()
         this.clearOutgoing()
 
+        this.promise                        = undefined
+
         if (this.origin && this.origin === this) {
             this.proposedArguments          = undefined
 

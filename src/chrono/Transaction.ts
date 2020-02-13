@@ -185,11 +185,13 @@ export class Transaction extends Base {
         this.markSelfDependent()
 
         return this.ongoing = entry.promise = this.ongoing.then(() => {
-            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+            // entry might be already calculated (in the `ongoing` promise), so no need to calculate it
+            if (entry.getValue() === undefined) return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
         }).then(() => {
             if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
 
-            entry.promise = undefined
+            // we clear the promise in the `resetToEpoch` should be enough?
+            // entry.promise = undefined
 
             // TODO review this exception
             if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
@@ -247,11 +249,13 @@ export class Transaction extends Base {
             return value
         } else {
             const promise = this.ongoing = entry.promise = this.ongoing.then(() => {
-                return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+                // entry might be already calculated (in the `ongoing` promise), so no need to calculate it
+                if (entry.getValue() === undefined) return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
             }).then(() => {
                 if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
 
-                entry.promise   = undefined
+                // we clear the promise in the `resetToEpoch` should be enough?
+                // entry.promise   = undefined
 
                 const value     = entry.getValue()
 
