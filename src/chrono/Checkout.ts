@@ -272,6 +272,8 @@ export class Checkout extends Base {
     reject<Reason> (reason? : Reason) {
         this.activeTransaction.reject(RejectEffect.new({ reason }))
 
+        this.ongoing            = Promise.resolve()
+
         this.$activeTransaction = undefined
     }
 
@@ -325,14 +327,14 @@ export class Checkout extends Base {
             result          = this.finalizeCommit(nextRevision)
 
             return this.finalizeCommitAsync(nextRevision)
-        }).then(() => {
+        }).then(nextRevision => {
+            return result
+        }).finally(() => {
             this.isInitialCommit        = false
 
             if (!activeTransaction.rejectedWith) this.markAndSweep()
 
             this.isCommitting           = false
-
-            return result
         })
 
         //
