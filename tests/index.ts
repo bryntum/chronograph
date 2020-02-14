@@ -85,6 +85,7 @@ project.start(
             'replica/020_reference.t.js',
             'replica/025_tree_node.t.js',
             'replica/030_cycle_dispatcher_example.t.js',
+            'replica/033_cycle_info.t.js',
             'replica/040_calculate_only.t.js'
         ]
     },

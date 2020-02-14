@@ -50,7 +50,7 @@ export class Entity extends Mixin(
                     get (entity : Entity, property : string | number | symbol, receiver : any) : any {
                         if (!entity[ property ]) debug(new Error(`Attempt to read a missing field ${String(property)} on ${entity}`))
 
-                        entity[ property ].SOURCE_POINT = SourceLinePoint.fromCurrentCall()
+                        entity[ property ].SOURCE_POINT = SourceLinePoint.fromThisCall()
 
                         return entity[ property ]
                     }
@@ -65,7 +65,7 @@ export class Entity extends Mixin(
 
         get $$ () : EntityIdentifier {
             return defineProperty(this, '$$', MinimalEntityIdentifier.new({
-                name                : this.$entity.name,
+                name                : this.$entityName,
                 entity              : this.$entity,
 
                 calculation         : this.calculateSelf,
@@ -73,6 +73,11 @@ export class Entity extends Mixin(
                 context             : this,
                 self                : this,
             }))
+        }
+
+
+        get $entityName () : string {
+            return this.constructor.name || this.$entity.name
         }
 
 
@@ -218,7 +223,7 @@ export class Entity extends Mixin(
             const name                  = field.name
 
             const config : Partial<FieldIdentifier> = {
-                name                : `${me.$$.name}/${name}`,
+                name                : `${me.$$.name}.$.${name}`,
                 field               : field
             }
 
@@ -342,10 +347,14 @@ export const generic_field : FieldDecorator<typeof Field> =
             }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<CommitResult> {
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : CommitResult | Promise<CommitResult> {
                     (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
 
-                    return this.graph ? this.graph.commitAsync() : Promise.resolve(CommitZero)
+                    return this.graph
+                        ?
+                            (this.graph.autoCommitMode === 'sync' ? this.graph.commit() : this.graph.commitAsync())
+                        :
+                            Promise.resolve(CommitZero)
                 }
             }
 

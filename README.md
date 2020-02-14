@@ -1,132 +1,36 @@
 ChronoGraph
 ===========
 
-Chronograph is an open-source, generic, reactive computational engine, implemented in TypeScript and developed by [Bryntum]. It powers the business logic of [Bryntum Gantt](https://www.bryntum.com/examples/gantt/).
+ChronoGraph is a reactive computational engine, written in the TypeScript, with the following properties already implemented:
 
-The reactive computations became a popular trend recently (popularized by React and Vue) and there's plenty of existing libraries for this purpose. However, Chronograph introduces some novel and unique features:
+- Entity/Relation framework
+- Cancelable transactions
+- O(1) undo/redo
+- Computations prioritization
+- Data branching
+- Mixed computational unit (constant/calculated value)
+- lazy/eager, sync/async computations
+- Unlimited stack depth
+- A disciplined approach to the cyclic computations
 
-- Chronograph provides built-in undo/redo support, data branching and cancelable transactions. 
-- Chronogrpah supports indefinitely deep data dependencies (when using generators functions).
-- Chronogrpah supports asynchronous computations (when using generators functions).
-- Chronogrpah supports mixed computations - computed values that accepts user input. 
+And the following very feasible:
 
-For more formal introduction to Chronograph please refer to XXX.
+- Possibility to split the whole computation into chunks (think `requestAnimationFrame`) 
+- Possibility for breadth-first computation (think network latency)
+- Mapping to SQL
+- Mapping to GraphQL
 
-Feature tour
-------------
+It powers the business logic of the [Bryntum Gantt](https://www.bryntum.com/examples/gantt/advanced/)
 
+Reactive computations became a popular trend recently, popularized by the React, Vue and Angular triade . However, all of the latter are the user interface frameworks. ChronoGraph, in contrast, focuses on the reactive computations, describing some big generic data graphs (for example Gantt project plans). It also includes the small Entity/Relation framework, which is mapped to regular ES6 classes.  
 
-## Hello world
+You should be able to quickly pick up the base concept of reactivity from the [Basic features](./BasicFeatures.md) guide.
 
-A "hello world" example for Chronograph will look like:
-
-```ts
-class Author extends Entity(Base) {
-    @field()
-    firstName       : string
-
-    @field()
-    lastName        : string
-
-    @field()
-    fullName        : string
-
-
-    @calculate('fullName')
-    calculateFullName () : string {
-        return this.firstName + ' ' + this.lastName
-    }
-}
-
-const replica           = MinimalReplica.new()
-
-const author            = Author.new({ firstName : 'Mark', lastName : 'Twain' })
-
-replica.addEntity(markTwain)
-
-console.log(author.fullName) // "Mark Twain"
-    
-```
-
-Here we define an `Author` class, as en `Entity` [mixin](https://www.bryntum.com/blog/the-mixin-pattern-in-typescript-all-you-need-to-know/), applied to the [Base](http://link_to_docs) class. The `Base` class provides a static method [new]((http://link_to_docs) which is analogous to class constructor. 
- 
-The `firstName`, `lastName` and `fullName` properties of the `Author` class are managed by Chronograph and called "fields". They are marked with decorator [field](http://link_to_docs). The `firstName` and `lastName` fields are regular "user input" fields and the `fullName` is a calculated field, based on their values. 
-
-The "reactive" contract is, that whenever the value of `firstName` or `lastName` changes, the value of `fullName` is updated automatically. The update, however, only happens after the `propagate` method is called. This allows to batch several data changes into a single transaction.
- 
-
-## Reading and writing data
-
-To read or write a field, you normally use regular property accessors:
-
-```ts
-author.firstName    = 'Moby'
-author.lastName     = 'Dick'
-
-author.propagate()
-
-author.firstName == 'Moby'
-author.fullName == 'Moby Dick'
-```
-
-For every field, there's also a generated pair of getter and setter method, with camel-cased names corresponding to field name, prefixed with `set` and `get`. Getters are equivalent to the `get` accessors seen above and setters adds a call to `propagate` (and returns a result from it).
-
-You can override the standard write behavior by using [custom writers](http://link_to_docs).
-
-
-## Undo/redo
-
-To enable the undo/redo functionality, you need to opt-in, by specifying a value bigger than 0 for the [historyLimit](http://link_to_docs)` config, during replica creation. The config specifies how many "transactions" can be undo-ed.    
-
-```ts
-const replica           = MinimalReplica.new()
-
-author.firstName    = 'Moby'
-
-replica.propagate()
-
-author.firstName == 'Moby'
-
-replica.undo()
-
-author.fullName == 'Mark'
-
-replica.redo()
-
-author.fullName == 'Moby'
-```
-
-
-## Data branching
-
-You can also create a separate branch, pretty much like in git. Data changes in the branch won't affect the ancestor, branch exists separately.
-
-```ts
-const replica           = MinimalReplica.new()
-
-author.firstName    = 'Moby'
-
-replica.propagate()
-
-author.firstName == 'Moby'
-
-replica.undo()
-
-author.fullName == 'Mark'
-
-replica.redo()
-
-author.fullName == 'Moby'
-```
-
-## Data branching
+To find out about the remaining (and most interesting) ChronoGraph's features, continue to the [Advanced features](./AdvancedFeatures.md) guide.
 
 
 ## COPYRIGHT AND LICENSE
 
 MIT License
 
-Copyright (c) 2018-2019 Bryntum
-
-
-[Bryntum]: https://bryntum.com
+Copyright (c) 2018-2020 Nickolay Platonov

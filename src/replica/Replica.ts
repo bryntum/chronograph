@@ -9,7 +9,9 @@ export class Replica extends Mixin(
     (base : ClassUnion<typeof ChronoGraph>) =>
 
 class Replica extends base {
-    schema              : Schema
+    schema                  : Schema
+
+    autoCommit              : boolean           = true
 
 
     addEntity (entity : Entity) {

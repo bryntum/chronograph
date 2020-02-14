@@ -237,13 +237,13 @@ StartTest(t => {
 
             @calculate('fullName')
             * calculateFullName () : CalculationIterator<string> {
-                yield delay(100)
+                yield delay(10)
 
                 return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
             }
         }
 
-        const replica1          = Replica.new({ schema : schema })
+        const replica1          = Replica.new({ schema : schema, autoCommit : true, autoCommitMode : 'async', onWriteDuringCommit : 'ignore' })
 
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
 
@@ -253,14 +253,11 @@ StartTest(t => {
 
         t.isInstanceOf(fullName1, Promise)
 
-        // t.is(await fullName1, 'Mark Twain', 'Correct name calculated')
-
         t.is(await markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 
-        // markTwain.firstName     = 'MARK'
-        //
-        // await markTwain.commitAsync()
-        //
-        // t.is(markTwain.fullName, 'MARK Twain', 'Correct name calculated')
+        // this write actually happens during the auto-commit, scheduled by the entity addition
+        markTwain.firstName     = 'MARK'
+
+        t.is(await markTwain.fullName, 'MARK Twain', 'Correct name calculated')
     })
 })

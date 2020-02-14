@@ -229,7 +229,7 @@ export class MixinState {
             [MixinInstanceOfProperty]         : this.identitySymbol,
             [MixinStateProperty]    : this,
             mix                     : this.mixinLambda,
-            derive                  : (base) => Mixin([ minimalClass, base ], identity),
+            derive                  : (base) => Mixin([ minimalClass, base ], base => class extends base {}),
             $                       : this,
             toString                : this.toString.bind(this)
         })

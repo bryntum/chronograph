@@ -102,17 +102,17 @@ export class Transaction extends Base {
     }
 
 
+    get dirty () : boolean {
+        return this.entries.size > 0
+    }
+
+
     markSelfDependent () {
         if (this.selfDependedMarked) return
 
         this.selfDependedMarked = true
 
         for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
-    }
-
-
-    isEmpty () : boolean {
-        return this.entries.size === 0
     }
 
 
@@ -185,9 +185,13 @@ export class Transaction extends Base {
         this.markSelfDependent()
 
         return this.ongoing = entry.promise = this.ongoing.then(() => {
-            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+            // entry might be already calculated (in the `ongoing` promise), so no need to calculate it
+            if (entry.getValue() === undefined) return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
         }).then(() => {
             if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
+
+            // we clear the promise in the `resetToEpoch` should be enough?
+            // entry.promise = undefined
 
             // TODO review this exception
             if (!entry.hasValue()) throw new Error('Computation cycle. Sync')
@@ -245,9 +249,13 @@ export class Transaction extends Base {
             return value
         } else {
             const promise = this.ongoing = entry.promise = this.ongoing.then(() => {
-                return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+                // entry might be already calculated (in the `ongoing` promise), so no need to calculate it
+                if (entry.getValue() === undefined) return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
             }).then(() => {
                 if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
+
+                // we clear the promise in the `resetToEpoch` should be enough?
+                // entry.promise   = undefined
 
                 const value     = entry.getValue()
 
@@ -666,7 +674,7 @@ export class Transaction extends Base {
 
                 walkContext.startFrom([ requestedEntry.identifier ])
 
-                const exception = new Error("Computation cycle: " + cycle)
+                const exception = new Error("Computation cycle:\n" + cycle)
 
                 //@ts-ignore
                 exception.cycle = cycle

@@ -1,4 +1,5 @@
 import { Base } from "../class/BetterMixin.js"
+import { SourceLinePoint } from "../environment/Debug.js"
 import { NOT_VISITED, OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { Identifier } from "./Identifier.js"
 import { Transaction } from "./Transaction.js"
@@ -8,26 +9,22 @@ import { Transaction } from "./Transaction.js"
 export class ComputationCycle extends Base {
     cycle           : Identifier[]
 
-    cycleStr        : string[]
-
-    // cycleStr        : string[]
-
-
-
     toString () : string {
 
         return this.cycle.map(identifier => {
             return identifier.name
 
-            // const sourcePoint       = getSourcePointFromIdentifier(identifier)
+            // //@ts-ignore
+            // const sourcePoint : SourceLinePoint      = identifier.SOURCE_POINT
             //
             // if (!sourcePoint) return identifier.name
             //
-            // const lastEntry         = sourcePoint.stackEntries[ sourcePoint.stackEntries.length - 1 ]
+            // const firstEntry       = sourcePoint.stackEntries[ 0 ]
             //
-            // if (lastEntry) {
-            //     return `Identifier ${identifier} requested from ${lastEntry.sourceFile}:${lastEntry.sourceLine}:${lastEntry.sourceCharPos || ''}`
-            // }
+            // if (firstEntry) {
+            //     return `${identifier}\n    yielded at ${firstEntry.sourceFile}:${firstEntry.sourceLine}:${firstEntry.sourceCharPos || ''}`
+            // } else
+            //     return identifier.name
         }).join('\n')
     }
 }
