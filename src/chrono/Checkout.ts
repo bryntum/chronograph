@@ -87,7 +87,7 @@ export class Checkout extends Base {
     ongoing                 : Promise<any>      = Promise.resolve()
 
     isInitialCommit         : boolean           = true
-    
+
     //-------------------------------------
     // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
     autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
@@ -117,8 +117,8 @@ export class Checkout extends Base {
     hasPendingAutoCommit () : boolean {
         return this.autoCommitTimeoutId !== null
     }
-    
-    
+
+
     get dirty () : boolean {
         return this.activeTransaction.dirty
     }
@@ -257,10 +257,10 @@ export class Checkout extends Base {
     }
 
 
-    branch () : this {
+    branch (config? : Partial<this>) : this {
         const Constructor = this.constructor as CheckoutConstructor
 
-        return Constructor.new({ baseRevision : this.baseRevision }) as this
+        return Constructor.new(Object.assign({}, config, { baseRevision : this.baseRevision })) as this
     }
 
 
