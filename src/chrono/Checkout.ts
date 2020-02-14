@@ -100,6 +100,8 @@ export class Checkout extends Base {
 
     onWriteDuringCommit     : 'throw' | 'warn' | 'ignore' = 'throw'
 
+    onComputationCycle      : 'throw' | 'warn' | 'reject' = 'throw'
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -272,6 +274,7 @@ export class Checkout extends Base {
     reject<Reason> (reason? : Reason) {
         this.activeTransaction.reject(RejectEffect.new({ reason }))
 
+        // reject resets the `ongoing` promise (which is possibly rejected because of cycle exception)
         this.ongoing            = Promise.resolve()
 
         this.$activeTransaction = undefined

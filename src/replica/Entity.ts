@@ -347,10 +347,14 @@ export const generic_field : FieldDecorator<typeof Field> =
             }
 
             if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : Promise<CommitResult> {
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : CommitResult | Promise<CommitResult> {
                     (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
 
-                    return this.graph ? this.graph.commitAsync() : Promise.resolve(CommitZero)
+                    return this.graph
+                        ?
+                            (this.graph.autoCommitMode === 'sync' ? this.graph.commit() : this.graph.commitAsync())
+                        :
+                            Promise.resolve(CommitZero)
                 }
             }
 
