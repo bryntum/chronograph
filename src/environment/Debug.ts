@@ -24,19 +24,12 @@ export const warn = (e : Error) => {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const exceptionCatcher = () : Error => { try { throw new Error() } catch (e) { return e } }
-
-
-//---------------------------------------------------------------------------------------------------------------------
 export class StackEntry extends Base {
-    sourceFile          : string
-
     statement           : string
 
+    sourceFile          : string
     sourceLine          : number
     sourceCharPos       : number
-
-    message             : string
 }
 
 
@@ -57,13 +50,12 @@ export class SourceLinePoint extends Base {
     }
 
 
-    static fromCurrentCall () : SourceLinePoint {
-        const constructor   = this as typeof SourceLinePoint
+    static fromThisCall () : SourceLinePoint {
+        const sourceLinePoint = this.fromError(new Error())
 
-        // TODO should skip the stack entries from the DEBUG to Entity (first 4 lines in the example below)
-        // no need for `exceptionCatcher` ? just `new Error()` ?
+        sourceLinePoint.stackEntries.splice(0, 2)
 
-        return constructor.fromError(exceptionCatcher())
+        return sourceLinePoint
     }
 
 }
@@ -87,7 +79,7 @@ export class SourceLinePoint extends Base {
 
 
 const parseErrorStack = (stack : string) : StackEntry[] => {
-    return CI(matchAll(/^   +at\s*(.*?)\s*\((http:\/\/.*?):(\d+):(\d+)/gm, stack))
+    return CI(matchAll(/^   +at\s*(.*?)\s*\((https?:\/\/.*?):(\d+):(\d+)/gm, stack))
         .map(match => StackEntry.new({
             statement       : match[ 1 ],
             sourceFile      : match[ 2 ],
