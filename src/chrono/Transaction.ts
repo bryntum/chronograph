@@ -674,7 +674,7 @@ export class Transaction extends Base {
 
                 walkContext.startFrom([ requestedEntry.identifier ])
 
-                const exception = new Error("Computation cycle: " + cycle)
+                const exception = new Error("Computation cycle:\n" + cycle)
 
                 //@ts-ignore
                 exception.cycle = cycle

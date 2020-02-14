@@ -63,7 +63,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
 
     toString () : string {
-        return `[${ this.field.name }] of [${ this.self }]`
+        return this.name
     }
 }){}
 
