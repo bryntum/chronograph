@@ -403,15 +403,17 @@ export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstru
 
 //---------------------------------------------------------------------------------------------------------------------
 export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) : MixinClassConstructor<T> => {
-    let baseClass : AnyConstructor
+    let ownBaseClass : AnyConstructor
 
     if (required.length > 0) {
         const lastRequirement    = required[ required.length - 1 ]
 
         // absence of `[ MixinStateProperty ]` indicates its a regular class and not a mixin class
         // avoid assigning ZeroBaseClass - it will be applied as default at the end
-        if (!lastRequirement[ MixinStateProperty ] && lastRequirement !== ZeroBaseClass) baseClass = lastRequirement
+        if (!lastRequirement[ MixinStateProperty ] && lastRequirement !== ZeroBaseClass) ownBaseClass = lastRequirement
     }
+
+    let baseClassFromRequirements : AnyConstructor
 
     const requirements : MixinState[]    = []
 
@@ -423,27 +425,39 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda
 
             // ignore ZeroBaseClass - since those are compatible with any other base class
             if (currentBaseClass !== ZeroBaseClass) {
-                // already found a base class different from ZeroBaseClass among requirements
-                if (baseClass) {
-                    // non-ZeroBaseClass base class requirements should match for all requirements
-                    //if (currentBaseClass !== baseClass) throw new Error("Base class mismatch")
+                if (ownBaseClass) {
+                    if (currentBaseClass !== ownBaseClass) {
+                        // all base classes from the requirements should match or be a superclass of our "own" base class (listed in our requirements)
+                        if (!currentBaseClass.prototype.isPrototypeOf(ownBaseClass.prototype)) throw new Error("Base class mismatch")
+                    }
                 }
                 else {
-                    baseClass = currentBaseClass
+                    if (baseClassFromRequirements) {
+                        // already found a base class from requirements earlier
+                        if (baseClassFromRequirements !== currentBaseClass) {
+                            const currentIsSub      = currentBaseClass.prototype.isPrototypeOf(baseClassFromRequirements.prototype)
+                            const currentIsSuper    = baseClassFromRequirements.prototype.isPrototypeOf(currentBaseClass.prototype)
+
+                            if (!currentIsSub && !currentIsSuper) throw new Error("Base class mismatch")
+
+                            baseClassFromRequirements   = currentIsSuper ? currentBaseClass : baseClassFromRequirements
+                        }
+
+                    } else
+                        // first base class from requirements
+                        baseClassFromRequirements = currentBaseClass
                 }
             }
 
             requirements.push(mixinState)
         }
         else {
-            if (index !== required.length - 1) throw new Error("Base class should be provided as the last elements of the requirements array")
+            if (index !== required.length - 1) throw new Error("Base class should be provided as the last element of the requirements array")
         }
     })
 
-    if (!baseClass) baseClass = ZeroBaseClass
-
     //------------------
-    const mixinState    = MixinState.new({ requirements, mixinLambda : mixinLambda as any, baseClass })
+    const mixinState    = MixinState.new({ requirements, mixinLambda : mixinLambda as any, baseClass: ownBaseClass || baseClassFromRequirements || ZeroBaseClass })
 
     return mixinState.minimalClass as any
 }
