@@ -426,7 +426,7 @@ export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda
                 // already found a base class different from ZeroBaseClass among requirements
                 if (baseClass) {
                     // non-ZeroBaseClass base class requirements should match for all requirements
-                    if (currentBaseClass !== baseClass) throw new Error("Base class mismatch")
+                    //if (currentBaseClass !== baseClass) throw new Error("Base class mismatch")
                 }
                 else {
                     baseClass = currentBaseClass
