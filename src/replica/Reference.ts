@@ -92,7 +92,7 @@ export class ReferenceIdentifier extends Mixin(
                 // the calculation for the removed reference won't be called - the possible `proposedValue` of reference will be ignored
                 const value  = graph.activeTransaction.readProposedOrPrevious(this) as Entity
 
-                if (value != null) {
+                if (value instanceof Entity) {
                     this.getBucket(value).removeFromBucket(graph.activeTransaction, this.self)
                 }
             }
@@ -115,7 +115,7 @@ export class ReferenceIdentifier extends Mixin(
                 else if (transaction.baseRevision.hasIdentifier(me)) {
                     const value  = transaction.baseRevision.read(me, transaction.graph) as Entity
 
-                    if (value != null) {
+                    if (value instanceof Entity) {
                         me.getBucket(value).removeFromBucket(transaction, me.self)
                     }
                 }
