@@ -33,4 +33,4 @@ To find out about the remaining (and most interesting) ChronoGraph's features, c
 
 MIT License
 
-Copyright (c) 2018-2020 Nickolay Platonov
+Copyright (c) 2018-2020 Bryntum, Nickolay Platonov

@@ -231,6 +231,10 @@ Other effects
 -----------------
 
 
+Generated setter/getter methods
+-------------------------------
+
+
 
 Field. Entity. Schema. Replica
 -------------------------------
@@ -489,4 +493,4 @@ Benchmarks
 
 MIT License
 
-Copyright (c) 2018-2020 Nickolay Platonov
+Copyright (c) 2018-2020 Bryntum, Nickolay Platonov
