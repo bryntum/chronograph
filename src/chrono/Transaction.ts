@@ -604,6 +604,7 @@ export class Transaction extends Base {
 
             entry.setOrigin(previousEntry.origin)
 
+            // seems not needed anymore?
             // this is to indicate that this entry should be recalculated (origin removed)
             // see `resetToEpoch`
             entry.value     = value
