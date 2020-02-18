@@ -1,5 +1,5 @@
 import { ChronoGraph } from "../chrono/Graph.js"
-import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
+import { CalculatedValueSync, Levels, QuarkSync } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
 import { AnyConstructor, ClassUnion, identity, isInstanceOf, Mixin } from "../class/BetterMixin.js"
@@ -50,7 +50,7 @@ export class ReferenceIdentifier extends Mixin(
 
         proposedValueIsBuilt    : boolean   = true
 
-        @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
+        @prototypeValue(QuarkSync)
         quarkClass          : QuarkConstructor
 
 

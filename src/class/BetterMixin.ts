@@ -107,7 +107,7 @@ export type MixinHash       = string
 let MIXIN_ID : MixinId      = 1
 
 //---------------------------------------------------------------------------------------------------------------------
-export const identity              = a => a
+export const identity              = a => class extends a {}
 
 // export type IdentityMixin<Base extends object>         = < T extends AnyConstructor<Base>>(base : T) => T
 //

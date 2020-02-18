@@ -1,8 +1,8 @@
-import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
+import { CalculatedValueSync, Levels, QuarkSync } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
 import { AnyConstructor, ClassUnion, identity, Mixin } from "../class/BetterMixin.js"
-import { CalculationSync } from "../primitives/Calculation.js"
+import { CalculationGen, CalculationSync } from "../primitives/Calculation.js"
 import { Field } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
@@ -53,6 +53,8 @@ class ReferenceBucketQuark extends base {
     }
 }){}
 
+export const MinimalReferenceBucketQuark = ReferenceBucketQuark.mix(QuarkSync)
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketIdentifier extends Mixin(
@@ -70,7 +72,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
         proposedValueIsBuilt    : boolean   = true
 
-        @prototypeValue(Mixin([ ReferenceBucketQuark, CalculationSync, Quark, Map ], identity))
+        @prototypeValue(MinimalReferenceBucketQuark)
         quarkClass          : QuarkConstructor
 
 

@@ -137,6 +137,11 @@ export const IdentifierC = <ValueT, ContextT extends Context>(...args) : Identif
     Identifier.new(...args) as Identifier<ValueT, ContextT>
 
 
+//@ts-ignore
+export const QuarkSync = Quark.mix(CalculationSync.mix(Map))
+//@ts-ignore
+export const QuarkGen = Quark.mix(CalculationGen.mix(Map))
+
 //---------------------------------------------------------------------------------------------------------------------
 export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
@@ -144,7 +149,7 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     @prototypeValue(Levels.UserInput)
     level               : number
 
-    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
+    @prototypeValue(QuarkSync)
     quarkClass          : QuarkConstructor
 
 
@@ -169,7 +174,7 @@ export function VariableC<ValueT> (...args) : Variable<ValueT> {
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
 
-    @prototypeValue(Mixin([ CalculationSync, Quark, Map ], identity))
+    @prototypeValue(QuarkSync)
     quarkClass          : QuarkConstructor
 
 
@@ -186,7 +191,7 @@ export function CalculatedValueSyncConstructor<ValueT> (...args) : CalculatedVal
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
 
-    @prototypeValue(Mixin([ CalculationGen, Quark, Map ], identity))
+    @prototypeValue(QuarkGen)
     quarkClass          : QuarkConstructor
 
 
