@@ -227,7 +227,8 @@ export class Transaction extends Base {
 
         if (value1 === TombStone) throwUnknownIdentifier(identifier)
 
-        if (value1 !== undefined) return value1
+        // the `&& entry.hasValue()` part was added to allow KEEP_TRYING_TO_RESOLVE feature for references
+        if (value1 !== undefined && entry.hasValue()) return value1
         if (entry.promise) return entry.promise
 
         //----------------------
