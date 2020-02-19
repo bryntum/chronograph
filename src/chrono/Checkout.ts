@@ -449,6 +449,13 @@ export class Checkout extends Base {
 
 
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
+        if (this.isCommitting) {
+            if (this.onWriteDuringCommit === 'throw')
+                throw new Error('Adding identifier during commit')
+            else if (this.onWriteDuringCommit === 'warn')
+                warn(new Error('Adding identifier during commit'))
+        }
+
         this.activeTransaction.addIdentifier(identifier, proposedValue, ...args)
 
         if (this.autoCommit) this.scheduleAutoCommit()
@@ -458,6 +465,13 @@ export class Checkout extends Base {
 
 
     removeIdentifier (identifier : Identifier) {
+        if (this.isCommitting) {
+            if (this.onWriteDuringCommit === 'throw')
+                throw new Error('Removing identifier during commit')
+            else if (this.onWriteDuringCommit === 'warn')
+                warn(new Error('Removing identifier during commit'))
+        }
+
         this.activeTransaction.removeIdentifier(identifier)
 
         this.listeners.delete(identifier)
