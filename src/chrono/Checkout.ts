@@ -122,7 +122,7 @@ export class Checkout extends Base {
 
 
     get dirty () : boolean {
-        return this.activeTransaction.dirty
+        return this.activeTransaction.dirty || this.isCommitting
     }
 
 
