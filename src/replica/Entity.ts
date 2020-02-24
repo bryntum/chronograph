@@ -310,7 +310,7 @@ export type FieldDecorator<Default extends AnyConstructor = typeof Field> =
     <T extends Default = Default> (fieldConfig? : Partial<InstanceType<T>>, fieldCls? : T | Default) => PropertyDecorator
 
 
-/**
+/*
  * The "generic" field decorator, in the sense, that it allows specifying both field config and field class.
  * This means it can create any field instance.
  */

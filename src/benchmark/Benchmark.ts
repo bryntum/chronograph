@@ -29,7 +29,7 @@ const unbiasedSampleVariance  = (samples : number[]) : number => {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-/**
+/*
  * T-Distribution two-tailed critical values for 95% confidence
  * http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm
  */
