@@ -42,7 +42,7 @@ The `Person` class has 3 fields - `firstName`, `lastName` and `fullName`, distin
 
 One more decorator, [`@calculate(fieldName)`](http://LINK) specifies, that the value of the field `fullName` is calculated in the `calculateFullName` method, based on the values of `firstName` and `lastName`.
 
-The `Person` class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method [new]((http://LINK), provided by the `Base` class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the `Base` class is optional, any JS class can be used instead.
+The `Person` class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method [new]((http://LINK), provided by the `Base` class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the `Base` class and its type-safe static constructor is optional, any JS class can be used instead. 
 
 All data is stored in the "replica", which is initially empty. You can populate it with data using the [addEntity](HTTP://LINK) call. Once the entity "enters" the replica, the reactivity contract starts holding. It is that, whenever the value of `firstName` or `lastName` changes, the value of `fullName` is updated automatically.
 
@@ -54,22 +54,24 @@ Purity. Immutability
 
 However, an important expectation is that computation functions should be pure. This is important consideration to keep in mind, coming from the imperative programming world.
 
-The pure computation means, that, given the same set of input values, it should always return the same result.
+The pure computation means, that, given the same set of input values, it should always return the same result and should not produce side effects (should not modify any state).
 
-This property:
+The purity property:
 
-- Allows us to make effective data updates. If none of the "firstName" or "lastName" changes, the "fullName" calculation will not be started. If both have changed, it will run once.
+- Allows us to make effective data updates. If none of the "firstName" or "lastName" changes, the "fullName" calculation will not be started. If both have changed, it will run once. 
 
 - Also means, that computation can be restarted at any time (even if another computation is in progress)
 
 Additionally, the computation functions should return immutable data (should not re-use objects but instead return a new copy every call, similar to `Array#concat()`)
 
-As a result, we avoid a massive class of bugs, which are common in the "wild" turing-complete imperative code. 
+As a result, we avoid a massive class of bugs, which are common in the "wild" turing-complete imperative code.
+
+These requirements are not enforced by ChronoGraph and you can ignore them, however you should know what you are doing in this case. 
  
 
 ## Adding and removing entities 
 
-Replica can be populated with entities using `addEntity` method and should be freed from them using `removeEntity` call. The reactivity contract becomes active only after entity has "entered" the replica. In the same way, once the entity is removed from the replica, reactivity contract ends.   
+A replica can be populated with entities using [addEntity](LINK) method and should be freed from them using `removeEntity` call. The reactivity contract becomes active only after entity has "entered" the replica. In the same way, once the entity is removed from the replica, reactivity contract ends.   
 
 ```ts
 const person            = Person.new({ firstName : 'Mark', lastName : 'Twain' })
@@ -89,7 +91,7 @@ replica.removeEntity(person)
 
 ## Reading and writing data
 
-To read or write a field, use regular property accessors:
+To read from or write to a field, use regular property accessors:
 
 ```ts
 person.firstName    = 'Moby'
@@ -166,6 +168,33 @@ person.fullName === 'Mark Twain'
 
 ## Equality
 
+ChronoGrah optimizes the computations, based on the assumption of the purity of computation functions. If none of the inputs of some field computation has changed - there's no need to re-compute it.
+
+The "has not changed" fact is checked using the equality check. It can be overriden by providing a `equality` config option to the field. By default equality is checked with `===` operator. 
+
+For example, if we don't care about the case of the letters
+
+```ts
+const ignoreCaseCompare = (a : string, b : string) : boolean => a.toUpperCase() === b.toUpperCase()
+
+class Person extends Entity.mix(Base) {
+    @field({ equality : ignoreCaseCompare })
+    firstName       : string
+
+    @field({ equality : ignoreCaseCompare })
+    lastName        : string
+
+    @field({ equality : ignoreCaseCompare })
+    fullName        : string
+
+    @calculate('fullName')
+    calculateFullName () : string {
+        return this.firstName + ' ' + this.lastName
+    }
+}
+```
+
+Make sure you've overriden this config property for composite data (data which is represented with JS objects and arrays).
 
 
 ## Reference and reference buckets
@@ -186,7 +215,7 @@ const book          = Book.new({ writtenBy : author })
 replica.addEntities([ author, book ])
 ```
 
-This is a simplest form of a reference to another entity. To make it a bit smarter and to answer a question - "what are the books written by Mark Twain", we can use another types of fields - reference buckets. Buckets are the `Set` collections with all entities, referencing the entity of the bucket
+This is a simplest form of a reference to another entity. To make it a bit smarter and to answer a question - "what are the books written by Mark Twain", we can use another types of fields - reference buckets. Buckets are the `Set` collections with all entities, referencing the entity of the bucket:
 
 ```ts
 class Author extends Person {
@@ -195,7 +224,7 @@ class Author extends Person {
 }
 
 class Book extends Entity.mix(Base) {
-    @reference<Author>({ bucket : 'books' })
+    @reference({ bucket : 'books' })
     writtenBy       : Author
 }
 
@@ -214,7 +243,7 @@ The reactivity contract for buckets is preserved:
 ```ts
 const huckleberryFinn   = Book.new({ writtenBy : markTwain })
 
-replica.addEntities([  huckleberryFinn ])
+replica.addEntities([ huckleberryFinn ])
 
 markTwain.books // new Set([ tomSawyer, huckleberryFinn ])
 
@@ -229,9 +258,13 @@ markTwain.books // new Set([ huckleberryFinn ])
 
 The computations for some fields may be expensive and not actually needed in every transaction. We would like to compute such fields only at the time when their value is actually needed.
 
-We will call such fields - "lazy" and all the other - "strict". 
+We will call such fields - "lazy" and all the other - "strict".
+
+ 
 
 Strict fields are computed in the "commit" call.
+
+By default all fields are strict.
 
 
 ## Further reading
