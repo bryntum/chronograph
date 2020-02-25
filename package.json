@@ -6,7 +6,7 @@
   "module": "main.js",
   "scripts": {
     "test": "npx siesta ./tests",
-    "docs": "npx typedoc --mode file --out docs"
+    "docs": "npx typedoc --out docs --exclude 'tests/**/*' --exclude 'documentation/**/*' --exclude 'main.ts' --exclude 'lab/**/*' --excludeNotDocumented"
   },
   "keywords": [
     "reactive",
@@ -28,7 +28,7 @@
     "regenerator-runtime": "^0.13.1",
     "siesta-lite": "^5.2.3",
     "tslint": "^5.16.0",
-    "typedoc": "^0.14.2",
+    "typedoc": "https://github.com/SamuraiJack/typedoc.git",
     "typescript": "3.7.5"
   }
 }

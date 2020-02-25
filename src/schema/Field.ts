@@ -9,6 +9,9 @@ export type Type    = string
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The field class.
+ */
 export class Field<ValueT = any, ContextT extends Context = Context> extends Meta<ValueT, ContextT> {
     type                : Type
 

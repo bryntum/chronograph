@@ -9,6 +9,19 @@ import { Transaction, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+
+Levels of the identifiers as simple integers. Defines the order of calculation, enforced by the following rule -
+all lower level identifiers should be already calculated before the calculation of the identifier with the higher level starts.
+
+Because of this, the lower level identifiers can not depend on higher level identifiers.
+
+This rule means that effects from _all_ identifiers of the lower levels will be already processed, when calculating
+an identifier of the higher level.
+
+Normally you don't need to specify level for your identifiers.
+
+*/
 export enum Levels {
     // must be sync
     UserInput                               = 0,
@@ -19,7 +32,21 @@ export enum Levels {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The base class for identifiers. It contains only "meta" properties that describes "abstract" identifier.
+ * The [[Field]] class inherit from this class.
+ *
+ * To understand the difference between the "abstract" identifier and the "specific" identifier,
+ * imagine a set of instances of the same entity class. Lets say that class has a field "name".
+ * So all of those instances each will have different "specific" identifiers for the "name" field.
+ *
+ * In the same time, some properties are common for all "specific" identifiers, like [[Meta.equality]], [[Meta.lazy]] etc.
+ * Such properties, that does not change between every "specific" identifier we will "meta" properties.
+ */
 export class Meta<ValueT = any, ContextT extends Context = Context> extends Base {
+    /**
+     * The name of the identifiers. Not an id, does not imply uniqueness.
+     */
     name                : any       = undefined
 
     ArgsT               : any[]
@@ -29,6 +56,12 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     @prototypeValue(Levels.DependsOnSelfKind)
     level               : number
 
+    /**
+     * Whether this identifier is lazy (`true`) or strict (`false`). Lazy identifiers are calculated on-demand
+     * (when read from graph or used by another identifiers).
+     *
+     * All strict identifiers will be calculated during the [[ChronoGraph.commit]] call.
+     */
     lazy                : boolean   = false
 
     @prototypeValue(true)
@@ -52,7 +85,11 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
         throw new Error("Abstract method `calculation` called")
     }
 
-
+    /**
+     * The equality check.
+     * @param v1 First value
+     * @param v2 Second value
+     */
     equality (v1 : ValueT, v2 : ValueT) : boolean {
         return v1 === v2
     }
@@ -60,6 +97,9 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The identifier class.
+ */
 export class Identifier<ValueT = any, ContextT extends Context = Context> extends Meta<ValueT, ContextT> {
     context             : this[ 'CalcContextT' ]       = undefined
 
@@ -133,8 +173,11 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 }
 
-export const IdentifierC = <ValueT, ContextT extends Context>(...args) : Identifier<ValueT, ContextT> =>
-    Identifier.new(...args) as Identifier<ValueT, ContextT>
+/**
+ * Constructor for the Identifier class. Only used for typing purposes.
+ */
+export const IdentifierC = <ValueT, ContextT extends Context>(config : Partial<Identifier>) : Identifier<ValueT, ContextT> =>
+    Identifier.new(config) as Identifier<ValueT, ContextT>
 
 
 //@ts-ignore
@@ -143,6 +186,9 @@ export const QuarkSync = Quark.mix(CalculationSync.mix(Map))
 export const QuarkGen = Quark.mix(CalculationGen.mix(Map))
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Variable is a subclass of `Identifier`, that does not perform any calculation and instead is always equal to a user-provided value.
+ */
 export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
     YieldT              : never
 

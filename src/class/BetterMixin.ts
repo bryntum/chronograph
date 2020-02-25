@@ -5,18 +5,18 @@ const MixinInstanceOfProperty   = Symbol('MixinIdentity')
 const MixinStateProperty        = Symbol('MixinStateProperty')
 
 //---------------------------------------------------------------------------------------------------------------------
-export type MixinStateExtension = {
+type MixinStateExtension = {
     [MixinInstanceOfProperty]   : symbol
     [MixinStateProperty]        : MixinState
 }
 
-export type MixinFunction   = ((base : AnyConstructor) => AnyConstructor) & MixinStateExtension
+type MixinFunction   = ((base : AnyConstructor) => AnyConstructor) & MixinStateExtension
 
-export type MixinClass      = AnyConstructor & MixinStateExtension
+type MixinClass      = AnyConstructor & MixinStateExtension
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class MixinWalkDepthState {
+class MixinWalkDepthState {
     sourceEl                        : MixinState                    = undefined
 
     private $elementsByTopoLevel    : Map<number, MixinState[]>     = undefined
@@ -100,8 +100,8 @@ export class MixinWalkDepthState {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type MixinId         = number
-export type MixinHash       = string
+type MixinId         = number
+type MixinHash       = string
 
 // Note: 65535 mixins only, because of the hashing function implementation (String.fromCharCode)
 let MIXIN_ID : MixinId      = 1
@@ -114,10 +114,10 @@ export const identity              = a => class extends a {}
 // export const IdentityMixin             = <Base extends object>() : IdentityMixin<Base> => identity
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ZeroBaseClass {}
+class ZeroBaseClass {}
 
 //---------------------------------------------------------------------------------------------------------------------
-export class MixinState {
+class MixinState {
     id                          : MixinId               = MIXIN_ID++
 
     requirements                : MixinState[]          = []
@@ -252,18 +252,45 @@ export class MixinState {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-/*
-
-Recommended base class.
-
-*/
+/**
+ * This is a base class, providing the type-safe static constructor [[new]].
+ */
 export class Base {
 
+    /**
+     * This method just applies its 1st argument (if any) to the current instance using `Object.assign()`.
+     *
+     * Supposed to be overridden in the subclasses to customize the instance creation process.
+     *
+     * @param props
+     */
     initialize<T extends Base> (props? : Partial<T>) {
         props && Object.assign(this, props)
     }
 
 
+    /**
+     * This is a type-safe static constructor method, accepting a single argument, with the object, corresponding to the
+     * class properties. It will generate a compilation error, if unknown property is provided.
+     *
+     * For example:
+     *
+     *     class MyClass {
+     *         prop     : string
+     *     }
+     *
+     *     const instance : MyClass = MyClass.new({ prop : 'prop', wrong : 11 })
+     *
+     * will produce:
+     *
+     *     TS2345: Argument of type '{ prop: string; wrong: number; }' is not assignable to parameter of type 'Partial<MyClass>'.   
+     *     Object literal may only specify known properties, and 'wrong' does not exist in type 'Partial<MyClass>'
+     *
+     * The only thing that this constructor does is creation of instance and calling [[initialize]] method on it, forwarding
+     * the first argument. The customization of instance is supposed to be performed in that method.
+     *
+     * @param props
+     */
     static new<T extends typeof Base> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance      = new this()
 
@@ -273,20 +300,31 @@ export class Base {
     }
 }
 
-export type BaseConstructor             = typeof Base
-
 //---------------------------------------------------------------------------------------------------------------------
 type SuppressNew<T> = {
     [ K in keyof T ] : T[ K ]
 }
 
+/**
+ * A type that represents a function with the `Result` returning type.
+ */
 export type AnyFunction<Result = any>        = (...input : any[]) => Result
-export type AnyConstructorRaw<Instance extends object = object, Static extends object = object>  = (new (...input : any[]) => Instance) & Static
+
+type AnyConstructorRaw<Instance extends object = object, Static extends object = object>  = (new (...input : any[]) => Instance) & Static
+
+/**
+ * A type that represents a constructor function, that returns `Instance` type on instantiation. The properties of the function itself
+ * are typed with `Static` argument. These properties will correspond to the static methods/properties of the class.
+ */
 export type AnyConstructor<Instance extends object = object, Static extends object = object>  = (new (...input : any[]) => Instance) & SuppressNew<Static>
 
 //---------------------------------------------------------------------------------------------------------------------
 type ZeroBaseClassConstructor = typeof ZeroBaseClass
 
+/**
+ * Type helper for mixins creation. Supports up to 5 class constructor arguments. May lead to compilation errors in some edges cases.
+ * See the [[Mixin]] for details.
+ */
 export type ClassUnion<
     C1 extends AnyConstructor = ZeroBaseClassConstructor,
     C2 extends AnyConstructor = ZeroBaseClassConstructor,
@@ -302,7 +340,7 @@ export type ClassUnion<
 type Omit2<T, K extends keyof any> = T extends AnyConstructorRaw<infer I> ? Pick<T, Exclude<keyof T, K>> & (new (...args : any[]) => I) : never
 
 
-export type MixinClassConstructor<T> =
+type MixinClassConstructor<T> =
     T extends AnyFunction<infer M> ?
         Omit2<M, 'mix' | 'derive'> & {
 
@@ -328,13 +366,13 @@ export type MixinClassConstructor<T> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type MixinHelperFuncAny = <T>(required : AnyConstructor[], arg : T) =>
+type MixinHelperFuncAny = <T>(required : AnyConstructor[], arg : T) =>
     T extends AnyFunction ?
         MixinClassConstructor<T>
     : never
 
 
-export type MixinHelperFunc0 = <T>(required : [], arg : T) =>
+type MixinHelperFunc0 = <T>(required : [], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<object> ?
@@ -345,7 +383,7 @@ export type MixinHelperFunc0 = <T>(required : [], arg : T) =>
         : never
     : never
 
-export type MixinHelperFunc1 = <A1 extends AnyConstructor, T>(required : [ A1 ], arg : T) =>
+type MixinHelperFunc1 = <A1 extends AnyConstructor, T>(required : [ A1 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1>, A1> ?
@@ -356,7 +394,7 @@ export type MixinHelperFunc1 = <A1 extends AnyConstructor, T>(required : [ A1 ],
         : never
     : never
 
-export type MixinHelperFunc2 = <A1 extends AnyConstructor, A2 extends AnyConstructor, T>(required : [ A1, A2 ], arg : T) =>
+type MixinHelperFunc2 = <A1 extends AnyConstructor, A2 extends AnyConstructor, T>(required : [ A1, A2 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2>, A1 & A2> ?
@@ -367,7 +405,7 @@ export type MixinHelperFunc2 = <A1 extends AnyConstructor, A2 extends AnyConstru
         : never
     : never
 
-export type MixinHelperFunc3 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, T>(required : [ A1, A2, A3 ], arg : T) =>
+type MixinHelperFunc3 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, T>(required : [ A1, A2, A3 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3>, A1 & A2 & A3> ?
@@ -378,7 +416,7 @@ export type MixinHelperFunc3 = <A1 extends AnyConstructor, A2 extends AnyConstru
         : never
     : never
 
-export type MixinHelperFunc4 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, T>(required : [ A1, A2, A3, A4 ], arg : T) =>
+type MixinHelperFunc4 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, T>(required : [ A1, A2, A3, A4 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4>, A1 & A2 & A3 & A4> ?
@@ -389,7 +427,7 @@ export type MixinHelperFunc4 = <A1 extends AnyConstructor, A2 extends AnyConstru
         : never
     : never
 
-export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5 ], arg : T) =>
+type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5 ], arg : T) =>
     T extends AnyFunction ?
         Parameters<T> extends [ infer Base ] ?
             Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5>, A1 & A2 & A3 & A4 & A5> ?
@@ -402,7 +440,7 @@ export type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstru
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) : MixinClassConstructor<T> => {
+const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) : MixinClassConstructor<T> => {
     let ownBaseClass : AnyConstructor
 
     if (required.length > 0) {
@@ -472,9 +510,15 @@ const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// This is the `instanceof` analog with typeguard:
-// https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards
-// though, the regular `instanceof` will also provide type narrowing now
+/**
+ * This is the `instanceof` analog with [typeguard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards).
+ *
+ * There's no strict need to use it, as regular `instanceof` is also supported for the mixins created with the [[Mixin]] function and also provides
+ * typeguarding.
+ *
+ * @param instance The instance of the class that has consumed mixin.
+ * @param func The constructor function of the class, that has consumed mixin.
+ */
 export const isInstanceOf = <T>(instance : any, func : T)
     : instance is (T extends AnyConstructor<infer A> ? A : unknown) =>
 {
@@ -483,5 +527,197 @@ export const isInstanceOf = <T>(instance : any, func : T)
 
 
 //---------------------------------------------------------------------------------------
+/**
+ * This function allows you to create mixin classes. Mixin classes solves the well-known problem with "classical" single-class inheritance,
+ * in which class hierarchy must form a tree. When using mixins, class hierarchy becomes an arbitrary acyclic graph.
+ *
+ * Another view on mixins is that, if "classical" class is a point (a vertice of the graph), mixin class is an arrow between the points
+ * (an edge in the graph, or rather, a description of the edge).
+ *
+ * Some background information about the mixin pattern can be found [here](https://mariusschulz.com/blog/typescript-2-2-mixin-classes)
+ * and [here](https://www.bryntum.com/blog/the-mixin-pattern-in-typescript-all-you-need-to-know/).
+ *
+ * The pattern, being described here, is the evolution of the previous work, and main advantage is that it solves the compilation error
+ * for circular references.
+ *
+ * Mixin definition. Requirements
+ * ------------------------------
+ *
+ * The pattern looks like:
+ *
+ *     class Mixin1 extends Mixin(
+ *         [],
+ *         (base : AnyConstructor) =>
+ *
+ *         class Mixin1 extends base {
+ *             prop1        : string
+ *             method1 () : string {
+ *                 return this.prop1
+ *             }
+ *             static static1 : number
+ *         }
+ *     ){}
+ *
+ * The core of the definition above is the mixin lambda - a function which receives a base class as its argument and returns a class,
+ * extending the base class with some additional properties (perhaps overriding the existing).
+ *
+ * The example above creates a mixin `MyMixin1` which has no requirements. Requirements are the other mixins, which needs to be included for this mixin.
+ * There's also a special type of the requirement, called "base class requirement". It is optional and can only appear as the last argument of the requirements
+ * array. It does not have to be a mixin, created with the `Mixin` function, but can be any JS class.
+ *
+ * The requirements of the mixin needs to be listed 3 times:
+ * - as an array of constructor functions, in the 1st argument of the `Mixin` function
+ * - as an instance type intersection, in the 1st type argument for the `AnyConstructor` type
+ * - as an static type intersection, in the 2nd type argument for the `AnyConstructor` type
+ *
+ * For example, the `Mixin2` requires the `Mixin1`:
+ *
+ *     class Mixin2 extends Mixin(
+ *         [ Mixin1 ],
+ *         (base : AnyConstructor<Mixin1, typeof Mixin1>) =>
+ *
+ *         class Mixin2 extends base {
+ *         }
+ *     ){}
+ *
+ * And `Mixin3` requires both `Mixin1` and `Mixin2` (even that its redundant, since `Mixin2` already requires `Mixin1`,
+ * but suppose we don't know the implementation details of the `Mixin2`):
+ *
+ *     class Mixin3 extends Mixin(
+ *         [ Mixin1, Mixin2 ],
+ *         (base : AnyConstructor<Mixin1 & Mixin2, typeof Mixin1 & typeof Mixin2>) =>
+ *
+ *         class Mixin3 extends base {
+ *         }
+ *     ){}
+ *
+ * Now, `Mixin4` requires `Mixin2`, plus, it requires the base class to be `SomeBaseClass`:
+ *
+ *     class SomeBaseClass {}
+ *
+ *     class Mixin4 extends Mixin(
+ *         [ Mixin2, SomeBaseClass ],
+ *         (base : AnyConstructor<
+ *             Mixin1 & SomeBaseClass, typeof Mixin1 & typeof SomeBaseClass
+ *         >) => {
+ *
+ *         class Mixin4 extends base {
+ *         }
+ *     ){}
+ *
+ * As already briefly mentioned, the requirements are "scanned" deep and included only once. Requirements can not form cycles.
+ *
+ * The typing for the `Mixin` function will provide a compilation error, if the requirements don't match, e.g. some requirement is
+ * listed in the array, but missed in the types. This protects you from trivial mistakes. However, the typing is done up to 5 requirements only.
+ * If you need more than 5 requirements for the mixin, use the [[MixinAny]] function, which is an exact analog of `Mixin`, but without
+ * this type-level protection for requirements mismatch.
+ *
+ * It is possible to simplify the type of the `base` argument a bit, by using the [[ClassUnion]] helper. However, it seems in certain edge cases
+ * it may lead to compilation errors. If your scenarios are not so complex you should give it a try. Using the [[ClassUnion]] helper, the
+ * `Mixin3` can be defined as:
+ *
+ *     class Mixin3 extends Mixin(
+ *         [ Mixin1, Mixin2 ],
+ *         (base : ClassUnion<typeof Mixin1, typeof Mixin2>) =>
+ *
+ *         class Mixin3 extends base {
+ *         }
+ *     ){}
+ *
+ * Note, that due to this [issue](https://github.com/Microsoft/TypeScript/issues/7342), if you use decorators in your mixin class,
+ * the declaration needs to be slightly more verbose (can not use compact notation for the arrow functions):
+ *
+ *     class Mixin2 extends Mixin(
+ *         [ Mixin1 ],
+ *         (base : AnyConstructor<Mixin1, typeof Mixin1>) => {
+ *             class Mixin2 extends base {
+ *             }
+ *             return Mixin2
+ *         }
+ *     ){}
+ *
+ *
+ * Mixin instantiation. Mixin constructor. `instanceof`
+ * --------------------------------
+ *
+ * You can instantiate any mixin class just by using its constructor:
+ *
+ *     const instance1 = new Mixin1()
+ *     const instance2 = new Mixin2()
+ *
+ * As explained in details [here](https://mariusschulz.com/blog/typescript-2-2-mixin-classes), mixin constructor should accept variable number of arguments
+ * with the `any` type. This is simply because the mixin is supposed to be applicable to any other base class, which may have its own type
+ * of the constructor arguments.
+ *
+ *     class Mixin2 extends Mixin(
+ *         [ Mixin1 ],
+ *         (base : AnyConstructor<Mixin1, typeof Mixin1>) => {
+ *             class Mixin2 extends base {
+ *                 prop2 : string
+ *
+ *                 constructor (...args: any[]) {
+ *                     super(...args)
+ *                     this.prop2 = ''
+ *                 }
+ *             }
+ *             return Mixin2
+ *         }
+ *     ){}
+ *
+ * In other words, its not possible to provide any type-safety for mixin instantiation using regular class constructor.
+ *
+ * However, if we change the way we create class instances a little, we can get the type-safety back. For that,
+ * we need to use a "uniform" class constructor - a constructor which has the same form for all classes. The [[Base]] class
+ * provides such constructor as its static [[Base.new]] method. Note, the usage of `Base` class is not required - you can use
+ * any other base class.
+ *
+ * The `instanceof` operator works as expected for instances of the mixin classes. It also takes into account all the requirements.
+ * For example:
+ *
+ *     const instance2 = new Mixin2()
+ *
+ *     const isMixin2 = instance2 instanceof Mixin2 // true
+ *     const isMixin1 = instance2 instanceof Mixin1 // true, since Mixin2 requires Mixin1
+ *
+ * "Manual" class derivation
+ * --------------------------------
+ *
+ * You have defined a mixin using the `Mixin` function. Now you want to apply it to some base class to get the "specific" class to be able
+ * to instantiate it. As described above - you don't have to, you can instantiate it directly.
+ *
+ * Sometimes however, you still want to derive the class "manually". For that, you can use static methods `mix` and `derive`, available
+ * on all mixins.
+ *
+ * The `mix` method provides a direct access to the mixin lambda. It does not take requirements into account - that's the implementor's responsibility.
+ * The `derive` method is
+ *
+ *
+ *     class Mixin1 extends Mixin(
+ *         [],
+ *         (base : AnyConstructor) =>
+ *
+ *         class Mixin1 extends base {
+ *             prop1        : string
+ *         }
+ *     ){}
+ *
+ *     class Mixin2 extends Mixin(
+ *         [ Mixin1 ],
+ *         (base : AnyConstructor<Mixin1, typeof Mixin1>) =>
+ *
+ *         class Mixin2 extends base {
+ *             prop2        : string
+ *         }
+ *     ){}
+ *
+ *     const ManualMixin1 = Mixin1.mix(Object)
+ *     const ManualMixin2 = Mixin2.mix(Mixin1.mix(Object))
+ *
+ *
+ */
 export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 & MixinHelperFunc5 = mixin as any
+
+/**
+ * This is an exact analog of the [[Mixin]] function, but without type-level protection for requirements mismatch.
+ */
 export const MixinAny : MixinHelperFuncAny = mixin as any
