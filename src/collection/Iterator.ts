@@ -1,4 +1,28 @@
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Given a single `Iterable`, returns an array of 2 iterables, mirroring the original one (which should not be used anymore).
+ *
+ * For example:
+ *
+ *     const gen = function* () { yield 1; yield 2; yield 3 }
+ *
+ *     const [ iterable1, iterable2 ] = split(gen())
+ *     const [ iter1, iter2 ] = [
+ *         iterable1[ Symbol.iterator ](),
+ *         iterable2[ Symbol.iterator ]()
+ *     ]
+ *
+ *     iter1.next() // 1
+ *     iter2.next() // 1
+ *     iter2.next() // 2
+ *     iter2.next() // 3
+ *     iter1.next() // 2
+ *     iter1.next() // 3
+ *     iter1.next() // done
+ *     iter2.next() // done
+ *
+ * @param iterable
+ */
 export function split<Element> (iterable : Iterable<Element>) : [ Iterable<Element>, Iterable<Element> ] {
     const gen1Pending : Element[]  = []
     const gen2Pending : Element[]  = []

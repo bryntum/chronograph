@@ -14,6 +14,16 @@ import { EntityIdentifier, FieldIdentifier, MinimalEntityIdentifier } from "./Id
 const isEntityMarker      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Entity mixin. Can be applied to any base class:
+ *
+ *     class SomeClass extends Entity.mix(SomeBaseClass) {
+ *         ...
+ *     }
+ *
+ * Entity
+ *
+ */
 export class Entity extends Mixin(
     [],
     (base : AnyConstructor) => {

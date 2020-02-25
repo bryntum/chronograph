@@ -561,9 +561,11 @@ export const isInstanceOf = <T>(instance : any, func : T)
  * The core of the definition above is the mixin lambda - a function which receives a base class as its argument and returns a class,
  * extending the base class with some additional properties (perhaps overriding the existing).
  *
- * The example above creates a mixin `MyMixin1` which has no requirements. Requirements are the other mixins, which needs to be included for this mixin.
- * There's also a special type of the requirement, called "base class requirement". It is optional and can only appear as the last argument of the requirements
- * array. It does not have to be a mixin, created with the `Mixin` function, but can be any JS class.
+ * The example above creates a mixin `Mixin1` which has no requirements. Requirements are the other mixins,
+ * which needs to be included in the base class of this mixin. There's also a special type of the requirement,
+ * called "base class requirement". It is optional and can only appear as the last argument of the requirements
+ * array. It does not have to be a mixin, created with the `Mixin` function, but can be any JS class. This requirement
+ * specifies, that the base class of this mixin should be a subclass of the given class (or that class itself).
  *
  * The requirements of the mixin needs to be listed 3 times:
  * - as an array of constructor functions, in the 1st argument of the `Mixin` function
@@ -631,11 +633,15 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *         [ Mixin1 ],
  *         (base : AnyConstructor<Mixin1, typeof Mixin1>) => {
  *             class Mixin2 extends base {
+ *                 @decorator
+ *                 prop2 : string
  *             }
  *             return Mixin2
  *         }
  *     ){}
  *
+ * As you noticed, the repeating listing of the requirements is somewhat verbose. Suggestions how the pattern can be improved
+ * are [very welcomed](mailto:nickolay8@gmail.com).
  *
  * Mixin instantiation. Mixin constructor. `instanceof`
  * --------------------------------
@@ -679,6 +685,8 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *     const isMixin2 = instance2 instanceof Mixin2 // true
  *     const isMixin1 = instance2 instanceof Mixin1 // true, since Mixin2 requires Mixin1
  *
+ * See also [[isInstanceOf]].
+ *
  * "Manual" class derivation
  * --------------------------------
  *
@@ -689,8 +697,9 @@ export const isInstanceOf = <T>(instance : any, func : T)
  * on all mixins.
  *
  * The `mix` method provides a direct access to the mixin lambda. It does not take requirements into account - that's the implementor's responsibility.
- * The `derive` method is
+ * The `derive` method is something like "accumulated" mixin lambda - mixin lambda with all requirements.
  *
+ * Both `mix` and `derive` provide the reasonably typed outcome.
  *
  *     class Mixin1 extends Mixin(
  *         [],
@@ -712,6 +721,10 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *
  *     const ManualMixin1 = Mixin1.mix(Object)
  *     const ManualMixin2 = Mixin2.mix(Mixin1.mix(Object))
+ *
+ *     const AnotherManualMixin1 = Mixin1.derive(Object)
+ *     const AnotherManualMixin2 = Mixin2.derive(Object)
+ *
  *
  *
  */
