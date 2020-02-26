@@ -1,5 +1,5 @@
 import { Base } from "../class/BetterMixin.js"
-import { Checkout } from "./Checkout.js"
+import { ChronoGraph } from "./Graph.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { Quark, TombStone } from "./Quark.js"
 import { Transaction } from "./Transaction.js"
@@ -61,7 +61,7 @@ export class Revision extends Base {
     }
 
 
-    readIfExists (identifier : Identifier, graph : Checkout) : any {
+    readIfExists (identifier : Identifier, graph : ChronoGraph) : any {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         if (!latestEntry) return undefined
@@ -72,7 +72,7 @@ export class Revision extends Base {
     }
 
 
-    readIfExistsAsync<T> (identifier : Identifier<T>, graph : Checkout) : Promise<T> {
+    readIfExistsAsync<T> (identifier : Identifier<T>, graph : ChronoGraph) : Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         if (!latestEntry) return undefined
@@ -83,7 +83,7 @@ export class Revision extends Base {
     }
 
 
-    get<T> (identifier : Identifier<T>, graph : Checkout) : T | Promise<T> {
+    get<T> (identifier : Identifier<T>, graph : ChronoGraph) : T | Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -102,7 +102,7 @@ export class Revision extends Base {
     }
 
 
-    read<T> (identifier : Identifier<T>, graph : Checkout) : T {
+    read<T> (identifier : Identifier<T>, graph : ChronoGraph) : T {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -121,7 +121,7 @@ export class Revision extends Base {
     }
 
 
-    readAsync<T> (identifier : Identifier<T>, graph : Checkout) : Promise<T> {
+    readAsync<T> (identifier : Identifier<T>, graph : ChronoGraph) : Promise<T> {
         const latestEntry   = this.getLatestEntryFor(identifier)
 
         // && DEBUG?
@@ -140,7 +140,7 @@ export class Revision extends Base {
     }
 
 
-    calculateLazyQuarkEntry (entry : Quark, graph : Checkout) : any {
+    calculateLazyQuarkEntry (entry : Quark, graph : ChronoGraph) : any {
         // if (!entry.identifier.sync) throw new Error("Can not calculate value of the asynchronous identifier synchronously")
 
         const transaction   = Transaction.new({ baseRevision : this, candidate : this, graph })
@@ -155,7 +155,7 @@ export class Revision extends Base {
     }
 
 
-    async calculateLazyQuarkEntryAsync (entry : Quark, graph : Checkout) : Promise<any> {
+    async calculateLazyQuarkEntryAsync (entry : Quark, graph : ChronoGraph) : Promise<any> {
         const transaction   = Transaction.new({ baseRevision : this, candidate : this, graph })
 
         transaction.entries.set(entry.identifier, entry)

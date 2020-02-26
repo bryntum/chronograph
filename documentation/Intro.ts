@@ -1,8 +1,8 @@
 //-----------------------------------
+import { ChronoGraph, ChronoIterator } from "../src/chrono/Graph.js"
 import { ProposedOrCurrent } from "../src/chrono/Effect.js"
 //-----------------------------------
 // example3
-import { ChronoIterator, ChronoGraph } from "../src/chrono/Graph.js"
 // example1
 import { Identifier, Variable } from "../src/chrono/Identifier.js"
 //-----------------------------------

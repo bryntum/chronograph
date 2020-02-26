@@ -1,6 +1,6 @@
-import { Checkout } from "../chrono/Checkout.js"
+import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../chrono/Identifier.js"
-import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"
@@ -38,7 +38,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
     // returns the value itself if there were no affecting writes for it
     // otherwise - promise
-    getFromGraph (graph : Checkout) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
+    getFromGraph (graph : ChronoGraph) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
         if (graph)
             return graph.get(this)
         else
@@ -46,7 +46,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     }
 
 
-    readFromGraph (graph : Checkout) : this[ 'ValueT' ] {
+    readFromGraph (graph : ChronoGraph) : this[ 'ValueT' ] {
         if (graph)
             return graph.read(this)
         else
@@ -54,7 +54,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     }
 
 
-    writeToGraph (graph : Checkout, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    writeToGraph (graph : ChronoGraph, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         if (graph)
             graph.write(this, proposedValue, ...args)
         else

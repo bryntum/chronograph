@@ -1,6 +1,4 @@
 import { ChronoGraph } from "../../src/chrono/Graph.js"
-import { Identifier, VariableC } from "../../src/chrono/Identifier.js"
-import { Context } from "../../src/primitives/Calculation.js"
 
 declare const StartTest : any
 

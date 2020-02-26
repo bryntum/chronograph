@@ -1,5 +1,4 @@
-import { CommitResult, CommitZero } from "../chrono/Checkout.js"
-import { ChronoGraph } from "../chrono/Graph.js"
+import { ChronoGraph, CommitResult, CommitZero } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/BetterMixin.js"

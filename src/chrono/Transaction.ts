@@ -4,8 +4,8 @@ import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { Checkout, CommitArguments } from "./Checkout.js"
 import { BreakCurrentStackExecution, Effect, RejectEffect } from "./Effect.js"
+import { ChronoGraph, CommitArguments } from "./Graph.js"
 import { Identifier, Levels, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { Revision, Scope } from "./Revision.js"
@@ -39,7 +39,7 @@ export class Transaction extends Base {
 
     candidate               : Revision              = undefined
 
-    graph                   : Checkout              = undefined
+    graph                   : ChronoGraph              = undefined
 
     isClosed                : boolean               = false
 

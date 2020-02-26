@@ -1,6 +1,5 @@
-import { runAllDeepChanges } from "./deep_changes.js"
 import { runAllGraphPopulation } from "./allocation.js"
-import { runAllMemoryLeak } from "./memory_leak.js"
+import { runAllDeepChanges } from "./deep_changes.js"
 import { runAllShallowChanges } from "./shallow_changes.js"
 
 export const runAll = async () => {

@@ -1,8 +1,8 @@
 import { Base } from "../class/BetterMixin.js"
 import { CalculationContext, CalculationGen, CalculationSync, Context, ContextGen, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { Checkout } from "./Checkout.js"
 import { ProposedOrCurrent } from "./Effect.js"
+import { ChronoGraph } from "./Graph.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
@@ -185,7 +185,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
      * @param proposedValue
      * @param args
      */
-    writeToGraph (graph : Checkout, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
+    writeToGraph (graph : ChronoGraph, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         graph.write(this, proposedValue, ...args)
     }
 
@@ -194,7 +194,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
      * Read the value of this identifier, in the context of `graph`, asynchronously
      * @param graph
      */
-    readFromGraphAsync (graph : Checkout) : Promise<ValueT> {
+    readFromGraphAsync (graph : ChronoGraph) : Promise<ValueT> {
         return graph.readAsync(this)
     }
 
@@ -203,7 +203,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
      * Read the value of this identifier, in the context of `graph`, synchronously
      * @param graph
      */
-    readFromGraph (graph : Checkout) : ValueT {
+    readFromGraph (graph : ChronoGraph) : ValueT {
         return graph.read(this)
     }
 
@@ -233,7 +233,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
      *
      * @param graph
      */
-    enterGraph (graph : Checkout) {
+    enterGraph (graph : ChronoGraph) {
     }
 
 
@@ -242,7 +242,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
      *
      * @param graph
      */
-    leaveGraph (graph : Checkout) {
+    leaveGraph (graph : ChronoGraph) {
     }
 }
 
