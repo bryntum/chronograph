@@ -27,22 +27,31 @@ import {
     WriteSeveralSymbol,
     WriteSymbol
 } from "./Effect.js"
-import { CalculatedValueGen, CalculatedValueGenConstructor, CalculatedValueSyncConstructor, Identifier, Variable, VariableC } from "./Identifier.js"
-import { Quark, TombStone } from "./Quark.js"
+import { CalculatedValueGen, CalculatedValueGenC, CalculatedValueSyncC, Identifier, Variable, VariableC } from "./Identifier.js"
+import { TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { EdgeTypePast, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The type of the argument for the [[commit]] call. Currently empty.
+ */
 export type CommitArguments = {
 }
 
 
+/**
+ * The type of the return value of the [[commit]] call.
+ */
 export type CommitResult = {
     rejectedWith        : RejectEffect<unknown> | null
 }
 
 
+/**
+ * A constant which will be used a commit result, when graph is not available.
+ */
 export const CommitZero : CommitResult = {
     rejectedWith        : null
 }
@@ -59,10 +68,15 @@ export class Listener extends Base {
 }
 
 
-export const ObserverSegment = Symbol('ObserverSegment')
-
-
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Generic reactive graph. Consists from [[Identifier]]s, depending on each other. This is a low-level representation
+ * of the ChronoGraph dataset, it is not "aware" of the entity/relation framework and operates as "just graph".
+ *
+ * This
+ *
+ *
+ */
 export class Checkout extends Base {
     // the revision currently being "checked out"
     baseRevision            : Revision      = undefined
@@ -92,6 +106,9 @@ export class Checkout extends Base {
     // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
     autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
 
+    /**
+     * Whether
+     */
     autoCommit              : boolean           = false
 
     autoCommitMode          : 'sync' | 'async'  = 'sync'
@@ -281,6 +298,11 @@ export class Checkout extends Base {
     }
 
 
+    /**
+     * Commit
+     *
+     * @param args
+     */
     commit (args? : CommitArguments) : CommitResult {
         this.unScheduleAutoCommit()
 
@@ -430,9 +452,9 @@ export class Checkout extends Base {
 
     identifier<ContextT extends Context, ValueT> (calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
         const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
-            CalculatedValueGenConstructor<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
+            CalculatedValueGenC<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
             :
-            CalculatedValueSyncConstructor<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
+            CalculatedValueSyncC<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
 
         return this.addIdentifier(identifier)
     }
@@ -440,14 +462,21 @@ export class Checkout extends Base {
 
     identifierNamed<ContextT extends Context, ValueT> (name : any, calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
         const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
-            CalculatedValueGenConstructor<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
+            CalculatedValueGenC<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
             :
-            CalculatedValueSyncConstructor<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
+            CalculatedValueSyncC<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
 
         return this.addIdentifier(identifier)
     }
 
 
+    /**
+     * Adds an identifier to this graph.
+     *
+     * @param identifier
+     * @param proposedValue
+     * @param args
+     */
     addIdentifier<T extends Identifier> (identifier : T, proposedValue? : any, ...args : any[]) : T {
         if (this.isCommitting) {
             if (this.onWriteDuringCommit === 'throw')
@@ -464,6 +493,11 @@ export class Checkout extends Base {
     }
 
 
+    /**
+     * Removes an identifier from this graph.
+     *
+     * @param identifier
+     */
     removeIdentifier (identifier : Identifier) {
         if (this.isCommitting) {
             if (this.onWriteDuringCommit === 'throw')
@@ -480,6 +514,11 @@ export class Checkout extends Base {
     }
 
 
+    /**
+     * Tests, whether this graph has given identifier.
+     *
+     * @param identifier
+     */
     hasIdentifier (identifier : Identifier) : boolean {
         return this.activeTransaction.hasIdentifier(identifier)
     }

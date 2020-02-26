@@ -1,14 +1,33 @@
 import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Type of return value of the generator function.
+ */
 export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, ResultT, any>
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Symbol to denote the synchronous calculation context
+ */
 export const ContextSync    = Symbol('ContextSync')
+/**
+ * Symbol to denote the generator calculation context
+ */
 export const ContextGen     = Symbol('ContextGen')
 
+/**
+ * Type, denoting the calculation context.
+ */
 export type Context         = typeof ContextSync | typeof ContextGen
 
+/**
+ * Type "picker". This is an object type, with 2 properties - [[ContextSync]] and [[ContextGen]]. Every property
+ * "translate" the generic arguments of the type, to different types.
+ *
+ * This type allows generic typization of the identifiers's calculation function (a single type both
+ * for the synchronous and generator-based functions).
+ */
 export type Contexts<ResultT, YieldT> = {
     [ContextGen]    : CalculationIterator<ResultT, YieldT>,
     [ContextSync]   : ResultT
@@ -16,6 +35,12 @@ export type Contexts<ResultT, YieldT> = {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * This is a calculation context. It is represented with a function, that receives some value (effect) and returns the result
+ * (effect processing results). Can be also thought as "effect handler".
+ *
+ * When using generators-based calculation, there's no need to use this function directly - the syntax construct `yield` plays its role.
+ */
 export type CalculationContext<YieldT> = (effect : YieldT) => any
 
 export type CalculationFunction<ContextT extends Context, ResultT, YieldT, ArgsT extends [ CalculationContext<YieldT>, ...any[] ]> =

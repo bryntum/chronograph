@@ -1,4 +1,4 @@
-import { Base, ClassUnion, identity, Mixin } from "../class/BetterMixin.js"
+import { Base } from "../class/BetterMixin.js"
 import { CalculationContext, CalculationGen, CalculationSync, Context, ContextGen, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Checkout } from "./Checkout.js"
@@ -38,10 +38,13 @@ export enum Levels {
  *
  * To understand the difference between the "abstract" identifier and the "specific" identifier,
  * imagine a set of instances of the same entity class. Lets say that class has a field "name".
- * So all of those instances each will have different "specific" identifiers for the "name" field.
+ * So all of those instances each will have different "specific" identifiers for the field "name".
  *
  * In the same time, some properties are common for all "specific" identifiers, like [[Meta.equality]], [[Meta.lazy]] etc.
- * Such properties, that does not change between every "specific" identifier we will "meta" properties.
+ * Such properties, that does not change between every "specific" identifier we will call "meta" properties.
+ *
+ * This class has 2 generic arguments - `ValueT` and `ContextT`. The 1st one defines the type of the identifier's value.
+ * The 2nd - the identifier's computation context (synchronous of generator).
  */
 export class Meta<ValueT = any, ContextT extends Context = Context> extends Base {
     /**
@@ -50,20 +53,31 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     name                : any       = undefined
 
     ArgsT               : any[]
+    /**
+     * The type of the effects that can be "yielded"
+     */
     YieldT              : YieldableValue
     ValueT              : ValueT
 
+    /**
+     * Level of the identifier (see [[Levels]]). This attribute is supposed to be defined on the prototype level only.
+     */
     @prototypeValue(Levels.DependsOnSelfKind)
-    level               : number
+    level               : Levels
 
     /**
-     * Whether this identifier is lazy (`true`) or strict (`false`). Lazy identifiers are calculated on-demand
-     * (when read from graph or used by another identifiers).
+     * Whether this identifier is lazy (`true`) or strict (`false`).
      *
-     * All strict identifiers will be calculated during the [[ChronoGraph.commit]] call.
+     * Lazy identifiers are calculated on-demand (when read from graph or used by another identifiers).
+     *
+     * Strict identifiers will be calculated on read or during the [[ChronoGraph.commit]] call.
      */
     lazy                : boolean   = false
 
+    /**
+     * Whether this identifier is sync (`true`) or generator-based (`false`). Default value is `true`.
+     * This attribute is supposed to be defined on the prototype level only.
+     */
     @prototypeValue(true)
     sync                : boolean
 
@@ -81,12 +95,44 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
     CalcContextT        : any
 
 
+    /**
+     * The calculation function of the identifier. Its returning value has a generic type, that is converted to a specific type,
+     * based on the generic attribute `ContextT`.
+     *
+     * This function will receive a single argument - current calculation context (effects handler).
+     *
+     * When using generators, there's no need to use this handler - one can "yield" the value directly, using the `yield` construct.
+     *
+     * Compare:
+     *
+     *     class Author extends Entity.mix(Base) {
+     *         @field()
+     *         firstName       : string
+     *         @field()
+     *         lastName        : string
+     *         @field()
+     *         fullName        : string
+     *
+     *         @calculate('fullName')
+     *         * calculateFullName () : ChronoIterator<string> {
+     *             return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
+     *         }
+     *
+     *         @calculate('fullName')
+     *         calculateFullName (Y) : string {
+     *             return Y(this.$.firstName) + ' ' + Y(this.$.lastName)
+     *         }
+     *     }
+     *
+     * @param YIELD
+     */
     calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ ContextT ] {
         throw new Error("Abstract method `calculation` called")
     }
 
     /**
-     * The equality check.
+     * The equality check of the identifier. By default is performed with `===`.
+     *
      * @param v1 First value
      * @param v2 Second value
      */
@@ -98,9 +144,12 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * The identifier class.
+ * The generic identifier class.
  */
 export class Identifier<ValueT = any, ContextT extends Context = Context> extends Meta<ValueT, ContextT> {
+    /**
+     * The scope (`this` value) for the calculation function.
+     */
     context             : this[ 'CalcContextT' ]       = undefined
 
 
@@ -116,7 +165,6 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
         return newQuark
     }
 
-
     write (me : this, transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         quark                       = quark || transaction.getWriteTarget(me)
 
@@ -130,16 +178,31 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
+    /**
+     * Write a value to this identifier, in the context of `graph`.
+     *
+     * @param graph
+     * @param proposedValue
+     * @param args
+     */
     writeToGraph (graph : Checkout, proposedValue : ValueT, ...args : this[ 'ArgsT' ]) {
         graph.write(this, proposedValue, ...args)
     }
 
 
+    /**
+     * Read the value of this identifier, in the context of `graph`, asynchronously
+     * @param graph
+     */
     readFromGraphAsync (graph : Checkout) : Promise<ValueT> {
         return graph.readAsync(this)
     }
 
 
+    /**
+     * Read the value of this identifier, in the context of `graph`, synchronously
+     * @param graph
+     */
     readFromGraph (graph : Checkout) : ValueT {
         return graph.read(this)
     }
@@ -165,16 +228,26 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     }
 
 
+    /**
+     * Template method, which is called, when this identifier first "enters" the graph.
+     *
+     * @param graph
+     */
     enterGraph (graph : Checkout) {
     }
 
 
+    /**
+     * Template method, which is called, when this identifier "leaves" the graph.
+     *
+     * @param graph
+     */
     leaveGraph (graph : Checkout) {
     }
 }
 
 /**
- * Constructor for the Identifier class. Only used for typing purposes.
+ * Constructor for the [[Identifier]] class. Used only for typization purposes.
  */
 export const IdentifierC = <ValueT, ContextT extends Context>(config : Partial<Identifier>) : Identifier<ValueT, ContextT> =>
     Identifier.new(config) as Identifier<ValueT, ContextT>
@@ -193,7 +266,7 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     YieldT              : never
 
     @prototypeValue(Levels.UserInput)
-    level               : number
+    level               : Levels
 
     @prototypeValue(QuarkSync)
     quarkClass          : QuarkConstructor
@@ -212,12 +285,18 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     }
 }
 
+/**
+ * Constructor for the [[Variable]] class. Used only for typization purposes.
+ */
 export function VariableC<ValueT> (...args) : Variable<ValueT> {
     return Variable.new(...args) as Variable<ValueT>
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Subclass of the [[Identifier]], representing synchronous computation.
+ */
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
 
     @prototypeValue(QuarkSync)
@@ -229,12 +308,18 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof
     }
 }
 
-export function CalculatedValueSyncConstructor<ValueT> (...args) : CalculatedValueSync<ValueT> {
+/**
+ * Constructor for the [[CalculatedValueSync]] class. Used only for typization purposes.
+ */
+export function CalculatedValueSyncC<ValueT> (...args) : CalculatedValueSync<ValueT> {
     return CalculatedValueSync.new(...args) as CalculatedValueSync<ValueT>
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Subclass of the [[Identifier]], representing generator-based computation.
+ */
 export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof ContextGen> {
 
     @prototypeValue(QuarkGen)
@@ -246,7 +331,10 @@ export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof 
     }
 }
 
-export function CalculatedValueGenConstructor<ValueT> (...args) : CalculatedValueGen<ValueT> {
+/**
+ * Constructor for the [[CalculatedValueGen]] class. Used only for typization purposes.
+ */
+export function CalculatedValueGenC<ValueT> (...args) : CalculatedValueGen<ValueT> {
     return CalculatedValueGen.new(...args) as CalculatedValueGen<ValueT>
 }
 

@@ -9,9 +9,9 @@ ChronoGraph has the following properties:
 - O(1) undo/redo
 - lazy/eager, sync/async computations
 - Data branching
-- Mixed computational unit (constant/calculated value)
+- Mixed computational unit (user input/calculated value)
 - Unlimited stack depth
-- A disciplined approach to the cyclic computations
+- Disciplined approach to cyclic computations
 - Entity/Relation framework
 
 And the following properties are very feasible:
@@ -23,7 +23,7 @@ And the following properties are very feasible:
 
 Reactive computations has become a popular trend recently, popularized by the React, Vue and Angular triade. However, all of the latter are user interface frameworks. 
 
-ChronoGraph, in contrast, focuses on reactive computations, describing some generic data graphs (for example Gantt project plans). It is designed to handle very large graphs - up to several hundred thousands of "atoms". It also includes the small Entity/Relation framework, which maps to regular ES6 classes.  
+ChronoGraph, in contrast, focuses on reactive computations, describing some generic data graphs (for example Gantt project plans). It is designed to handle extremely large graphs - up to several hundred thousands of "atoms". It also includes the small Entity/Relation framework, which maps to regular ES6 classes.
 
 
 Documentation
