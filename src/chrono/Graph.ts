@@ -73,8 +73,28 @@ export class Listener extends Base {
  * Generic reactive graph. Consists from [[Identifier]]s, depending on each other. This is a low-level representation
  * of the ChronoGraph dataset, it is not "aware" of the entity/relation framework and operates as "just graph".
  *
- * This
+ * For higher-level (and more convenient) representation, please refer to [[Replica]].
  *
+ * An example of usage:
+ *
+ *     const graph      = ChronoGraph.new({ historyLimit : 10 })
+ *
+ *     const var1       = graph.variable(1)
+ *     const var2       = graph.variable(2)
+ *     const iden1      = graph.identifier((Y) => Y(var1) + Y(var2))
+ *
+ *     graph.read(iden1) // 3
+ *
+ *     graph.commit()
+ *
+ *     graph.write(var1, 2)
+ *
+ *     graph.read(iden1) // 4
+ *
+ *     graph.reject()
+ *
+ *     graph.read(var1) // 1
+ *     graph.read(iden1) // 3
  *
  */
 export class ChronoGraph extends Base {
@@ -83,9 +103,12 @@ export class ChronoGraph extends Base {
     // the revision to follow to, when performing `redo` operation
     topRevision             : Revision      = undefined
 
-    // how many revisions (except the `baseRevision`) to keep in memory for undo operation
-    // minimal value is 0 (the `baseRevision` only, no undo/redo)
-    // users supposed to opt-in for undo/redo by increasing this config
+    /**
+     * Integer value, indicating how many transactions to keep in memory, to be available for [[undo]] call.
+     * Default value is 0 - previous transaction is cleared immediately.
+     *
+     * Increase this config to opt-in for the [[undo]]/[[redo]] functionality.
+     */
     historyLimit            : number            = 0
 
     listeners               : Map<Identifier, Listener> = new Map()
@@ -106,10 +129,14 @@ export class ChronoGraph extends Base {
     autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
 
     /**
-     * Whether
+     * If this option is enabled with `true` value, all data modification calls ([[write]], [[addIdentifier]], [[removeIdentifier]]) will trigger
+     * a delayed `commit` call (or `commitAsync`, depending from the [[autoCommitMode]] option).
      */
     autoCommit              : boolean           = false
 
+    /**
+     * Indicates the default commit mode, which is used in [[autoCommit]].
+     */
     autoCommitMode          : 'sync' | 'async'  = 'sync'
 
     autoCommitHandler       : AnyFunction       = null
@@ -132,6 +159,9 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Returns boolean, indicating whether the auto-commit is pending.
+     */
     hasPendingAutoCommit () : boolean {
         return this.autoCommitTimeoutId !== null
     }
@@ -275,8 +305,13 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Creates a new branch of this graph. Only committed data will be "visible" in the new branch.
+     *
+     * @param config Configuration object for the new graph instance.
+     */
     branch (config? : Partial<this>) : this {
-        const Constructor = this.constructor as CheckoutConstructor
+        const Constructor = this.constructor as (typeof ChronoGraph)
 
         return Constructor.new(Object.assign({}, config, { baseRevision : this.baseRevision })) as this
     }
@@ -287,6 +322,11 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Rejects the current changes in the graph and revert it to the state of the previous "commit".
+     *
+     * @param reason Any value, describing why reject has happened
+     */
     reject<Reason> (reason? : Reason) {
         this.activeTransaction.reject(RejectEffect.new({ reason }))
 
@@ -298,7 +338,13 @@ export class ChronoGraph extends Base {
 
 
     /**
-     * Commit
+     * Synchronously commit the state of the graph. All potentially changed strict identifiers (see [[Identifier.lazy]])
+     * will be calculated during this call. If any of such identifiers will be async (see [[Identifier.sync]]), an exception
+     * will be thrown.
+     *
+     * This call marks a "stable" state of the graph.
+     *
+     * See also [[reject]].
      *
      * @param args
      */
@@ -318,22 +364,17 @@ export class ChronoGraph extends Base {
     }
 
 
-    // propagateSync (args? : PropagateArguments) : PropagateResult {
-    //     const nextRevision      = this.activeTransaction.propagateSync(args)
-    //
-    //     const result            = this.finalizePropagation(nextRevision)
-    //
-    //     this.runningTransaction = null
-    //
-    //     return result
-    // }
-
-
     async propagateAsync (args? : CommitArguments) : Promise<CommitResult> {
         return this.commitAsync(args)
     }
 
 
+    /**
+     * Asynchronously commit the state of the replica. All potentially changed strict identifiers (see [[Identifier.lazy]])
+     * will be calculated during this call.
+     *
+     * @param args
+     */
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
         this.unScheduleAutoCommit()
 
@@ -433,6 +474,11 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Creates a variable identifier with the given initial value and adds it to graph.
+     *
+     * @param value The initial value. The `undefined` value will be converted to `null`
+     */
     variable<T> (value : T) : Variable<T> {
         const variable      = VariableC<T>()
 
@@ -441,6 +487,12 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Creates a named variable identifier with the given initial value and adds it to graph.
+     *
+     * @param name The [[Variable.name]] property of the newly created variable
+     * @param value The initial value. The `undefined` value will be converted to `null`
+     */
     variableNamed<T> (name : any, value : T) : Variable<T> {
         const variable      = VariableC<T>({ name })
 
@@ -448,7 +500,15 @@ export class ChronoGraph extends Base {
         return this.addIdentifier(variable, value === undefined ? null : value)
     }
 
-
+    /**
+     * Creates an identifier based on the given calculation function and adds it to this graph. Depending form the type of the function
+     * (sync/generator) either [[CalculatedValueGen]] or [[CalculatedValueSync]] will be created.
+     *
+     * To have full control on the identifier creation, instantiate it yourself and add to graph using the [[ChronoGraph.addIdentifier]] call.
+     *
+     * @param calculation The calculation function of the identifier.
+     * @param context The [[Identifier.context]] property of the newly created identifier
+     */
     identifier<ContextT extends Context, ValueT> (calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
         const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
             CalculatedValueGenC<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
@@ -459,6 +519,16 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Creates a named identifier based on the given calculation function and adds it to this graph. Depending form the type of the function
+     * (sync/generator) either [[CalculatedValueGen]] or [[CalculatedValueSync]] will be created.
+     *
+     * To have full control on the identifier creation, instantiate it yourself and add to graph using the [[ChronoGraph.addIdentifier]] call.
+     *
+     * @param name The [[Identifier.name]] property of the newly created identifier
+     * @param calculation The calculation function of the identifier.
+     * @param context The [[Identifier.context]] property of the newly created identifier
+     */
     identifierNamed<ContextT extends Context, ValueT> (name : any, calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
         const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
             CalculatedValueGenC<ValueT>({ name, calculation, context }) as Identifier<ValueT, ContextT>
@@ -523,6 +593,13 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Writes a value to the given `identifier`.
+     *
+     * @param identifier
+     * @param proposedValue
+     * @param args
+     */
     write<T> (identifier : Identifier<T>, proposedValue : T, ...args : any[]) {
         if (this.isCommitting) {
             if (this.onWriteDuringCommit === 'throw')
@@ -559,15 +636,25 @@ export class ChronoGraph extends Base {
     }
 
 
-    // Synchronously read the "current" value from the graph.
-    // Synchronous read can not calculate asynchronous identifiers and will throw exception
+    /**
+     * Synchronously read the value of the given identifier from the graph.
+     *
+     * Synchronous read can not calculate asynchronous identifiers and will throw exception
+     *
+     * @param identifier
+     */
     read<T> (identifier : Identifier<T>) : T {
         return this.activeTransaction.read(identifier)
     }
 
 
-    // Asynchronously read the "current" value from the graph.
-    // Asynchronous read can calculate both synchronous and asynchronous identifiers
+    /**
+     * Asynchronously read the value of the given identifier from the graph.
+     *
+     * Asynchronous read can calculate both synchronous and asynchronous identifiers
+     *
+     * @param identifier
+     */
     readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         return this.activeTransaction.readAsync(identifier)
     }
@@ -645,6 +732,13 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Revert the replica to the state of previous transaction (marked with the [[commit]] call).
+     *
+     * To enable this feature, you need to opt-in using the [[ChronoGraph.historyLimit]] configuration property.
+     *
+     * Returns boolean, indicating whether the revert actually happened.
+     */
     undo () : boolean {
         const baseRevision      = this.baseRevision
         const previous          = baseRevision.previous
@@ -660,6 +754,14 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Advance the replica to the state of next transaction (marked with the [[commit]] call). Only meaningful
+     * if a [[ChronoGraph.redo]] call has been made earlier.
+     *
+     * To enable this feature, you need to opt-in using the [[ChronoGraph.historyLimit]] configuration property.
+     *
+     * Returns boolean, indicating whether the revert actually happened.
+     */
     redo () : boolean {
         const baseRevision      = this.baseRevision
 
@@ -841,8 +943,6 @@ export class ChronoGraph extends Base {
         return quark && !quark.isShadow() ? quark.proposedArguments : undefined
     }
 }
-
-export type CheckoutConstructor = typeof ChronoGraph
 
 /**
  * Type, that represent the return value of the identifier's calculation function (when its based on generator).

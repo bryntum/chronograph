@@ -37,7 +37,7 @@ To find out about the remaining (and most interesting) features of ChronoGraph, 
 Connect
 =======
 
-We welcome all feedback. Please tell us what works well in ChronoGraph, what causes troubles and what else features you would like to see in it.
+We welcome all feedback. Please tell us what works well in ChronoGraph, what causes troubles and what other features you would like to see in it.
 
 Post at the [forum](https://bryntum.com/forum/CHRONOGRAPH)
 
