@@ -12,13 +12,23 @@ export interface PartOfEntityIdentifier {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Mixin, for the identifier that represent a field of the entity. Requires the [[Identifier]] (or its subclass)
+ * as a base class. See more about mixins: [[Mixin]]
+ */
 export class FieldIdentifier extends Mixin(
     [ Identifier ],
     (base : AnyConstructor<Identifier, typeof Identifier>) =>
 
 class FieldIdentifier extends base implements PartOfEntityIdentifier {
+    /**
+     * Reference to the [[Field]] this identifier represents
+     */
     field       : Field             = undefined
 
+    /**
+     * Reference to the [[Entity]] this identifier represents
+     */
     self        : Entity            = undefined
 
     // temp storage for value for the phase, when identifier is created, but has not joined any graph
@@ -75,13 +85,23 @@ export class MinimalFieldVariable extends FieldIdentifier.mix(Variable) {}
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Mixin, for the identifier that represent an entity as a whole. Requires the [[Identifier]] (or its subclass)
+ * as a base class. See more about mixins: [[Mixin]]
+ */
 export class EntityIdentifier extends Mixin(
     [ Identifier ],
     (base : AnyConstructor<Identifier, typeof Identifier>) =>
 
 class EntityIdentifier extends base implements PartOfEntityIdentifier {
+    /**
+     * [[EntityMeta]] instance of the entity this identifier represents
+     */
     entity      : EntityMeta        = undefined
 
+    /**
+     * Reference to the [[Entity]] this identifier represents
+     */
     self        : Entity            = undefined
 
 

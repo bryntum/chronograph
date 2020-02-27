@@ -29,9 +29,9 @@ ChronoGraph, in contrast, focuses on reactive computations, describing some gene
 Documentation
 =============
 
-You should be able to quickly pick up the base concept of reactivity from the [Basic features](./BasicFeatures.md) guide.
+You should be able to quickly pick up the base concept of reactivity from the [Basic features](./modules/_guides_basicfeatures_.html) guide.
 
-To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [Advanced features](./AdvancedFeatures.md) guide.
+To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [Advanced features](./modules/_guides_advancedfeatures_.html) guide.
 
 
 Connect

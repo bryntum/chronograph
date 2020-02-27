@@ -130,7 +130,7 @@ export class ChronoGraph extends Base {
 
     /**
      * If this option is enabled with `true` value, all data modification calls ([[write]], [[addIdentifier]], [[removeIdentifier]]) will trigger
-     * a delayed `commit` call (or `commitAsync`, depending from the [[autoCommitMode]] option).
+     * a delayed [[commit]] call (or [[commitAsync]], depending from the [[autoCommitMode]] option).
      */
     autoCommit              : boolean           = false
 
@@ -307,6 +307,23 @@ export class ChronoGraph extends Base {
 
     /**
      * Creates a new branch of this graph. Only committed data will be "visible" in the new branch.
+     *
+     * When using the branching feature in [[Replica]], you need to reference the field values using their
+     * corresponding identifiers:
+     *
+     * ```ts
+     * class Author extends Entity.mix(Base) {
+     *     @calculate('fullName')
+     *     calculateFullName (Y) : string {
+     *         return Y(this.$.firstName) + ' ' + Y(this.$.lastName)
+     *     }
+     *
+     *     @calculate('fullName')
+     *     * calculateFullName (Y) : CalculationIterator<string> {
+     *         return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
+     *     }
+     * }
+     * ```
      *
      * @param config Configuration object for the new graph instance.
      */

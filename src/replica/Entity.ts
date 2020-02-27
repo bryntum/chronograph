@@ -1,4 +1,4 @@
-import { ChronoGraph, CommitResult, CommitZero } from "../chrono/Graph.js"
+import { ChronoGraph, CommitArguments, CommitResult, CommitZero } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
@@ -14,13 +14,28 @@ const isEntityMarker      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * Entity mixin. Can be applied to any base class:
+ * Entity mixin. When applied to some base class (recommended one is [[Base]]), turns it into entity.
+ * Entity may have several fields, which are properties decorated with [[field]] decorator.
  *
- *     class SomeClass extends Entity.mix(SomeBaseClass) {
- *         ...
+ * Another decorator, [[calculate]], marks the method, that will be used to calculate the value of field.
+ *
+ * Example:
+ *
+ * ```ts
+ * class Author extends Entity.mix(Base) {
+ *     @field()
+ *     firstName       : string
+ *     @field()
+ *     lastName        : string
+ *     @field()
+ *     fullName        : string
+ *
+ *     @calculate('fullName')
+ *     calculateFullName () : string {
+ *         return this.firstName + ' ' + this.lastName
  *     }
- *
- * Entity
+ * }
+ * ```
  *
  */
 export class Entity extends Mixin(
@@ -38,15 +53,35 @@ export class Entity extends Mixin(
         $writes         : { [s in keyof this] : string }
         $buildProposed  : { [s in keyof this] : string }
 
+        /**
+         * A reference to the graph, this entity belongs to. Initially empty, and is populated when the entity instance
+         * is added to the replica ([[Replica.addEntity]])
+         */
         graph           : ChronoGraph
 
-        // lazy meta instance creation - will work even w/o any @field or @entity decorator
+        /**
+         * An [[EntityMeta]] instance, representing the "meta" information about the entity class. It is shared among all instances
+         * of the class.
+         */
         get $entity () : EntityMeta {
             // this will lazily create an EntityData instance in the prototype
             return createEntityOnPrototype(this.constructor.prototype)
         }
 
 
+        /**
+         * An object, which properties corresponds to the ChronoGraph [[Identifier]]s, created for every field.
+         *
+         * For example, for the `Author` class from the above example:
+         *
+         * ```ts
+         * const author = Author.new()
+         *
+         * author.$.firstName
+         *
+         * const firstName = replica.read(author.$.firstName)
+         * ```
+         */
         get $ () : { [s in keyof this] : FieldIdentifier } {
             const $ = {}
 
@@ -71,7 +106,9 @@ export class Entity extends Mixin(
             }
         }
 
-
+        /**
+         * A graph identifier, that represents the whole entity.
+         */
         get $$ () : EntityIdentifier {
             return defineProperty(this, '$$', MinimalEntityIdentifier.new({
                 name                : this.$entityName,
@@ -117,6 +154,11 @@ export class Entity extends Mixin(
         }
 
 
+        /**
+         * This method is called when entity is added to some replica.
+         *
+         * @param replica
+         */
         enterGraph (replica : ChronoGraph) {
             if (this.graph) throw new Error('Already entered replica')
 
@@ -134,6 +176,9 @@ export class Entity extends Mixin(
         }
 
 
+        /**
+         * This method is called when entity is removed from the replica it's been added to.
+         */
         leaveGraph () {
             const graph     = this.graph
             if (!graph) return
@@ -151,17 +196,22 @@ export class Entity extends Mixin(
         // }
 
 
-        propagate () : CommitResult {
-            return this.commit()
+        propagate (arg? : CommitArguments) : CommitResult {
+            return this.commit(arg)
         }
 
 
-        commit () : CommitResult {
+        /**
+         * This is a convenience method, that just delegates to the [[ChronoGraph.commit]] method of this entity's graph.
+         *
+         * If there's no graph (entity has not been added to any replica) a [[CommitZero]] constant will be returned.
+         */
+        commit (arg? : CommitArguments) : CommitResult {
             const graph     = this.graph
 
-            if (!graph) return
+            if (!graph) return CommitZero
 
-            return graph.commit()
+            return graph.commit(arg)
         }
 
 
@@ -170,59 +220,33 @@ export class Entity extends Mixin(
         }
 
 
-        async commitAsync () : Promise<CommitResult> {
+        /**
+         * This is a convenience method, that just delegates to the [[ChronoGraph.commitAsync]] method of this entity's graph.
+         *
+         * If there's no graph (entity has not been added to any replica) a resolved promise with [[CommitZero]] constant will be returned.
+         */
+        async commitAsync (arg? : CommitArguments) : Promise<CommitResult> {
             const graph     = this.graph
 
             if (!graph) return Promise.resolve(CommitZero)
 
-            return graph.commitAsync()
+            return graph.commitAsync(arg)
         }
 
 
-        // propagateSync () : PropagateResult {
-        //     const graph     = this.graph
-        //
-        //     if (!graph) return
-        //
-        //     return graph.propagateSync()
-        // }
-
-        // async waitForPropagateCompleted () : Promise<PropagationResult | null> {
-        //     return this.getGraph().waitForPropagateCompleted()
-        // }
-        //
-        //
-        // async tryPropagateWithNodes (onEffect? : EffectResolverFunction, nodes? : ChronoAtom[], hatchFn? : Function) : Promise<PropagationResult> {
-        //     return this.getGraph().tryPropagateWithNodes(onEffect, nodes, hatchFn)
-        // }
-        //
-        //
-        // async tryPropagateWithEntities (onEffect? : EffectResolverFunction, entities? : Entity[], hatchFn? : Function) : Promise<PropagationResult> {
-        //     const graph = this.getGraph()
-        //
-        //     let result
-        //
-        //     if (isReplica(graph)) {
-        //         result = graph.tryPropagateWithEntities(onEffect, entities, hatchFn)
-        //     }
-        //     else {
-        //         throw new Error("Entity is not part of replica")
-        //     }
-        //
-        //     return result
-        // }
-        //
-        //
-        // markAsNeedRecalculation (atom : ChronoAtom) {
-        //     this.getGraph().markAsNeedRecalculation(atom)
-        // }
-
-
+        /**
+         * A [[Field]] instance, representing the "meta" information about the class field. It is shared among all identifiers of the certain field
+         * in the class.
+         */
         static getField (name : Name) : Field {
             return this.getEntity().getField(name)
         }
 
 
+        /**
+         * An [[EntityMeta]] instance, representing the "meta" information about the entity class. It is shared among all instances
+         * of the class.
+         */
         static getEntity () : EntityMeta {
             return ensureEntityOnPrototype(this.prototype)
         }
@@ -377,10 +401,56 @@ export const generic_field : FieldDecorator<typeof Field> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Field decorator. The type signature is:
+ *
+ * ```ts
+ * field : <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) => PropertyDecorator
+ * ```
+ * Its a function, that accepts field config object and optionally a field class (default is [[Field]]) and returns a property decorator.
+ *
+ * Example:
+ *
+ * ```ts
+ * const ignoreCaseCompare = (a : string, b : string) : boolean => a.toUpperCase() === b.toUpperCase()
+ *
+ * class MyField extends Field {}
+ *
+ * class Author extends Entity.mix(Base) {
+ *     @field({ equality : ignoreCaseCompare })
+ *     firstName       : string
+ *
+ *     @field({ lazy : true }, MyField)
+ *     lastName       : string
+ * }
+ * ```
+ *
+ */
 export const field : typeof generic_field = generic_field
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Decorator for the method, that calculates a value of some field
+ *
+ * ```ts
+ * class Author extends Entity.mix(Base) {
+ *     @field()
+ *     firstName       : string
+ *     @field()
+ *     lastName        : string
+ *     @field()
+ *     fullName        : string
+ *
+ *     @calculate('fullName')
+ *     calculateFullName () : string {
+ *         return this.firstName + ' ' + this.lastName
+ *     }
+ * }
+ * ```
+ *
+ * @param fieldName The name of the field the decorated method should be "tied" to.
+ */
 export const calculate = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
@@ -419,10 +489,4 @@ export const build_proposed = function (fieldName : Name) : MethodDecorator {
 
         buildProposed[ fieldName ]     = propertyKey
     }
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const getSourcePointFromIdentifier = (identifier : Identifier) : SourceLinePoint => {
-    return (identifier as any).SOURCE_POINT
 }

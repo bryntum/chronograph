@@ -5,22 +5,43 @@ import { Name } from "./Field.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * This class describes a schema. Schemas are not used in ChronoGraph.
+ *
+ * Schema is just a collection of entities ([[EntityMeta]])
+ */
 export class Schema extends Base {
+    /**
+     * The name of the schema
+     */
     name                : Name
 
     entities            : Map<Name, EntityMeta>     = new Map()
 
-
+    /**
+     * Checks whether the schema has an entity with the given name.
+     *
+     * @param name
+     */
     hasEntity (name : Name) : boolean {
         return this.entities.has(name)
     }
 
 
+    /**
+     * Returns an entity with the given name or `undefined` if there's no such in this schema
+     *
+     * @param name
+     */
     getEntity (name : Name) : EntityMeta {
         return this.entities.get(name)
     }
 
 
+    /**
+     * Adds an entity to the schema.
+     * @param entity
+     */
     addEntity (entity : EntityMeta) : EntityMeta {
         const name      = entity.name
 
@@ -35,6 +56,9 @@ export class Schema extends Base {
     }
 
 
+    /**
+     * Returns a class decorator which can be used to decorate classes as entities.
+     */
     getEntityDecorator () : ClassDecorator {
         // @ts-ignore : https://github.com/Microsoft/TypeScript/issues/29828
         return (target : EntityConstructor) => {
