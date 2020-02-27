@@ -145,6 +145,10 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
 //---------------------------------------------------------------------------------------------------------------------
 /**
  * The generic identifier class.
+ *
+ * ```ts
+ * const identifier1 = Identifier.new({ calculation : () => 42 })
+ * ```
  */
 export class Identifier<ValueT = any, ContextT extends Context = Context> extends Meta<ValueT, ContextT> {
     /**

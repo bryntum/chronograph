@@ -1,8 +1,13 @@
+ChronoGraph advanced features
+=============================
 
-Identifiers
-------------
+This guide introduces more advanced functionality of ChronoGraph. To use them we first need to examine the low-level
+data representation of ChronoGraph.
 
-ChronoGraph represents itself by a directed acyclic graph. The nodes of the graph are called "identifiers". The main property of the identifier is a function, that calculates its value.  
+Graph. Synchronous identifiers. Generator-based identifiers
+------------------------
+
+At the low level, ChronoGraph is a directed acyclic graph. The nodes of the graph are called "identifiers". The main property of the [[Identifier]] is a function, that calculates its value ([[Identifier.calculation]]).  
 
 ```ts
 import { Identifier } from "../src/chrono/Identifier.js"
@@ -10,21 +15,23 @@ import { Identifier } from "../src/chrono/Identifier.js"
 const identifier1 = Identifier.new({ calculation : () => 42 })
 ```
 
-It is possible to reference to the value of another identifier through a special construct, which is called "yielding an effect". In TypeScript syntax this means passing the identifier to the special function (so called "effect handler"), which is provided as the 1st argument of every calculation function.
+In the calculation function of some identifier, it is possible to reference the value of another identifier through a special construct, which is called "yielding an effect". In TypeScript syntax this means passing the identifier to the special function (so called "effect handler"), which is provided as the 1st argument of every calculation function.
 
 ```ts
 import { SyncEffectHandler } from "../src/chrono/Transaction.js"
 
-const identifier2 = Identifier.new({ calculation : (Y : SyncEffectHandler) => Y(identifier1) + 5 })
+const identifier2 = Identifier.new({ 
+    calculation : (Y : SyncEffectHandler) => Y(identifier1) + 5 
+})
 ```
 
-Important expectation is, that other than by values that results from yielding an effect, the calculation functions are supposed to be pure. This is important consideration to keep in mind, if you have background from the imperative language. The purity allows us to avoid a massive class of bugs, which are common in the "wild" turing-complete imperative code.
+Important expectation is, that other than by values that results from yielding an effect, the calculation functions are supposed to be pure. 
 
-As you may have noticed, the value of another identifier can be referenced as the synchronous call to the effect handler. Thus, by language design, the nesting of such construct is limited by the stack depth. ChronoGraph also adds couple of internal calls to the handler. Our measurements showed, that effective stack depth for the ChronoGraph identifiers is ~1300. 
+So, the value of another identifier can be referenced as the synchronous call to the effect handler. Thus, by language design, the nesting of such construct is limited by the stack depth. ChronoGraph also adds couple of internal calls to the handler. Our measurements showed, that effective stack depth for the ChronoGraph identifiers is ~1300. 
 
 For some applications it may be not enough. For example, in our Gantt product, we calculate the schedule of the project, which consists from many tasks. Tasks are connected with each other, using "successor/predecessors" relationships. Such task dependencies can form long chains, and we want the length of the chain to be bigger than ~1300.
 
-Thankfully it is possible to rule out this limitation completely by using a special form of the calculation function, which is based on generators:
+Thankfully it is possible to rule out this limitation completely by using a special form of calculation function, which is based on generators:
 
 ```ts
 import { ChronoIterator } from "../src/chrono/Graph.js"
@@ -38,7 +45,9 @@ const identifier3 = Identifier.new({
 })
 ```
 
-User can also provide a context in which to execute this function (the `this` value). Considering the purity requirement, the context should be an immutable value.
+As you can see, in this form, "yielding an effect" is mapped to the actual JS `yield` keyword.
+
+User can also provide a context in which to execute this function (the `this` value, see [[Identifier.context]]). Considering the purity requirement, the context should be an immutable value.
 
 ```ts
 const context = { identifier1, identifier2 }
@@ -63,11 +72,11 @@ const identifier5 = Identifier.new({
 
 ```
 
-Again, in generator form, identifiers may reference each other in indefinitely long chains (unlimited stack depth). Also, in generator form, calculation function can also be asynchronous (by yield asynchronous effects). However, execution of the generator function has additional overhead, compared to synchronous function, so this calculation mode imposes certain performance penalty (see the Benchmarks section). 
+Again, in generator form, identifiers may reference each other in indefinitely long chains (unlimited stack depth). Also, in generator form, calculation function can also be asynchronous (by yield asynchronous effects). However, execution of the generator function has additional overhead, compared to synchronous function, so this calculation mode imposes certain performance penalty (see the [Benchmarks]((_guides_benchmarks_.html)) guide). 
 
-Cyclic identifier references are not allowed. You may still find, that you need to encode a cyclic set of formulas, as an invariant about your data. In such case, reference the [Dealing with computation cycles]() guide. 
+Cyclic identifier references are not allowed. You may still find, that you need to encode a cyclic set of formulas, as an invariant about your data. In such case, reference the [Dealing with cyclic computations](_guides_cycleresolver_.html) guide. 
 
-It is possible to mix the identifiers with different types of calculation functions freely (you can get a value of the generator identifier in the synchronous identifier and vice-versa).
+It is possible to mix the identifiers with different types of calculation functions freely (you can reference a value of the generator identifier in the synchronous identifier and vice-versa).
 
 ```ts
 const identifier6 = Identifier.new({
@@ -87,10 +96,10 @@ const identifier7 = Identifier.new({
 })
 ```
 
-Takes over:
+Takeaways:
 
-- ChronoGraph represents a directed acyclic graph of identifiers, which are, in simplest form, just calculation functions
-- Its possible to reference another identifiers through the "effect yielding"
+- ChronoGraph is a directed acyclic graph of identifiers, which are, in the simplest form, just calculation functions
+- In those functions, its possible to reference another identifiers through the "effect yielding"
 - The effect yielding can be of 2 types - synchronous and with generators
 - Generator calculations has unlimited stack depth and can be asynchronous. They are a bit slower, however.
 - The identifiers of different types can be freely mixed   
@@ -98,10 +107,10 @@ Takes over:
 Scopes. Variables. Reactive contract. Equality
 -----------------
 
-The identifiers themselves represent a closed world of pure functions. To be able to interact with this world, we need to sort of "materialize" it. We do it by adding an identifier to the `ChronoGraph` instance. Now, we can read the value of that identifier "in the scope" of that `ChronoGraph` instance.
+The identifiers themselves represent a closed world of pure functions. To be able to interact with this world, we need to sort of "materialize" it. We do it by adding an identifier to the [[ChronoGraph]] instance. Now, we can read the value of that identifier "in the scope" or "in the context" of that `ChronoGraph` instance.
 
 ```ts
-const graph = MinimalChronoGraph.new()
+const graph = ChronoGraph.new()
 
 graph.addIdentifier(identifier1)
 
@@ -116,7 +125,7 @@ const identifier1 = graph.identifier(() => 42))
 const value1 = graph.read(identifier1)
 ```
 
-There is a special type of identifiers, that represent a user input - "variables". Variables can be created by supplying their initial value: 
+There is a special type of identifiers, that represent a user input - "variables" (see [[Variable]]). It is more lightweight than regular identifier, as it omits the calculation function. Variables can be created by supplying their initial value: 
 
 ```ts
 const variable9 : Variable<number> = graph.variable(42)
@@ -124,7 +133,7 @@ const variable9 : Variable<number> = graph.variable(42)
 const value9 = graph.read(variable9)
 ```
 
-To provide a value for the variable, you can "write" to it:
+To provide a value for the variable, you can "write" to it (see [[ChronoGraph.write]]):
 
 ```ts
 graph.write(variable9, 11)
@@ -135,7 +144,6 @@ const value10 = graph.read(variable9)
 As you probably already guessed, after you wrote to some variable, reading from any dependent identifier will return updated, consistent value - that is what we call "reactive contract".
 
 Another part of the reactive contract, is that if the value is calculated to the same value as it had previously, the identifiers, dependent on it, will not be re-calculated. This minimizes the numbers of computations needed to bring the data into the consistent state and greatly improves performance. In fact, identifiers forms a memoized set of calculations. 
-
 
 ```ts
 const variable11 : Variable<number> = graph.variable(5)
@@ -154,7 +162,7 @@ graph.write(variable12, 7)
 const value15 = graph.read(identifier14)
 ```
 
-One more property of the identifiers is, how they "understand" or implement equality for their data. By default, the equality check is performed with the `===` operator, one can provide a custom implementation using the `equality` property. 
+One more property of the identifiers is, how they "understand" or implement equality for their data. By default, the equality check is performed with the `===` operator, one can provide a custom implementation using the [[Identifier.equality]] property. 
 
 ```ts
 const identifier10 = Identifier.new({
@@ -167,26 +175,26 @@ const identifier10 = Identifier.new({
 ```
 
 
-Takes over:
-- Reading/writing from/to the identifiers is only possible inside of certain "scope" (`ChronoGraph` instance)
-- There's a special kind of identifiers - "variables", that represents user input.
+Takeaways:
+- Reading/writing from/to the identifiers is only possible inside of certain "scope" ([[ChronoGraph]] instance)
+- There's a special lightweight kind of identifiers - "variables", that represents user input.
 - The data in the scope conforms to the "reactive contract", which means that reads from the identifiers will return consistent values with regard to previous writes.
-- If identifier is computed to the "same" value (the notion of "sameness" can be configured with the `equality` property of the identifiers), dependent identifiers are not re-calculated, minimizing the number of computations. By default, the equality is implemented with `===` operator.
+- If identifier is computed to the "same" value (the notion of "sameness" can be configured with the [[Identifier.equality]] property), dependent identifiers are not re-calculated, minimizing the number of computations. By default, the equality is implemented with `===` operator.
 
 
 Mixed identifier. ProposedOrCurrent effect
 -----------------------
 
-In "classic" reactive system, variables and computed values are the only primitives. However, we found, that it is common for the identifiers to behave differently, based on some other data. For example, in some mode, identifier may only represent a user input ("variable"), but when some external value changes, it may need to ignore the user input and instead be calculated, based on other identifiers only.
+In a "classic" reactive system, variables and computed values are the only primitives. However, we found, that it is common for the identifiers to behave differently, based on some other data. For example, in some mode, identifier may only represent a user input ("variable"), but when some external value changes, it may need to ignore the user input and instead be calculated, based on other identifiers only.
 
-This is of course can be solved by simply having an extra identifier for the input. However, when pretty much the same identifiers needs to have this behavior this means doubling the number of identifiers. In Bryntum Gantt, for the project with 10k tasks and 5k dependencies we have roughly 500k of identifiers, doubling all of them would mean the number would be 1M.
+This is of course can be solved by simply having an extra identifier for the input. However, when pretty much all the identifiers needs to have this behavior, this means doubling the number of identifiers. In Bryntum Gantt, for the project with 10k tasks and 5k dependencies we have roughly 500k of identifiers, doubling all of them would mean the number would be 1M.
 
 Instead, we introduce a special effect for the user input `ProposedOrCurrent`. Yielding this effect returns either a user input for this identifier, or, if there's no input, its current value. 
 
 If identifier does not yield this effect, it becomes a purely computed value. If it does, and returns its value unmodified, it becomes a variable. It can also yield this effect, but return some processed value, based on extra data. This can be seen as validating user input:
 
 ```ts
-const graph4 = MinimalChronoGraph.new()
+const graph4 = ChronoGraph.new()
 
 const max           = graph4.variable(100)
 
@@ -215,7 +223,7 @@ One thing to consider, is that if an identifier yields a `ProposedOrCurrent` eff
 
 See also the [Dealing with the computation cycles]() guide.
 
-Takes over:
+Takeaways:
 
 - The user input in ChronoGraph is actually represented with the special effect, `ProposedOrCurrent`
 - Identifier can yield this effect or choose to not do that, based on the values of external data. This may change the identifier's behavior from purely computed value to variable, with "validated" value in the middle
@@ -279,7 +287,7 @@ We introduce a new kind of data scope, that keeps entities information, called "
 
 Field properties creates auto-generated get/set accessors, which are tied to the `read/write` methods of the graph. For the outside world, entities behave very similar to regular TypeScript classes, however, important consideration to keep in mind, is, again, purity. Even that field calculation function has class instance as its `this` value, it should not refer anything other than `this.$` property, which is simply an immutable object collection of all fields of this entity. It should not modify any external state, or perform other effects. 
 
-Takes over:
+Takeaways:
 
 - Modeling complex data domains is easier, when data graph is represented with the entities - "records" of the individual "fields", which are represented with plain TypeScript classes
 - Fields of entities are regular TypeScript class properties with `@field()` decorator. They creates corresponding identifiers in the new type of the data scope, called "replica". One can assign a calculation function for the field using the `@calculate(fieldName)` decorator for class method
@@ -330,7 +338,7 @@ huckleberryFinn2.writtenBy  = markTwain2
 markTwain2.books // new Set([ tomSawyer2, huckleberryFinn2 ])
 ```
 
-Takes over:
+Takeaways:
 
 - References between the entities can be established with the special kind of fields - "reference" and "reference bucket", with `@reference<Entity>({ bucket : bucketName})` and `@bucket()` decorators.
 - Buckets are the `Set` collections with all entities, referencing the entity of the bucket  
@@ -360,7 +368,7 @@ Data branching. Undo/redo
 You can derive a new scope from the existing one. The data in these 2 scope will be unrelated. 
 
 ```ts
-const graph2 = MinimalChronoGraph.new()
+const graph2 = ChronoGraph.new()
 
 const variable13 : Variable<number> = graph2.variable(5)
 
@@ -379,7 +387,7 @@ Data branching is cheap, there's no overhead for computations in the branches.
 It is also possible to opt-in to keep in the memory the recent state of the data graph. One can switch between the states using the `undo/redo` methods. The memory "depth" is configured with the `historyLimit` configuration option.
 
 ```ts
-const graph3 = MinimalChronoGraph.new({ historyLimit : 5 })
+const graph3 = ChronoGraph.new({ historyLimit : 5 })
 
 const variable14 : Variable<number> = graph2.variable(5)
 
@@ -398,7 +406,7 @@ graph2.redo()
 const value14_4 = graph2.read(variable14)  // 10
 ```
 
-Takes over:
+Takeaways:
 - It is possible to derive an unrelated branch from the current data scope. This is cheap, and can answer "what if" questions about the data.
 - Its possible to opt-in for the undo/redo feature 
 

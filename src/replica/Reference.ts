@@ -13,9 +13,11 @@ import { ReferenceBucketIdentifier } from "./ReferenceBucket.js"
 export type ResolverFunc    = (locator : any) => Entity
 
 
-
-
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Mixin, for the identifier that represent a reference field of the entity. Requires the [[Field]] (or its subclass)
+ * as a base class. See more about mixins: [[Mixin]]
+ */
 export class ReferenceField extends Mixin(
     [ Field ],
     (base : AnyConstructor<Field, typeof Field>) =>
@@ -25,11 +27,34 @@ class ReferenceField extends base {
 
     resolver            : ResolverFunc
 
+    /**
+     * The name of the "bucket" field on this reference's value. The entity to which this reference field belongs
+     * will be added to that "bucket"
+     */
     bucket              : Name
 }){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Specialized version of the [field](_replica_entity_.html#field) decorator, which should be used to mark the references.
+ * All it does is replace the default value of the second argument to the [[ReferenceField]].
+ *
+ * ```ts
+ * class Author extends Person {
+ *     @bucket()
+ *     books           : Set<Book>
+ * }
+ *
+ * class Book extends Entity.mix(Base) {
+ *     @reference({ bucket : 'books' })
+ *     writtenBy       : Author
+ * }
+ * ```
+ *
+ * @param fieldConfig Object with the configuration properties
+ * @param fieldCls Optional. Default value has been changed to [[ReferenceField]]
+ */
 export const reference : FieldDecorator<typeof ReferenceField> =
     (fieldConfig?, fieldCls = ReferenceField) => generic_field(fieldConfig, fieldCls)
 

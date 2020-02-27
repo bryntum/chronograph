@@ -677,6 +677,11 @@ export class ChronoGraph extends Base {
     }
 
 
+    /**
+     * Read the value of the identifier either synchronously or asynchronously, depending on its type (see [[Identifier.sync]])
+     * 
+     * @param identifier
+     */
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
         return this.activeTransaction.get(identifier)
     }

@@ -8,6 +8,10 @@ import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Mixin, for the identifier that represent a reference bucket field of the entity. Requires the [[Field]] (or its subclass)
+ * as a base class. See more about mixins: [[Mixin]]
+ */
 export class ReferenceBucketField extends Mixin(
     [ Field ],
     (base : AnyConstructor<Field, typeof Field>) =>
@@ -22,16 +26,35 @@ class ReferenceBucketField extends base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Specialized version of the [field](_replica_entity_.html#field) decorator, which should be used to mark the reference buckets.
+ * All it does is replace the default value of the second argument to the [[ReferenceBucketField]].
+ *
+ * ```ts
+ * class Author extends Person {
+ *     @bucket()
+ *     books           : Set<Book>
+ * }
+ *
+ * class Book extends Entity.mix(Base) {
+ *     @reference({ bucket : 'books' })
+ *     writtenBy       : Author
+ * }
+ * ```
+ *
+ * @param fieldConfig Object with the field configuration properties
+ * @param fieldCls Optional. Default value has been changed to [[ReferenceBucketField]]
+ */
 export const bucket : FieldDecorator<typeof ReferenceBucketField> =
     (fieldConfig?, fieldCls = ReferenceBucketField) => generic_field(fieldConfig, fieldCls)
 
 
-export enum BucketMutationType {
+enum BucketMutationType {
     'Add'       = 'Add',
     'Remove'    = 'Remove'
 }
 
-export type BucketMutation  = {
+type BucketMutation  = {
     type        : BucketMutationType,
     entity      : Entity
 }

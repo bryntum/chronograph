@@ -425,6 +425,33 @@ export const generic_field : FieldDecorator<typeof Field> =
  * }
  * ```
  *
+ * For every field, there are generated get and set accessors, with which you can read/write the data:
+ *
+ * ```ts
+ * const author     = Author.new({ firstName : 'Mark' })
+ *
+ * author.firstName // Mark
+ * author.lastName  = 'Twain'
+ * ```
+ *
+ * The getters are basically using [[ChronoGraph.get]] and setters [[ChronoGraph.write]].
+ *
+ * Note, that if the identifier is asynchronous, reading from it may return a promise. But, immediately after the `commit` call, getter will return
+ * plain value. This is a compromise between the convenience and correctness and this behavior may change (or made configurable) in the future.
+ *
+ * Additionally to the accessors, the getter and setter methods are generated. The getter method's name is formed as `get` followed by the field name
+ * with upper-cased first letter. The setter's name is formed in the same way, with `set` prefix.
+ *
+ * The getter method is an exact equivalent of the get accessor. The setter method, in addition to data write, immediately after that
+ * performs a call to [[ChronoGraph.commit]] (or [[ChronoGraph.commitAsync]], depending from the [[ChronoGraph.autoCommitMode]] option)
+ * and return its result.
+ *
+ * ```ts
+ * const author     = Author.new({ firstName : 'Mark' })
+ *
+ * author.getFirstName() // Mark
+ * await author.setLastName('Twain') // suppose asynchronous commit
+ * ```
  */
 export const field : typeof generic_field = generic_field
 
