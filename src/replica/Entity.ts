@@ -77,6 +77,7 @@ export class Entity extends Mixin(
          * ```ts
          * const author = Author.new()
          *
+         * // identifier for the field `firstName`
          * author.$.firstName
          *
          * const firstName = replica.read(author.$.firstName)

@@ -270,6 +270,11 @@ markTwain.books // new Set([ huckleberryFinn ])
 
 ```
 
+Takeaways:
+
+- References between the entities can be established with the special kind of fields - "reference" and "reference bucket", with `@reference<Entity>({ bucket : bucketName})` and `@bucket()` decorators.
+- Buckets are unordered `Set` collections with all entities, referencing the entity of the bucket  
+
 
 ## Lazy and strict computations
 

@@ -198,10 +198,10 @@ const graph4 = ChronoGraph.new()
 
 const max           = graph4.variable(100)
 
-const identifier15  = graph4.identifier(function *calculation () : CalculationIterator<number> {
-    const proposedValue : number    = yield ProposedOrPrevious
+const identifier15  = graph4.identifier((Y) : number => {
+    const proposedValue : number    = Y(ProposedOrPrevious)
 
-    const maxValue : number         = yield max
+    const maxValue : number         = Y(max)
 
     return proposedValue <= maxValue ? proposedValue : maxValue
 })
@@ -223,8 +223,6 @@ One thing to consider, is that if an identifier yields a `ProposedOrPrevious` ef
 
 See also the [Dealing with the computation cycles](_guides_cycleresolver_.html) guide.
 
-There's a number 
-
 Takeaways:
 
 - The user input in ChronoGraph is actually represented with the special effect, `ProposedOrPrevious`
@@ -234,15 +232,24 @@ Takeaways:
 Other effects
 -------------
 
+In addition to the `ProposedOrPrevious` effect there's a number of other effects, for example [[Reject]].
+
+The other effects are still somewhat experimental, so they are not documented intentionally. Please refer to `chrono/Effect.ts` file for info.
 
 
-Field. Entity. Schema. Replica
--------------------------------
+Entity/Relation framework
+-------------------------
 
-The identifiers graph from above is a low-level interface for the ChronoGraph. We found, that for modelling a complex data domain, its much easier to reason about such graph, when its organized into "entities". We naturally chose to represent entities with TypeScript classes:
+The identifiers graph from above is a low-level interface for the ChronoGraph. In the [Basic features](_guides_basicfeatures_.html) we've already introduced a more convenient view on it, as on set of "entities" with "fields". We naturally chose to represent entities with TypeScript classes and fields - with their properties.
+
+To turn some JS class into entity, one need to mix the [[Entity]] mixin into it (see more about mixins - [[Mixin]]). And to turn a property into a field - decorate it with [field](_replica_entity_.html#field) decorator. 
+
+To specify the calculation function for the identifier of some field - write it as a method of the entity class and decorate with [[calculate]].
+
+Under the hood, its an a bit enhanced version of the same graph, which can be instantiated with [[Replica]] constructor.  
 
 ```ts
-class Author extends Entity(Object) {
+class Author extends Entity.mix(Object) {
     @field()
     firstName       : string
 
@@ -255,109 +262,38 @@ class Author extends Entity(Object) {
 
     @calculate('fullName')
     calculateFullName (Y : SyncEffectHandler) : string {
-        return Y(this.$.firstName) + ' ' + Y(this.$.lastName)
+        return this.firstName + ' ' + this.lastName
     }
 }
+```
 
-const replica1          = MinimalReplica.new()
+The identifiers for all fields are collected into the [[Entity.$]] property.
 
+```ts
 const markTwain         = new Author()
 
-replica1.addEntity(markTwain)
-
-markTwain.firstName     = 'Mark'
-markTwain.lastName      = 'Twain'
-
-console.log(markTwain.fullName) // Mark Twain
+markTwain.$.firstName
+markTwain.$.lastName
 ```
 
-Here we use the `Entity` mixin, to turn any base class into entity. Then we use `@field()` decorator to mark some properties as "fields" - which are a special kind of ChronoGraph identifiers. We also use the `@calculate(fieldName)` decorator to mark a method of the class as the calculation function for the field, specified in the decorator. The context of calculation (value of `this`) is the class instance.
+The [[Identifier.context]] config of all field identifiers is set to the entity instance itself. 
 
-To reference the identifier, that represent a field of certain entity instance, we use the following notation: `this.$.fieldName`.
+Field properties also creates auto-generated get/set accessors, which are tied to the [[Replica.read]]/[[Replica.write]] methods of the graph. 
 
-We introduce a new kind of data scope, that keeps entities information, called "replica". Once we instantiate some entity, we need to add it to the replica. That will create identifiers for every field in the entity and also additional identifier, representing the entity as whole. 
-
-Field properties creates auto-generated get/set accessors, which are tied to the `read/write` methods of the graph. For the outside world, entities behave very similar to regular TypeScript classes, however, important consideration to keep in mind, is, again, purity. Even that field calculation function has class instance as its `this` value, it should not refer anything other than `this.$` property, which is simply an immutable object collection of all fields of this entity. It should not modify any external state, or perform other effects. 
+For the outside world, entities behave very similar to regular TypeScript classes, however, important consideration to keep in mind, is, again, purity. Even that field calculation function has class instance as its `this` value, it should not refer to anything other than `this.$` property, which is simply an immutable object collection of all fields of this entity. It should not modify any external state, or perform other effects. 
 
 Takeaways:
 
-- Modeling complex data domains is easier, when data graph is represented with the entities - "records" of the individual "fields", which are represented with plain TypeScript classes
+- Modeling complex data domains is easier, when data graph is represented as the set of "entities" with "fields", which are mapped to plain TypeScript classes
 - Fields of entities are regular TypeScript class properties with `@field()` decorator. They creates corresponding identifiers in the new type of the data scope, called "replica". One can assign a calculation function for the field using the `@calculate(fieldName)` decorator for class method
-- Fields creates get/set accessors, which are tied to the read/write methods of the replica 
 
 
-Reference. Reference bucket
-----------------------
-
-Entities often need to reference each other. For example, in addition to the `Author` entity from the previous example, we may introduce a `Book` entity, that will have `writtenBy` field with the `Author` type, containing a corresponding `Author` instance.
-
-```ts
-class Book extends Entity(Object) {
-    @field()
-    writtenBy       : Author
-}
-
-const tomSoyer          = new Book
-    
-tomSoyer.writtenBy      = markTwain
-```
-
-This is a simplest form of reference to another entity. To make it a bit smarter and to answer a question - "what are the books written by Mark Twain", we can use special types of identifiers - references and reference buckets.
-
-```ts
-class Author2 extends Entity(Object) {
-    @bucket()
-    books           : Set<Book2>
-}
-
-class Book2 extends Entity(Object) {
-    @reference2<Author2>({ bucket : 'books' })
-    writtenBy       : Author2
-}
-
-const replica2          = MinimalReplica.new()
-
-const markTwain2        = new Author2()
-
-const tomSawyer2        = new Book()
-const huckleberryFinn2  = new Book()
-
-replica2.addEntities([ markTwain2, tomSawyer2, huckleberryFinn2 ])
-
-tomSawyer2.writtenBy        = markTwain2
-huckleberryFinn2.writtenBy  = markTwain2
-
-markTwain2.books // new Set([ tomSawyer2, huckleberryFinn2 ])
-```
-
-Takeaways:
-
-- References between the entities can be established with the special kind of fields - "reference" and "reference bucket", with `@reference<Entity>({ bucket : bucketName})` and `@bucket()` decorators.
-- Buckets are the `Set` collections with all entities, referencing the entity of the bucket  
-
-
-
-Mixins
-------
-
-We found, that when modelling a complex data domain, its much easier to reason about each requirement in isolation, independently from other business logic. We would like to be able to add/remove features, without breaking existing ones.
-
-This can be achieved by using mixins, instead of regular class inheritance.
-
-Using mixins however, is orthogonal to the ChronoGraph itself - you can choose any other class organization.
-
-Mixins - requirements.
-
-Every feature - a mixin with own requirements (already "consumed" mixins).
-
-
-
-
-Data branching. Undo/redo
+Data branching.
 --------------
 
+We can finally introduce a most interesting feature of ChronoGraph - data branching. 
 
-You can derive a new scope from the existing one. The data in these 2 scope will be unrelated. 
+You can derive a new ChronoGraph data scope from the existing one. The data in these 2 scope will be unrelated. 
 
 ```ts
 const graph2 = ChronoGraph.new()
@@ -372,64 +308,111 @@ const value13_1 = graph2.read(variable13)  // 5
 const value13_2 = branch2.read(variable13) // 10
 ```
 
-This is a very useful feature to answer a "what-if" questions about the data. For example, in our Gantt, dependencies between tasks can not form cycles. So we need to find out, if adding a dependency creates a cycle, w/o actually adding a dependency (to show the prohibitive indicator in the UI). This is implemented by deriving a new branch and adding a dependency into it.
+This is a very useful feature to answer a "what-if" questions about the data. For example, in our Gantt product, dependencies between tasks can not form cycles. So, before adding a dependency, we need to find out whether it creates a cycle.
+
+More over we need get this information in advance, w/o actually adding a dependency (to show the prohibitive indicator in the UI and disallow the user action). This is implemented by deriving a new branch and adding a dependency into it.
 
 Data branching is cheap, there's no overhead for computations in the branches.
 
-It is also possible to opt-in to keep in the memory the recent state of the data graph. One can switch between the states using the `undo/redo` methods. The memory "depth" is configured with the `historyLimit` configuration option.
+We plan to eventually evolve this mechanism to the state, where the branches can be merged (first with only fast-forward scenario and latterly to a general merge).
+
+
+Mixins
+------
+
+We found, that when modelling a complex data domain, its much easier to reason about each requirement in isolation, independently from other business logic. We would like to be able to add/remove features, without breaking existing ones.
+
+This can be achieved by writing every feature as a mixin. Mixins is a well-known pattern in the imperative programming, which, in this context,
+means a combination of class inheritance and lambda functions. Lambda functions composes well, so do mixins. This solves a well-known problem of re-using functionality across the whole inheritance diagram.
+
+This pattern encourages every mixin to describe a very granular addition of logic, over already defined set of mixins (requirements that are assumed to be already maintained). This allows to model the requirements precisely, one by one. Naturally, the number of classes on the diagram increases (it took roughly 30 mixins, for example, to model the requirements of the Gantt chart), but modern tooling (TypeScript's typechecker), allows us to keep the things under control, and prevent "feature leak" - well known effect, when the logic of some feature is spreaded across many source files.
+
+For example, we can define a `Person` as something that can concatenate its `firstName` and `lastName`, derived as ChronoGraph [[Entity]], from the base class [[Base]].  
 
 ```ts
-const graph3 = ChronoGraph.new({ historyLimit : 5 })
+class Person extends Mixin(
+    [ Entity, Base ], 
+    (base : ClassUnion<typeof Entity, typeof Base>) => {
 
-const variable14 : Variable<number> = graph2.variable(5)
+    class Person extends base
+        @field()
+        firstName       : string
+        @field()
+        lastName        : string
+        @field()
+        fullName        : string
+    
+        @calculate('fullName')
+        calculateFullName (Y : SyncEffectHandler) : string {
+            return this.firstName + ' ' + this.lastName
+        }
+    }
 
-const value14_1 = graph2.read(variable14)  // 5
-
-graph3.write(variable14, 10)
-
-const value14_2 = graph2.read(variable14)  // 10
-
-graph2.undo()
-
-const value14_3 = graph2.read(variable14)  // 5
-
-graph2.redo()
-
-const value14_4 = graph2.read(variable14)  // 10
+    return Person
+}){}
 ```
 
-Takeaways:
-- It is possible to derive an unrelated branch from the current data scope. This is cheap, and can answer "what if" questions about the data.
-- Its possible to opt-in for the undo/redo feature 
-
-
-## Data branching
-
-You can also create a separate branch, pretty much like in git. Data changes in the branch won't affect the ancestor, branch exists separately.
+Then we can define an `Employee`, as a `Person` with `salary`.  
 
 ```ts
-const replica           = MinimalReplica.new()
+class Employee extends Mixin(
+    [ Person ], 
+    (base : ClassUnion<typeof Person>) => {
 
-author.firstName    = 'Moby'
+    class Employee extends base
+        @field()
+        salary          : number
+    
+        @calculate('salary')
+        calculateSalary (Y : SyncEffectHandler) : number {
+            return Y(ProposedOrPrevious)
+        }
+    }
 
-replica.propagate()
+    return Employee
+}){}
+``` 
 
-author.firstName == 'Moby'
+Lets say contract says, that employee can take free days, w/o being paid for them. Then we can define an feature, that describes how the salary changes if `Employee` took some free days during the month. Note, that if employee did not take any free days, this feature delegates the previous behavior. The notion of "previous behavior" is what allows mixins to compose well.   
 
-replica.undo()
+```ts
+class ExcludeFreeDaysFromSalary extends Mixin(
+    [ Employee ], 
+    (base : ClassUnion<typeof Employee>) => {
 
-author.fullName == 'Mark'
+    class Employee extends base
+        @field()
+        freeDays            : FreeDay[] // whatever that means
+    
+        @calculate('salary')
+        calculateSalary (Y : SyncEffectHandler) : number {
+            let salary = super.calculateSalary(Y)
 
-replica.redo()
+            if (this.freeDays.length > 0) {
+                salary  -= () => ...    
+            }
 
-author.fullName == 'Moby'
-```
+            return salary
+        }
+    }
 
+    return Employee
+}){}
+``` 
+
+Another business requirement could be -
+
+TODO FILL WITH ONE MORE REQUIREMENT SAMPLE 
+
+Using mixins however, is orthogonal to the ChronoGraph itself - you can choose any other class organization.
+
+See here on the ChronoGraph mixin's implementation details: [[Mixin]]. Note that the notation for mixins is still evolving. 
 
 
 Debug mode
 ==========
 
+There's a special constant in the code base, that, when changed  
 
 
 

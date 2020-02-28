@@ -45,6 +45,9 @@ export type CommitArguments = {
  * The type of the return value of the [[commit]] call.
  */
 export type CommitResult = {
+    /**
+     * If the transaction has been rejected, this property will be filled with the [[RejectEffect]] instance
+     */
     rejectedWith        : RejectEffect<unknown> | null
 }
 
