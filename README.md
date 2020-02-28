@@ -34,10 +34,18 @@ You should be able to quickly pick up the base concept of reactivity from the [B
 To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [Advanced features](./modules/_guides_advancedfeatures_.html) guide.
 
 
+Benchmarks
+==========
+
+ChronoGraph is committed to have excellent performance. To reason about it objectively we wrote a benchmark suite.
+More details in the [Benchmarks](./modules/_guides_benchmarks_.html) guide.
+
 Connect
 =======
 
 We welcome all feedback. Please tell us what works well in ChronoGraph, what causes troubles and what other features you would like to see in it.
+
+[Issues tracker](https://github.com/bryntum/chronograph/issues)
 
 Post at the [forum](https://bryntum.com/forum/CHRONOGRAPH)
 

@@ -72,7 +72,7 @@ const identifier5 = Identifier.new({
 
 ```
 
-Again, in generator form, identifiers may reference each other in indefinitely long chains (unlimited stack depth). Also, in generator form, calculation function can also be asynchronous (by yield asynchronous effects). However, execution of the generator function has additional overhead, compared to synchronous function, so this calculation mode imposes certain performance penalty (see the [Benchmarks]((_guides_benchmarks_.html)) guide). 
+Again, in generator form, identifiers may reference each other in indefinitely long chains (unlimited stack depth). Also, in generator form, calculation function can also be asynchronous (by yield asynchronous effects). However, execution of the generator function has additional overhead, compared to synchronous function, so this calculation mode imposes certain performance penalty (see the [Benchmarks](_guides_benchmarks_.html) guide). 
 
 Cyclic identifier references are not allowed. You may still find, that you need to encode a cyclic set of formulas, as an invariant about your data. In such case, reference the [Dealing with cyclic computations](_guides_cycleresolver_.html) guide. 
 
@@ -185,13 +185,13 @@ Takeaways:
 Mixed identifier. ProposedOrCurrent effect
 -----------------------
 
-In a "classic" reactive system, variables and computed values are the only primitives. However, we found, that it is common for the identifiers to behave differently, based on some other data. For example, in some mode, identifier may only represent a user input ("variable"), but when some external value changes, it may need to ignore the user input and instead be calculated, based on other identifiers only.
+In a "classic" reactive system, variables and computed values are the only primitives. However, we found, that it is common for the identifiers to behave differently, based on some other data. For example, in some mode, an identifier may represent only user input ("variable"), but when some external value changes, it may need to ignore the user input and instead be calculated, based on other identifiers.
 
-This is of course can be solved by simply having an extra identifier for the input. However, when pretty much all the identifiers needs to have this behavior, this means doubling the number of identifiers. In Bryntum Gantt, for the project with 10k tasks and 5k dependencies we have roughly 500k of identifiers, doubling all of them would mean the number would be 1M.
+This is of course can be solved by simply having an extra identifier for the input. However, when pretty much all the identifiers need to have this behavior, this means doubling the number of identifiers. In Bryntum Gantt, for the project with 10k tasks and 5k dependencies we have roughly 500k of identifiers, doubling all of them would mean the number would be 1M, which is a significant pressure on browser.
 
-Instead, we introduce a special effect for the user input `ProposedOrCurrent`. Yielding this effect returns either a user input for this identifier, or, if there's no input, its current value. 
+Instead, we introduce a special [[Effect]] for the user input `ProposedOrCurrent`. Yielding this effect returns either a user input for this identifier, or, if there's no input, its previous value. 
 
-If identifier does not yield this effect, it becomes a purely computed value. If it does, and returns its value unmodified, it becomes a variable. It can also yield this effect, but return some processed value, based on extra data. This can be seen as validating user input:
+If an identifier does not yield this effect, it becomes a purely computed value. If it does, and returns its value unmodified, it becomes a variable. It can also yield this effect, but return some processed value, based on extra data. This can be seen as validating user input:
 
 ```ts
 const graph4 = ChronoGraph.new()
@@ -221,26 +221,18 @@ const value15_3 = graph4.read(identifier15) // 50
 
 One thing to consider, is that if an identifier yields a `ProposedOrCurrent` effect and its computed value does not match the value of this effect, it will be re-calculated (computation function called) again on the next read. This is because the value of its `yield ProposedOrCurrent` input changes.
 
-See also the [Dealing with the computation cycles]() guide.
+See also the [Dealing with the computation cycles](_guides_cycleresolver_.html) guide.
+
+There's a number 
 
 Takeaways:
 
 - The user input in ChronoGraph is actually represented with the special effect, `ProposedOrCurrent`
-- Identifier can yield this effect or choose to not do that, based on the values of external data. This may change the identifier's behavior from purely computed value to variable, with "validated" value in the middle
-
-
-Observing the identifier in the scope
--------------------------------------
-
-graph.observe()
+- Identifier can yield this effect or choose to not do that, based on the values of external data. This may change the identifier's behavior from purely computed value to variable, with "validated" value in the middle.
 
 
 Other effects
------------------
-
-
-Generated setter/getter methods
--------------------------------
+-------------
 
 
 
@@ -434,66 +426,10 @@ author.fullName == 'Moby'
 ```
 
 
-Dealing with computation cycles. Cycle dispatcher. Cycle resolver.
-----------------------
-
-Computation cycle occurs when identifiers starts referencing each other in cycle. 
-
-The best way to deal with such situation is to avoid it.
-
-However, computation cycles are natural way of describing invariants between the mutually depending identifiers, so sometimes its not possible to avoid them. 
-
-ChronoGraph suggest a uniform approach to dealing with cycles, which, with disciplined usage, achieves the goal and keeps the code clean. It is still an evolving area, so we are very welcoming the feedback on it.
-
-Below we examine a simplified example from our Gantt implementation. 
-
-In the Gantt chart, every task has start date (`S`), end date (`E`) and duration (`D`). A natural invariant of these 3 identifiers is expressed with formula:
-
-    E = S + D
-    
-We want all three identifiers to accept user input. And we want the remaining ones to adapt to that input, keeping the invariant. So, for example, if user writes to `E` and `S` we want to calculate `D`. If user writes to `S` and `D`, we want to calculate `E`, etc.
-    
-If we would be writing the calculation functions for these identifiers, we could start with something like: 
-
-    E = S + D
-    S = E - D
-    D = E - S 
-   
-As you can immediately see, this set of formulas is cyclic. 
-
-Additionally, what if user writes only to a single identifier, lets say `S`? In respond, we can either recalculate `E` and keep `D` (move the task on the timeline), or recalculate `D` and keep `E` (resize the task). Both choices are valid since they don't violate the invariant, however their semantic and result are very different. 
-
-Because of the above, when writing to any of identifiers of the cycle, we may need to provide an additional flag, specifying the resolution option.
-
-
-
-    
-// The cycle appears because of the requirement to accept user input for all 3 identifiers, meaning //sometimes they should behave as variables and sometimes - as calculated values.
-
- 
-
 
 Debug mode
 ==========
 
-
-
-Benchmarks
-==========
-
-- Deep graph changes - generators: 3.684ms ±0.034
-- Deep graph changes - synchronous: 2.411ms ±0.117
-- Deep graph changes - Mobx: 1.633ms ±0.099
-- Deep graph changes - generators big: 484.267ms ±14.619
-- Deep graph changes - generators big, shared identifiers: 395.111ms ±17.015
-- Shallow graph changes - generators: 1.954ms ±0.031
-- Shallow graph changes - synchronous: 2.051ms ±0.039
-- Shallow graph changes - Mobx: 0.421ms ±0.016
-- Shallow graph changes - generators big: 279.08ms ±12.293
-- Graph population 100k - generators: 161.5ms ±7.819
-- Graph population 100k - synchronous: 156.792ms ±7.489
-- Graph population 100k - Mobx: 227.513ms ±10.609
-- Replica population 125k: 227.333ms ±5.838
 
 
 

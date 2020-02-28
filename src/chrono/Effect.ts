@@ -7,9 +7,15 @@ export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution'
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The base class for effect.
+ */
 export class Effect extends Base {
     handler     : symbol
 
+    /**
+     * Whether the effect is synchronous. Default value, defined in the prototype, is `true`.
+     */
     @prototypeValue(true)
     sync        : boolean
 
