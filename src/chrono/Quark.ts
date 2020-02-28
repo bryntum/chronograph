@@ -43,7 +43,7 @@ class Quark extends base {
     value                   : any       = undefined
     proposedValue           : any       = undefined
     proposedArguments       : any[]     = undefined
-    usedProposedOrCurrent   : boolean   = false
+    usedProposedOrPrevious   : boolean   = false
     // eof quark state
 
     previous        : Quark             = undefined
@@ -97,7 +97,7 @@ class Quark extends base {
         // TODO needs some proper solution for edgesFlow + walk epoch combination
         if (this.edgesFlow < 0) this.edgesFlow = 0
 
-        this.usedProposedOrCurrent          = false
+        this.usedProposedOrPrevious          = false
 
         this.cleanupCalculation()
         this.clearOutgoing()
@@ -128,7 +128,7 @@ class Quark extends base {
         this.value                  = origin.value
         this.proposedValue          = origin.proposedValue
         this.proposedArguments      = origin.proposedArguments
-        this.usedProposedOrCurrent  = origin.usedProposedOrCurrent
+        this.usedProposedOrPrevious  = origin.usedProposedOrPrevious
     }
 
 

@@ -1,6 +1,6 @@
 //-----------------------------------
 import { ChronoGraph, ChronoIterator } from "../src/chrono/Graph.js"
-import { ProposedOrCurrent } from "../src/chrono/Effect.js"
+import { ProposedOrPrevious } from "../src/chrono/Effect.js"
 //-----------------------------------
 // example3
 // example1
@@ -176,7 +176,7 @@ const graph4 = ChronoGraph.new()
 const max           = graph4.variable(100)
 
 const identifier15  = graph4.identifier(function *calculation () : CalculationIterator<number> {
-    const proposedValue : number    = yield ProposedOrCurrent
+    const proposedValue : number    = yield ProposedOrPrevious
 
     const maxValue : number         = yield max
 

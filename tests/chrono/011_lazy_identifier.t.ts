@@ -1,4 +1,4 @@
-import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
+import { ProposedOrPrevious } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
 import { Revision } from "../../src/chrono/Revision.js"
@@ -199,7 +199,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should be able to calculate lazy identifier that uses `ProposedOrCurrent`', async t => {
+    t.it('Should be able to calculate lazy identifier that uses `ProposedOrPrevious`', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableNamed('i1', 0)
@@ -216,7 +216,7 @@ StartTest(t => {
                 if (dispatch === 'pure') {
                     return (yield i1) + (yield i2)
                 } else {
-                    return (yield ProposedOrCurrent)
+                    return (yield ProposedOrPrevious)
                 }
             }
         }))
@@ -254,7 +254,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should be able to calculate lazy identifier that uses `ProposedOrCurrent` - sync', async t => {
+    t.it('Should be able to calculate lazy identifier that uses `ProposedOrPrevious` - sync', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableNamed('i1', 0)
@@ -271,7 +271,7 @@ StartTest(t => {
                 if (dispatch === 'pure') {
                     return YIELD(i1) + YIELD(i2)
                 } else {
-                    return YIELD(ProposedOrCurrent)
+                    return YIELD(ProposedOrPrevious)
                 }
             }
         }))

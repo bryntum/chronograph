@@ -1,7 +1,7 @@
 import { Base } from "../class/BetterMixin.js"
 import { CalculationContext, CalculationGen, CalculationSync, Context, ContextGen, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { ProposedOrCurrent } from "./Effect.js"
+import { ProposedOrPrevious } from "./Effect.js"
 import { ChronoGraph } from "./Graph.js"
 import { Quark, QuarkConstructor } from "./Quark.js"
 import { Revision } from "./Revision.js"
@@ -308,7 +308,7 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof
 
 
     calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextSync ] {
-        return YIELD(ProposedOrCurrent)
+        return YIELD(ProposedOrPrevious)
     }
 }
 
@@ -331,7 +331,7 @@ export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof 
 
 
     * calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextGen ] {
-        return yield ProposedOrCurrent
+        return yield ProposedOrPrevious
     }
 }
 

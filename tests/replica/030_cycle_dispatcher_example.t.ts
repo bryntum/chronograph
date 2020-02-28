@@ -1,4 +1,4 @@
-import { ProposedArgumentsOf, ProposedOrCurrent, ProposedValueOf } from "../../src/chrono/Effect.js"
+import { ProposedArgumentsOf, ProposedOrPrevious, ProposedValueOf } from "../../src/chrono/Effect.js"
 import { Identifier } from "../../src/chrono/Identifier.js"
 import { Quark } from "../../src/chrono/Quark.js"
 import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
@@ -79,7 +79,7 @@ class Event extends Entity.mix(Base) {
             return endValue - durationValue
         }
         else if (instruction === CalculationMode.CalculateProposed) {
-            return yield ProposedOrCurrent
+            return yield ProposedOrPrevious
         }
     }
 
@@ -99,7 +99,7 @@ class Event extends Entity.mix(Base) {
             return startValue + durationValue
         }
         else if (instruction === CalculationMode.CalculateProposed) {
-            return yield ProposedOrCurrent
+            return yield ProposedOrPrevious
         }
     }
 
@@ -119,7 +119,7 @@ class Event extends Entity.mix(Base) {
             return endValue - startValue
         }
         else if (instruction === CalculationMode.CalculateProposed) {
-            return yield ProposedOrCurrent
+            return yield ProposedOrPrevious
         }
     }
 
@@ -138,7 +138,7 @@ class Event extends Entity.mix(Base) {
 
     @calculate('dispatcher')
     * calculateDispatcher (YIELD : SyncEffectHandler) : CalculationIterator<DispatcherValue> {
-        const proposedOrCurrent                 = yield ProposedOrCurrent
+        const proposedOrPrevious                 = yield ProposedOrPrevious
 
         // if (window.DEBUG) debugger
 

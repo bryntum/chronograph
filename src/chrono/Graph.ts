@@ -13,7 +13,7 @@ import {
     PreviousValueOfSymbol,
     ProgressNotificationEffect,
     ProposedArgumentsOfSymbol,
-    ProposedOrCurrentSymbol,
+    ProposedOrPreviousSymbol,
     ProposedOrPreviousValueOfSymbol,
     ProposedValueOfEffect,
     ProposedValueOfSymbol,
@@ -247,7 +247,7 @@ export class ChronoGraph extends Base {
                         entry.mergePreviousOrigin(newRev.scope)
                     }
                     else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin) {
-                        // for lazy quarks, that depends on the `ProposedOrCurrent` effect, we need to save the value or proposed value
+                        // for lazy quarks, that depends on the `ProposedOrPrevious` effect, we need to save the value or proposed value
                         // from the previous revision
                         entry.startOrigin().proposedValue   = prevQuark.origin.value !== undefined ? prevQuark.origin.value : prevQuark.origin.proposedValue
                     }
@@ -679,7 +679,7 @@ export class ChronoGraph extends Base {
 
     /**
      * Read the value of the identifier either synchronously or asynchronously, depending on its type (see [[Identifier.sync]])
-     * 
+     *
      * @param identifier
      */
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
@@ -804,9 +804,9 @@ export class ChronoGraph extends Base {
     }
 
 
-    [ProposedOrCurrentSymbol] (effect : Effect, transaction : Transaction) : any {
+    [ProposedOrPreviousSymbol] (effect : Effect, transaction : Transaction) : any {
         const activeEntry   = transaction.getActiveEntry()
-        activeEntry.usedProposedOrCurrent = true
+        activeEntry.usedProposedOrPrevious = true
 
         const proposedValue     = activeEntry.getProposedValue(transaction)
 

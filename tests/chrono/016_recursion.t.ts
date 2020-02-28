@@ -1,4 +1,4 @@
-import { ProposedOrCurrent, Write, WriteSeveral } from "../../src/chrono/Effect.js"
+import { ProposedOrPrevious, Write, WriteSeveral } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
@@ -76,7 +76,7 @@ StartTest(t => {
                 ])
             }
 
-            return yield ProposedOrCurrent
+            return yield ProposedOrPrevious
         })
 
 
@@ -118,7 +118,7 @@ StartTest(t => {
         //     name        : 'disp',
         //
         //     * calculation (YIELD) : CalculationIterator<number> {
-        //         const proposedValue : number    = YIELD(ProposedOrCurrent)
+        //         const proposedValue : number    = YIELD(ProposedOrPrevious)
         //
         //         return proposedValue
         //     },
@@ -132,7 +132,7 @@ StartTest(t => {
         //     * calculation (YIELD) : CalculationIterator<number> {
         //         const disp      = yield dispatcher
         //
-        //         const proposedValue : number    = YIELD(ProposedOrCurrent)
+        //         const proposedValue : number    = YIELD(ProposedOrPrevious)
         //
         //         const maxValue : number         = YIELD(max)
         //
@@ -253,7 +253,7 @@ StartTest(t => {
     //             yield Write(var1, value0)
     //         }
     //
-    //         return yield ProposedOrCurrent
+    //         return yield ProposedOrPrevious
     //     })
     //
     //

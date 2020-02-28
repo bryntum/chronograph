@@ -617,7 +617,7 @@ export class Transaction extends Base {
         //--------------------
         let ignoreSelfDependency : boolean = false
 
-        if (entry.usedProposedOrCurrent) {
+        if (entry.usedProposedOrPrevious) {
             if (entry.proposedValue !== undefined) {
                 if (identifier.equality(value, entry.proposedValue)) ignoreSelfDependency = true
             } else {

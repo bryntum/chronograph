@@ -1,4 +1,4 @@
-import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
+import { ProposedOrPrevious } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueSync, Variable, VariableC } from "../../src/chrono/Identifier.js"
 
@@ -228,7 +228,7 @@ StartTest(t => {
 
         const iden1     = graph.addIdentifier(CalculatedValueSync.new({
             calculation : function (YIELD) {
-                return YIELD(ProposedOrCurrent)
+                return YIELD(ProposedOrPrevious)
             }
         }), 10)
 

@@ -182,14 +182,14 @@ Takeaways:
 - If identifier is computed to the "same" value (the notion of "sameness" can be configured with the [[Identifier.equality]] property), dependent identifiers are not re-calculated, minimizing the number of computations. By default, the equality is implemented with `===` operator.
 
 
-Mixed identifier. ProposedOrCurrent effect
+Mixed identifier. ProposedOrPrevious effect
 -----------------------
 
 In a "classic" reactive system, variables and computed values are the only primitives. However, we found, that it is common for the identifiers to behave differently, based on some other data. For example, in some mode, an identifier may represent only user input ("variable"), but when some external value changes, it may need to ignore the user input and instead be calculated, based on other identifiers.
 
 This is of course can be solved by simply having an extra identifier for the input. However, when pretty much all the identifiers need to have this behavior, this means doubling the number of identifiers. In Bryntum Gantt, for the project with 10k tasks and 5k dependencies we have roughly 500k of identifiers, doubling all of them would mean the number would be 1M, which is a significant pressure on browser.
 
-Instead, we introduce a special [[Effect]] for the user input `ProposedOrCurrent`. Yielding this effect returns either a user input for this identifier, or, if there's no input, its previous value. 
+Instead, we introduce a special [[Effect]] for the user input `ProposedOrPrevious`. Yielding this effect returns either a user input for this identifier, or, if there's no input, its previous value. 
 
 If an identifier does not yield this effect, it becomes a purely computed value. If it does, and returns its value unmodified, it becomes a variable. It can also yield this effect, but return some processed value, based on extra data. This can be seen as validating user input:
 
@@ -199,7 +199,7 @@ const graph4 = ChronoGraph.new()
 const max           = graph4.variable(100)
 
 const identifier15  = graph4.identifier(function *calculation () : CalculationIterator<number> {
-    const proposedValue : number    = yield ProposedOrCurrent
+    const proposedValue : number    = yield ProposedOrPrevious
 
     const maxValue : number         = yield max
 
@@ -219,7 +219,7 @@ graph4.write(max, 50)
 const value15_3 = graph4.read(identifier15) // 50
 ```      
 
-One thing to consider, is that if an identifier yields a `ProposedOrCurrent` effect and its computed value does not match the value of this effect, it will be re-calculated (computation function called) again on the next read. This is because the value of its `yield ProposedOrCurrent` input changes.
+One thing to consider, is that if an identifier yields a `ProposedOrPrevious` effect and its computed value does not match the value of this effect, it will be re-calculated (computation function called) again on the next read. This is because the value of its `yield ProposedOrPrevious` input changes.
 
 See also the [Dealing with the computation cycles](_guides_cycleresolver_.html) guide.
 
@@ -227,7 +227,7 @@ There's a number
 
 Takeaways:
 
-- The user input in ChronoGraph is actually represented with the special effect, `ProposedOrCurrent`
+- The user input in ChronoGraph is actually represented with the special effect, `ProposedOrPrevious`
 - Identifier can yield this effect or choose to not do that, based on the values of external data. This may change the identifier's behavior from purely computed value to variable, with "validated" value in the middle.
 
 

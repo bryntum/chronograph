@@ -25,9 +25,9 @@ export class Effect extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ProposedOrCurrentSymbol    = Symbol('ProposedOrCurrentSymbol')
+export const ProposedOrPreviousSymbol    = Symbol('ProposedOrPreviousSymbol')
 
-export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurrentSymbol })
+export const ProposedOrPrevious : Effect = Effect.new({ handler : ProposedOrPreviousSymbol })
 
 
 //---------------------------------------------------------------------------------------------------------------------
