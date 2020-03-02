@@ -1,7 +1,7 @@
 ChronoGraph advanced features
 =============================
 
-This guide introduces more advanced functionality of ChronoGraph. To use them we first need to examine the low-level
+This guide introduces more advanced functionality of ChronoGraph. To use it, we first need to examine the low-level
 data representation of ChronoGraph.
 
 Graph. Synchronous identifiers. Generator-based identifiers
@@ -15,7 +15,7 @@ import { Identifier } from "../src/chrono/Identifier.js"
 const identifier1 = Identifier.new({ calculation : () => 42 })
 ```
 
-In the calculation function of some identifier, it is possible to reference the value of another identifier through a special construct, which is called "yielding an effect". In TypeScript syntax this means passing the identifier to the special function (so called "effect handler"), which is provided as the 1st argument of every calculation function.
+Inside the calculation function of some identifier, it is possible to reference the value of another identifier through a special construct, which is called "yielding an effect". In TypeScript syntax this means passing the identifier to the special function (so called "effect handler"), which is provided as the 1st argument of every calculation function.
 
 ```ts
 import { SyncEffectHandler } from "../src/chrono/Transaction.js"
@@ -47,7 +47,7 @@ const identifier3 = Identifier.new({
 
 As you can see, in this form, "yielding an effect" is mapped to the actual JS `yield` keyword.
 
-User can also provide a context in which to execute this function (the `this` value, see [[Identifier.context]]). Considering the purity requirement, the context should be an immutable value.
+User can also provide a context in which to execute this function (the `this` value, see [[Identifier.context]]). Considering the purity requirement, the calculation function should only reference the immutable data from the context.
 
 ```ts
 const context = { identifier1, identifier2 }
@@ -55,7 +55,6 @@ const context = { identifier1, identifier2 }
 const identifier4 = Identifier.new({
     calculation  (Y : SyncEffectHandler) : number {
         const value1 : number = Y(this.identifier1)
-
         return value1 + 5
     },
     context
@@ -64,7 +63,6 @@ const identifier4 = Identifier.new({
 const identifier5 = Identifier.new({
     *calculation  (Y : SyncEffectHandler) : ChronoIterator<number> {
         const value2 : number = yield this.identifier2
-
         return value2 + 5
     },
     context
@@ -189,7 +187,7 @@ In a "classic" reactive system, variables and computed values are the only primi
 
 This is of course can be solved by simply having an extra identifier for the input. However, when pretty much all the identifiers need to have this behavior, this means doubling the number of identifiers. In Bryntum Gantt, for the project with 10k tasks and 5k dependencies we have roughly 500k of identifiers, doubling all of them would mean the number would be 1M, which is a significant pressure on browser.
 
-Instead, we introduce a special [[Effect]] for the user input `ProposedOrPrevious`. Yielding this effect returns either a user input for this identifier, or, if there's no input, its previous value. 
+Instead, we introduce a special [[Effect]] for the user input - [[ProposedOrPrevious]]. Yielding this effect returns either a user input for the identifier being calculated, or, if there's no input, its previous value. 
 
 If an identifier does not yield this effect, it becomes a purely computed value. If it does, and returns its value unmodified, it becomes a variable. It can also yield this effect, but return some processed value, based on extra data. This can be seen as validating user input:
 
@@ -219,7 +217,7 @@ graph4.write(max, 50)
 const value15_3 = graph4.read(identifier15) // 50
 ```      
 
-One thing to consider, is that if an identifier yields a `ProposedOrPrevious` effect and its computed value does not match the value of this effect, it will be re-calculated (computation function called) again on the next read. This is because the value of its `yield ProposedOrPrevious` input changes.
+One thing to consider, is that if an identifier yields a [[ProposedOrPrevious]] effect and its computed value does not match the value of this effect, it will be re-calculated again on the next read (or during next commit if its a strict identifier). This is because the value of its `ProposedOrPrevious` input changes.
 
 See also the [Dealing with the computation cycles](_guides_cycleresolver_.html) guide.
 
@@ -243,9 +241,9 @@ Entity/Relation framework
 The identifiers graph from above is a low-level interface for the ChronoGraph. In the [Basic features](_guides_basicfeatures_.html) we've already introduced a more convenient view on it, as on set of "entities" with "fields". We naturally chose to represent entities with TypeScript classes and fields - with their properties.
 
 To turn some JS class into entity, one need to mix the [[Entity]] mixin into it (see more about mixins - [[Mixin]]). And to turn a property into a field - decorate it with 
-[["src/replica/entity.ts".field]] decorator. 
+[["src/replica/Entity.ts".field]] decorator. 
 
-To specify the calculation function for the identifier of some field - write it as a method of the entity class and decorate with [[calculate]].
+To specify the calculation function for the identifier of some field - write it as a method of the entity class and decorate with [[calculate]] (this mapped will be set as the [[Identifier.calculation]] config of the corresponding identifier).
 
 Under the hood, its an a bit enhanced version of the same graph, which can be instantiated with [[Replica]] constructor.  
 
@@ -266,6 +264,8 @@ class Author extends Entity.mix(Object) {
         return this.firstName + ' ' + this.lastName
     }
 }
+
+const replica   = Replica.new()
 ```
 
 The identifiers for all fields are collected into the [[Entity.$]] property.
@@ -281,7 +281,7 @@ The [[Identifier.context]] config of all field identifiers is set to the entity 
 
 Field properties also creates auto-generated get/set accessors, which are tied to the [[Replica.read]]/[[Replica.write]] methods of the graph. 
 
-For the outside world, entities behave very similar to regular TypeScript classes, however, important consideration to keep in mind, is, again, purity. Even that field calculation function has class instance as its `this` value, it should not refer to anything other than `this.$` property, which is simply an immutable object collection of all fields of this entity. It should not modify any external state, or perform other effects. 
+For the outside world, entities behave very similar to regular TypeScript classes, however, important consideration to keep in mind, is, again, purity. Even that field calculation function has class instance as its `this` value, it should only refer the immutable data from it. The `this.$` property is immutable, so it can be accessed safely. Calculation function should not modify any external state, or perform other effects. 
 
 Takeaways:
 
@@ -294,7 +294,7 @@ Data branching.
 
 We can finally introduce a most interesting feature of ChronoGraph - data branching. 
 
-You can derive a new ChronoGraph data scope from the existing one. The data in these 2 scope will be unrelated. 
+You can derive a new ChronoGraph data scope from the existing one. The data in these 2 scopes will be identical at the beginning, but will diverge, as user performs writes. 
 
 ```ts
 const graph2 = ChronoGraph.new()
@@ -311,11 +311,25 @@ const value13_2 = branch2.read(variable13) // 10
 
 This is a very useful feature to answer a "what-if" questions about the data. For example, in our Gantt product, dependencies between tasks can not form cycles. So, before adding a dependency, we need to find out whether it creates a cycle.
 
-More over we need get this information in advance, w/o actually adding a dependency (to show the prohibitive indicator in the UI and disallow the user action). This is implemented by deriving a new branch and adding a dependency into it.
+More over we need get this information in advance, w/o actually adding a dependency (to show the prohibitive indicator in the UI and disallow the user action). This is implemented by deriving a new branch and adding a dependency into it. Then, reading a single identifier from that branch will either succeed (no cycle) or throw an exception (cycle).
 
 Data branching is cheap, there's no overhead for computations in the branches.
 
-We plan to eventually evolve this mechanism to the state, where the branches can be merged (first with only fast-forward scenario and latterly to a general merge).
+Branching works for replica too of course, with one nuance. It is that in calculation functions, you need to reference the input identifiers, by explicit yielding of identifier, instead of using field accessor:
+
+```ts
+class Author extends Entity.mix(Object) {
+
+    @calculate('fullName')
+    calculateFullName (Y : SyncEffectHandler) : string {
+        return Y(this.$.firstName) + ' ' + Y(this.$.lastName)
+    }
+}
+```
+
+This is because ChronoGraph need to know in context of which branch the calculation is performed. And this context is encoded in the effect handler (`Y`), but field accessors are always bound to the graph they have been added to with [[Replica.addEntity]]. This may improve in the future.
+
+We plan to eventually evolve data branching mechanism to the state, where the branches can be merged (first with only fast-forward scenario and latterly with a general merge).
 
 
 Mixins
@@ -324,9 +338,9 @@ Mixins
 We found, that when modelling a complex data domain, its much easier to reason about each requirement in isolation, independently from other business logic. We would like to be able to add/remove features, without breaking existing ones.
 
 This can be achieved by writing every feature as a mixin. Mixins is a well-known pattern in the imperative programming, which, in this context,
-means a combination of class inheritance and lambda functions. Lambda functions composes well, so do mixins. This solves a well-known problem of re-using functionality across the whole inheritance diagram.
+means a combination of class inheritance and lambda function. Lambda functions composes well, so do mixins. This solves a well-known problem of re-using functionality across the whole inheritance diagram.
 
-This pattern encourages every mixin to describe a very granular addition of logic, over already defined set of mixins (requirements that are assumed to be already maintained). This allows to model the requirements precisely, one by one. Naturally, the number of classes on the diagram increases (it took roughly 30 mixins, for example, to model the requirements of the Gantt chart), but modern tooling (TypeScript's typechecker), allows us to keep the things under control, and prevent "feature leak" - well known effect, when the logic of some feature is spreaded across many source files.
+This pattern encourages every mixin to describe a very granular addition of logic, over already defined set of mixins (requirements that are assumed to be already maintained). This allows to model the requirements precisely, one by one. Naturally, the number of classes on the diagram increases (it took roughly 30 mixins, for example, to model the requirements of the Gantt chart), but modern tooling (TypeScript's typechecker), allows us to keep the things under control, and prevent "feature leak" - well known effect, when the logic of some feature is spread across many source files.
 
 For example, we can define a `Person` as something that can concatenate its `firstName` and `lastName`, derived as ChronoGraph [[Entity]], from the base class [[Base]].  
 
@@ -374,7 +388,9 @@ class Employee extends Mixin(
 }){}
 ``` 
 
-Lets say contract says, that employee can take free days, w/o being paid for them. Then we can define an feature, that describes how the salary changes if `Employee` took some free days during the month. Note, that if employee did not take any free days, this feature delegates the previous behavior. The notion of "previous behavior" is what allows mixins to compose well.   
+Note, that trying to access `salary` field from the `Person` mixin itself will issue a compilation error - features are isolated.
+
+Then, lets say contract says, that employee can take free days, w/o being paid for them. Then we can define a feature, that describes how the salary changes if `Employee` took some free days during the month. Note, that if employee did not take any free days, this feature delegates the previous behavior. The notion of "previous behavior" is what allows mixins to compose well.   
 
 ```ts
 class ExcludeFreeDaysFromSalary extends Mixin(
@@ -401,20 +417,62 @@ class ExcludeFreeDaysFromSalary extends Mixin(
 }){}
 ``` 
 
-Another business requirement could be -
+Another business requirement could be - if employee completes some plan, s/he gets a bonus.
 
-TODO FILL WITH ONE MORE REQUIREMENT SAMPLE 
+```ts
+class BonusForGoodWork extends Mixin(
+    [ Employee ], 
+    (base : ClassUnion<typeof Employee>) => {
 
-Using mixins however, is orthogonal to the ChronoGraph itself - you can choose any other class organization.
+    class Employee extends base
+        @field()
+        wokrPlan            : number
+        @field()
+        workDone            : number
+    
+        @calculate('salary')
+        calculateSalary (Y : SyncEffectHandler) : number {
+            let salary = super.calculateSalary(Y)
+
+            if (this.workDone > this.workPlan) {
+                salary  += () => ...    
+            }
+
+            return salary
+        }
+    }
+
+    return Employee
+}){}
+```
+
+Finally we compose everything together:
+
+```ts
+// automatic
+class EmployeeAccordingToContract extends Mixin(
+    [ Employee, ExcludeFreeDaysFromSalary, BonusForGoodWork ], 
+    (base : ClassUnion<typeof Employee, typeof ExcludeFreeDaysFromSalary, typeof BonusForGoodWork>) => {
+
+    class EmployeeAccordingToContract extends base
+    }
+
+    return EmployeeAccordingToContract
+}){}
+
+// manual
+const EmployeeAccordingToContract = 
+    ExcludeFreeDaysFromSalary.mix(
+    BonusForGoodWork.mix(
+    Employee.mix(
+    Person.mix(
+        Base
+    ))))
+```
 
 See here on the ChronoGraph mixin's implementation details: [[Mixin]]. Note that the notation for mixins is still evolving. 
 
-
-Debug mode
-==========
-
-There's a special constant in the code base, that, when changed  
-
+Using mixins, however, is orthogonal to the ChronoGraph itself - you can choose any class organization.
 
 
 ## COPYRIGHT AND LICENSE
