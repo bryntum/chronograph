@@ -29,6 +29,6 @@
     "siesta-lite": "^5.2.3",
     "tslint": "^5.16.0",
     "typedoc": "git://github.com/SamuraiJack/typedoc.git#custom",
-    "typescript": "3.8.2"
+    "typescript": "3.8.3"
   }
 }
