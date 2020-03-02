@@ -148,6 +148,8 @@ export class ChronoGraph extends Base {
 
     onComputationCycle      : 'throw' | 'warn' | 'reject' = 'throw'
 
+    transactionClass        : typeof Transaction    = Transaction
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -301,7 +303,7 @@ export class ChronoGraph extends Base {
     get activeTransaction () : Transaction {
         if (this.$activeTransaction) return this.$activeTransaction
 
-        return this.$activeTransaction = Transaction.new({
+        return this.$activeTransaction = this.transactionClass.new({
             baseRevision                : this.baseRevision,
             graph                       : this
         })
