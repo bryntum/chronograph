@@ -178,6 +178,10 @@ export class ChronoGraph extends Base {
 
 
     clear () {
+        this.reject()
+
+        this.unScheduleAutoCommit()
+
         this.baseRevision.scope.clear()
         this.baseRevision.previous  = null
         this.listeners.clear()
