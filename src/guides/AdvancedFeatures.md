@@ -70,7 +70,7 @@ const identifier5 = Identifier.new({
 
 ```
 
-Again, in generator form, identifiers may reference each other in indefinitely long chains (unlimited stack depth). Also, in generator form, calculation function can also be asynchronous (by yield asynchronous effects). However, execution of the generator function has additional overhead, compared to synchronous function, so this calculation mode imposes certain performance penalty (see the [Benchmarks](_guides_benchmarks_.html) guide). 
+Again, in generator form, identifiers may reference each other in indefinitely long chains (unlimited stack depth). Also, in generator form, calculation function can also be asynchronous (by yielding a `Promise`, which will be awaited in the outer context). However, execution of the generator function has additional overhead, compared to synchronous function, so this calculation mode imposes certain performance penalty (see the [Benchmarks](_guides_benchmarks_.html) guide). 
 
 Cyclic identifier references are not allowed. You may still find, that you need to encode a cyclic set of formulas, as an invariant about your data. In such case, reference the [Dealing with cyclic computations](_guides_cycleresolver_.html) guide. 
 
