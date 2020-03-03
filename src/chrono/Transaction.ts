@@ -112,7 +112,13 @@ export class Transaction extends Base {
 
         this.selfDependedMarked = true
 
-        for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
+        for (const selfDependentIden of this.baseRevision.selfDependent) {
+            const existing  = this.entries.get(selfDependentIden)
+
+            if (existing && existing.getValue() === TombStone) continue
+
+            this.touch(selfDependentIden)
+        }
     }
 
 

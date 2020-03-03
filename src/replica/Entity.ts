@@ -145,6 +145,7 @@ export class Entity extends Mixin(
 
             identifier.context          = this
             identifier.self             = this
+            identifier.name             = `${this.$$.name}.$.${field.name}`
 
             return identifier
         }

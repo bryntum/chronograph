@@ -1,5 +1,5 @@
 import { CalculatedValueSync, Levels, QuarkSync } from "../chrono/Identifier.js"
-import { Quark, QuarkConstructor } from "../chrono/Quark.js"
+import { Quark, QuarkConstructor, TombStone } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
 import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { Field } from "../schema/Field.js"
@@ -110,6 +110,11 @@ export class ReferenceBucketIdentifier extends Mixin(
 
 
         removeFromBucket (transaction : Transaction, entity : Entity) {
+            const preQuark      = transaction.entries.get(this)
+
+            // if bucket is already removed - no need to remove from it
+            if (preQuark && preQuark.getValue() === TombStone) return
+
             const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
             quark.mutations.push({ type : BucketMutationType.Remove, entity })
