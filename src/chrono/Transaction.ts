@@ -37,6 +37,7 @@ export type TransactionCommitResult = { revision : Revision, entries : Scope, tr
 export class Transaction extends Base {
     baseRevision            : Revision              = undefined
 
+    candidateClass          : typeof Revision       = Revision
     candidate               : Revision              = undefined
 
     graph                   : ChronoGraph              = undefined
@@ -88,7 +89,7 @@ export class Transaction extends Base {
             pushTo          : this.stackGen
         })
 
-        if (!this.candidate) this.candidate = Revision.new({ previous : this.baseRevision })
+        if (!this.candidate) this.candidate = this.candidateClass.new({ previous : this.baseRevision })
 
         // the `onEffectSync` should be bound to the `yieldSync` of course, and `yieldSync` should look like:
         //     yieldSync (effect : YieldableValue) : any {
