@@ -5,28 +5,58 @@ import { DEBUG } from "../environment/Debug.js"
 import { OnCycleAction, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Type alias for formula ids. A synonym for `number`
+ */
 export type FormulaId   = number
 
 let FORMULA_ID : FormulaId  = 0
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Type alias for cycle variables. Just a synonym for `symbol`
+ */
 export type Variable                            = symbol
 
-export type CycleResolution                     = Map<Variable, FormulaId>
+/**
+ * Type for cycle resolution value. It maps every variable to a formula.
+ */
+export type CycleResolutionValue                = Map<Variable, FormulaId>
 
 export type CycleResolutionFormulas             = Set<Formula>
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Pre-defined constant formula id. If assigned to some variable, specifies, that this variable should keep the value proposed by user
+ * (user input), or, if there's none, its previous value.
+ */
 export const CalculateProposed : FormulaId      = FORMULA_ID++
-export const CalculatePure : FormulaId          = FORMULA_ID++
+// export const CalculatePure : FormulaId          = FORMULA_ID++
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Class, describing a formula, which is part of the cyclic set. Formula just specifies its input variables and output variable,
+ * it does not contain actual calculation.
+ *
+ * It is assumed that formula can only be "activated" if all of its inputs has value. It can be either a value from the previous iteration,
+ * a value provided by user, or an output value of some other formula. See [[VariableInputState]] and [[CycleResolutionInput]].
+ */
 export class Formula extends Base {
+    /**
+     * The id of the formula. It is assigned automatically, should not be changed.
+     */
     formulaId           : FormulaId         = FORMULA_ID++
 
+    /**
+     * A set of the input variables for this formula.
+     */
     inputs              : Set<Variable>     = new Set()
+
+    /**
+     * An output variable for this formula.
+     */
     output              : Variable
 }
 
@@ -52,11 +82,17 @@ export class FormulasCache extends Mixin(
     (base : ClassUnion<typeof Base>) =>
 
     class FormulasCache extends base {
+        /**
+         * A set of variables, which forms cyclic computation
+         */
         variables           : Set<Variable>     = new Set()
+        /**
+         * A set of formulas, which forms cyclic computation
+         */
         formulas            : Set<Formula>      = new Set()
 
-        $formulasByInput    : Map<Variable, Set<Formula>>
-        $formulasByOutput   : Map<Variable, Set<Formula>>
+        $formulasByInput    : Map<Variable, Set<Formula>>   = undefined
+        $formulasByOutput   : Map<Variable, Set<Formula>>   = undefined
 
         get formulasByInput () : Map<Variable, Set<Formula>> {
             if (this.$formulasByInput !== undefined) return this.$formulasByInput
@@ -139,17 +175,35 @@ export type GraphInputsHash    = string
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphDescription extends FormulasCache {
+/**
+ * Abstract description of the cycle. Does not include the default formula resolution, only variables and formulas. See also [[CycleResolution]].
+ */
+export class CycleDescription extends FormulasCache {
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CycleResolutionContext extends Base {
-    description                 : GraphDescription                          = undefined
+/**
+ * Class describing the cycle resolution process. Requires the abstract cycle [[description]] and a set of default formulas.
+ *
+ * The resolution is performed with [[CycleResolution.resolve]] method.
+ *
+ * Resolution are memoized, based on the input. You should generally have a single instance of this class for a single set of default formulas,
+ * to accumulate the results and make resolution fast.
+ */
+export class CycleResolution extends Base {
+    /**
+     * Abstract cycle description for this resolution.
+     */
+    description                 : CycleDescription                          = undefined
 
+    /**
+     * A set of default formulas for this resolution. Default formulas specifies how the calculation should be performed, if there's no user input
+     * for any variable. Also, default formulas are preferred, if several formulas can be chosen to continue the resolution.
+     */
     defaultResolutionFormulas   : CycleResolutionFormulas                   = new Set()
 
-    resolutionsByInputHash      : Map<GraphInputsHash, CycleResolution>     = new Map()
+    resolutionsByInputHash      : Map<GraphInputsHash, CycleResolutionValue>     = new Map()
 
 
     // the caching space is 3^var_num might need to clear the memory at some time
@@ -158,7 +212,13 @@ export class CycleResolutionContext extends Base {
     }
 
 
-    resolve (input : CycleResolutionInput) : CycleResolution {
+    /**
+     * This method accepts an input object and returns a cycle resolution.
+     * Resolution are memoized, based on the input.
+     *
+     * @param input
+     */
+    resolve (input : CycleResolutionInput) : CycleResolutionValue {
         const cached    = this.resolutionsByInputHash.get(input.hash)
 
         if (cached !== undefined) return cached
@@ -171,7 +231,7 @@ export class CycleResolutionContext extends Base {
     }
 
 
-    buildResolution (input : CycleResolutionInput) : CycleResolution {
+    buildResolution (input : CycleResolutionInput) : CycleResolutionValue {
         const walkContext           = WalkState.new({ context : this, input })
 
         const allResolutions        = Array.from(walkContext.next()).map(state => {
@@ -199,18 +259,40 @@ export class CycleResolutionContext extends Base {
     }
 }
 
+/**
+ * Enumeration for various states of the input data for variables in the cycle. Individual members corresponds to binary bits and can be set simultaneously, like:
+ *
+ * ```ts
+ * const input : VariableInputState = VariableInputState.HasPreviousValue | VariableInputState.HasProposedValue
+ * ```
+ */
 export enum VariableInputState {
     NoInput                 = 0,
+    /**
+     * This bit indicates that variable has some previous value, when resolution starts. It can be any non-`undefined` value, including `null`.
+     */
     HasPreviousValue        = 1,
+    /**
+     * This bit indicates that variable has user input, when resolution starts. It can be any non-`undefined` value, including `null`.
+     */
     HasProposedValue        = 2,
+    /**
+     * This bit indicates, that user intention is to keep this variable unchanged, if that is possible (does not contradict to other user input).
+     */
     KeepIfPossible          = 4,
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Class, describing the input data for a set of variables during cycle resolution.
+ */
 export class CycleResolutionInput extends Base {
+    /**
+     * A cycle resolution instance this input corresponds to.
+     */
     @required
-    context             : CycleResolutionContext                = undefined
+    context             : CycleResolution                = undefined
 
     private input       : Map<Variable, VariableInputState>     = undefined
 
@@ -223,10 +305,10 @@ export class CycleResolutionInput extends Base {
         return this.$hash = this.buildHash()
     }
 
-    get description () : GraphDescription { return this.context.description }
+    get description () : CycleDescription { return this.context.description }
 
 
-    get resolution () : CycleResolution {
+    get resolution () : CycleResolutionValue {
         return this.context.resolve(this)
     }
 
@@ -254,8 +336,12 @@ export class CycleResolutionInput extends Base {
         )
     }
 
-
     //---------------------
+    /**
+     * This method sets the [[HasProposedValue]] flag for the specified variable.
+     *
+     * @param variable
+     */
     addProposedValueFlag (variable : Variable) {
         if (DEBUG) {
             if (!this.description.variables.has(variable)) throw new Error('Unknown variable')
@@ -277,6 +363,11 @@ export class CycleResolutionInput extends Base {
 
 
     //---------------------
+    /**
+     * This method sets the [[HasPreviousValue]] flag for the specified variable.
+     *
+     * @param variable
+     */
     addPreviousValueFlag (variable : Variable) {
         if (DEBUG) {
             if (!this.description.variables.has(variable)) throw new Error('Unknown variable')
@@ -298,6 +389,11 @@ export class CycleResolutionInput extends Base {
 
 
     //---------------------
+    /**
+     * This method sets the [[KeepIfPossible]] flag for the specified variable.
+     *
+     * @param variable
+     */
     addKeepIfPossibleFlag (variable : Variable) {
         if (DEBUG) {
             if (!this.description.variables.has(variable)) throw new Error('Unknown variable')
@@ -321,7 +417,7 @@ export class CycleResolutionInput extends Base {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkState extends Base {
-    context                             : CycleResolutionContext    = undefined
+    context                             : CycleResolution    = undefined
     input                               : CycleResolutionInput      = undefined
 
     previous                            : WalkState                 = undefined
@@ -343,7 +439,7 @@ export class WalkState extends Base {
     }
 
 
-    get description () : GraphDescription { return this.context.description }
+    get description () : CycleDescription { return this.context.description }
 
 
     * thisAndPreviousStates () : Iterable<WalkState> {
@@ -510,7 +606,7 @@ export class WalkState extends Base {
     }
 
 
-    asResolution () : CycleResolution {
+    asResolution () : CycleResolutionValue {
         return new Map(
             CI(this.description.variables).map(variable => {
                 const formulas   = this.activatedFormulas.formulasByOutput.get(variable)

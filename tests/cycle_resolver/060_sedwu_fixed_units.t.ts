@@ -1,4 +1,4 @@
-import { CalculateProposed, CycleResolutionContext, CycleResolutionInput, Formula, GraphDescription } from "../../src/cycle_resolver/CycleResolver.js"
+import { CalculateProposed, CycleResolution, CycleResolutionInput, Formula, CycleDescription } from "../../src/cycle_resolver/CycleResolver.js"
 
 declare const StartTest : any
 
@@ -45,7 +45,7 @@ StartTest(t => {
         inputs      : new Set([ EndDateVar, EffortVar, UnitsVar ])
     })
 
-    const fixedUnitsDescription = GraphDescription.new({
+    const fixedUnitsDescription = CycleDescription.new({
         variables           : new Set([ StartDateVar, EndDateVar, DurationVar, EffortVar, UnitsVar ]),
         formulas            : new Set([
             endDateByEffortFormula,
@@ -59,7 +59,7 @@ StartTest(t => {
     })
 
 
-    const fixedUnitsResolutionContext = CycleResolutionContext.new({
+    const fixedUnitsResolutionContext = CycleResolution.new({
         description                 : fixedUnitsDescription,
         defaultResolutionFormulas   : new Set([ endDateFormula, endDateByEffortFormula, effortFormula ])
     })
