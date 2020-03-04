@@ -107,7 +107,11 @@ class Quark extends base {
         if (this.origin && this.origin === this) {
             this.proposedArguments          = undefined
 
-            this.proposedValue              = this.value
+            // only overwrite the proposed value if the actual value has been already calculated
+            // otherwise, keep the proposed value as is
+            if (this.value !== undefined) {
+                this.proposedValue          = this.value
+            }
 
             this.value                      = undefined
         }
