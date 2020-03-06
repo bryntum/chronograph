@@ -24,21 +24,28 @@ const iden2     = graph.identifier(Y => 10 - Y(iden1))
 
 These calculations describe the invariant: `iden1 + iden2 === 10`. 
 
-Lets say we want to accept user input on both `iden1` and `iden2` and additionally enforce this invariant. This a typical scenario in data processing applications, when application allows user to edit any of the variables, and all other variables adapt to the user input (or the whole operation is canceled, if some other invariant is broken). Also, we want to calculate every identifier only once.
+Lets say we want to accept user input on both `iden1` and `iden2` and additionally enforce this invariant. This a typical scenario in data processing applications, when application allows user to edit any of the variables, and all other variables adapt to the user input (or the whole operation is canceled, if some other invariant is broken).
+
+Additionally, we want to calculate every identifier only once. 
 
 ChronoGraph suggest a uniformed approach to dealing with such cycles, that, when used in a disciplined way, solves the problem and keeps the code clean. It is still an evolving area, so we very welcome feedback on it.
 
 
-Calculating task 
+Problem formulation 
 -----------------
 
-Lets check a simplified example from our Gantt implementation. 
+Lets formulate our requirements on the simplified example from our Gantt implementation. 
 
-In the Gantt chart, every task has start date (`S`), end date (`E`) and duration (`D`). A natural invariant of these 3 identifiers is expressed with formula:
+In the Gantt chart, every task has start date (`S`), end date (`E`) and duration (`D`). The invariant between these 3 identifiers is expressed by the formula:
 
     E = S + D
 
-If we would be writing the calculation functions for these identifiers, we could start with something like: 
+We would like to make all three identifiers to accept user input, and the identifiers without the user input to adapt, according to the invariant.
+
+This formula `E = S + D` will be a default cycle resolution - it should be used if there's no user input to any of the identifiers, or, if there's 
+user input for all of them.
+
+If we were writing calculation functions for these identifiers, we could start with something like: 
 
     E = S + D
     S = E - D
@@ -54,51 +61,51 @@ However, if user writes only to `S`, we can update either `E` or `D`. Both choic
 Cycle description
 -----------------
 
-First we need to describe this cycle in abstract way (not tied to actual identifiers). We start by creating a [[Variable]] for each symbol in the equations. It is a `Symbol` in code too:
+First we need to describe this cycle in an abstract way (not tied to actual identifiers). We start by creating a [[Variable]] for each symbol in the equations. It is a `Symbol` in code too:
 
 ```ts
-const StartDateVar : Variable       = Symbol('StartDate')
-const EndDateVar : Variable         = Symbol('EndDate')
-const DurationVar : Variable        = Symbol('Duration')
+const StartVar           = Symbol('Start')
+const EndVar             = Symbol('End')
+const DurationVar        = Symbol('Duration')
 ```
 
 Then, we describe every formula we have in the cyclic set. [[Formula]] just specifies its input variables and output variable, it does not contain actual calculation.
 
 ```ts
-const startDateFormula = Formula.new({
-    output      : StartDateVar,
-    inputs      : new Set([ DurationVar, EndDateVar ])
+const startFormula       = Formula.new({
+    output      : StartVar, 
+    inputs      : new Set([ DurationVar, EndVar ])
 })
 
-const endDateFormula    = Formula.new({
-    output      : EndDateVar,
-    inputs      : new Set([ DurationVar, StartDateVar ])
+const endFormula         = Formula.new({
+    output      : EndVar,
+    inputs      : new Set([ DurationVar, StartVar ])
 })
 
 const durationFormula   = Formula.new({
     output      : DurationVar,
-    inputs      : new Set([ StartDateVar, EndDateVar ])
+    inputs      : new Set([ StartVar, EndVar ])
 })
 ```
 
-Then, we combine variables and formulas in an abstract cycle description:
+Then, we combine variables and formulas in the abstract cycle description:
 
 ```ts
 const cycleDescription = CycleDescription.new({
-    variables           : new Set([ StartDateVar, EndDateVar, DurationVar ]),
-    formulas            : new Set([ startDateFormula, endDateFormula, durationFormula ])
+    variables           : new Set([ StartVar, EndVar, DurationVar ]),
+    formulas            : new Set([ startFormula, endFormula, durationFormula ])
 })
 ```
 
 And finally, we create a specific resolution, by adding default resolution formulas. Default formulas specifies how the calculation should be performed, if there's no user input
-for any variable. Also, default formulas are preferred, if several formulas can be chosen to continue the resolution.
+for any variable (or there's input for all of them). Also, default formulas are preferred, if several formulas can be chosen to continue the resolution.
 
 In our simplified example, there's a single default formula: `E = S + D`, which is encoded as `endDateFormula` constant.
 
 ```ts
 const cycleResolution = CycleResolution.new({
     description                 : cycleDescription,
-    defaultResolutionFormulas   : new Set([ endDateFormula ])
+    defaultResolutionFormulas   : new Set([ endFormula ])
 })
 ```
 
@@ -108,13 +115,13 @@ As you can see, the same cycle can be resolved differently with different defaul
 Cycle resolution input
 -----------------
 
-Cycle resolution is represented with [[CycleResolutionValue]] type, which simply map every variable of the cycle to the formula, that should be used to calculate it. Mapping is performed by [[formulaId]] property. 
+Cycle resolution is represented with [[CycleResolutionValue]] type, which maps every variable of the cycle to a formula, that should be used to calculate it. Mapping is performed by the [[formulaId]] property. 
 
 There's a special formula id constant [[CalculateProposed]] which indicates, that this variable should not use any formula and should use the user input value, or if there's none, its previous value.
 
-It is assumed that formula can only be "activated" if all of its input variables has some value. It can be either a value from the previous iteration, a value provided by user, or an output value of some other formula. See [[VariableInputState]] and [[CycleResolutionInput]]. Then, a formula can not be activated, if it target a variable, that has user input (we should not overwrite user input). Also, default formulas are preferred to regular ones, if several formulas can be chosen.
+It is assumed that formula can only be "activated" if all of its input variables has some value. It can be either a value from the previous iteration, a value provided by user, or an output value of some other formula. See [[VariableInputState]] and [[CycleResolutionInput]]. Then, a formula can not be activated, if it targets a variable, that has user input (we should not overwrite user input). Also, default formulas are preferred to regular ones, if several formulas can be chosen.
 
-Resolution is performed with the [[CycleResolution.resolve]] method, based on the information we have about the input data for variables of the cycle. The results are memoized, so repeating resolution for the same input will be instant.
+Resolution is performed with the [[CycleResolution.resolve]] method, based on the information we have about the input data for the cycle variables. The results are memoized, so repeating resolution for the same input will be instantaneous.
 
 For example, if we try to resolve the no user input scenario - a default resolution formulas should be returned:
 
@@ -123,9 +130,24 @@ const input : CycleResolutionInput  = CycleResolutionInput.new({ context : cycle
 
 const resolution = cycleResolution.resolve(input)
 
-resolution.get(StartDateVar) === CalculateProposed
-resolution.get(EndDateVar) === endDateFormula.formulaid
+resolution.get(StartVar) === CalculateProposed
+resolution.get(EndVar) === endFormula.formulaId
 resolution.get(DurationVar) === CalculateProposed
+```
+
+And if we resolve input for `S` and `E` - the `D` variable should be calculated using `durationFormula`:
+
+```ts
+const input : CycleResolutionInput  = CycleResolutionInput.new({ context : cycleResolution })
+
+input.addProposedValueFlag(StartVar)
+input.addProposedValueFlag(EndVar)
+
+const resolution = cycleResolution.resolve(input)
+
+resolution.get(StartVar) === CalculateProposed
+resolution.get(EndVar) === CalculateProposed
+resolution.get(DurationVar) === durationFormula.formulaId
 ```
 
 Cycle dispatcher
@@ -133,7 +155,9 @@ Cycle dispatcher
 
 Now we can use the abstract representation from above in the actual ChronoGraph identifiers.
 
-We can resolve the cycle by adding an additional identifier, that will drive the resolution. Lets call such identifier - cycle dispatcher.
+We add an additional identifier, that will drive the resolution process, called - cycle dispatcher. This identifier represent the cycle as a whole and manage other identifiers of the cycle.
+
+
 
 
 

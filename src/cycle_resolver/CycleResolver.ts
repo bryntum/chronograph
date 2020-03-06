@@ -199,7 +199,7 @@ export class CycleResolution extends Base {
 
     /**
      * A set of default formulas for this resolution. Default formulas specifies how the calculation should be performed, if there's no user input
-     * for any variable. Also, default formulas are preferred, if several formulas can be chosen to continue the resolution.
+     * for any variable (or there's input for all of them). Also, default formulas are preferred, if several formulas can be chosen to continue the resolution.
      */
     defaultResolutionFormulas   : CycleResolutionFormulas                   = new Set()
 
