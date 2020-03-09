@@ -186,7 +186,6 @@ export class ChronoGraph extends Base {
         this.baseRevision.previous  = null
         this.listeners.clear()
 
-        this.baseRevision   = Revision.new()
         this.topRevision    = this.baseRevision
 
         clearLazyProperty(this, 'followingRevision')

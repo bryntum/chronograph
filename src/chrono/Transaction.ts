@@ -523,7 +523,7 @@ export class Transaction extends Base {
 
         for (const quark of this.entries.values()) {
             quark.cleanup()
-            quark.clearOutgoing()
+            // quark.clearOutgoing()
         }
 
         this.entries.clear()
@@ -715,6 +715,8 @@ export class Transaction extends Base {
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : Quark[]) : Generator<any, void, unknown> {
+        if (this.rejectedWith) return
+
         this.walkContext.startNewEpoch()
 
         const entries                       = this.entries
@@ -857,6 +859,8 @@ export class Transaction extends Base {
 
     // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, stack : Quark[]) {
+        if (this.rejectedWith) return
+
         this.walkContext.startNewEpoch()
 
         const entries                       = this.entries
