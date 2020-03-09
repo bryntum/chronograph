@@ -125,15 +125,15 @@ export class ReferenceIdentifier extends Mixin(
         }
 
 
-        write (me : this, transaction : Transaction, quark : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ]) {
-            quark           = quark || transaction.acquireQuarkIfExists(me)
+        write (me : this, transaction : Transaction, q : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ]) {
+            const quark           = q || transaction.acquireQuarkIfExists(me)
 
             if (me.hasBucket()) {
                 if (quark) {
-                    const proposedValue     = quark.proposedValue
+                    const prevValue     = quark.getValue()
 
-                    if (proposedValue instanceof Entity) {
-                        me.getBucket(proposedValue).removeFromBucket(transaction, me.self)
+                    if (prevValue instanceof Entity) {
+                        me.getBucket(prevValue).removeFromBucket(transaction, me.self)
                     }
                 }
                 else if (transaction.baseRevision.hasIdentifier(me)) {
@@ -145,7 +145,9 @@ export class ReferenceIdentifier extends Mixin(
                 }
             }
 
-            super.write(me, transaction, quark, proposedValue)
+            // we pass the `q` to super and not `quark`, because we don't do `getWriteTarget` (which increment the epoch)
+            // but only `acquireQuarkIfExists` (which does not)
+            super.write(me, transaction, q, proposedValue)
         }
     }
 
