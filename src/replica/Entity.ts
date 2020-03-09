@@ -352,8 +352,11 @@ export type FieldDecorator<Default extends AnyConstructor = typeof Field> =
 export const generic_field : FieldDecorator<typeof Field> =
     <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
 
-        return function (target : Entity, propertyKey : string) : void {
-            const entity    = ensureEntityOnPrototype(target)
+        return function (target : Entity, pk : string) : void {
+            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
+            // it can optimize access by it
+            const propertyKey   = pk
+            const entity        = ensureEntityOnPrototype(target)
 
             const field     = entity.addField(
                 fieldCls.new(Object.assign(fieldConfig || {}, {
