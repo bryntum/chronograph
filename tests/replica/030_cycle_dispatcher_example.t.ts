@@ -73,6 +73,11 @@ const dispatcherEq     = (v1 : CycleDispatcher, v2 : CycleDispatcher) : boolean 
         && resolution1.get(DurationVar) === resolution2.get(DurationVar)
 }
 
+const defaultDispatcher = CycleDispatcher.new({ context : cycleResolution })
+
+defaultDispatcher.addPreviousValueFlag(StartVar)
+defaultDispatcher.addPreviousValueFlag(EndVar)
+defaultDispatcher.addPreviousValueFlag(DurationVar)
 
 class Event extends Entity.mix(Base) {
     @field()
@@ -155,7 +160,7 @@ class Event extends Entity.mix(Base) {
 
     @build_proposed('dispatcher')
     buildProposedDispatcher (me : Identifier, quark : Quark, transaction : Transaction) : CycleDispatcher {
-        return CycleDispatcher.new({ context : cycleResolution })
+        return defaultDispatcher
     }
 
 
@@ -314,7 +319,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should not recalculate everything on 2nd propagation', async t => {
+    t.it('Should not recalculate everything on 2nd propagation', async t => {
         const spy           = t.spyOn(event.$.dispatcher, 'calculation')
 
         event.start = 10
