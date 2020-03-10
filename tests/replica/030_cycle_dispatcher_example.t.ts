@@ -165,8 +165,8 @@ class Event extends Entity.mix(Base) {
 
 
     @calculate('dispatcher')
-    * calculateDispatcher (Y : SyncEffectHandler) : CalculationIterator<CycleDispatcher> {
-        const proposedOrPrevious        = yield ProposedOrPrevious
+    calculateDispatcher (Y : SyncEffectHandler) : CycleDispatcher {
+        const proposedOrPrevious        = Y(ProposedOrPrevious)
 
         const cycleDispatcher           = CycleDispatcher.new({ context : cycleResolution })
 
@@ -175,21 +175,21 @@ class Event extends Entity.mix(Base) {
         cycleDispatcher.collectInfo(Y, this.$.duration, DurationVar)
 
         //---------------
-        const startProposedArgs         = yield ProposedArgumentsOf(this.$.start)
+        const startProposedArgs         = Y(ProposedArgumentsOf(this.$.start))
 
         const startInstruction : Instruction = startProposedArgs ? startProposedArgs[ 0 ] : undefined
 
         if (startInstruction) cycleDispatcher.addInstruction(startInstruction)
 
         //---------------
-        const endProposedArgs         = yield ProposedArgumentsOf(this.$.end)
+        const endProposedArgs         = Y(ProposedArgumentsOf(this.$.end))
 
         const endInstruction : Instruction = endProposedArgs ? endProposedArgs[ 0 ] : undefined
 
         if (endInstruction) cycleDispatcher.addInstruction(endInstruction)
 
         //---------------
-        const durationProposedArgs    = yield ProposedArgumentsOf(this.$.duration)
+        const durationProposedArgs    = Y(ProposedArgumentsOf(this.$.duration))
 
         const durationInstruction : Instruction = durationProposedArgs ? durationProposedArgs[ 0 ] : undefined
 

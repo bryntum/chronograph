@@ -308,6 +308,9 @@ export class CycleResolutionInput extends Base {
     get description () : CycleDescription { return this.context.description }
 
 
+    /**
+     * Returns the same result as calling [[CycleResolution.resolve]] on this input instance
+     */
     get resolution () : CycleResolutionValue {
         return this.context.resolve(this)
     }

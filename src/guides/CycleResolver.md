@@ -28,7 +28,7 @@ Lets say we want to accept user input on both `iden1` and `iden2` and additional
 
 Additionally, we want to calculate every identifier only once. 
 
-ChronoGraph suggest a uniformed approach to dealing with such cycles, that, when used in a disciplined way, solves the problem and keeps the code clean. It is still an evolving area, so we very welcome feedback on it.
+ChronoGraph suggest a uniformed approach to dealing with such cycles, that, when used in a disciplined way, solves the problem and keeps the code clean.
 
 
 Problem formulation 
@@ -123,10 +123,13 @@ It is assumed that formula can only be "activated" if all of its input variables
 
 Resolution is performed with the [[CycleResolution.resolve]] method, based on the information we have about the input data for the cycle variables. The results are memoized, so repeating resolution for the same input will be instantaneous.
 
-For example, if we try to resolve the no user input scenario - a default resolution formulas should be returned:
+For example, if we try to resolve the no user input scenario - a default resolution formulas should be returned (assumed there are previous value for all variables):
 
 ```ts
 const input : CycleResolutionInput  = CycleResolutionInput.new({ context : cycleResolution })
+input.addPreviousValueFlag(StartVar)
+input.addPreviousValueFlag(EndVar)
+input.addPreviousValueFlag(DurationVar)
 
 const resolution = cycleResolution.resolve(input)
 
@@ -153,16 +156,91 @@ resolution.get(DurationVar) === durationFormula.formulaId
 Cycle dispatcher
 ----------------
 
-Now we can use the abstract representation from above in the actual ChronoGraph identifiers.
+Now we can use the abstract representation from above in the actual ChronoGraph identifiers. 
 
-We add an additional identifier, that will drive the resolution process, called - cycle dispatcher. This identifier represent the cycle as a whole and manage other identifiers of the cycle.
+We add an additional identifier, that will drive the resolution process, called - cycle dispatcher. This identifier represents the cycle as a whole and manage other identifiers of the cycle, by providing them with information about what formula they should use to calculate themselves.
+
+It is best to inherit the dispatcher class from the `[[CycleResolutionInputChrono]]` which provides a convenience method [[collectInfo]]. 
+
+```ts
+class CycleDispatcher extends CycleResolutionInputChrono {
+}
+```
+
+We then need the equality function, 2 dispatchers are equal if they have the same cycle resolution:
+
+```ts
+const dispatcherEq     = (v1 : CycleDispatcher, v2 : CycleDispatcher) : boolean => {
+    const resolution1       = v1.resolution
+    const resolution2       = v2.resolution
+
+    return resolution1.get(StartVar) === resolution2.get(StartVar)
+        && resolution1.get(EndVar) === resolution2.get(EndVar)
+        && resolution1.get(DurationVar) === resolution2.get(DurationVar)
+}
+``` 
+
+Dispatcher collects the information about the user input:
+
+```ts
+@calculate('dispatcher')
+calculateDispatcher (Y : SyncEffectHandler) : CycleDispatcher {
+    const proposedOrPrevious        = Y(ProposedOrPrevious)
+
+    const cycleDispatcher           = CycleDispatcher.new({ context : cycleResolution })
+
+    cycleDispatcher.collectInfo(Y, this.$.start, StartVar)
+    cycleDispatcher.collectInfo(Y, this.$.end, EndVar)
+    cycleDispatcher.collectInfo(Y, this.$.duration, DurationVar)
+
+    // ...
+    
+    return cycleDispatcher
+}
+```
+
+Based on that information, dispatcher provides cycle resolution to individual identifiers. For example, the calculation of start will look like:
+
+```ts
+@calculate('start')
+calculateStart (Y) : number {
+    const dispatch : CycleDispatcher = this.dispatcher
+
+    const instruction : FormulaId = dispatch.resolution.get(StartVar)
+
+    if (instruction === startFormula.formulaId) {
+        const endValue : number         = this.end
+        const durationValue : number    = this.duration
+
+        if (isNotNumber(endValue) || isNotNumber(durationValue)) return null
+
+        return endValue - durationValue
+    }
+    else if (instruction === CalculateProposed) {
+        return Y(ProposedOrPrevious)
+    }
+}
+```
+
+Note, that although dispatcher does not use its proposed value, it still "yields" it. The proposed value for dispatcher is always the same - its a dispatcher with the default resolution:
+
+```ts
+const defaultDispatcher = CycleDispatcher.new({ context : cycleResolution })
+
+defaultDispatcher.addPreviousValueFlag(StartVar)
+defaultDispatcher.addPreviousValueFlag(EndVar)
+defaultDispatcher.addPreviousValueFlag(DurationVar)
+```
+
+This is because we need to always reset the dispatcher to that value, because this is the correct information flow in the absence of user input.
 
 
+Conclusion
+----------------
 
+For brevity and due to experimental state of this feature, we've omit some code. The full code is available in the `tests/replica/030_cycle_dispatcher_example.t.ts` file of the ChronoGraph package.
 
-
-
-
+Dealing with computation cycles is still an evolving area in ChronoGraph, so we very much welcome feedback on it.
 
 
 ## COPYRIGHT AND LICENSE
