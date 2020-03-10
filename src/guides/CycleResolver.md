@@ -55,8 +55,6 @@ As you can see, this set of formulas is cyclic but not contradicting.
 
 If user writes to the `S` and `D`, we want to only update the `E`. In the same way, if user writes to `S` and `E` we want to only update `D`.
 
-However, if user writes only to `S`, we can update either `E` or `D`. Both choices are valid, since they don't violate the invariant, but the result is different. So we will need to provide some additional information for the writes, to manage the cycle resolution. We'll see what that means soon.
-
 
 Cycle description
 -----------------
@@ -68,6 +66,8 @@ const StartVar           = Symbol('Start')
 const EndVar             = Symbol('End')
 const DurationVar        = Symbol('Duration')
 ```
+
+For a full code, please refer to the `tests/replica/030_cycle_dispatcher_example.t.ts` file in the ChronoGraph package.
 
 Then, we describe every formula we have in the cyclic set. [[Formula]] just specifies its input variables and output variable, it does not contain actual calculation.
 
@@ -109,7 +109,7 @@ const cycleResolution = CycleResolution.new({
 })
 ```
 
-As you can see, the same cycle can be resolved differently with different default formulas set. 
+The same cycle can be resolved differently with different default formulas set. 
 
 
 Cycle resolution input
@@ -160,10 +160,11 @@ Now we can use the abstract representation from above in the actual ChronoGraph 
 
 We add an additional identifier, that will drive the resolution process, called - cycle dispatcher. This identifier represents the cycle as a whole and manage other identifiers of the cycle, by providing them with information about what formula they should use to calculate themselves.
 
-It is best to inherit the dispatcher class from the `[[CycleResolutionInputChrono]]` which provides a convenience method [[collectInfo]]. 
+It is best to inherit the dispatcher class from the [[CycleResolutionInputChrono]] which provides a convenience method [[collectInfo]]. 
 
 ```ts
 class CycleDispatcher extends CycleResolutionInputChrono {
+    ...
 }
 ```
 
@@ -186,20 +187,31 @@ Dispatcher collects the information about the user input:
 @calculate('dispatcher')
 calculateDispatcher (Y : SyncEffectHandler) : CycleDispatcher {
     const proposedOrPrevious        = Y(ProposedOrPrevious)
-
-    const cycleDispatcher           = CycleDispatcher.new({ context : cycleResolution })
+    const cycleDispatcher           = CycleDispatcher.new({ 
+        context : cycleResolution 
+    })
 
     cycleDispatcher.collectInfo(Y, this.$.start, StartVar)
     cycleDispatcher.collectInfo(Y, this.$.end, EndVar)
     cycleDispatcher.collectInfo(Y, this.$.duration, DurationVar)
-
     // ...
-    
     return cycleDispatcher
 }
 ```
 
-Based on that information, dispatcher provides cycle resolution to individual identifiers. For example, the calculation of start will look like:
+Although dispatcher does not use its proposed value, it still "yields" it. The proposed value for dispatcher is always the same - its a dispatcher with the default resolution:
+
+```ts
+const defaultDispatcher = CycleDispatcher.new({ context : cycleResolution })
+
+defaultDispatcher.addPreviousValueFlag(StartVar)
+defaultDispatcher.addPreviousValueFlag(EndVar)
+defaultDispatcher.addPreviousValueFlag(DurationVar)
+```
+
+This is because we need to always reset the dispatcher to the default resolution, since this is a correct information flow in the absence of user input.
+
+Based on that information, dispatcher provides cycle resolution to individual identifiers. For example, the calculation of `start` field will look like:
 
 ```ts
 @calculate('start')
@@ -222,25 +234,14 @@ calculateStart (Y) : number {
 }
 ```
 
-Note, that although dispatcher does not use its proposed value, it still "yields" it. The proposed value for dispatcher is always the same - its a dispatcher with the default resolution:
-
-```ts
-const defaultDispatcher = CycleDispatcher.new({ context : cycleResolution })
-
-defaultDispatcher.addPreviousValueFlag(StartVar)
-defaultDispatcher.addPreviousValueFlag(EndVar)
-defaultDispatcher.addPreviousValueFlag(DurationVar)
-```
-
-This is because we need to always reset the dispatcher to that value, because this is the correct information flow in the absence of user input.
 
 
 Conclusion
 ----------------
 
-For brevity and due to experimental state of this feature, we've omit some code. The full code is available in the `tests/replica/030_cycle_dispatcher_example.t.ts` file of the ChronoGraph package.
+For the sake of brevity and due to the experimental status of this feature, we have omitted some code. The full code is available in the `tests/replica/030_cycle_dispatcher_example.t.ts` file of the ChronoGraph package.
 
-Dealing with computation cycles is still an evolving area in ChronoGraph, so we very much welcome feedback on it.
+Dealing with computation cycles is still an evolving area in ChronoGraph and we very much welcome feedback on it.
 
 
 ## COPYRIGHT AND LICENSE

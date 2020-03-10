@@ -35,15 +35,15 @@ replica.addEntity(markTwain)
 console.log(person.fullName) // "Mark Twain"
 ```
 
-Here, we've defined a `Person` class, as an `Entity` mixin (see [[Mixin]]), applied to the [[Base]] class.
+Here, we've defined a `Person` class, as an [[Entity]] [[Mixin|mixin]], applied to the [[Base]] class.
 
-The `Person` class has 3 fields - `firstName`, `lastName` and `fullName`, distinct from other properties with the [`@field()`](_replica_entity_.html#field) decorator.
+The `Person` class has 3 fields - `firstName`, `lastName` and `fullName`, distinct from other properties with the [["replica/Entity".field|@field()]] decorator.
 
-One more decorator, [[calculate]] specifies, that the value of the field `fullName` is calculated in the `calculateFullName` method, based on the values of `firstName` and `lastName`.
+One more decorator [[calculate|@calculate()]] specifies, that the value of the field `fullName` is calculated in the method `calculateFullName`, based on the values of `firstName` and `lastName`.
 
-The `Person` class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method [[new]], provided by the [[Base]] class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the `Base` class and its type-safe static constructor is optional, any JS class can be used instead. 
+The `Person` class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method [[Base.new|new]], provided by the [[Base]] class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the [[Base]] class and its type-safe static constructor is optional, any JS class can be used instead. 
 
-All data is stored in the "replica", which is initially empty. You can populate it with data using the [addEntity](../classes/_replica_replica_.replica.html#addentity) call. Once the entity "enters" the replica, the reactivity contract starts holding. It is that, whenever the value of `firstName` or `lastName` changes, the value of `fullName` is updated automatically.
+All data is stored in the [[Replica|replica]], which is initially empty. You can populate it with data using the [[Replica.addEntity]] call. Once the entity "enters" the replica, the reactivity contract starts holding. It is that, whenever the value of `firstName` or `lastName` changes, the value of `fullName` is updated automatically.
 
 This simple idea relieves the programmer of burden of updating the outdated data - all data automatically becomes "fresh" and consistent, according to the specified calculation rules.  
 
@@ -70,7 +70,7 @@ These requirements are not enforced by ChronoGraph and you can ignore them, howe
 
 ## Adding and removing entities 
 
-A replica can be populated with entities using [addEntity](../classes/_replica_replica_.replica.html#addentity) method and should be freed from them using [removeEntity]((../classes/_replica_replica_.replica.html#removeentity)) call. The reactivity contract becomes active only after entity has "entered" the replica. In the same way, once the entity is removed from the replica, reactivity contract ends.   
+A replica can be populated with entities using [[Replica.addEntity|addEntity]] method and should be freed from them using [[Replica.removeEntity|removeEntity]]. The reactivity contract becomes active only after entity has "entered" the replica. In the same way, once the entity is removed from the replica, reactivity contract ends.   
 
 ```ts
 const person            = Person.new({ firstName : 'Mark', lastName : 'Twain' })
@@ -114,11 +114,11 @@ or a calculated value (only readable).
 In the same time, when modelling complex data domains, it might be desirable to actually support both modes for the field. This happens when
 we have a set of inter-dependent fields and changing any of them, should update the others according to the business logic. This scenario
 will lead to computation cycles and requires careful and disciplined approach. 
-Please refer to the [Advanced features](_guides_advancedfeatures_.html) guide for more details. 
+Please refer to the [[AdvancedFeaturesGuide|Advanced features]] guide for more details. 
 
 ## Cancelable transactions
 
-At any point, if something went wrong, its possible to reject the current transaction. Transaction borders are marked with the [[ChronoGraph.commit]] call. The end of the previous transaction immediately starts the next one. Transaction rejection resets the whole replica state to the preceding commit.
+At any point, if something went wrong, its possible to [[Replica.reject|reject]] the current transaction. Transaction borders are marked with the [[Replica.commit|commit]] call. The end of the previous transaction immediately starts the next one. Transaction rejection resets the whole replica state to the preceding commit.
 
 ```ts
 person.firstName    = 'Elon'
@@ -138,14 +138,14 @@ person.lastName === 'Musk'
 person.fullName === 'Elon Musk'
 ```
 
-Transaction rejection will also "cancel" the `addEntity/removeEntity` calls.
+Transaction rejection will also "cancel" the [[Replica.addEntity|addEntity]]/[[Replica.removeEntity|removeEntity]]` calls.
 
 
 ## Undo/redo
 
-It is possible to revert a replica to some previous state, using the [[ChronoGraph.undo]] call.
+It is possible to revert a replica to the previous state, using the [[Replica.undo|undo]] call. Similarly, if no changes has been made to the reverted state, its possible to [[Replica.redo|redo]] back to the initial state.
 
-To enable the undo/redo functionality, you need to opt-in, by specifying a value bigger than 0 for the [[ChronoGraph.historyLimit]] config, during replica creation. It specifies how many transactions can be reverted. 
+To enable the undo/redo functionality, you need to opt-in, by specifying a bigger than 0 value for the [[Replica.historyLimit|historyLimit]] config, during replica creation. It specifies how many transactions can be reverted. 
 
 ```ts
 const replica       = Replica.new({ historyLimit : 10 })
@@ -185,9 +185,9 @@ person.fullName === 'Mark Twain'
 
 ChronoGrah optimizes the computations, based on the assumption of the purity of computation functions. If none of the inputs of some field computation has changed - there's no need to re-compute it.
 
-The "has not changed" fact is checked using the equality check. It can be overriden by providing a [[Field.equality]] config option to the field. By default equality is checked with `===` operator. 
+The "has not changed" fact is checked using the equality check. It can be overriden by providing a [[Field.equality|equality]] config option to the [[field]]. By default equality is checked with `===` operator. 
 
-For example, if we don't care about the case of the letters
+For example, if we don't care about the case of the letters:
 
 ```ts
 const ignoreCaseCompare = (a : string, b : string) : boolean => a.toUpperCase() === b.toUpperCase()
@@ -272,7 +272,8 @@ markTwain.books // new Set([ huckleberryFinn ])
 
 Takeaways:
 
-- References between the entities can be established with the special kind of fields - "reference" and "reference bucket", with `@reference<Entity>({ bucket : bucketName})` and `@bucket()` decorators.
+- References between the entities can be established with the special kind of fields - [[reference]] and [[bucket]], with corresponding decorators.
+- References are property of the [[Entity]] type (or any type that has included this mixin)  
 - Buckets are unordered `Set` collections with all entities, referencing the entity of the bucket  
 
 
@@ -280,7 +281,7 @@ Takeaways:
 
 The computations for some fields may be expensive and not actually needed in every transaction. We would like to compute such fields only at the time when their value is actually needed.
 
-We will call such fields - "lazy" and all the other - "strict". The lazyness of the field is defined with its [[Field.lazy]] config:
+We will call such fields - "lazy" and all the other - "strict". The lazyness of the field is defined with its [[Field.lazy|lazy]] config:
 
 ```ts
 class SomeClass extends Entity.mix(Base) {
@@ -312,7 +313,7 @@ By default all fields are strict.
 
 ## Further reading
 
-ChronoGraph provides a lot more functionality. It supports sync/async computations, data branching, mixed computational unit and more. Continue reading to the [Advanced features](_guides_advancedfeatures_.html) guide.
+ChronoGraph provides a lot more functionality. It supports sync/async computations, data branching, mixed computational unit and more. Continue reading to the [[AdvancedFeaturesGuide|Advanced features]] guide.
 
 
 ## COPYRIGHT AND LICENSE

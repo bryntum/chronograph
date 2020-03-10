@@ -29,16 +29,16 @@ ChronoGraph, in contrast, focuses on reactive computations, describing some gene
 Documentation
 =============
 
-You should be able to quickly pick up the base concept of reactivity from the [Basic features](./modules/_guides_basicfeatures_.html) guide.
+You should be able to quickly pick up the base concept of reactivity from the [[BasicFeaturesGuide|Basic features]] guide.
 
-To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [Advanced features](./modules/_guides_advancedfeatures_.html) guide.
+To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [[AdvancedFeaturesGuide|Advanced features]] guide.
 
 
 Benchmarks
 ==========
 
-ChronoGraph is committed to have excellent performance. To reason about it objectively we wrote a benchmark suite.
-More details in the [Benchmarks](./modules/_guides_benchmarks_.html) guide.
+ChronoGraph is committed to have excellent performance. To reason about it objectively, we wrote a benchmark suite.
+More details in the [[BenchmarksGuide|Benchmarks]] guide.
 
 Connect
 =======

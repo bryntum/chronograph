@@ -16,8 +16,14 @@ import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
 //---------------------------------------------------------------------------------------------------------------------
 export type NotPromise<T> = T extends Promise<any> ? never : T
 
+/**
+ * A type for the value, that can be yielded as an effect.
+ */
 export type YieldableValue = Effect | Identifier | Promise<any>
 
+/**
+ * A type for the synchronous effect handler function
+ */
 export type SyncEffectHandler = <T extends any>(effect : YieldableValue) => T & NotPromise<T>
 export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Promise<T>
 
