@@ -241,7 +241,7 @@ Entity/Relation framework
 The identifiers graph from above is a low-level interface for the ChronoGraph. In the [Basic features](_guides_basicfeatures_.html) we've already introduced a more convenient view on it, as on set of "entities" with "fields". We naturally chose to represent entities with TypeScript classes and fields - with their properties.
 
 To turn some JS class into entity, one need to mix the [[Entity]] mixin into it (see more about mixins - [[Mixin]]). And to turn a property into a field - decorate it with 
-[["src/replica/Entity.ts".field]] decorator. 
+[["replica/Entity".field|field]] decorator. 
 
 To specify the calculation function for the identifier of some field - write it as a method of the entity class and decorate with [[calculate]] (this mapped will be set as the [[Identifier.calculation]] config of the corresponding identifier).
 

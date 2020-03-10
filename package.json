@@ -6,7 +6,7 @@
   "module": "main.js",
   "scripts": {
     "test": "npx siesta ./tests",
-    "docs": "npx typedoc --includes 'src/guides' --out docs --exclude 'tests/**/*' --exclude 'documentation/**/*' --exclude 'main.ts' --exclude 'src/lab/**/*' --excludeNotDocumented"
+    "docs": "npx typedoc --includes 'src/guides' --out docs --exclude 'tests/**/*' --exclude 'documentation/**/*' --exclude 'main.ts' --exclude 'src/lab/**/*' --excludeNotDocumented --listInvalidSymbolLinks"
   },
   "keywords": [
     "reactive",
