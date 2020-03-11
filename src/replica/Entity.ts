@@ -8,6 +8,7 @@ import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
 import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
 import { EntityIdentifier, FieldIdentifier, MinimalEntityIdentifier } from "./Identifier.js"
+import { Replica } from "./Replica.js"
 
 
 const isEntityMarker      = Symbol('isEntity')
@@ -57,7 +58,7 @@ export class Entity extends Mixin(
          * A reference to the graph, this entity belongs to. Initially empty, and is populated when the entity instance
          * is added to the replica ([[Replica.addEntity]])
          */
-        graph           : ChronoGraph
+        graph           : Replica
 
         /**
          * An [[EntityMeta]] instance, representing the "meta" information about the entity class. It is shared among all instances
@@ -161,7 +162,7 @@ export class Entity extends Mixin(
          *
          * @param replica
          */
-        enterGraph (replica : ChronoGraph) {
+        enterGraph (replica : Replica) {
             if (this.graph) throw new Error('Already entered replica')
 
             this.graph      = replica

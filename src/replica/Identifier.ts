@@ -4,6 +4,7 @@ import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"
+import { ReadMode, Replica } from "./Replica.js"
 
 
 export interface PartOfEntityIdentifier {
@@ -48,15 +49,18 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
 
     // returns the value itself if there were no affecting writes for it
     // otherwise - promise
-    getFromGraph (graph : ChronoGraph) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
-        if (graph)
-            return graph.get(this)
-        else
+    getFromGraph (graph : Replica) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
+        if (graph) {
+            if (graph.readMode === ReadMode.Current) return graph.get(this)
+            if (graph.readMode === ReadMode.Previous) return graph.baseRevision.get(this, graph)
+
+            return graph.activeTransaction.readProposedOrPrevious(this)
+        } else
             return this.DATA
     }
 
 
-    readFromGraph (graph : ChronoGraph) : this[ 'ValueT' ] {
+    readFromGraph (graph : Replica) : this[ 'ValueT' ] {
         if (graph)
             return graph.read(this)
         else
@@ -64,7 +68,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     }
 
 
-    writeToGraph (graph : ChronoGraph, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
+    writeToGraph (graph : Replica, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
         if (graph)
             graph.write(this, proposedValue, ...args)
         else

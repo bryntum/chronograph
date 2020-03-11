@@ -3,6 +3,13 @@ import { ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { Schema } from "../schema/Schema.js"
 import { Entity } from "./Entity.js"
 
+export enum ReadMode {
+    Current,
+    Previous,
+    ProposedOrPrevious
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------
 /**
  * Reactive graph, operating on the set of entities (see [[Entity]] and [[EntityMeta]]), each having a set of fields (see [[Field]]).
@@ -43,6 +50,7 @@ class Replica extends base {
      */
     autoCommit              : boolean           = true
 
+    readMode                : ReadMode          = ReadMode.Current
 
     /**
      * Add entity instance to the replica
