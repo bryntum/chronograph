@@ -17,7 +17,7 @@ export const ContextSync    = Symbol('ContextSync')
 export const ContextGen     = Symbol('ContextGen')
 
 /**
- * Type, denoting the calculation context.
+ * Type, denoting the generic calculation context (both sync and generators).
  */
 export type Context         = typeof ContextSync | typeof ContextGen
 
@@ -36,7 +36,7 @@ export type Contexts<ResultT, YieldT> = {
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * This is a calculation context. It is represented with a function, that receives some value (effect) and returns the result
+ * This is a calculation context type. It is represented with a function, that receives some value (effect) and returns the result
  * (effect processing results). Can be also thought as "effect handler".
  *
  * When using generators-based calculation, there's no need to use this function directly - the syntax construct `yield` plays its role.

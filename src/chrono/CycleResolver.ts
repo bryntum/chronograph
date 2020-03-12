@@ -11,8 +11,8 @@ import { SyncEffectHandler } from "./Transaction.js"
 export class CycleResolutionInputChrono extends CycleResolutionInput {
 
     /**
-     * This method, given an effect handler, identifier and a variable, will add previous value
-     * and proposed value flags for that variable
+     * This method, given an effect handler, identifier and a variable, will add [[CycleResolutionInput.addPreviousValueFlag|previous value]]
+     * and [[CycleResolutionInput.addProposedValueFlag|proposed value]] flags for that variable.
      *
      * @param Y An effect handler function, which is given as a 1st argument of every calculation function
      * @param identifier

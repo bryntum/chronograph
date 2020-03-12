@@ -253,7 +253,8 @@ class MixinState {
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * This is a base class, providing the type-safe static constructor [[new]]. Its usage is completely optional.
+ * This is a base class, providing the type-safe static constructor [[new]]. This is very convenient when using
+ * [[Mixin|mixins]], as mixins can not have types in the constructors.
  */
 export class Base {
 
@@ -276,7 +277,7 @@ export class Base {
      * For example:
      *
      * ```ts
-     * class MyClass {
+     * class MyClass extends Base {
      *     prop     : string
      * }
      *
@@ -735,11 +736,41 @@ export const isInstanceOf = <T>(instance : any, func : T)
  * --------
  *
  * Using generics with mixins is tricky because TypeScript does not have higher-kinded types and type inference for generics. Still some form
- * of generic arguments is possible
+ * of generic arguments is possible, using the interface merging trick.
  *
+ * Here's the pattern:
  *
+ * ```ts
+ * class Duplicator<Element> extends Mixin(
+ *     [],
+ *     (base : AnyConstructor) =>
  *
+ *     class Duplicator extends base {
+ *         Element                 : any
  *
+ *         duplicate (value : this[ 'Element' ]) : this[ 'Element' ][] {
+ *             return [ value, value ]
+ *         }
+ *     }
+ * ){}
+ *
+ * interface Duplicator<Element> {
+ *     Element : Element
+ * }
+ *
+ * const dup = new Duplicator<boolean>()
+ *
+ * dup.duplicate('foo') // TS2345: Argument of type '"foo"' is not assignable to parameter of type 'boolean'.
+ * ```
+ *
+ * In the example above, we've defined a generic argument `Element` for the outer mixin class, but in fact, that argument is not used anywhere in the
+ * nested class definition in the mixin lambda. Instead, in the nested class, we define a property `Element`, which plays the role of the
+ * generic argument.
+ *
+ * Mixin class methods then can refer to the generic type as `this[ 'Element' ]`.
+ *
+ * The generic arguments of the outer and nested classes are tied together in the additional interface declaration, which, by TypeScript rules
+ * is merged together with the class definition. In this declaration, we specify that property `Element` has type of the `Element` generic argument.
  */
 export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 & MixinHelperFunc5 = mixin as any
 

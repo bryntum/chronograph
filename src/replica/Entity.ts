@@ -15,8 +15,10 @@ const isEntityMarker      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * Entity mixin. When applied to some base class (recommended one is [[Base]]), turns it into entity.
+ * Entity [[Mixin|mixin]]. When applied to some base class (recommended one is [[Base]]), turns it into entity.
  * Entity may have several fields, which are properties decorated with [[field]] decorator.
+ *
+ * To apply this mixin use the `Entity.mix` property, which represents the mixin lambda.
  *
  * Another decorator, [[calculate]], marks the method, that will be used to calculate the value of field.
  *
@@ -73,9 +75,16 @@ export class Entity extends Mixin(
         /**
          * An object, which properties corresponds to the ChronoGraph [[Identifier]]s, created for every field.
          *
-         * For example, for the `Author` class from the above example:
+         * For example:
          *
          * ```ts
+         * class Author extends Entity.mix(Base) {
+         *     @field()
+         *     firstName       : string
+         *     @field()
+         *     lastName        : string
+         * }
+         *
          * const author = Author.new()
          *
          * // identifier for the field `firstName`
@@ -440,23 +449,23 @@ export const generic_field : FieldDecorator<typeof Field> =
  * author.lastName  = 'Twain'
  * ```
  *
- * The getters are basically using [[ChronoGraph.get]] and setters [[ChronoGraph.write]].
+ * The getters are basically using [[Replica.get]] and setters [[Replica.write]].
  *
- * Note, that if the identifier is asynchronous, reading from it may return a promise. But, immediately after the `commit` call, getter will return
+ * Note, that if the identifier is asynchronous, reading from it will return a promise. But, immediately after the [[Replica.commit]] call, getter will return
  * plain value. This is a compromise between the convenience and correctness and this behavior may change (or made configurable) in the future.
  *
  * Additionally to the accessors, the getter and setter methods are generated. The getter method's name is formed as `get` followed by the field name
  * with upper-cased first letter. The setter's name is formed in the same way, with `set` prefix.
  *
  * The getter method is an exact equivalent of the get accessor. The setter method, in addition to data write, immediately after that
- * performs a call to [[ChronoGraph.commit]] (or [[ChronoGraph.commitAsync]], depending from the [[ChronoGraph.autoCommitMode]] option)
+ * performs a call to [[Replica.commit]] (or [[Replica.commitAsync]], depending from the [[Replica.autoCommitMode]] option)
  * and return its result.
  *
  * ```ts
  * const author     = Author.new({ firstName : 'Mark' })
  *
  * author.getFirstName() // Mark
- * await author.setLastName('Twain') // suppose asynchronous commit
+ * await author.setLastName('Twain') // issues asynchronous commit
  * ```
  */
 export const field : typeof generic_field = generic_field
