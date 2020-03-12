@@ -1,4 +1,4 @@
-import { PreviousValueOf, ProposedArgumentsOf, ProposedOrCurrent, ProposedOrPreviousValueOf, ProposedValueOf } from "../../src/chrono/Effect.js"
+import { PreviousValueOf, ProposedArgumentsOf, ProposedOrPrevious, ProposedOrPreviousValueOf, ProposedValueOf } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueSync } from "../../src/chrono/Identifier.js"
 import { SyncEffectHandler } from "../../src/chrono/Transaction.js"
@@ -27,7 +27,7 @@ StartTest(t => {
                 const mode : string     = YIELD(sourceMode)
 
                 if (mode === 'proposed')
-                    return YIELD(ProposedOrCurrent)
+                    return YIELD(ProposedOrPrevious)
                 else
                     return YIELD(var1) + 1
             }
@@ -106,7 +106,7 @@ StartTest(t => {
                 const mode : string     = YIELD(sourceMode)
 
                 if (mode === 'proposed')
-                    return YIELD(ProposedOrCurrent)
+                    return YIELD(ProposedOrPrevious)
                 else
                     return YIELD(var1) + 1
             }
@@ -183,7 +183,7 @@ StartTest(t => {
                 const mode : string     = YIELD(sourceMode)
 
                 if (mode === 'proposed')
-                    return YIELD(ProposedOrCurrent)
+                    return YIELD(ProposedOrPrevious)
                 else
                     return YIELD(var1) + 1
             }
@@ -260,7 +260,7 @@ StartTest(t => {
                 const mode : string     = YIELD(sourceMode)
 
                 if (mode === 'proposed')
-                    return YIELD(ProposedOrCurrent)
+                    return YIELD(ProposedOrPrevious)
                 else
                     return YIELD(var1) + 1
             }

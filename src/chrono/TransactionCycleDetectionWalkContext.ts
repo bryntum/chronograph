@@ -1,5 +1,4 @@
 import { Base } from "../class/BetterMixin.js"
-import { SourceLinePoint } from "../environment/Debug.js"
 import { NOT_VISITED, OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { Identifier } from "./Identifier.js"
 import { Transaction } from "./Transaction.js"

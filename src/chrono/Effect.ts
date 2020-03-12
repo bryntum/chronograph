@@ -7,9 +7,15 @@ export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution'
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The base class for effect.
+ */
 export class Effect extends Base {
     handler     : symbol
 
+    /**
+     * Whether the effect is synchronous. Default value, defined in the prototype, is `true`.
+     */
     @prototypeValue(true)
     sync        : boolean
 
@@ -19,23 +25,69 @@ export class Effect extends Base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const ProposedOrCurrentSymbol    = Symbol('ProposedOrCurrentSymbol')
+export const ProposedOrPreviousSymbol    = Symbol('ProposedOrPreviousSymbol')
 
-export const ProposedOrCurrent : Effect = Effect.new({ handler : ProposedOrCurrentSymbol })
+/**
+ * The constant that represents a request for either user input (proposed value) or previous value of the
+ * identifier, currently being calculated.
+ *
+ * Important note, is that if an identifier yields a `ProposedOrPrevious` effect and its computed value does not match the value of this effect,
+ * it will be re-calculated (computation function called) again on the next read. This is because the value of its `ProposedOrPrevious` input changes.
+ *
+ * ```ts
+ * const graph4 = ChronoGraph.new()
+ *
+ * const max           = graph4.variable(100)
+ *
+ * const identifier15  = graph4.identifier((Y) : number => {
+ *     const proposedValue : number    = Y(ProposedOrPrevious)
+ *
+ *     const maxValue : number         = Y(max)
+ *
+ *     return proposedValue <= maxValue ? proposedValue : maxValue
+ * })
+ *
+ * graph4.write(identifier15, 18)
+ *
+ * const value15_1 = graph4.read(identifier15) // 18
+ *
+ * graph4.write(identifier15, 180)
+ *
+ * const value15_2 = graph4.read(identifier15) // 100
+ *
+ * graph4.write(max, 50)
+ *
+ * const value15_3 = graph4.read(identifier15) // 50
+ * ```
+ */
+export const ProposedOrPrevious : Effect = Effect.new({ handler : ProposedOrPreviousSymbol })
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const RejectSymbol    = Symbol('RejectSymbol')
 
+/**
+ * Class for [[Reject]] effect.
+ */
 export class RejectEffect<Reason> extends Effect {
     handler         : symbol    = RejectSymbol
 
+    /**
+     * Reason of the reject
+     */
     reason          : Reason
 
     @prototypeValue(false)
     pure            : boolean
 }
 
+/**
+ * This is constructor for `RejectEffect` class. If this effect will be yielded during computation the current transaction
+ * will be rejected.
+ *
+ * @param reason
+ * @constructor
+ */
 export const Reject = <Reason>(reason : Reason) : RejectEffect<Reason> => RejectEffect.new({ reason }) as RejectEffect<Reason>
 
 

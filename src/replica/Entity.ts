@@ -1,5 +1,4 @@
-import { CommitResult, CommitZero } from "../chrono/Checkout.js"
-import { ChronoGraph } from "../chrono/Graph.js"
+import { ChronoGraph, CommitArguments, CommitResult, CommitZero } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
@@ -9,11 +8,37 @@ import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
 import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
 import { EntityIdentifier, FieldIdentifier, MinimalEntityIdentifier } from "./Identifier.js"
+import { Replica } from "./Replica.js"
 
 
 const isEntityMarker      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Entity mixin. When applied to some base class (recommended one is [[Base]]), turns it into entity.
+ * Entity may have several fields, which are properties decorated with [[field]] decorator.
+ *
+ * Another decorator, [[calculate]], marks the method, that will be used to calculate the value of field.
+ *
+ * Example:
+ *
+ * ```ts
+ * class Author extends Entity.mix(Base) {
+ *     @field()
+ *     firstName       : string
+ *     @field()
+ *     lastName        : string
+ *     @field()
+ *     fullName        : string
+ *
+ *     @calculate('fullName')
+ *     calculateFullName () : string {
+ *         return this.firstName + ' ' + this.lastName
+ *     }
+ * }
+ * ```
+ *
+ */
 export class Entity extends Mixin(
     [],
     (base : AnyConstructor) => {
@@ -29,15 +54,36 @@ export class Entity extends Mixin(
         $writes         : { [s in keyof this] : string }
         $buildProposed  : { [s in keyof this] : string }
 
-        graph           : ChronoGraph
+        /**
+         * A reference to the graph, this entity belongs to. Initially empty, and is populated when the entity instance
+         * is added to the replica ([[Replica.addEntity]])
+         */
+        graph           : Replica
 
-        // lazy meta instance creation - will work even w/o any @field or @entity decorator
+        /**
+         * An [[EntityMeta]] instance, representing the "meta" information about the entity class. It is shared among all instances
+         * of the class.
+         */
         get $entity () : EntityMeta {
             // this will lazily create an EntityData instance in the prototype
             return createEntityOnPrototype(this.constructor.prototype)
         }
 
 
+        /**
+         * An object, which properties corresponds to the ChronoGraph [[Identifier]]s, created for every field.
+         *
+         * For example, for the `Author` class from the above example:
+         *
+         * ```ts
+         * const author = Author.new()
+         *
+         * // identifier for the field `firstName`
+         * author.$.firstName
+         *
+         * const firstName = replica.read(author.$.firstName)
+         * ```
+         */
         get $ () : { [s in keyof this] : FieldIdentifier } {
             const $ = {}
 
@@ -62,7 +108,9 @@ export class Entity extends Mixin(
             }
         }
 
-
+        /**
+         * A graph identifier, that represents the whole entity.
+         */
         get $$ () : EntityIdentifier {
             return defineProperty(this, '$$', MinimalEntityIdentifier.new({
                 name                : this.$entityName,
@@ -98,6 +146,7 @@ export class Entity extends Mixin(
 
             identifier.context          = this
             identifier.self             = this
+            identifier.name             = `${this.$$.name}.$.${field.name}`
 
             return identifier
         }
@@ -108,7 +157,12 @@ export class Entity extends Mixin(
         }
 
 
-        enterGraph (replica : ChronoGraph) {
+        /**
+         * This method is called when entity is added to some replica.
+         *
+         * @param replica
+         */
+        enterGraph (replica : Replica) {
             if (this.graph) throw new Error('Already entered replica')
 
             this.graph      = replica
@@ -125,6 +179,9 @@ export class Entity extends Mixin(
         }
 
 
+        /**
+         * This method is called when entity is removed from the replica it's been added to.
+         */
         leaveGraph () {
             const graph     = this.graph
             if (!graph) return
@@ -142,17 +199,22 @@ export class Entity extends Mixin(
         // }
 
 
-        propagate () : CommitResult {
-            return this.commit()
+        propagate (arg? : CommitArguments) : CommitResult {
+            return this.commit(arg)
         }
 
 
-        commit () : CommitResult {
+        /**
+         * This is a convenience method, that just delegates to the [[ChronoGraph.commit]] method of this entity's graph.
+         *
+         * If there's no graph (entity has not been added to any replica) a [[CommitZero]] constant will be returned.
+         */
+        commit (arg? : CommitArguments) : CommitResult {
             const graph     = this.graph
 
-            if (!graph) return
+            if (!graph) return CommitZero
 
-            return graph.commit()
+            return graph.commit(arg)
         }
 
 
@@ -161,59 +223,33 @@ export class Entity extends Mixin(
         }
 
 
-        async commitAsync () : Promise<CommitResult> {
+        /**
+         * This is a convenience method, that just delegates to the [[ChronoGraph.commitAsync]] method of this entity's graph.
+         *
+         * If there's no graph (entity has not been added to any replica) a resolved promise with [[CommitZero]] constant will be returned.
+         */
+        async commitAsync (arg? : CommitArguments) : Promise<CommitResult> {
             const graph     = this.graph
 
             if (!graph) return Promise.resolve(CommitZero)
 
-            return graph.commitAsync()
+            return graph.commitAsync(arg)
         }
 
 
-        // propagateSync () : PropagateResult {
-        //     const graph     = this.graph
-        //
-        //     if (!graph) return
-        //
-        //     return graph.propagateSync()
-        // }
-
-        // async waitForPropagateCompleted () : Promise<PropagationResult | null> {
-        //     return this.getGraph().waitForPropagateCompleted()
-        // }
-        //
-        //
-        // async tryPropagateWithNodes (onEffect? : EffectResolverFunction, nodes? : ChronoAtom[], hatchFn? : Function) : Promise<PropagationResult> {
-        //     return this.getGraph().tryPropagateWithNodes(onEffect, nodes, hatchFn)
-        // }
-        //
-        //
-        // async tryPropagateWithEntities (onEffect? : EffectResolverFunction, entities? : Entity[], hatchFn? : Function) : Promise<PropagationResult> {
-        //     const graph = this.getGraph()
-        //
-        //     let result
-        //
-        //     if (isReplica(graph)) {
-        //         result = graph.tryPropagateWithEntities(onEffect, entities, hatchFn)
-        //     }
-        //     else {
-        //         throw new Error("Entity is not part of replica")
-        //     }
-        //
-        //     return result
-        // }
-        //
-        //
-        // markAsNeedRecalculation (atom : ChronoAtom) {
-        //     this.getGraph().markAsNeedRecalculation(atom)
-        // }
-
-
+        /**
+         * A [[Field]] instance, representing the "meta" information about the class field. It is shared among all identifiers of the certain field
+         * in the class.
+         */
         static getField (name : Name) : Field {
             return this.getEntity().getField(name)
         }
 
 
+        /**
+         * An [[EntityMeta]] instance, representing the "meta" information about the entity class. It is shared among all instances
+         * of the class.
+         */
         static getEntity () : EntityMeta {
             return ensureEntityOnPrototype(this.prototype)
         }
@@ -310,15 +346,18 @@ export type FieldDecorator<Default extends AnyConstructor = typeof Field> =
     <T extends Default = Default> (fieldConfig? : Partial<InstanceType<T>>, fieldCls? : T | Default) => PropertyDecorator
 
 
-/**
+/*
  * The "generic" field decorator, in the sense, that it allows specifying both field config and field class.
  * This means it can create any field instance.
  */
 export const generic_field : FieldDecorator<typeof Field> =
     <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
 
-        return function (target : Entity, propertyKey : string) : void {
-            const entity    = ensureEntityOnPrototype(target)
+        return function (target : Entity, pk : string) : void {
+            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
+            // it can optimize access by it
+            const propertyKey   = pk
+            const entity        = ensureEntityOnPrototype(target)
 
             const field     = entity.addField(
                 fieldCls.new(Object.assign(fieldConfig || {}, {
@@ -368,10 +407,83 @@ export const generic_field : FieldDecorator<typeof Field> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Field decorator. The type signature is:
+ *
+ * ```ts
+ * field : <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) => PropertyDecorator
+ * ```
+ * Its a function, that accepts field config object and optionally a field class (default is [[Field]]) and returns a property decorator.
+ *
+ * Example:
+ *
+ * ```ts
+ * const ignoreCaseCompare = (a : string, b : string) : boolean => a.toUpperCase() === b.toUpperCase()
+ *
+ * class MyField extends Field {}
+ *
+ * class Author extends Entity.mix(Base) {
+ *     @field({ equality : ignoreCaseCompare })
+ *     firstName       : string
+ *
+ *     @field({ lazy : true }, MyField)
+ *     lastName       : string
+ * }
+ * ```
+ *
+ * For every field, there are generated get and set accessors, with which you can read/write the data:
+ *
+ * ```ts
+ * const author     = Author.new({ firstName : 'Mark' })
+ *
+ * author.firstName // Mark
+ * author.lastName  = 'Twain'
+ * ```
+ *
+ * The getters are basically using [[ChronoGraph.get]] and setters [[ChronoGraph.write]].
+ *
+ * Note, that if the identifier is asynchronous, reading from it may return a promise. But, immediately after the `commit` call, getter will return
+ * plain value. This is a compromise between the convenience and correctness and this behavior may change (or made configurable) in the future.
+ *
+ * Additionally to the accessors, the getter and setter methods are generated. The getter method's name is formed as `get` followed by the field name
+ * with upper-cased first letter. The setter's name is formed in the same way, with `set` prefix.
+ *
+ * The getter method is an exact equivalent of the get accessor. The setter method, in addition to data write, immediately after that
+ * performs a call to [[ChronoGraph.commit]] (or [[ChronoGraph.commitAsync]], depending from the [[ChronoGraph.autoCommitMode]] option)
+ * and return its result.
+ *
+ * ```ts
+ * const author     = Author.new({ firstName : 'Mark' })
+ *
+ * author.getFirstName() // Mark
+ * await author.setLastName('Twain') // suppose asynchronous commit
+ * ```
+ */
 export const field : typeof generic_field = generic_field
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Decorator for the method, that calculates a value of some field
+ *
+ * ```ts
+ * class Author extends Entity.mix(Base) {
+ *     @field()
+ *     firstName       : string
+ *     @field()
+ *     lastName        : string
+ *     @field()
+ *     fullName        : string
+ *
+ *     @calculate('fullName')
+ *     calculateFullName () : string {
+ *         return this.firstName + ' ' + this.lastName
+ *     }
+ * }
+ * ```
+ *
+ * @param fieldName The name of the field the decorated method should be "tied" to.
+ */
 export const calculate = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
@@ -410,10 +522,4 @@ export const build_proposed = function (fieldName : Name) : MethodDecorator {
 
         buildProposed[ fieldName ]     = propertyKey
     }
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export const getSourcePointFromIdentifier = (identifier : Identifier) : SourceLinePoint => {
-    return (identifier as any).SOURCE_POINT
 }

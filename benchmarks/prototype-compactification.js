@@ -16,6 +16,151 @@ class Base {
     }
 }
 
+class Classic {
+    method1 () {
+        return 1
+    }
+
+    method2 () {
+        return 1
+    }
+
+    method3 () {
+        return 1
+    }
+
+    method4 () {
+        return 1
+    }
+}
+
+
+class Override1 extends Classic {
+    method1 () {
+        return super.method1() + 1
+    }
+
+    method2 () {
+        return super.method2() + 1
+    }
+
+    method3 () {
+        return super.method3() + 1
+    }
+
+    method4 () {
+        return super.method4() + 1
+    }
+}
+
+class Override2 extends Override1 {
+    method1 () {
+        return super.method1() + 1
+    }
+
+    method2 () {
+        return super.method2() + 1
+    }
+
+    method3 () {
+        return super.method3() + 1
+    }
+
+    method4 () {
+        return super.method4() + 1
+    }
+}
+
+class Override3 extends Override2 {
+    method1 () {
+        return super.method1() + 1
+    }
+
+    method2 () {
+        return super.method2() + 1
+    }
+
+    method3 () {
+        return super.method3() + 1
+    }
+
+    method4 () {
+        return super.method4() + 1
+    }
+}
+
+class Override4 extends Override3 {
+    method1 () {
+        return super.method1() + 1
+    }
+
+    method2 () {
+        return super.method2() + 1
+    }
+
+    method3 () {
+        return super.method3() + 1
+    }
+
+    method4 () {
+        return super.method4() + 1
+    }
+}
+
+class Override5 extends Override4 {
+    method1 () {
+        return super.method1() + 1
+    }
+
+    method2 () {
+        return super.method2() + 1
+    }
+
+    method3 () {
+        return super.method3() + 1
+    }
+
+    method4 () {
+        return super.method4() + 1
+    }
+}
+
+class Override6 extends Override5 {
+    method1 () {
+        return super.method1() + 1
+    }
+
+    method2 () {
+        return super.method2() + 1
+    }
+
+    method3 () {
+        return super.method3() + 1
+    }
+
+    method4 () {
+        return super.method4() + 1
+    }
+}
+
+class Override7 extends Override6 {
+    method1 () {
+        return super.method1() + 1
+    }
+
+    method2 () {
+        return super.method2() + 1
+    }
+
+    method3 () {
+        return super.method3() + 1
+    }
+
+    method4 () {
+        return super.method4() + 1
+    }
+}
+
 const Mixin1 = (base) =>
     class Mixin1 extends base {
         method1 () {
@@ -112,12 +257,13 @@ const Cls2Compact =
 
 
 const count         = 10000
-const instances     = []
+const instancesSparse     = []
+const instancesCompact     = []
+const instancesClassic     = []
 
-
-for (let i = 0; i < count; i++) instances.push(new Cls1Sparse())
-
-for (let i = 0; i < count; i++) instances.push(new Cls2Compact())
+for (let i = 0; i < count; i++) instancesSparse.push(new Cls1Sparse())
+for (let i = 0; i < count; i++) instancesCompact.push(new Cls2Compact())
+for (let i = 0; i < count; i++) instancesClassic.push(new Override7())
 
 
 let res = 0

@@ -364,5 +364,102 @@ StartTest(t => {
 
     })
 
+
+    t.it('Should be able to derive from the subclass of the base class', t => {
+        class MyClass extends Base {
+            myProp      : string    = 'myProp'
+        }
+
+
+        class MyClassMixed extends SomeMixin1.derive(MyClass) {
+        }
+
+        const instance  = MyClassMixed.new({ prop1 : '1', myProp : '1' })
+
+        t.is(instance.method1(true), '1')
+    })
+
+
+    t.it('Should choose the super-most base class from requirements ', t => {
+        class MyClass extends Base {
+            myProp      : string    = 'myProp'
+        }
+
+        class SomeMixin1 extends Mixin(
+            [ Base ],
+            (base : ClassUnion<typeof Base>) =>
+
+            class SomeMixin1 extends base {
+                prop1       : string    = '1'
+            }
+        ){}
+
+        class SomeMixin2 extends Mixin(
+            [ SomeMixin1, MyClass ],
+            (base : ClassUnion<typeof SomeMixin1 & typeof MyClass>) =>
+
+            class SomeMixin2 extends base {
+                prop2       : string    = '2'
+            }
+        ){}
+
+        // in this mixin, the SomeMixin1 requirement first sets the base class to Base
+        // but later the SomeMixin2, "upgrades" it to MyClass
+        class SomeMixin3 extends Mixin(
+            [ SomeMixin1, SomeMixin2 ],
+            (base : ClassUnion<typeof SomeMixin1 & typeof SomeMixin2>) =>
+
+            class SomeMixin3 extends base {
+                prop3       : string    = '3'
+            }
+        ){}
+
+        //@ts-ignore
+        t.is(SomeMixin3.$.baseClass, MyClass)
+
+        const instance  = SomeMixin3.new()
+
+        t.is(instance.prop1, '1')
+        t.is(instance.prop2, '2')
+        t.is(instance.prop3, '3')
+    })
+
+
+    t.it('Should throw when trying to construct a mixin from contradicting base classes ', t => {
+        class MyClass {
+            myProp      : string    = 'myProp'
+        }
+
+        class SomeMixin1 extends Mixin(
+            [ Base ],
+            (base : ClassUnion<typeof Base>) =>
+
+            class SomeMixin1 extends base {
+                prop1       : string    = '1'
+            }
+        ){}
+
+        class SomeMixin2 extends Mixin(
+            [ MyClass ],
+            (base : ClassUnion<typeof MyClass>) =>
+
+            class SomeMixin2 extends base {
+                prop2       : string    = '2'
+            }
+        ){}
+
+        t.throwsOk(() => {
+            class SomeMixin3 extends Mixin(
+                [ SomeMixin1, SomeMixin2 ],
+                (base : ClassUnion<typeof SomeMixin1 & typeof SomeMixin2>) =>
+
+                class SomeMixin3 extends base {
+                    prop3       : string    = '3'
+                }
+            ){}
+        }, /Base class mismatch/)
+    })
 })
+
+
 

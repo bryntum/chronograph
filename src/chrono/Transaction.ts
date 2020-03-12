@@ -4,8 +4,8 @@ import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { Checkout, CommitArguments } from "./Checkout.js"
 import { BreakCurrentStackExecution, Effect, RejectEffect } from "./Effect.js"
+import { ChronoGraph, CommitArguments } from "./Graph.js"
 import { Identifier, Levels, throwUnknownIdentifier } from "./Identifier.js"
 import { EdgeType, Quark, TombStone } from "./Quark.js"
 import { Revision, Scope } from "./Revision.js"
@@ -16,8 +16,14 @@ import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
 //---------------------------------------------------------------------------------------------------------------------
 export type NotPromise<T> = T extends Promise<any> ? never : T
 
+/**
+ * A type for the value, that can be yielded as an effect.
+ */
 export type YieldableValue = Effect | Identifier | Promise<any>
 
+/**
+ * A type for the synchronous effect handler function
+ */
 export type SyncEffectHandler = <T extends any>(effect : YieldableValue) => T & NotPromise<T>
 export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Promise<T>
 
@@ -37,9 +43,10 @@ export type TransactionCommitResult = { revision : Revision, entries : Scope, tr
 export class Transaction extends Base {
     baseRevision            : Revision              = undefined
 
+    candidateClass          : typeof Revision       = Revision
     candidate               : Revision              = undefined
 
-    graph                   : Checkout              = undefined
+    graph                   : ChronoGraph              = undefined
 
     isClosed                : boolean               = false
 
@@ -88,7 +95,7 @@ export class Transaction extends Base {
             pushTo          : this.stackGen
         })
 
-        if (!this.candidate) this.candidate = Revision.new({ previous : this.baseRevision })
+        if (!this.candidate) this.candidate = this.candidateClass.new({ previous : this.baseRevision })
 
         // the `onEffectSync` should be bound to the `yieldSync` of course, and `yieldSync` should look like:
         //     yieldSync (effect : YieldableValue) : any {
@@ -112,7 +119,13 @@ export class Transaction extends Base {
 
         this.selfDependedMarked = true
 
-        for (const selfDependentQuark of this.baseRevision.selfDependent) this.touch(selfDependentQuark)
+        for (const selfDependentIden of this.baseRevision.selfDependent) {
+            const existing  = this.entries.get(selfDependentIden)
+
+            if (existing && existing.getValue() === TombStone) continue
+
+            this.touch(selfDependentIden)
+        }
     }
 
 
@@ -227,7 +240,8 @@ export class Transaction extends Base {
 
         if (value1 === TombStone) throwUnknownIdentifier(identifier)
 
-        if (value1 !== undefined) return value1
+        // the `&& entry.hasValue()` part was added to allow KEEP_TRYING_TO_RESOLVE feature for references
+        if (value1 !== undefined && entry.hasValue()) return value1
         if (entry.promise) return entry.promise
 
         //----------------------
@@ -515,7 +529,7 @@ export class Transaction extends Base {
 
         for (const quark of this.entries.values()) {
             quark.cleanup()
-            quark.clearOutgoing()
+            // quark.clearOutgoing()
         }
 
         this.entries.clear()
@@ -604,6 +618,7 @@ export class Transaction extends Base {
 
             entry.setOrigin(previousEntry.origin)
 
+            // seems not needed anymore?
             // this is to indicate that this entry should be recalculated (origin removed)
             // see `resetToEpoch`
             entry.value     = value
@@ -615,7 +630,7 @@ export class Transaction extends Base {
         //--------------------
         let ignoreSelfDependency : boolean = false
 
-        if (entry.usedProposedOrCurrent) {
+        if (entry.usedProposedOrPrevious) {
             if (entry.proposedValue !== undefined) {
                 if (identifier.equality(value, entry.proposedValue)) ignoreSelfDependency = true
             } else {
@@ -706,6 +721,8 @@ export class Transaction extends Base {
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : Quark[]) : Generator<any, void, unknown> {
+        if (this.rejectedWith) return
+
         this.walkContext.startNewEpoch()
 
         const entries                       = this.entries
@@ -848,6 +865,8 @@ export class Transaction extends Base {
 
     // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, stack : Quark[]) {
+        if (this.rejectedWith) return
+
         this.walkContext.startNewEpoch()
 
         const entries                       = this.entries

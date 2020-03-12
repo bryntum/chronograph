@@ -1,47 +1,83 @@
-import { ProposedArgumentsOf, ProposedOrCurrent, ProposedValueOf } from "../../src/chrono/Effect.js"
+import { CycleResolutionInputChrono } from "../../src/chrono/CycleResolver.js"
+import { ProposedArgumentsOf, ProposedOrPrevious, ProposedValueOf } from "../../src/chrono/Effect.js"
 import { Identifier } from "../../src/chrono/Identifier.js"
 import { Quark } from "../../src/chrono/Quark.js"
 import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
 import { Base } from "../../src/class/BetterMixin.js"
+import { Formula, CycleDescription, CycleResolution, FormulaId, CalculateProposed } from "../../src/cycle_resolver/CycleResolver.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { build_proposed, calculate, Entity, field } from "../../src/replica/Entity.js"
 import { Replica } from "../../src/replica/Replica.js"
 
 declare const StartTest : any
 
-type DispatcherValue        = Map<FieldType, CalculationMode>
+//---------------------------------------------------------------------------------------------------------------------
+const StartVar           = Symbol('Start')
+const EndVar             = Symbol('End')
+const DurationVar        = Symbol('Duration')
+
+//---------------------------------------------------------------------------------------------------------------------
+const startFormula       = Formula.new({
+    output      : StartVar,
+    inputs      : new Set([ DurationVar, EndVar ])
+})
+
+const endFormula         = Formula.new({
+    output      : EndVar,
+    inputs      : new Set([ DurationVar, StartVar ])
+})
+
+const durationFormula   = Formula.new({
+    output      : DurationVar,
+    inputs      : new Set([ StartVar, EndVar ])
+})
+
+//---------------------------------------------------------------------------------------------------------------------
+const cycleDescription = CycleDescription.new({
+    variables           : new Set([ StartVar, EndVar, DurationVar ]),
+    formulas            : new Set([ startFormula, endFormula, durationFormula ])
+})
 
 
-const isNotNumber = (value : any) => Number(value) !== value
+const cycleResolution = CycleResolution.new({
+    description                 : cycleDescription,
+    defaultResolutionFormulas   : new Set([ endFormula ])
+})
 
-const dispatcherValueEq     = (v1 : DispatcherValue, v2 : DispatcherValue) : boolean => {
-    return v1.get(FieldType.Start) === v2.get(FieldType.Start)
-        && v1.get(FieldType.End) === v2.get(FieldType.End)
-        && v1.get(FieldType.Duration) === v2.get(FieldType.Duration)
-}
-
-enum CalculationMode {
-    CalculateProposed     = 'CalculateProposed',
-    CalculatePure  = 'CalculatePure'
-}
-
-enum FieldType {
-    Start   = 'Start',
-    End     = 'End',
-    Duration = 'Duration'
-}
-
+//---------------------------------------------------------------------------------------------------------------------
 enum Instruction {
     KeepDuration    = 'KeepDuration',
     KeepStart       = 'KeepStart',
     KeepEnd         = 'KeepEnd'
 }
 
-enum Direction {
-    Forward         = 'Forward',
-    Backward        = 'Backward'
+
+//---------------------------------------------------------------------------------------------------------------------
+class CycleDispatcher extends CycleResolutionInputChrono {
+
+    addInstruction (instruction : Instruction) {
+        if (instruction === Instruction.KeepStart) this.addKeepIfPossibleFlag(StartVar)
+        if (instruction === Instruction.KeepEnd) this.addKeepIfPossibleFlag(EndVar)
+        if (instruction === Instruction.KeepDuration) this.addKeepIfPossibleFlag(DurationVar)
+    }
 }
 
+const isNotNumber = (value : any) : boolean => value !== Number(value)
+
+const dispatcherEq     = (v1 : CycleDispatcher, v2 : CycleDispatcher) : boolean => {
+    const resolution1       = v1.resolution
+    const resolution2       = v2.resolution
+
+    return resolution1.get(StartVar) === resolution2.get(StartVar)
+        && resolution1.get(EndVar) === resolution2.get(EndVar)
+        && resolution1.get(DurationVar) === resolution2.get(DurationVar)
+}
+
+const defaultDispatcher = CycleDispatcher.new({ context : cycleResolution })
+
+defaultDispatcher.addPreviousValueFlag(StartVar)
+defaultDispatcher.addPreviousValueFlag(EndVar)
+defaultDispatcher.addPreviousValueFlag(DurationVar)
 
 class Event extends Entity.mix(Base) {
     @field()
@@ -53,149 +89,113 @@ class Event extends Entity.mix(Base) {
     @field()
     duration    : number
 
-    @field()
-    direction   : Direction    = Direction.Forward
-
-    @field({ equality : dispatcherValueEq })
-    dispatcher  : DispatcherValue
+    @field({ equality : dispatcherEq })
+    dispatcher  : CycleDispatcher
 
 
     setStart : (value : number, instruction : Instruction) => any
     setEnd : (value : number, instruction : Instruction) => any
     setDuration : (value : number, instruction : Instruction) => any
 
+
     @calculate('start')
-    * calculateStart () : CalculationIterator<number> {
-        const dispatch : DispatcherValue = yield this.$.dispatcher
+    calculateStart (Y) : number {
+        const dispatch : CycleDispatcher = this.dispatcher
 
-        const instruction : CalculationMode = dispatch.get(FieldType.Start)
+        const instruction : FormulaId = dispatch.resolution.get(StartVar)
 
-        if (instruction === CalculationMode.CalculatePure) {
-            const endValue : number         = yield this.$.end
-            const durationValue : number    = yield this.$.duration
+        if (instruction === startFormula.formulaId) {
+            const endValue : number         = this.end
+            const durationValue : number    = this.duration
 
             if (isNotNumber(endValue) || isNotNumber(durationValue)) return null
 
             return endValue - durationValue
         }
-        else if (instruction === CalculationMode.CalculateProposed) {
-            return yield ProposedOrCurrent
+        else if (instruction === CalculateProposed) {
+            return Y(ProposedOrPrevious)
         }
     }
 
 
     @calculate('end')
-    * calculateEnd () : CalculationIterator<number> {
-        const dispatch : DispatcherValue = yield this.$.dispatcher
+    calculateEnd (Y) : number {
+        const dispatch : CycleDispatcher = this.dispatcher
 
-        const instruction : CalculationMode = dispatch.get(FieldType.End)
+        const instruction : FormulaId = dispatch.resolution.get(EndVar)
 
-        if (instruction === CalculationMode.CalculatePure) {
-            const startValue : number       = yield this.$.start
-            const durationValue : number    = yield this.$.duration
+        if (instruction === endFormula.formulaId) {
+            const startValue : number       = this.start
+            const durationValue : number    = this.duration
 
             if (isNotNumber(startValue) || isNotNumber(durationValue)) return null
 
             return startValue + durationValue
         }
-        else if (instruction === CalculationMode.CalculateProposed) {
-            return yield ProposedOrCurrent
+        else if (instruction === CalculateProposed) {
+            return Y(ProposedOrPrevious)
         }
     }
 
 
     @calculate('duration')
-    * calculateDuration () : CalculationIterator<number> {
-        const dispatch : DispatcherValue = yield this.$.dispatcher
+    calculateDuration (Y) : number {
+        const dispatch : CycleDispatcher = this.dispatcher
 
-        const instruction : CalculationMode = dispatch.get(FieldType.Duration)
+        const instruction : FormulaId = dispatch.resolution.get(DurationVar)
 
-        if (instruction === CalculationMode.CalculatePure) {
-            const startValue : number       = yield this.$.start
-            const endValue : number         = yield this.$.end
+        if (instruction === durationFormula.formulaId) {
+            const startValue : number       = this.start
+            const endValue : number         = this.end
 
             if (isNotNumber(startValue) || isNotNumber(endValue)) return null
 
             return endValue - startValue
         }
-        else if (instruction === CalculationMode.CalculateProposed) {
-            return yield ProposedOrCurrent
+        else if (instruction === CalculateProposed) {
+            return Y(ProposedOrPrevious)
         }
     }
 
 
     @build_proposed('dispatcher')
-    buildProposedDispatcher (me : Identifier, quark : Quark, transaction : Transaction) : DispatcherValue {
-        const direction : Direction    = transaction.readProposedOrPrevious(this.$.direction)
-
-        return new Map([
-            [ FieldType.Start, direction === Direction.Forward ? CalculationMode.CalculateProposed : CalculationMode.CalculateProposed ],
-            [ FieldType.End, direction === Direction.Forward ? CalculationMode.CalculatePure : CalculationMode.CalculatePure ],
-            [ FieldType.Duration, CalculationMode.CalculateProposed ]
-        ])
+    buildProposedDispatcher (me : Identifier, quark : Quark, transaction : Transaction) : CycleDispatcher {
+        return defaultDispatcher
     }
 
 
     @calculate('dispatcher')
-    * calculateDispatcher (YIELD : SyncEffectHandler) : CalculationIterator<DispatcherValue> {
-        const proposedOrCurrent                 = yield ProposedOrCurrent
+    calculateDispatcher (Y : SyncEffectHandler) : CycleDispatcher {
+        const proposedOrPrevious        = Y(ProposedOrPrevious)
 
-        // if (window.DEBUG) debugger
+        const cycleDispatcher           = CycleDispatcher.new({ context : cycleResolution })
 
-        const directionValue : Direction        = yield this.$.direction
-
-        let startMode : CalculationMode         = (yield ProposedValueOf(this.$.start)) !== undefined ? CalculationMode.CalculateProposed : CalculationMode.CalculatePure
-        let endMode : CalculationMode           = (yield ProposedValueOf(this.$.end)) !== undefined ? CalculationMode.CalculateProposed : CalculationMode.CalculatePure
-        let durationMode : CalculationMode      = (yield ProposedValueOf(this.$.duration)) !== undefined ? CalculationMode.CalculateProposed : CalculationMode.CalculatePure
+        cycleDispatcher.collectInfo(Y, this.$.start, StartVar)
+        cycleDispatcher.collectInfo(Y, this.$.end, EndVar)
+        cycleDispatcher.collectInfo(Y, this.$.duration, DurationVar)
 
         //---------------
-        const startArgs                         = yield ProposedArgumentsOf(this.$.start)
+        const startProposedArgs         = Y(ProposedArgumentsOf(this.$.start))
 
-        if (startArgs) {
-            if (startArgs[ 0 ] === Instruction.KeepDuration) durationMode = CalculationMode.CalculateProposed
-            if (startArgs[ 0 ] === Instruction.KeepEnd) endMode = CalculationMode.CalculateProposed
-        }
+        const startInstruction : Instruction = startProposedArgs ? startProposedArgs[ 0 ] : undefined
 
-        //---------------
-        const endArgs                           = yield ProposedArgumentsOf(this.$.end)
-
-        if (endArgs) {
-            if (endArgs[ 0 ] === Instruction.KeepDuration) durationMode = CalculationMode.CalculateProposed
-            if (endArgs[ 0 ] === Instruction.KeepStart) startMode = CalculationMode.CalculateProposed
-        }
+        if (startInstruction) cycleDispatcher.addInstruction(startInstruction)
 
         //---------------
-        const durationArgs                      = yield ProposedArgumentsOf(this.$.duration)
+        const endProposedArgs         = Y(ProposedArgumentsOf(this.$.end))
 
-        if (durationArgs) {
-            if (durationArgs[ 0 ] === Instruction.KeepStart) startMode = CalculationMode.CalculateProposed
-            if (durationArgs[ 0 ] === Instruction.KeepEnd) endMode = CalculationMode.CalculateProposed
-        }
+        const endInstruction : Instruction = endProposedArgs ? endProposedArgs[ 0 ] : undefined
+
+        if (endInstruction) cycleDispatcher.addInstruction(endInstruction)
 
         //---------------
-        let withProposedCounter : number        = 0
+        const durationProposedArgs    = Y(ProposedArgumentsOf(this.$.duration))
 
-        if (startMode === CalculationMode.CalculateProposed) withProposedCounter++
-        if (endMode === CalculationMode.CalculateProposed) withProposedCounter++
-        if (durationMode === CalculationMode.CalculateProposed) withProposedCounter++
+        const durationInstruction : Instruction = durationProposedArgs ? durationProposedArgs[ 0 ] : undefined
 
-        if (withProposedCounter === 3) {
-            if (directionValue === Direction.Forward)
-                endMode     = CalculationMode.CalculatePure
-            else
-                startMode   = CalculationMode.CalculatePure
-        }
-        else if (withProposedCounter <= 1) {
-            startMode       = CalculationMode.CalculateProposed
-            endMode         = CalculationMode.CalculateProposed
-            durationMode    = CalculationMode.CalculateProposed
-        }
+        if (durationInstruction) cycleDispatcher.addInstruction(durationInstruction)
 
-        return new Map([
-            [ FieldType.Start, startMode ],
-            [ FieldType.End, endMode ],
-            [ FieldType.Duration, durationMode ]
-        ])
+        return cycleDispatcher
     }
 }
 

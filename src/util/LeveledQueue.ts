@@ -89,4 +89,13 @@ export class LeveledQueue<T extends { level : number }> {
 
         if (elLevel < this.lowestLevel) this.lowestLevel = elLevel
     }
+
+    
+    * [Symbol.iterator] () : Iterable<T> {
+        for (let i = 0; i < this.levels.length; i++) {
+            const level     = this.levels[ i ]
+
+            if (level) yield* level
+        }
+    }
 }

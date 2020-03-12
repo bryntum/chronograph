@@ -1,4 +1,4 @@
-import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
+import { ProposedOrPrevious } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
@@ -7,13 +7,13 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('`ProposedOrCurrent` effect', async t => {
+    t.it('`ProposedOrPrevious` effect', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
         const max       = graph.variableNamed('variable', 100)
 
         const var1      = graph.identifier(function * () : CalculationIterator<number> {
-            const proposedValue : number    = yield ProposedOrCurrent
+            const proposedValue : number    = yield ProposedOrPrevious
 
             const maxValue : number         = yield max
 
@@ -46,7 +46,7 @@ StartTest(t => {
     })
 
 
-    t.it('ProposedOrCurrent - caching, generators', async t => {
+    t.it('ProposedOrPrevious - caching, generators', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableNamed('var0', 1)
@@ -55,7 +55,7 @@ StartTest(t => {
 
         const var1      = graph.addIdentifier(CalculatedValueGen.new({
             * calculation () : CalculationIterator<number> {
-                const proposedValue : number    = yield ProposedOrCurrent
+                const proposedValue : number    = yield ProposedOrPrevious
 
                 const maxValue : number         = yield max
 
@@ -134,7 +134,7 @@ StartTest(t => {
     })
 
 
-    t.it('ProposedOrCurrent - caching, sync', async t => {
+    t.it('ProposedOrPrevious - caching, sync', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
         const var0      = graph.variableNamed('var0', 1)
@@ -143,7 +143,7 @@ StartTest(t => {
 
         const var1      = graph.addIdentifier(CalculatedValueSync.new({
             calculation (YIELD) : number {
-                const proposedValue : number    = YIELD(ProposedOrCurrent)
+                const proposedValue : number    = YIELD(ProposedOrPrevious)
 
                 const maxValue : number         = YIELD(max)
 
@@ -234,7 +234,7 @@ StartTest(t => {
             lazy    : true,
 
             * calculation () : CalculationIterator<number> {
-                const proposedValue : number    = yield ProposedOrCurrent
+                const proposedValue : number    = yield ProposedOrPrevious
 
                 const maxValue : number         = yield max
 
@@ -307,7 +307,7 @@ StartTest(t => {
             lazy : true,
 
             calculation (YIELD) : number {
-                const proposedValue : number    = YIELD(ProposedOrCurrent)
+                const proposedValue : number    = YIELD(ProposedOrPrevious)
 
                 const maxValue : number         = YIELD(max)
 

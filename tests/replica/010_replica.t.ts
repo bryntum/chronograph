@@ -1,4 +1,4 @@
-import { ProposedOrCurrent } from "../../src/chrono/Effect.js"
+import { ProposedOrPrevious } from "../../src/chrono/Effect.js"
 import { Base } from "../../src/class/BetterMixin.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { calculate, Entity, field } from "../../src/replica/Entity.js"
@@ -179,12 +179,12 @@ StartTest(t => {
 
             @calculate('firstName')
             calculateFirstName (Y) : string {
-                return Y(ProposedOrCurrent)
+                return Y(ProposedOrPrevious)
             }
 
             @calculate('lastName')
             calculateLastName (Y) : string {
-                return Y(ProposedOrCurrent)
+                return Y(ProposedOrPrevious)
             }
 
         }

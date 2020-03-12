@@ -1,14 +1,17 @@
-import { CalculatedValueSync, Levels } from "../chrono/Identifier.js"
-import { Quark, QuarkConstructor } from "../chrono/Quark.js"
+import { CalculatedValueSync, Levels, QuarkSync } from "../chrono/Identifier.js"
+import { Quark, QuarkConstructor, TombStone } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
-import { AnyConstructor, ClassUnion, identity, Mixin } from "../class/BetterMixin.js"
-import { CalculationSync } from "../primitives/Calculation.js"
+import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { Field } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"
 import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Mixin, for the identifier that represent a reference bucket field of the entity. Requires the [[Field]] (or its subclass)
+ * as a base class. See more about mixins: [[Mixin]]
+ */
 export class ReferenceBucketField extends Mixin(
     [ Field ],
     (base : AnyConstructor<Field, typeof Field>) =>
@@ -23,16 +26,35 @@ class ReferenceBucketField extends base {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Specialized version of the [field](_replica_entity_.html#field) decorator, which should be used to mark the reference buckets.
+ * All it does is replace the default value of the second argument to the [[ReferenceBucketField]].
+ *
+ * ```ts
+ * class Author extends Person {
+ *     @bucket()
+ *     books           : Set<Book>
+ * }
+ *
+ * class Book extends Entity.mix(Base) {
+ *     @reference({ bucket : 'books' })
+ *     writtenBy       : Author
+ * }
+ * ```
+ *
+ * @param fieldConfig Object with the field configuration properties
+ * @param fieldCls Optional. Default value has been changed to [[ReferenceBucketField]]
+ */
 export const bucket : FieldDecorator<typeof ReferenceBucketField> =
     (fieldConfig?, fieldCls = ReferenceBucketField) => generic_field(fieldConfig, fieldCls)
 
 
-export enum BucketMutationType {
+enum BucketMutationType {
     'Add'       = 'Add',
     'Remove'    = 'Remove'
 }
 
-export type BucketMutation  = {
+type BucketMutation  = {
     type        : BucketMutationType,
     entity      : Entity
 }
@@ -53,6 +75,8 @@ class ReferenceBucketQuark extends base {
     }
 }){}
 
+export const MinimalReferenceBucketQuark = ReferenceBucketQuark.mix(QuarkSync)
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketIdentifier extends Mixin(
@@ -70,7 +94,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
         proposedValueIsBuilt    : boolean   = true
 
-        @prototypeValue(Mixin([ ReferenceBucketQuark, CalculationSync, Quark, Map ], identity))
+        @prototypeValue(MinimalReferenceBucketQuark)
         quarkClass          : QuarkConstructor
 
 
@@ -86,6 +110,11 @@ export class ReferenceBucketIdentifier extends Mixin(
 
 
         removeFromBucket (transaction : Transaction, entity : Entity) {
+            const preQuark      = transaction.entries.get(this)
+
+            // if bucket is already removed - no need to remove from it
+            if (preQuark && preQuark.getValue() === TombStone) return
+
             const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
             quark.mutations.push({ type : BucketMutationType.Remove, entity })

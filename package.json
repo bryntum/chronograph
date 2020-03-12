@@ -6,7 +6,7 @@
   "module": "main.js",
   "scripts": {
     "test": "npx siesta ./tests",
-    "docs": "npx typedoc --mode file --out docs"
+    "docs": "npx typedoc --includes 'src/guides' --out docs --exclude 'tests/**/*' --exclude 'documentation/**/*' --exclude 'main.ts' --exclude 'src/lab/**/*' --excludeNotDocumented --listInvalidSymbolLinks --theme node_modules/typedoc-default-themes/bin/default/"
   },
   "keywords": [
     "reactive",
@@ -28,7 +28,8 @@
     "regenerator-runtime": "^0.13.1",
     "siesta-lite": "^5.2.3",
     "tslint": "^5.16.0",
-    "typedoc": "^0.14.2",
-    "typescript": "3.7.5"
+    "typedoc": "git://github.com/bryntum/typedoc.git#custom",
+    "typedoc-default-themes": "git://github.com/bryntum/typedoc-default-themes.git",
+    "typescript": "3.8.3"
   }
 }
