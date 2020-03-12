@@ -253,12 +253,12 @@ class MixinState {
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * This is a base class, providing the type-safe static constructor [[new]].
+ * This is a base class, providing the type-safe static constructor [[new]]. Its usage is completely optional.
  */
 export class Base {
 
     /**
-     * This method just applies its 1st argument (if any) to the current instance using `Object.assign()`.
+     * This method applies its 1st argument (if any) to the current instance using `Object.assign()`.
      *
      * Supposed to be overridden in the subclasses to customize the instance creation process.
      *
@@ -275,18 +275,22 @@ export class Base {
      *
      * For example:
      *
-     *     class MyClass {
-     *         prop     : string
-     *     }
+     * ```ts
+     * class MyClass {
+     *     prop     : string
+     * }
      *
-     *     const instance : MyClass = MyClass.new({ prop : 'prop', wrong : 11 })
+     * const instance : MyClass = MyClass.new({ prop : 'prop', wrong : 11 })
+     * ```
      *
      * will produce:
      *
-     *     TS2345: Argument of type '{ prop: string; wrong: number; }' is not assignable to parameter of type 'Partial<MyClass>'.   
-     *     Object literal may only specify known properties, and 'wrong' does not exist in type 'Partial<MyClass>'
+     * ```plaintext
+     * TS2345: Argument of type '{ prop: string; wrong: number; }' is not assignable to parameter of type 'Partial<MyClass>'.   
+     * Object literal may only specify known properties, and 'wrong' does not exist in type 'Partial<MyClass>'
+     * ```
      *
-     * The only thing that this constructor does is creation of instance and calling [[initialize]] method on it, forwarding
+     * The only thing this constructor does is create an instance and call the [[initialize]] method on it, forwarding
      * the first argument. The customization of instance is supposed to be performed in that method.
      *
      * @param props
@@ -306,7 +310,7 @@ type SuppressNew<T> = {
 }
 
 /**
- * A type that represents a function with the `Result` returning type.
+ * A type that represents a function with the `Result` return type.
  */
 export type AnyFunction<Result = any>        = (...input : any[]) => Result
 
@@ -511,13 +515,13 @@ const isInstanceOfStatic  = function (this : MixinStateExtension, instance : any
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * This is the `instanceof` analog with [typeguard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards).
+ * This is the `instanceof` analog for the classes created with [[Mixin]] helper. It also provides [typeguard](https://www.typescriptlang.org/docs/handbook/advanced-types.html#user-defined-type-guards).
  *
- * There's no strict need to use it, as regular `instanceof` is also supported for the mixins created with the [[Mixin]] function and also provides
+ * There's no strict need to use it, as the native `instanceof` is also supported for the mixins created with the [[Mixin]] helper and also provides
  * typeguarding.
  *
- * @param instance The instance of the class that has consumed mixin.
- * @param func The constructor function of the class, that has consumed mixin.
+ * @param instance Any value, normally an instance of the mixin class
+ * @param func The constructor function of the class, created with [[Mixin]]
  */
 export const isInstanceOf = <T>(instance : any, func : T)
     : instance is (T extends AnyConstructor<infer A> ? A : unknown) =>
@@ -559,20 +563,22 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *     ){}
  *
  * The core of the definition above is the mixin lambda - a function which receives a base class as its argument and returns a class,
- * extending the base class with some additional properties (perhaps overriding the existing).
+ * extending the base class with additional properties.
  *
  * The example above creates a mixin `Mixin1` which has no requirements. Requirements are the other mixins,
- * which needs to be included in the base class of this mixin. There's also a special type of the requirement,
+ * which needs to be included in the base class of this mixin.
+ *
+ * There's also a special type of the requirement,
  * called "base class requirement". It is optional and can only appear as the last argument of the requirements
  * array. It does not have to be a mixin, created with the `Mixin` function, but can be any JS class. This requirement
  * specifies, that the base class of this mixin should be a subclass of the given class (or that class itself).
  *
  * The requirements of the mixin needs to be listed 3 times:
  * - as an array of constructor functions, in the 1st argument of the `Mixin` function
- * - as an instance type intersection, in the 1st type argument for the `AnyConstructor` type
- * - as an static type intersection, in the 2nd type argument for the `AnyConstructor` type
+ * - as an instance type intersection, in the 1st type argument for the [[AnyConstructor]] type
+ * - as an static type intersection, in the 2nd type argument for the [[AnyConstructor]] type
  *
- * For example, the `Mixin2` requires the `Mixin1`:
+ * For example, `Mixin2` requires `Mixin1`:
  *
  *     class Mixin2 extends Mixin(
  *         [ Mixin1 ],
@@ -593,14 +599,14 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *         }
  *     ){}
  *
- * Now, `Mixin4` requires `Mixin2`, plus, it requires the base class to be `SomeBaseClass`:
+ * Now, `Mixin4` requires `Mixin3`, plus, it requires the base class to be `SomeBaseClass`:
  *
  *     class SomeBaseClass {}
  *
  *     class Mixin4 extends Mixin(
- *         [ Mixin2, SomeBaseClass ],
+ *         [ Mixin3, SomeBaseClass ],
  *         (base : AnyConstructor<
- *             Mixin1 & SomeBaseClass, typeof Mixin1 & typeof SomeBaseClass
+ *             Mixin3 & SomeBaseClass, typeof Mixin3 & typeof SomeBaseClass
  *         >) => {
  *
  *         class Mixin4 extends base {
@@ -674,7 +680,7 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *
  * However, if we change the way we create class instances a little, we can get the type-safety back. For that,
  * we need to use a "uniform" class constructor - a constructor which has the same form for all classes. The [[Base]] class
- * provides such constructor as its static [[Base.new]] method. Note, the usage of `Base` class is not required - you can use
+ * provides such constructor as its static [[Base.new|new]] method. The usage of `Base` class is not required - you can use
  * any other base class.
  *
  * The `instanceof` operator works as expected for instances of the mixin classes. It also takes into account all the requirements.
@@ -725,6 +731,13 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *     const AnotherManualMixin1 = Mixin1.derive(Object)
  *     const AnotherManualMixin2 = Mixin2.derive(Object)
  *
+ * Generics
+ * --------
+ *
+ * Using generics with mixins is tricky because TypeScript does not have higher-kinded types and type inference for generics. Still some form
+ * of generic arguments is possible
+ *
+ *
  *
  *
  */
@@ -732,5 +745,6 @@ export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & Mi
 
 /**
  * This is an exact analog of the [[Mixin]] function, but without type-level protection for requirements mismatch.
+ * It supports unlimited number of requirements.
  */
 export const MixinAny : MixinHelperFuncAny = mixin as any
