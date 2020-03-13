@@ -33,11 +33,13 @@ You should be able to quickly pick up the base concept of reactivity from the [[
 
 To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [[AdvancedFeaturesGuide|Advanced features]] guide.
 
+Guides contains extensive references to the [API docs](./globals.html)
+
 
 Benchmarks
 ==========
 
-ChronoGraph is committed to have excellent performance. To reason about it objectively, we wrote a benchmark suite.
+ChronoGraph aims to have excellent performance. To reason about it objectively, we wrote a benchmark suite.
 More details in the [[BenchmarksGuide|Benchmarks]] guide.
 
 Connect
