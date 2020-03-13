@@ -647,7 +647,10 @@ export class Transaction extends Base {
     onReadIdentifier (identifierRead : Identifier, activeEntry : Quark, stack : Quark[]) : IteratorResult<any> | undefined {
         const requestedEntry            = this.addEdge(identifierRead, activeEntry, EdgeTypeNormal)
 
-        if (requestedEntry.hasValue()) {
+        // this is a workaround for references with failed resolution problem in gantt
+        // those references return `hasValue() === false` even that they actually have value
+        // (which is `null` and needed to be recalculated)
+        if (requestedEntry.hasValue() || requestedEntry.value !== undefined) {
             const value                 = requestedEntry.getValue()
 
             if (value === TombStone) throwUnknownIdentifier(identifierRead)
