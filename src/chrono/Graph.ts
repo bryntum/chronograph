@@ -730,7 +730,7 @@ export class ChronoGraph extends Base {
 
     observe
         <ContextT extends Context, Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
-        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, onUpdated : (value : Result) => any)
+        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, onUpdated : (value : Result) => any) : Identifier<Result>
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
             // observers are explicitly eager
@@ -744,13 +744,15 @@ export class ChronoGraph extends Base {
             // segment         : ObserverSegment
         }))
 
-        return this.addListener(identifier, onUpdated)
+        this.addListener(identifier, onUpdated)
+
+        return identifier as Identifier<Result>
     }
 
 
     observeContext
         <ContextT extends Context, Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
-        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, context : object, onUpdated : (value : Result) => any) : Identifier
+        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, context : object, onUpdated : (value : Result) => any) : Identifier<Result>
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
             // observers are explicitly eager
@@ -767,7 +769,7 @@ export class ChronoGraph extends Base {
 
         this.addListener(identifier, onUpdated)
 
-        return identifier
+        return identifier as Identifier<Result>
     }
 
 
