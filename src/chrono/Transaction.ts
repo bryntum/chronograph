@@ -354,6 +354,37 @@ export class Transaction extends Base {
     }
 
 
+    // semantic is actually - read the most-fresh value
+    readCurrentOrProposedOrPrevious<T> (identifier : Identifier<T>) : T {
+        const dirtyQuark    = this.entries.get(identifier)
+
+        if (dirtyQuark) {
+            const value     = dirtyQuark.getValue()
+
+            if (value !== undefined) return value
+
+            if (dirtyQuark.proposedValue !== undefined) return dirtyQuark.proposedValue
+        }
+
+        return this.baseRevision.readIfExists(identifier, this.graph)
+    }
+
+
+    readCurrentOrProposedOrPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        const dirtyQuark    = this.entries.get(identifier)
+
+        if (dirtyQuark) {
+            const value     = dirtyQuark.getValue()
+
+            if (value !== undefined) return value
+
+            if (dirtyQuark.proposedValue !== undefined) return dirtyQuark.proposedValue
+        }
+
+        return this.baseRevision.readIfExistsAsync(identifier, this.graph)
+    }
+
+
     readProposedOrPrevious<T> (identifier : Identifier<T>) : T {
         const dirtyQuark    = this.entries.get(identifier)
 
