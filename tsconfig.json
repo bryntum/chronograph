@@ -16,12 +16,10 @@
 
     "include" : [
         "main.ts",
-        "documentation/**/*.ts",
         "src/**/*.ts",
         "tests/**/*.ts"
     ],
 
     "exclude" : [
-        "src/class/Lab.ts"
     ]
 }
