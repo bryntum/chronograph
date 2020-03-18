@@ -5,7 +5,7 @@ set -e
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
-node "$DIR/has_changes.js"
+#node "$DIR/has_changes.js"
 
 DIST="$DIR/../dist"
 
@@ -17,8 +17,11 @@ git worktree add "$DIST" --no-checkout --detach
 
 (
 cd "$DIST"
+
 git checkout HEAD
+
+rm -rf "$DIST/.git" "$DIST/benchmarks"
+
+ln -s "$DIR/../node_modules" "node_modules"
 )
-#
-#rsync -r "$DIR/.." "$DIST" \
-#    --exclude "scripts" --exclude ".git" --exclude ".idea" --exclude "dist" --exclude "benchmarks" --exclude "node_modules"
+
