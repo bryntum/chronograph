@@ -4,8 +4,12 @@
 set -e
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
+. "$DIR"/has_changes.sh
 
-#node "$DIR/has_changes.js" || echo ">>Repository has changes, aborting making distribution" && false
+if [[ $(git_repo_has_changes "$DIR/..") == 'true' ]]; then
+    echo ">>Repository has changes, aborting making distribution"
+    exit 1
+fi
 
 DIST="$DIR/../dist"
 

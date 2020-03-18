@@ -29,3 +29,9 @@ fi
 npm version $V
 
 npm publish --access public
+
+# publish docs
+cd "$DIR"
+
+# the trailing dot is required
+"$DIR"/publish_docs.sh "$DIST/docs/."

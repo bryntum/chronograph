@@ -28,10 +28,10 @@ rm -rf "$DIST/docs"
 
 cp -r "$DOCS" "$DIST/docs"
 
-git commit -a -m "Doc updated"
+git commit -a -m "Doc updated" || true
 
 git push
 
-#git worktree remove "$DIST"
-#
-#echo ">>Successfully updated github pages"
+git worktree remove "$DIST"
+
+echo ">>Successfully updated github pages"
