@@ -5,11 +5,11 @@ set -e
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
-#node "$DIR/has_changes.js"
+node "$DIR/has_changes.js" || echo ">>Repository has changes, aborting release" && false
 
 DIST="$DIR/../dist"
 
-make_dist.sh
+"$DIR"/make_dist.sh
 
 cd $DIST
 
@@ -17,8 +17,7 @@ cd $DIST
 scripts/build.sh
 
 # run suite in node
-npx siesta ./tests
-
+npx siesta ./tests || echo ">>Test suite failed, aborting release" && false
 
 # publish
 scripts/build_docs.sh
@@ -29,4 +28,4 @@ fi
 
 npm version $V
 
-npm publish --access
+npm publish --access public

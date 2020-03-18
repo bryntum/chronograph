@@ -5,13 +5,13 @@ set -e
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 
-#node "$DIR/has_changes.js"
+#node "$DIR/has_changes.js" || echo ">>Repository has changes, aborting making distribution" && false
 
 DIST="$DIR/../dist"
 
 rm -rf "$DIST"
 
-mkdir -p "$DIST"
+git worktree prune
 
 git worktree add "$DIST" --no-checkout --detach
 
