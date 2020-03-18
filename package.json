@@ -1,13 +1,16 @@
 {
-  "name": "chronograph",
+  "name": "@bryntum/chronograph",
   "version": "0.0.1",
-  "description": "Graph-based reactive computational engine",
+  "description": "Open-source reactive computational engine, implemented in TypeScript and developed by Bryntum",
   "main": "index.js",
   "module": "main.js",
   "scripts": {
     "test": "npx siesta ./tests",
     "docs": "scripts/build_docs.sh"
   },
+  "homepage": "https://github.com/bryntum/chronograph",
+  "bugs" : "https://github.com/bryntum/chronograph/issues",
+  "repository": "git@github.com:bryntum/chronograph.git",
   "keywords": [
     "reactive",
     "graph",

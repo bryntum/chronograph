@@ -28,3 +28,5 @@ if [[ -z "$V" ]]; then
 fi
 
 npm version $V
+
+npm publish --access
