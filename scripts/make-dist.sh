@@ -9,4 +9,4 @@ rm -rf "$DIST"
 mkdir -p "$DIST"
 
 rsync -r "$DIR/.." "$DIST" \
-  --exclude "scripts" --exclude ".git" --exclude ".idea" --exclude "node_modules" --exclude "dist" --exclude "benchmarks"
+  --exclude "scripts" --exclude ".git" --exclude ".idea" --exclude "dist" --exclude "benchmarks"

@@ -30,6 +30,7 @@
     "tslint": "^5.16.0",
     "typedoc": "git://github.com/bryntum/typedoc.git#custom",
     "typedoc-default-themes": "git://github.com/bryntum/typedoc-default-themes.git",
-    "typescript": "3.8.3"
+    "typescript": "3.8.3",
+    "git-utils": "^5.6.2"
   }
 }
