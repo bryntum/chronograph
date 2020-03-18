@@ -37,7 +37,7 @@ node -e "require(\"./scripts/changelog.js\").updateVersion()"
 
 echo "" > .npmignore
 
-npm publish --access public --dry-run
+npm publish --access public
 
 # post-publish, update the main repo
 cd "$DIR/.."
