@@ -21,7 +21,7 @@ cd $DIST
 scripts/build.sh
 
 # run suite in node
-npx siesta ./tests || echo ">>Test suite failed, aborting release" && false
+#npx siesta ./tests || echo ">>Test suite failed, aborting release" && false
 
 # publish
 scripts/build_docs.sh
@@ -47,6 +47,8 @@ node -e "require(\"scripts/changelog.js\").updateVersionAndStartNew()"
 
 git add CHANGELOG.md
 git commit -m "Updated changelog"
+
+git push
 
 # the trailing dot is required
 "$DIR"/publish_docs.sh "$DIST/docs/."
