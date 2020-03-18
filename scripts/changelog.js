@@ -1,11 +1,12 @@
 const fs    = require('fs')
 const path  = require('path')
 
+console.log("YOYOYO", process.cwd())
+
+
 const now           = Date.now()
 const version       = require('./package.json').version
 const versionStr    = `${version} ${now.getFullYear()}-${ prependZero(now.getMonth() + 1, 2) }-${ prependZero(now.getDay(), 2) } ${ prependZero(now.getHour(), 2) }:${ prependZero(now.getMinutes(), 2) }`
-
-console.log("YOYOYO", process.cwd())
 
 const prependZero = (int, minLength) => {
     const str   = String(int)
