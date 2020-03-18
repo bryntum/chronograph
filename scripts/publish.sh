@@ -11,7 +11,7 @@ if [[ $(git_repo_has_changes "$DIR/..") == 'true' ]]; then
     exit 1
 fi
 
-DIST="$DIR/../dist"
+DIST="$DIR/../DIST"
 
 "$DIR"/make_dist.sh
 

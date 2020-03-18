@@ -12,7 +12,7 @@ if [[ -z $DOCS ]]; then
     exit 1
 fi
 
-DIST="$DIR/../dist_docs"
+DIST="$DIR/../DIST_DOCS"
 
 rm -rf "$DIST"
 
