@@ -35,10 +35,12 @@ npm version $V
 
 node -e "require(\"./scripts/changelog.js\").updateVersion()"
 
+echo "" > .npmignore
+
 npm publish --access public --dry-run
 
 # post-publish, update the main repo
-cd "$DIR"
+cd "$DIR/.."
 
 # bump version in main repo
 npm version $V
