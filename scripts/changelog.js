@@ -9,7 +9,7 @@ const prependZero = (int, minLength) => {
 
 const now           = new Date()
 const version       = require('../package.json').version
-const versionStr    = `${version} ${now.getFullYear()}-${ prependZero(now.getMonth() + 1, 2) }-${ prependZero(now.getDate(), 2) } ${ prependZero(now.getHours(), 2) }:${ prependZero(now.getMinutes(), 2) }`
+const versionStr    = `${version}        ${now.getFullYear()}-${ prependZero(now.getMonth() + 1, 2) }-${ prependZero(now.getDate(), 2) } ${ prependZero(now.getHours(), 2) }:${ prependZero(now.getMinutes(), 2) }`
 
 const updateVersion = () => {
     let changelog = fs.readFileSync('CHANGELOG.md', 'utf8')
@@ -23,7 +23,7 @@ const updateVersion = () => {
 const updateVersionAndStartNew = () => {
     let changelog = fs.readFileSync('CHANGELOG.md', 'utf8')
 
-    changelog = changelog.replace(/^\{\{ \$NEXT \}\}/m, `{{ $NEXT }}\n${versionStr}`)
+    changelog = changelog.replace(/^\{\{ \$NEXT \}\}/m, `{{ $NEXT }}\n\n${versionStr}`)
 
     fs.writeFileSync('CHANGELOG.md', changelog, 'utf8')
 }
