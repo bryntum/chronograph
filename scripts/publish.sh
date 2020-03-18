@@ -4,8 +4,12 @@
 set -e
 
 DIR="$( cd "$( dirname "$0" )" && pwd )"
+. "$DIR"/util.sh
 
-node "$DIR/has_changes.js" || echo ">>Repository has changes, aborting release" && false
+if [[ $(git_repo_has_changes "$DIR/..") == 'true' ]]; then
+    echo ">>Repository has changes, aborting release"
+    exit 1
+fi
 
 DIST="$DIR/../dist"
 
@@ -26,12 +30,23 @@ if [[ -z "$V" ]]; then
     V="patch"
 fi
 
+# bump version in distribution - won't be refelected in main repo, since "make_dist" removes the ".git"
 npm version $V
 
-npm publish --access public
+node -e "require(\"scripts/changelog.js\").updateVersion()"
 
-# publish docs
+npm publish --access public --dry-run
+
+# post-publish, update the main repo
 cd "$DIR"
+
+# bump version in main repo
+npm version $V
+
+node -e "require(\"scripts/changelog.js\").updateVersionAndStartNew()"
+
+git add CHANGELOG.md
+git commit -m "Updated changelog"
 
 # the trailing dot is required
 "$DIR"/publish_docs.sh "$DIST/docs/."
