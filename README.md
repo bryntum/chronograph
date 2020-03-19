@@ -1,5 +1,5 @@
-[//]: # (This may be the most platform independent comment)
-[//]: # (This may be the most platform independent comment)
+[//]: # (The canonical source of this file is '/docs_src/README.md')
+[//]: # (Do not edit the /README.md directly)
 
 ChronoGraph
 ===========
@@ -52,7 +52,7 @@ We welcome all feedback. Please tell us what works well in ChronoGraph, what cau
 
 [Issues tracker](https://github.com/bryntum/chronograph/issues)
 
-Post at the [forum](https://bryntum.com/forum/CHRONOGRAPH)
+Post at the [forum](https://bryntum.com/forum/viewforum.php?f=53)
 
 Discord [live chat](https://discordapp.com/channels/681424024445780014/681424024449974316)
 

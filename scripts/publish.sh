@@ -6,10 +6,10 @@ set -e
 DIR="$( cd "$( dirname "$0" )" && pwd )"
 . "$DIR"/util.sh
 
-#if [[ $(git_repo_has_changes "$DIR/..") == 'true' ]]; then
-#    echo ">>Repository has changes, aborting release"
-#    exit 1
-#fi
+if [[ $(git_repo_has_changes "$DIR/..") == 'true' ]]; then
+    echo ">>Repository has changes, aborting release"
+    exit 1
+fi
 
 DIST="$DIR/../DIST"
 
@@ -21,7 +21,7 @@ cd $DIST
 scripts/build.sh
 
 # run suite in node
-#npx siesta ./tests || echo ">>Test suite failed, aborting release" && false
+npx siesta ./tests || echo ">>Test suite failed, aborting release" && false
 
 # publish
 scripts/build_docs.sh
