@@ -21,7 +21,7 @@ cd $DIST
 scripts/build.sh
 
 # run suite in node
-npx siesta ./tests || echo ">>Test suite failed, aborting release" && false
+npx siesta ./tests || (echo ">>Test suite failed, aborting release" && false)
 
 # publish
 scripts/build_docs.sh
