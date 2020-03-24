@@ -320,6 +320,61 @@ export class Entity extends Mixin(
 
             return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as any, args, this)
         }
+
+
+        static createPropertyAccessorsFor (fieldName : string) {
+            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
+            // it can optimize access by it
+            const propertyKey   = fieldName
+            const target        = this.prototype
+
+            Object.defineProperty(target, propertyKey, {
+                get     : function (this : Entity) : any {
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
+                },
+
+                set     : function (this : Entity, value : any) {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value)
+                }
+            })
+        }
+
+
+        static createMethodAccessorsFor (fieldName : string) {
+            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
+            // it can optimize access by it
+            const propertyKey   = fieldName
+            const target        = this.prototype
+
+            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
+            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
+            const putterFnName = `put${ uppercaseFirst(propertyKey) }`
+
+            if (!(getterFnName in target)) {
+                target[ getterFnName ] = function (this : Entity) : any {
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
+                }
+            }
+
+            if (!(setterFnName in target)) {
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : CommitResult | Promise<CommitResult> {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
+
+                    return this.graph
+                        ?
+                            (this.graph.autoCommitMode === 'sync' ? this.graph.commit() : this.graph.commitAsync())
+                        :
+                            Promise.resolve(CommitZero)
+                }
+            }
+
+            if (!(putterFnName in target)) {
+                target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
+                }
+            }
+        }
+
     }
 
     return Entity
@@ -362,55 +417,19 @@ export type FieldDecorator<Default extends AnyConstructor = typeof Field> =
 export const generic_field : FieldDecorator<typeof Field> =
     <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
 
-        return function (target : Entity, pk : string) : void {
-            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
-            // it can optimize access by it
-            const propertyKey   = pk
+        return function (target : Entity, fieldName : string) : void {
             const entity        = ensureEntityOnPrototype(target)
 
-            const field     = entity.addField(
+            const field         = entity.addField(
                 fieldCls.new(Object.assign(fieldConfig || {}, {
-                    name    : propertyKey
+                    name    : fieldName
                 }))
             )
 
-            Object.defineProperty(target, propertyKey, {
-                get     : function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
-                },
+            const cons          = target.constructor as typeof Entity
 
-                set     : function (this : Entity, value : any) {
-                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value)
-                }
-            })
-
-            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
-            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
-            const putterFnName = `put${ uppercaseFirst(propertyKey) }`
-
-            if (!(getterFnName in target)) {
-                target[ getterFnName ] = function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
-                }
-            }
-
-            if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : CommitResult | Promise<CommitResult> {
-                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
-
-                    return this.graph
-                        ?
-                            (this.graph.autoCommitMode === 'sync' ? this.graph.commit() : this.graph.commitAsync())
-                        :
-                            Promise.resolve(CommitZero)
-                }
-            }
-
-            if (!(putterFnName in target)) {
-                target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
-                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
-                }
-            }
+            cons.createPropertyAccessorsFor(fieldName)
+            cons.createMethodAccessorsFor(fieldName)
         }
     }
 
