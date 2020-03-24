@@ -101,6 +101,9 @@ export class Listener extends Base {
  *
  */
 export class ChronoGraph extends Base {
+    baseRevisionStable      : Revision      = undefined
+    baseRevisionTentative   : Revision      = undefined
+
     baseRevision            : Revision      = Revision.new()
 
     // the revision to follow to, when performing `redo` operation
@@ -307,7 +310,7 @@ export class ChronoGraph extends Base {
         if (this.$activeTransaction) return this.$activeTransaction
 
         return this.$activeTransaction = this.transactionClass.new({
-            baseRevision                : this.baseRevision,
+            baseRevision                : this.baseRevisionTentative || this.baseRevision,
             graph                       : this
         })
     }
@@ -375,6 +378,13 @@ export class ChronoGraph extends Base {
         this.ongoing            = Promise.resolve()
 
         this.$activeTransaction = undefined
+
+        this.baseRevisionTentative  = undefined
+
+        if (this.baseRevisionStable) {
+            this.baseRevision           = this.baseRevisionStable
+            this.baseRevisionStable     = undefined
+        }
     }
 
 
@@ -391,10 +401,13 @@ export class ChronoGraph extends Base {
      * @param args
      */
     commit (args? : CommitArguments) : CommitResult {
+        // TODO should have a "while" loop adding extra transactions, similar to `commitAsync`
         this.unScheduleAutoCommit()
 
         const activeTransaction = this.activeTransaction
         const nextRevision      = activeTransaction.commit(args)
+
+        this.$activeTransaction     = undefined
 
         const result            = this.finalizeCommit(nextRevision)
 
@@ -429,37 +442,44 @@ export class ChronoGraph extends Base {
 
         this.isCommitting       = true
 
-        let result
+        this.baseRevisionStable = this.baseRevision
 
-        const activeTransaction = this.activeTransaction
+        let result : CommitResult
 
         return this.ongoing = this.ongoing.then(() => {
-            return activeTransaction.commitAsync(args)
-        }).then(nextRevision => {
-            result          = this.finalizeCommit(nextRevision)
+            return this.doCommitAsync(args)
+        }).then(res => {
+            result  = res
 
-            return this.finalizeCommitAsync(nextRevision)
-        }).then(nextRevision => {
-            return result
+            return res
         }).finally(() => {
+            this.baseRevisionTentative  = undefined
             this.isInitialCommit        = false
 
-            if (!activeTransaction.rejectedWith) this.markAndSweep()
+            if (result && !result.rejectedWith) this.markAndSweep()
 
             this.isCommitting           = false
         })
+    }
 
-        //
-        // const nextRevision      = await this.activeTransaction.commitAsync(args)
-        //
-        // const result            = this.finalizeCommit(nextRevision)
-        //
-        // await this.finalizeCommitAsync(nextRevision)
-        //
-        // this.runningTransaction = null
-        // this.isCommitting       = false
-        //
-        // return result
+
+    async doCommitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        const activeTransaction = this.activeTransaction
+
+        const transactionResult = await activeTransaction.commitAsync(args)
+
+        this.baseRevisionTentative  = activeTransaction.candidate
+        this.$activeTransaction     = undefined
+
+        const result            = this.finalizeCommit(transactionResult)
+
+        await this.finalizeCommitAsync(transactionResult)
+
+        if (this.activeTransaction.dirty) {
+            return await this.doCommitAsync(args)
+        } else {
+            return result
+        }
     }
 
 
@@ -495,8 +515,6 @@ export class ChronoGraph extends Base {
 
             clearLazyProperty(this, 'followingRevision')
         }
-
-        this.$activeTransaction = undefined
 
         return { rejectedWith : transaction.rejectedWith }
     }
