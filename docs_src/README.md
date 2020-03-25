@@ -38,6 +38,8 @@ To find out about the remaining (and most interesting) features of ChronoGraph, 
 
 Guides contains extensive references to the [API docs](./globals.html)
 
+The API surface is currently intentionally small and some features are not documented. Please [reach out](https://discordapp.com/channels/681424024445780014/681424024449974316) if you need something specific.
+
 
 Benchmarks
 ==========
