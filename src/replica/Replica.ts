@@ -6,7 +6,8 @@ import { Entity } from "./Entity.js"
 export enum ReadMode {
     Current,
     Previous,
-    ProposedOrPrevious
+    ProposedOrPrevious,
+    CurrentOrProposedOrPrevious
 }
 
 

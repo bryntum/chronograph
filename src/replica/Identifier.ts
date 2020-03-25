@@ -53,6 +53,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
         if (graph) {
             if (graph.readMode === ReadMode.Current) return graph.get(this)
             if (graph.readMode === ReadMode.Previous) return graph.baseRevision.get(this, graph)
+            if (graph.readMode === ReadMode.ProposedOrPrevious) graph.activeTransaction.readProposedOrPrevious(this)
 
             return graph.activeTransaction.readCurrentOrProposedOrPrevious(this)
         } else
