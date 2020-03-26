@@ -608,7 +608,7 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *         [ Mixin3, SomeBaseClass ],
  *         (base : AnyConstructor<
  *             Mixin3 & SomeBaseClass, typeof Mixin3 & typeof SomeBaseClass
- *         >) => {
+ *         >) =>
  *
  *         class Mixin4 extends base {
  *         }
