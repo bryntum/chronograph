@@ -191,15 +191,17 @@ export class Entity extends Mixin(
         /**
          * This method is called when entity is removed from the replica it's been added to.
          */
-        leaveGraph () {
-            const graph     = this.graph
-            if (!graph) return
+        leaveGraph (graph : Replica) {
+            const ownGraph      = this.graph
+            const removeFrom    = graph || ownGraph
 
-            this.$entity.forEachField((field, name) => graph.removeIdentifier(this.$[ name ]))
+            if (!removeFrom) return
 
-            graph.removeIdentifier(this.$$)
+            this.$entity.forEachField((field, name) => removeFrom.removeIdentifier(this.$[ name ]))
 
-            this.graph      = undefined
+            removeFrom.removeIdentifier(this.$$)
+
+            if (removeFrom === ownGraph) this.graph      = undefined
         }
 
 

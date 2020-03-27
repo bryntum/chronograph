@@ -77,7 +77,7 @@ class Replica extends base {
      * @param entity
      */
     removeEntity (entity : Entity) {
-        entity.leaveGraph()
+        entity.leaveGraph(this)
     }
 
 
