@@ -253,7 +253,8 @@ class MixinState {
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * This is a base class, providing the type-safe static constructor [[new]]. Its usage is completely optional.
+ * This is a base class, providing the type-safe static constructor [[new]]. This is very convenient when using
+ * [[Mixin|mixins]], as mixins can not have types in the constructors.
  */
 export class Base {
 
@@ -276,7 +277,7 @@ export class Base {
      * For example:
      *
      * ```ts
-     * class MyClass {
+     * class MyClass extends Base {
      *     prop     : string
      * }
      *
@@ -607,13 +608,17 @@ export const isInstanceOf = <T>(instance : any, func : T)
  *         [ Mixin3, SomeBaseClass ],
  *         (base : AnyConstructor<
  *             Mixin3 & SomeBaseClass, typeof Mixin3 & typeof SomeBaseClass
- *         >) => {
+ *         >) =>
  *
  *         class Mixin4 extends base {
  *         }
  *     ){}
  *
- * As already briefly mentioned, the requirements are "scanned" deep and included only once. Requirements can not form cycles.
+ * As already briefly mentioned, the requirements are "scanned" deep and included only once. Also all minimal classes are cached -
+ * for example the creation of the Mixin3 will reuse the minimal class of the Mixin2 instead of creating a new intermediate class.
+ * This means that all edges of the mixin dependencies graph are created only once (up to the base class).
+ *
+ * Requirements can not form cycles - that will generate both compilation error and run-time stack overflow.
  *
  * The typing for the `Mixin` function will provide a compilation error, if the requirements don't match, e.g. some requirement is
  * listed in the array, but missed in the types. This protects you from trivial mistakes. However, the typing is done up to 5 requirements only.
@@ -735,10 +740,54 @@ export const isInstanceOf = <T>(instance : any, func : T)
  * --------
  *
  * Using generics with mixins is tricky because TypeScript does not have higher-kinded types and type inference for generics. Still some form
- * of generic arguments is possible
+ * of generic arguments is possible, using the interface merging trick.
  *
+ * Here's the pattern:
  *
+ * ```ts
+ * class Duplicator<Element> extends Mixin(
+ *     [],
+ *     (base : AnyConstructor) =>
  *
+ *     class Duplicator extends base {
+ *         Element                 : any
+ *
+ *         duplicate (value : this[ 'Element' ]) : this[ 'Element' ][] {
+ *             return [ value, value ]
+ *         }
+ *     }
+ * ){}
+ *
+ * interface Duplicator<Element> {
+ *     Element : Element
+ * }
+ *
+ * const dup = new Duplicator<boolean>()
+ *
+ * dup.duplicate('foo') // TS2345: Argument of type '"foo"' is not assignable to parameter of type 'boolean'.
+ * ```
+ *
+ * In the example above, we've defined a generic argument `Element` for the outer mixin class, but in fact, that argument is not used anywhere in the
+ * nested class definition in the mixin lambda. Instead, in the nested class, we define a property `Element`, which plays the role of the
+ * generic argument.
+ *
+ * Mixin class methods then can refer to the generic type as `this[ 'Element' ]`.
+ *
+ * The generic arguments of the outer and nested classes are tied together in the additional interface declaration, which, by TypeScript rules
+ * is merged together with the class definition. In this declaration, we specify that property `Element` has type of the `Element` generic argument.
+ *
+ * Limitations
+ * ---------
+ *
+ * The most important limitation we found (which affect the old pattern as well) is the compilation error, which will be issued for
+ * the private/protected methods, when compiling with declarations emitting (*.d.ts files generation).
+ *
+ * This is a [well-known problem](https://github.com/microsoft/TypeScript/issues/35822) in the TypeScript world – the *.d.ts files do not represent
+ * the internal data structures of the TypeScript compiler well. Instead they use some simplified syntax, optimized for human editing.
+ * This is why the compiler may generate false positives in the incremental compilation mode – it uses *.d.ts files internally.
+ *
+ * This can be a show-stopper for the people that use declaration files (usually for publishing). Keep in mind though, that you can always
+ * publish actual TypeScript sources along with the generated JavaScript files, instead of publishing JavaScript + declarations files.
  *
  */
 export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 & MixinHelperFunc5 = mixin as any

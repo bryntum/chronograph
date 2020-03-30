@@ -6,7 +6,7 @@ import { Name } from "./Field.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * This class describes a schema. Schemas are not used in ChronoGraph.
+ * This class describes a schema. Schemas are not used yet in ChronoGraph.
  *
  * Schema is just a collection of entities ([[EntityMeta]])
  */

@@ -48,7 +48,7 @@ export type CommitResult = {
     /**
      * If the transaction has been rejected, this property will be filled with the [[RejectEffect]] instance
      */
-    rejectedWith        : RejectEffect<unknown> | null
+    rejectedWith?       : RejectEffect<unknown> | null
 }
 
 
@@ -101,6 +101,9 @@ export class Listener extends Base {
  *
  */
 export class ChronoGraph extends Base {
+    baseRevisionStable      : Revision      = undefined
+    baseRevisionTentative   : Revision      = undefined
+
     baseRevision            : Revision      = Revision.new()
 
     // the revision to follow to, when performing `redo` operation
@@ -182,7 +185,8 @@ export class ChronoGraph extends Base {
 
         this.unScheduleAutoCommit()
 
-        this.baseRevision.scope.clear()
+        // some stale state - `clear` called at sensitive time
+        this.baseRevision.scope && this.baseRevision.scope.clear()
         this.baseRevision.previous  = null
         this.listeners.clear()
 
@@ -307,7 +311,7 @@ export class ChronoGraph extends Base {
         if (this.$activeTransaction) return this.$activeTransaction
 
         return this.$activeTransaction = this.transactionClass.new({
-            baseRevision                : this.baseRevision,
+            baseRevision                : this.baseRevisionTentative || this.baseRevision,
             graph                       : this
         })
     }
@@ -316,8 +320,22 @@ export class ChronoGraph extends Base {
     /**
      * Creates a new branch of this graph. Only committed data will be "visible" in the new branch.
      *
-     * When using the branching feature in [[Replica]], you need to reference the field values using their
-     * corresponding identifiers:
+     * ```ts
+     * const graph2 = ChronoGraph.new()
+     *
+     * const variable13 : Variable<number> = graph2.variable(5)
+     *
+     * const branch2 = graph2.branch()
+     *
+     * branch2.write(variable13, 10)
+     *
+     * const value13_1 = graph2.read(variable13)  // 5
+     * const value13_2 = branch2.read(variable13) // 10
+     * ```
+     *
+     * When using the branching feature in [[Replica]], you need to reference the field values by yielding their
+     * corresponding identifiers. This is because ChronoGraph need to know in context of which branch
+     * the calculation happens and this information is encoded in the outer context. This may improve in the future.
      *
      * ```ts
      * class Author extends Entity.mix(Base) {
@@ -348,7 +366,9 @@ export class ChronoGraph extends Base {
 
 
     /**
-     * Rejects the current changes in the graph and revert it to the state of the previous "commit".
+     * Rejects the current changes in the graph and revert it to the state of the previous [[commit]].
+     *
+     * See also [[RejectEffect]].
      *
      * @param reason Any value, describing why reject has happened
      */
@@ -359,25 +379,36 @@ export class ChronoGraph extends Base {
         this.ongoing            = Promise.resolve()
 
         this.$activeTransaction = undefined
+
+        this.baseRevisionTentative  = undefined
+
+        if (this.baseRevisionStable) {
+            this.baseRevision           = this.baseRevisionStable
+            this.baseRevisionStable     = undefined
+        }
     }
 
 
     /**
-     * Synchronously commit the state of the graph. All potentially changed strict identifiers (see [[Identifier.lazy]])
-     * will be calculated during this call. If any of such identifiers will be async (see [[Identifier.sync]]), an exception
+     * Synchronously commit the state of the graph. All potentially changed [[Identifier.lazy|strict]] identifiers
+     * will be calculated during this call. If any of such identifiers will be [[Identifier.sync|async]], an exception
      * will be thrown.
      *
-     * This call marks a "stable" state of the graph.
+     * This call marks a "stable" state of the graph and a transaction border. Using the [[undo]] call one can revert to the previous
+     * state.
      *
      * See also [[reject]].
      *
      * @param args
      */
     commit (args? : CommitArguments) : CommitResult {
+        // TODO should have a "while" loop adding extra transactions, similar to `commitAsync`
         this.unScheduleAutoCommit()
 
         const activeTransaction = this.activeTransaction
         const nextRevision      = activeTransaction.commit(args)
+
+        this.$activeTransaction     = undefined
 
         const result            = this.finalizeCommit(nextRevision)
 
@@ -398,6 +429,11 @@ export class ChronoGraph extends Base {
      * Asynchronously commit the state of the replica. All potentially changed strict identifiers (see [[Identifier.lazy]])
      * will be calculated during this call.
      *
+     * This call marks a "stable" state of the graph and a transaction border. Using the [[undo]] call one can revert to the previous
+     * state.
+     *
+     * See also [[reject]].
+     *
      * @param args
      */
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
@@ -407,37 +443,44 @@ export class ChronoGraph extends Base {
 
         this.isCommitting       = true
 
-        let result
+        this.baseRevisionStable = this.baseRevision
 
-        const activeTransaction = this.activeTransaction
+        let result : CommitResult
 
         return this.ongoing = this.ongoing.then(() => {
-            return activeTransaction.commitAsync(args)
-        }).then(nextRevision => {
-            result          = this.finalizeCommit(nextRevision)
+            return this.doCommitAsync(args)
+        }).then(res => {
+            result  = res
 
-            return this.finalizeCommitAsync(nextRevision)
-        }).then(nextRevision => {
-            return result
+            return res
         }).finally(() => {
+            this.baseRevisionTentative  = undefined
             this.isInitialCommit        = false
 
-            if (!activeTransaction.rejectedWith) this.markAndSweep()
+            if (result && !result.rejectedWith) this.markAndSweep()
 
             this.isCommitting           = false
         })
+    }
 
-        //
-        // const nextRevision      = await this.activeTransaction.commitAsync(args)
-        //
-        // const result            = this.finalizeCommit(nextRevision)
-        //
-        // await this.finalizeCommitAsync(nextRevision)
-        //
-        // this.runningTransaction = null
-        // this.isCommitting       = false
-        //
-        // return result
+
+    async doCommitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        const activeTransaction = this.activeTransaction
+
+        const transactionResult = await activeTransaction.commitAsync(args)
+
+        this.baseRevisionTentative  = activeTransaction.candidate
+        this.$activeTransaction     = undefined
+
+        const result            = this.finalizeCommit(transactionResult)
+
+        await this.finalizeCommitAsync(transactionResult)
+
+        if (this.activeTransaction.dirty) {
+            return await this.doCommitAsync(args)
+        } else {
+            return result
+        }
     }
 
 
@@ -473,8 +516,6 @@ export class ChronoGraph extends Base {
 
             clearLazyProperty(this, 'followingRevision')
         }
-
-        this.$activeTransaction = undefined
 
         return { rejectedWith : transaction.rejectedWith }
     }
@@ -532,7 +573,7 @@ export class ChronoGraph extends Base {
      * To have full control on the identifier creation, instantiate it yourself and add to graph using the [[ChronoGraph.addIdentifier]] call.
      *
      * @param calculation The calculation function of the identifier.
-     * @param context The [[Identifier.context]] property of the newly created identifier
+     * @param context The [[Identifier.context|context]] property of the newly created identifier
      */
     identifier<ContextT extends Context, ValueT> (calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
         const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
@@ -565,7 +606,7 @@ export class ChronoGraph extends Base {
 
 
     /**
-     * Adds an identifier to this graph.
+     * Adds an identifier to this graph. Optionally [[write|writes]] the `proposedValue` to it afterwards.
      *
      * @param identifier
      * @param proposedValue
@@ -708,7 +749,7 @@ export class ChronoGraph extends Base {
 
     observe
         <ContextT extends Context, Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
-        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, onUpdated : (value : Result) => any)
+        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, onUpdated : (value : Result) => any) : Identifier<Result>
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
             // observers are explicitly eager
@@ -722,13 +763,15 @@ export class ChronoGraph extends Base {
             // segment         : ObserverSegment
         }))
 
-        return this.addListener(identifier, onUpdated)
+        this.addListener(identifier, onUpdated)
+
+        return identifier as Identifier<Result>
     }
 
 
     observeContext
         <ContextT extends Context, Result, Yield extends YieldableValue, ArgsT extends [ CalculationContext<Yield>, ...any[] ]>
-        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, context : object, onUpdated : (value : Result) => any) : Identifier
+        (observerFunc : CalculationFunction<ContextT, Result, Yield, ArgsT>, context : object, onUpdated : (value : Result) => any) : Identifier<Result>
     {
         const identifier    = this.addIdentifier(CalculatedValueGen.new({
             // observers are explicitly eager
@@ -745,7 +788,7 @@ export class ChronoGraph extends Base {
 
         this.addListener(identifier, onUpdated)
 
-        return identifier
+        return identifier as Identifier<Result>
     }
 
 
@@ -765,9 +808,9 @@ export class ChronoGraph extends Base {
     /**
      * Revert the replica to the state of previous transaction (marked with the [[commit]] call).
      *
-     * To enable this feature, you need to opt-in using the [[ChronoGraph.historyLimit]] configuration property.
+     * To enable this feature, you need to opt-in using the [[ChronoGraph.historyLimit|historyLimit]] configuration property.
      *
-     * Returns boolean, indicating whether the revert actually happened.
+     * Returns boolean, indicating whether the state transition actually happened.
      */
     undo () : boolean {
         const baseRevision      = this.baseRevision
@@ -786,11 +829,11 @@ export class ChronoGraph extends Base {
 
     /**
      * Advance the replica to the state of next transaction (marked with the [[commit]] call). Only meaningful
-     * if a [[ChronoGraph.redo]] call has been made earlier.
+     * if a [[ChronoGraph.undo|undo]] call has been made earlier.
      *
-     * To enable this feature, you need to opt-in using the [[ChronoGraph.historyLimit]] configuration property.
+     * To enable this feature, you need to opt-in using the [[historyLimit]] configuration property.
      *
-     * Returns boolean, indicating whether the revert actually happened.
+     * Returns boolean, indicating whether the state transition actually happened.
      */
     redo () : boolean {
         const baseRevision      = this.baseRevision
@@ -975,7 +1018,7 @@ export class ChronoGraph extends Base {
 }
 
 /**
- * Type, that represent the return value of the identifier's calculation function (when its based on generator).
+ * Type, that represent the return value of the generator-based identifier's calculation function.
  * The `Result` argument corresponds to the type of the value being computed.
  *
  * For example:

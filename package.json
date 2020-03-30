@@ -1,13 +1,16 @@
 {
-  "name": "chronograph",
-  "version": "0.0.1",
-  "description": "Graph-based reactive computational engine",
+  "name": "@bryntum/chronograph",
+  "version": "0.0.5",
+  "description": "Open-source reactive computational engine, implemented in TypeScript and developed by Bryntum",
   "main": "index.js",
   "module": "main.js",
   "scripts": {
     "test": "npx siesta ./tests",
-    "docs": "npx typedoc --includes 'src/guides' --out docs --exclude 'tests/**/*' --exclude 'documentation/**/*' --exclude 'main.ts' --exclude 'src/lab/**/*' --excludeNotDocumented --listInvalidSymbolLinks --theme node_modules/typedoc-default-themes/bin/default/"
+    "docs": "scripts/build_docs.sh"
   },
+  "homepage": "https://github.com/bryntum/chronograph",
+  "bugs": "https://github.com/bryntum/chronograph/issues",
+  "repository": "git@github.com:bryntum/chronograph.git",
   "keywords": [
     "reactive",
     "graph",
@@ -26,7 +29,7 @@
     "deoptigate": "^0.5.0",
     "mobx": "^5.13.0",
     "regenerator-runtime": "^0.13.1",
-    "siesta-lite": "^5.2.3",
+    "siesta-lite": "^5.3.2",
     "tslint": "^5.16.0",
     "typedoc": "git://github.com/bryntum/typedoc.git#custom",
     "typedoc-default-themes": "git://github.com/bryntum/typedoc-default-themes.git",

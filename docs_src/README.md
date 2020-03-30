@@ -32,18 +32,20 @@ ChronoGraph, in contrast, focuses on reactive computations, describing some gene
 Documentation
 =============
 
-You should be able to quickly pick up the base concept of reactivity from the [Basic features](https://bryntum.github.io/chronograph/docs/modules/_guides_basicfeatures_.html#basicfeaturesguide) guide.
+You should be able to quickly pick up the base concept of reactivity from the [[BasicFeaturesGuide|Basic features]] guide.
 
-To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [Advanced features](https://bryntum.github.io/chronograph/docs/modules/_guides_advancedfeatures_.html#advancedfeaturesguide) guide.
+To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [[AdvancedFeaturesGuide|Advanced features]] guide.
 
-Guides contains extensive references to the [API docs](https://bryntum.github.io/chronograph/docs/)
+Guides contains extensive references to the [API docs](./globals.html)
+
+The API surface is currently intentionally small and some features are not documented. Please [reach out](https://discordapp.com/channels/681424024445780014/681424024449974316) if you need something specific.
 
 
 Benchmarks
 ==========
 
 ChronoGraph aims to have excellent performance. To reason about it objectively, we wrote a benchmark suite.
-More details in the [Benchmarks](https://bryntum.github.io/chronograph/docs/modules/_guides_benchmarks_.html#benchmarksguide) guide.
+More details in the [[BenchmarksGuide|Benchmarks]] guide.
 
 Connect
 =======

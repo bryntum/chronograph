@@ -6,7 +6,8 @@ import { Entity } from "./Entity.js"
 export enum ReadMode {
     Current,
     Previous,
-    ProposedOrPrevious
+    ProposedOrPrevious,
+    CurrentOrProposedOrPrevious
 }
 
 
@@ -16,19 +17,18 @@ export enum ReadMode {
  *
  * Entities are mapped to JS classes and fields - to their properties, decorated with [[field]].
  *
+ * The calculation function for some field can be mapped to the class method, using the [[calculate]] decorator.
+ *
  * An example of usage:
  *
  * ```ts
  * class Author extends Entity.mix(Base) {
  *     @field()
  *     firstName       : string
- *
  *     @field()
  *     lastName        : string
- *
  *     @field()
  *     fullName        : string
- *
  *
  *     @calculate('fullName')
  *     calculateFullName () : string {
@@ -36,7 +36,6 @@ export enum ReadMode {
  *     }
  * }
  * ```
- *
  */
 export class Replica extends Mixin(
     [ ChronoGraph ],
@@ -78,7 +77,7 @@ class Replica extends base {
      * @param entity
      */
     removeEntity (entity : Entity) {
-        entity.leaveGraph()
+        entity.leaveGraph(this)
     }
 
 

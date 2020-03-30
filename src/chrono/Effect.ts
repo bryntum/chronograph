@@ -8,7 +8,18 @@ export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution'
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * The base class for effect.
+ * The base class for effect. Effect is some value, that can be send to the "outer" calculation context, using the
+ * effect handler function. Effect handler then will process an effect and return some resulting value.
+ *
+ * ```ts
+ * const identifier  = graph.identifier((Y : SyncEffectHandler) : number => {
+ *     const proposedValue : number    = Y(ProposedOrPrevious)
+ *
+ *     const maxValue : number         = Y(max)
+ *
+ *     return proposedValue <= maxValue ? proposedValue : maxValue
+ * })
+ * ```
  */
 export class Effect extends Base {
     handler     : symbol
@@ -83,7 +94,7 @@ export class RejectEffect<Reason> extends Effect {
 
 /**
  * This is constructor for `RejectEffect` class. If this effect will be yielded during computation the current transaction
- * will be rejected.
+ * will be [[ChronoGraph.reject|rejected]].
  *
  * @param reason
  * @constructor

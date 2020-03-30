@@ -15,8 +15,10 @@ const isEntityMarker      = Symbol('isEntity')
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
- * Entity mixin. When applied to some base class (recommended one is [[Base]]), turns it into entity.
+ * Entity [[Mixin|mixin]]. When applied to some base class (recommended one is [[Base]]), turns it into entity.
  * Entity may have several fields, which are properties decorated with [[field]] decorator.
+ *
+ * To apply this mixin use the `Entity.mix` property, which represents the mixin lambda.
  *
  * Another decorator, [[calculate]], marks the method, that will be used to calculate the value of field.
  *
@@ -73,9 +75,16 @@ export class Entity extends Mixin(
         /**
          * An object, which properties corresponds to the ChronoGraph [[Identifier]]s, created for every field.
          *
-         * For example, for the `Author` class from the above example:
+         * For example:
          *
          * ```ts
+         * class Author extends Entity.mix(Base) {
+         *     @field()
+         *     firstName       : string
+         *     @field()
+         *     lastName        : string
+         * }
+         *
          * const author = Author.new()
          *
          * // identifier for the field `firstName`
@@ -182,15 +191,17 @@ export class Entity extends Mixin(
         /**
          * This method is called when entity is removed from the replica it's been added to.
          */
-        leaveGraph () {
-            const graph     = this.graph
-            if (!graph) return
+        leaveGraph (graph : Replica) {
+            const ownGraph      = this.graph
+            const removeFrom    = graph || ownGraph
 
-            this.$entity.forEachField((field, name) => graph.removeIdentifier(this.$[ name ]))
+            if (!removeFrom) return
 
-            graph.removeIdentifier(this.$$)
+            this.$entity.forEachField((field, name) => removeFrom.removeIdentifier(this.$[ name ]))
 
-            this.graph      = undefined
+            removeFrom.removeIdentifier(this.$$)
+
+            if (removeFrom === ownGraph) this.graph      = undefined
         }
 
 
@@ -311,6 +322,61 @@ export class Entity extends Mixin(
 
             return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as any, args, this)
         }
+
+
+        static createPropertyAccessorsFor (fieldName : string) {
+            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
+            // it can optimize access by it
+            const propertyKey   = fieldName
+            const target        = this.prototype
+
+            Object.defineProperty(target, propertyKey, {
+                get     : function (this : Entity) : any {
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
+                },
+
+                set     : function (this : Entity, value : any) {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value)
+                }
+            })
+        }
+
+
+        static createMethodAccessorsFor (fieldName : string) {
+            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
+            // it can optimize access by it
+            const propertyKey   = fieldName
+            const target        = this.prototype
+
+            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
+            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
+            const putterFnName = `put${ uppercaseFirst(propertyKey) }`
+
+            if (!(getterFnName in target)) {
+                target[ getterFnName ] = function (this : Entity) : any {
+                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
+                }
+            }
+
+            if (!(setterFnName in target)) {
+                target[ setterFnName ] = function (this : Entity, value : any, ...args) : CommitResult | Promise<CommitResult> {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
+
+                    return this.graph
+                        ?
+                            (this.graph.autoCommitMode === 'sync' ? this.graph.commit() : this.graph.commitAsync())
+                        :
+                            Promise.resolve(CommitZero)
+                }
+            }
+
+            if (!(putterFnName in target)) {
+                target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
+                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
+                }
+            }
+        }
+
     }
 
     return Entity
@@ -353,55 +419,19 @@ export type FieldDecorator<Default extends AnyConstructor = typeof Field> =
 export const generic_field : FieldDecorator<typeof Field> =
     <T extends typeof Field = typeof Field> (fieldConfig? : Partial<InstanceType<T>>, fieldCls : T | typeof Field = Field) : PropertyDecorator => {
 
-        return function (target : Entity, pk : string) : void {
-            // idea is to indicate to the v8, that `propertyKey` is a constant and thus
-            // it can optimize access by it
-            const propertyKey   = pk
+        return function (target : Entity, fieldName : string) : void {
             const entity        = ensureEntityOnPrototype(target)
 
-            const field     = entity.addField(
+            const field         = entity.addField(
                 fieldCls.new(Object.assign(fieldConfig || {}, {
-                    name    : propertyKey
+                    name    : fieldName
                 }))
             )
 
-            Object.defineProperty(target, propertyKey, {
-                get     : function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
-                },
+            const cons          = target.constructor as typeof Entity
 
-                set     : function (this : Entity, value : any) {
-                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value)
-                }
-            })
-
-            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
-            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
-            const putterFnName = `put${ uppercaseFirst(propertyKey) }`
-
-            if (!(getterFnName in target)) {
-                target[ getterFnName ] = function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldIdentifier).getFromGraph(this.graph)
-                }
-            }
-
-            if (!(setterFnName in target)) {
-                target[ setterFnName ] = function (this : Entity, value : any, ...args) : CommitResult | Promise<CommitResult> {
-                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
-
-                    return this.graph
-                        ?
-                            (this.graph.autoCommitMode === 'sync' ? this.graph.commit() : this.graph.commitAsync())
-                        :
-                            Promise.resolve(CommitZero)
-                }
-            }
-
-            if (!(putterFnName in target)) {
-                target[ putterFnName ] = function (this : Entity, value : any, ...args) : any {
-                    (this.$[ propertyKey ] as FieldIdentifier).writeToGraph(this.graph, value, ...args)
-                }
-            }
+            cons.createPropertyAccessorsFor(fieldName)
+            cons.createMethodAccessorsFor(fieldName)
         }
     }
 
@@ -440,23 +470,23 @@ export const generic_field : FieldDecorator<typeof Field> =
  * author.lastName  = 'Twain'
  * ```
  *
- * The getters are basically using [[ChronoGraph.get]] and setters [[ChronoGraph.write]].
+ * The getters are basically using [[Replica.get]] and setters [[Replica.write]].
  *
- * Note, that if the identifier is asynchronous, reading from it may return a promise. But, immediately after the `commit` call, getter will return
+ * Note, that if the identifier is asynchronous, reading from it will return a promise. But, immediately after the [[Replica.commit]] call, getter will return
  * plain value. This is a compromise between the convenience and correctness and this behavior may change (or made configurable) in the future.
  *
  * Additionally to the accessors, the getter and setter methods are generated. The getter method's name is formed as `get` followed by the field name
  * with upper-cased first letter. The setter's name is formed in the same way, with `set` prefix.
  *
  * The getter method is an exact equivalent of the get accessor. The setter method, in addition to data write, immediately after that
- * performs a call to [[ChronoGraph.commit]] (or [[ChronoGraph.commitAsync]], depending from the [[ChronoGraph.autoCommitMode]] option)
+ * performs a call to [[Replica.commit]] (or [[Replica.commitAsync]], depending from the [[Replica.autoCommitMode]] option)
  * and return its result.
  *
  * ```ts
  * const author     = Author.new({ firstName : 'Mark' })
  *
  * author.getFirstName() // Mark
- * await author.setLastName('Twain') // suppose asynchronous commit
+ * await author.setLastName('Twain') // issues asynchronous commit
  * ```
  */
 export const field : typeof generic_field = generic_field
