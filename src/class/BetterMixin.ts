@@ -797,3 +797,6 @@ export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & Mi
  * It supports unlimited number of requirements.
  */
 export const MixinAny : MixinHelperFuncAny = mixin as any
+
+
+export type PrototypeOf<A> = A

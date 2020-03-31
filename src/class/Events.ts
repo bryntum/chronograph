@@ -1,4 +1,4 @@
-import { AnyConstructor, Base, Mixin } from "./BetterMixin.js"
+import { AnyConstructor, Base, Mixin, PrototypeOf } from "./BetterMixin.js"
 
 // //---------------------------------------------------------------------------------------------------------------------
 // export const ContextSync    = Symbol('ContextSync')
@@ -12,42 +12,43 @@ import { AnyConstructor, Base, Mixin } from "./BetterMixin.js"
 // }
 
 //---------------------------------------------------------------------------------------------------------------------
-class EventMeta<Payload> extends Array<(payload : Payload, event : Event<Payload>) => any> {
+class EventMeta<Payload> extends Array<Listener<Payload>> {
     Payload     : Payload
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-class Listener<Payload> extends Base {
-    listener    : (payload : Payload, event : Event<Payload>) => any = undefined
-    scope       : any   = undefined
-}
+type Listener<Payload> = (event : Event<Payload>, payload : Payload) => any
 
 
 //---------------------------------------------------------------------------------------------------------------------
-class EventInstance<Payload> extends EventMeta<Payload> {
-    listeners   : Array<(payload : Payload, event : Event<Payload>) => any>
+class EventInstance<Payload> extends Array<Listener<Payload>> {
+    // Type-only
+    Payload     : Payload
 
     emitter     : EventEmitter      = undefined
 
-    Payload     : Payload
-
-    on (listener : (payload : Payload, event : Event<Payload>) => any) {
-        return () => this.un(listener)
+    get listeners () : Array<Listener<Payload>> {
+        return this
     }
 
 
-    un (listener : (payload : Payload, event : Event<Payload>) => any) {
-        const index = this.indexOf(listener)
+    on (listener : Listener<Payload>) {
+        this.listeners.push(listener)
+    }
 
-        this.splice(index, 1)
+
+    un (listener : Listener<Payload>) {
+        const index = this.listeners.indexOf(listener)
+
+        this.listeners.splice(index, 1)
     }
 
 
     trigger (payload : Payload) : Event<Payload> {
-        const event     = EventC<Payload>({ payload, source : this.emitter })
+        const event     = new Event<Payload>({ payload, emitter : this })
 
-        this.reduce((event, listener) => listener(payload, event), event)
+        this.reduce((event, listener) => listener(event, payload), event)
 
         return event
     }
@@ -74,7 +75,7 @@ export const event = <T extends EventMeta<Payload>, Payload>(eventConfig? : Part
             get     : function (this : EventEmitter) : any {
                 if (this[ storageKey ] !== undefined) return this[ storageKey ]
 
-                const newEventInstance  = new EventInstance()
+                const newEventInstance : EventInstance<Payload> = new eventCls()
 
                 newEventInstance.emitter    = this
 
@@ -104,26 +105,18 @@ export class EventEmitter extends Mixin(
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Event<Payload> extends Mixin(
-    [ Base ],
-    (base : AnyConstructor<Base, typeof Base>) => {
+class Event<Payload> {
+    // Type-only
+    Payload     : any
 
-    class Event extends base {
-        Payload     : any
+    emitter     : EventInstance<Payload>    = undefined
 
-        source      : EventEmitter
+    payload     : this[ 'Payload' ]         = undefined
 
-        payload     : this[ 'Payload' ]
+    constructor (config : Partial<Event<Payload>>) {
+        Object.assign(this, config)
     }
-
-    return Event
-}){}
-
-export interface Event<Payload> {
-    Payload : Payload
 }
-
-const EventC = <Payload>(config : Partial<Event<Payload>>) => Event.new(config) as Event<Payload>
 
 
 //---------------------------------------------------------------------------------------------------------------------
