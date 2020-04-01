@@ -166,6 +166,20 @@ class Quark extends base {
             }
         }
 
+        if (origin.$outgoingPast !== undefined) {
+            const outgoingPast      = this.getOutgoingPast()
+
+            for (const [ identifier, quark ] of origin.getOutgoingPast()) {
+                const ownOutgoing       = outgoingPast.get(identifier)
+
+                if (!ownOutgoing) {
+                    const latest        = latestScope.get(identifier)
+
+                    if (!latest || latest.originId === quark.originId) outgoingPast.set(identifier, latest || quark)
+                }
+            }
+        }
+
         // changing `origin`, but keeping `originId`
         this.origin                 = this
 
