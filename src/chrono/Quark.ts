@@ -100,7 +100,11 @@ class Quark extends base {
         this.usedProposedOrPrevious          = false
 
         this.cleanupCalculation()
-        this.clearOutgoing()
+        // if there's no value, then generally should be no outgoing edges
+        // (which indicates that the value has been used somewhere else)
+        // but there might be outgoing "past" edges, created if `HasProposedValue`
+        // or similar effect has been used on the identifier
+        if (this.value !== undefined) this.clearOutgoing()
 
         this.promise                        = undefined
 
