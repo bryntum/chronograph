@@ -405,12 +405,16 @@ export class ChronoGraph extends Base {
         // TODO should have a "while" loop adding extra transactions, similar to `commitAsync`
         this.unScheduleAutoCommit()
 
-        const activeTransaction = this.activeTransaction
-        const nextRevision      = activeTransaction.commit(args)
+        this.baseRevisionStable = this.baseRevision
 
-        this.$activeTransaction     = undefined
+        const activeTransaction         = this.activeTransaction
+        const transactionCommitResult   = activeTransaction.commit(args)
 
-        const result            = this.finalizeCommit(nextRevision)
+        this.$activeTransaction = undefined
+
+        const result            = this.finalizeCommit(transactionCommitResult)
+
+        this.baseRevisionStable = undefined
 
         this.isInitialCommit    = false
 
@@ -454,6 +458,7 @@ export class ChronoGraph extends Base {
 
             return res
         }).finally(() => {
+            this.baseRevisionStable     = undefined
             this.baseRevisionTentative  = undefined
             this.isInitialCommit        = false
 
@@ -487,9 +492,9 @@ export class ChronoGraph extends Base {
     finalizeCommit (transactionResult : TransactionCommitResult) : CommitResult {
         const { revision, entries, transaction } = transactionResult
 
-        if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
-
         if (!transaction.rejectedWith) {
+            if (revision.previous !== this.baseRevision) throw new Error('Invalid revisions chain')
+
             // dereference all revisions
             for (const [ revision, isReachable ] of this.eachReachableRevision()) {
                 if (isReachable) revision.reachableCount--
@@ -515,6 +520,10 @@ export class ChronoGraph extends Base {
             }
 
             clearLazyProperty(this, 'followingRevision')
+        } else {
+            this.baseRevision           = this.baseRevisionStable
+            this.baseRevisionStable     = undefined
+            this.baseRevisionTentative  = undefined
         }
 
         return { rejectedWith : transaction.rejectedWith }
