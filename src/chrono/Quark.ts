@@ -125,7 +125,7 @@ class Quark extends base {
             this.value                      = undefined
         }
 
-        if (this.identifier.proposedValueIsBuilt) {
+        if (this.identifier.proposedValueIsBuilt && this.proposedValue !== TombStone) {
             this.needToBuildProposedValue   = true
             this.proposedValue              = undefined
         }

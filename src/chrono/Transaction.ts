@@ -959,7 +959,7 @@ export class Transaction extends Base {
                 continue
             }
 
-            if (/*entry.isShadow() ||*/ entry.hasValue()) {
+            if (/*entry.isShadow() ||*/ entry.hasValue() || entry.proposedValue === TombStone) {
                 entry.cleanup()
 
                 stack.pop()
