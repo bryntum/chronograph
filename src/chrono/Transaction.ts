@@ -438,9 +438,11 @@ export class Transaction extends Base {
 
 
     touch (identifier : Identifier) : Quark {
-        this.walkContext.continueFrom([ identifier ])
+        const existingEntry         = this.entries.get(identifier)
 
-        const entry                 = this.entries.get(identifier)
+        if (!existingEntry || existingEntry.visitEpoch < this.walkContext.currentEpoch) this.walkContext.continueFrom([ identifier ])
+
+        const entry                 = existingEntry || this.entries.get(identifier)
 
         entry.forceCalculation()
 
@@ -880,7 +882,7 @@ export class Transaction extends Base {
                     const effectResult          = yield value
 
                     // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
-                    // in such case we can not continue calculation and just exit the inner loop
+                    // in such case we can not continue calculation and jare ust exit the inner loop
                     if (effectResult === BreakCurrentStackExecution) break
 
                     // // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
