@@ -443,6 +443,60 @@ type MixinHelperFunc5 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A
         : never
     : never
 
+type MixinHelperFunc6 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, A6 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5, A6 ], arg : T) =>
+    T extends AnyFunction ?
+        Parameters<T> extends [ infer Base ] ?
+            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6>, A1 & A2 & A3 & A4 & A5 & A6> ?
+                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> extends InstanceType<Base> ?
+                    MixinClassConstructor<T>
+                : never
+            : never
+        : never
+    : never
+
+type MixinHelperFunc7 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, A6 extends AnyConstructor, A7 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5, A6, A7 ], arg : T) =>
+    T extends AnyFunction ?
+        Parameters<T> extends [ infer Base ] ?
+            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7>, A1 & A2 & A3 & A4 & A5 & A6 & A7> ?
+                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7> extends InstanceType<Base> ?
+                    MixinClassConstructor<T>
+                : never
+            : never
+        : never
+    : never
+
+type MixinHelperFunc8 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, A6 extends AnyConstructor, A7 extends AnyConstructor, A8 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5, A6, A7, A8 ], arg : T) =>
+    T extends AnyFunction ?
+        Parameters<T> extends [ infer Base ] ?
+            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7> & InstanceType<A8>, A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8> ?
+                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7> & InstanceType<A8> extends InstanceType<Base> ?
+                    MixinClassConstructor<T>
+                : never
+            : never
+        : never
+    : never
+
+type MixinHelperFunc9 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, A6 extends AnyConstructor, A7 extends AnyConstructor, A8 extends AnyConstructor, A9 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5, A6, A7, A8, A9 ], arg : T) =>
+    T extends AnyFunction ?
+        Parameters<T> extends [ infer Base ] ?
+            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7> & InstanceType<A8> & InstanceType<A9>, A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9> ?
+                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7> & InstanceType<A8> & InstanceType<A9> extends InstanceType<Base> ?
+                    MixinClassConstructor<T>
+                : never
+            : never
+        : never
+    : never
+
+type MixinHelperFunc10 = <A1 extends AnyConstructor, A2 extends AnyConstructor, A3 extends AnyConstructor, A4 extends AnyConstructor, A5 extends AnyConstructor, A6 extends AnyConstructor, A7 extends AnyConstructor, A8 extends AnyConstructor, A9 extends AnyConstructor, A10 extends AnyConstructor, T>(required : [ A1, A2, A3, A4, A5, A6, A7, A8, A9, A10 ], arg : T) =>
+    T extends AnyFunction ?
+        Parameters<T> extends [ infer Base ] ?
+            Base extends AnyConstructor<InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7> & InstanceType<A8> & InstanceType<A9> & InstanceType<A10>, A1 & A2 & A3 & A4 & A5 & A6 & A7 & A8 & A9 & A10> ?
+                InstanceType<A1> & InstanceType<A2> & InstanceType<A3> & InstanceType<A4> & InstanceType<A5> & InstanceType<A6> & InstanceType<A7> & InstanceType<A8> & InstanceType<A9> & InstanceType<A10> extends InstanceType<Base> ?
+                    MixinClassConstructor<T>
+                : never
+            : never
+        : never
+    : never
 
 //---------------------------------------------------------------------------------------------------------------------
 const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) : MixinClassConstructor<T> => {
@@ -621,8 +675,8 @@ export const isInstanceOf = <T>(instance : any, func : T)
  * Requirements can not form cycles - that will generate both compilation error and run-time stack overflow.
  *
  * The typing for the `Mixin` function will provide a compilation error, if the requirements don't match, e.g. some requirement is
- * listed in the array, but missed in the types. This protects you from trivial mistakes. However, the typing is done up to 5 requirements only.
- * If you need more than 5 requirements for the mixin, use the [[MixinAny]] function, which is an exact analog of `Mixin`, but without
+ * listed in the array, but missed in the types. This protects you from trivial mistakes. However, the typing is done up to 10 requirements only.
+ * If you need more than 10 requirements for the mixin, use the [[MixinAny]] function, which is an exact analog of `Mixin`, but without
  * this type-level protection for requirements mismatch.
  *
  * It is possible to simplify the type of the `base` argument a bit, by using the [[ClassUnion]] helper. However, it seems in certain edge cases
@@ -790,7 +844,7 @@ export const isInstanceOf = <T>(instance : any, func : T)
  * publish actual TypeScript sources along with the generated JavaScript files, instead of publishing JavaScript + declarations files.
  *
  */
-export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 & MixinHelperFunc5 = mixin as any
+export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & MixinHelperFunc3 & MixinHelperFunc4 & MixinHelperFunc5 & MixinHelperFunc6 & MixinHelperFunc7 & MixinHelperFunc8 & MixinHelperFunc9 & MixinHelperFunc10 = mixin as any
 
 /**
  * This is an exact analog of the [[Mixin]] function, but without type-level protection for requirements mismatch.
