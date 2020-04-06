@@ -19,6 +19,8 @@
 /main.js
 /tsconfig.tsbuildinfo
 
+/examples/basic/**/*.js
+
 # docs
 /docs
 

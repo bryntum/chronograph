@@ -16,7 +16,8 @@
     "include" : [
         "main.ts",
         "src/**/*.ts",
-        "tests/**/*.ts"
+        "tests/**/*.ts",
+        "examples/**/*.ts"
     ],
 
     "exclude" : [
