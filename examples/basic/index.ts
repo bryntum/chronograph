@@ -1,5 +1,5 @@
 import { ChronoGraph } from "../../src/chrono/Graph.js"
-import { CytoscapeWrapper } from "./Cytoscape.js"
+import { CytoscapeWrapper } from "../../src/visualization/Cytoscape.js"
 
 declare const window, document : any
 

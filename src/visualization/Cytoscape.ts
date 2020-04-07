@@ -1,8 +1,9 @@
-import { ChronoGraph } from "../../src/chrono/Graph.js"
-import { Identifier } from "../../src/chrono/Identifier.js"
-import { Base } from "../../src/class/BetterMixin.js"
+import { ChronoGraph } from "../chrono/Graph.js"
+import { Identifier } from "../chrono/Identifier.js"
+import { Base } from "../class/BetterMixin.js"
+import { EntityIdentifier, FieldIdentifier } from "../replica/Identifier.js"
 
-declare const cytoscape, cytoscapeDagre : any
+declare const cytoscape, cytoscapeDagre, cytoscapeKlay, cytoscapeCoseBilkent : any
 
 export type Cytoscape = any
 export type CytoscapeId = string
@@ -10,6 +11,8 @@ export type CytoscapeId = string
 export class CytoscapeWrapper extends Base {
     graph           : ChronoGraph   = undefined
     container       : any           = undefined
+
+    hideNodesWithoutOutgoingEdges : boolean     = true
 
     ids             : Map<Identifier, CytoscapeId>  = new Map()
 
@@ -20,17 +23,19 @@ export class CytoscapeWrapper extends Base {
 
         return this.$cytoscape = this.buildCytoScape()
     }
-    
-    
+
+
     renderTo (elem : any) {
         this.container  = elem
-        
+
         this.cytoscape
     }
 
 
     buildCytoScape () : Cytoscape {
-        cytoscape.use(cytoscapeDagre)
+        // cytoscape.use(cytoscapeDagre)
+        // cytoscape.use(cytoscapeKlay)
+        cytoscape.use(cytoscapeCoseBilkent)
 
         const cyto = cytoscape({
             container: this.container,
@@ -71,21 +76,50 @@ export class CytoscapeWrapper extends Base {
 
         const cytoIds = new Map()
 
-        revision.scope.forEach((quark, identifier) => {
-            const cytoId = ID++
 
-            const cytoNode = cyto.add({group: 'nodes', data : { id : cytoId, name : identifier.name } })
+
+        revision.scope.forEach((quark, identifier) => {
+            // if (this.hideNodesWithoutOutgoingEdges && quark.getOutgoing().size === 0 && !quark.$outgoingPast) return
+
+            // lazy nodes
+            if (this.hideNodesWithoutOutgoingEdges && quark.value === undefined) return
+
+            const cytoId    = ID++
 
             cytoIds.set(identifier, cytoId)
+
+            const data : any     = { id : cytoId, name : identifier.name }
+
+            if (identifier instanceof FieldIdentifier) {
+                const entityIden  = identifier.self.$$
+
+                let entityId  = cytoIds.get(entityIden)
+
+                if (!entityId) {
+                    entityId    = ID++
+
+                    cytoIds.set(entityIden, entityId)
+
+                    const cytoNode = cyto.add({ group: 'nodes', data : { id : entityId, name : entityIden.name } })
+                }
+
+                data.parent = entityId
+            }
+
+            const cytoNode = cyto.add({ group: 'nodes', data : data })
         })
 
         revision.scope.forEach((sourceQuark, identifier) => {
             sourceQuark.outgoingInTheFutureAndPastCb(revision, (targetQuark) => {
-                cyto.add({group: 'edges', data : { source: cytoIds.get(sourceQuark.identifier), target: cytoIds.get(targetQuark.identifier) } })
+                cyto.add({ group: 'edges', data : { source: cytoIds.get(sourceQuark.identifier), target: cytoIds.get(targetQuark.identifier) } })
             })
         })
 
-        cyto.layout({ name: 'dagre' }).run()
+        // cyto.layout({ name: 'dagre' }).run()
+        cyto.layout({ name: 'klay' }).run()
+        // cyto.layout({ name: 'cose-bilkent' }).run()
+
+        return cyto
     }
 }
 
