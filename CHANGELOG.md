@@ -3,6 +3,8 @@ Release history for ChronoGraph:
 
 {{ $NEXT }}
 
+1.0.0        2020-04-07 19:26
+
 The 1.0.0 release.
 
 0.0.5        2020-03-19 20:10
