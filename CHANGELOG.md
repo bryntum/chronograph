@@ -3,6 +3,17 @@ Release history for ChronoGraph:
 
 {{ $NEXT }}
 
+FEATURES / ENHANCEMENTS
+-----------------------
+
+API CHANGES
+-----------
+
+BUG FIXES
+---------
+
+- Fixed links to docs
+
 1.0.0        2020-04-07 19:26
 
 The 1.0.0 release.
@@ -13,11 +24,3 @@ The 1.0.0 release.
 
 This is the initial release of the ChronoGraph.
 
-FEATURES / ENHANCEMENTS
------------------------
-
-API CHANGES
------------
-
-BUG FIXES
----------
