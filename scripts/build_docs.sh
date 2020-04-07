@@ -17,3 +17,5 @@ sed -i -e 's!\[\[BasicFeaturesGuide[|]Basic features\]\]![Basic features](https:
 sed -i -e 's!\[\[AdvancedFeaturesGuide[|]Advanced features\]\]![Advanced features](https://bryntum.github.io/chronograph/docs/modules/_guides_advancedfeatures_.html#advancedfeaturesguide)!' "README.md"
 sed -i -e 's!\[API docs\][(]\./globals.html[)]![API docs](https://bryntum.github.io/chronograph/docs/)!' "README.md"
 sed -i -e 's!\[\[BenchmarksGuide[|]Benchmarks\]\]![Benchmarks](https://bryntum.github.io/chronograph/docs/modules/_guides_benchmarks_.html#benchmarksguide)!' "README.md"
+
+sed -i -e 's!<iframe.*iframe>!!' "README.md"
