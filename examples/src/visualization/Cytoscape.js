@@ -1,5 +1,5 @@
 import { Base } from "../class/BetterMixin.js";
-import { FieldIdentifier } from "../replica/Identifier.js";
+import { EntityIdentifier, FieldIdentifier } from "../replica/Identifier.js";
 export class CytoscapeWrapper extends Base {
     constructor() {
         super(...arguments);
@@ -28,17 +28,16 @@ export class CytoscapeWrapper extends Base {
                 {
                     selector: 'node',
                     style: {
-                        'label': 'data(name)'
+                        'label': 'data(name)',
+                        'background-color': '#168BFF',
                     }
                 },
-                // {
-                //     selector: '.parent',
-                //     style: {
-                //         'background-color': 'red',
-                //         'label': 'data(id)',
-                //         'line-color': 'red',
-                //     }
-                // },
+                {
+                    selector: '.parent',
+                    style: {
+                        'background-color': '#eee',
+                    }
+                },
                 {
                     selector: 'edge',
                     style: {
@@ -61,18 +60,21 @@ export class CytoscapeWrapper extends Base {
                 return;
             const cytoId = ID++;
             cytoIds.set(identifier, cytoId);
-            const data = { id: cytoId, name: identifier.name };
+            const data = { group: 'nodes', data: { id: cytoId, name: identifier.name } };
             if (identifier instanceof FieldIdentifier) {
                 const entityIden = identifier.self.$$;
                 let entityId = cytoIds.get(entityIden);
                 if (entityId === undefined) {
                     entityId = ID++;
                     cytoIds.set(entityIden, entityId);
-                    const cytoNode = cyto.add({ group: 'nodes', data: { id: entityId, name: entityIden.name } });
+                    const cytoNode = cyto.add({ group: 'nodes', data: { id: entityId, name: entityIden.name }, classes: ['parent'] });
                 }
-                data.parent = entityId;
+                data.data.parent = entityId;
             }
-            const cytoNode = cyto.add({ group: 'nodes', data: data });
+            if (identifier instanceof EntityIdentifier) {
+                data.classes = ['parent'];
+            }
+            const cytoNode = cyto.add(data);
         });
         revision.scope.forEach((sourceQuark, identifier) => {
             sourceQuark.outgoingInTheFutureAndPastCb(revision, (targetQuark) => {
