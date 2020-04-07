@@ -99,10 +99,10 @@ project.start(
         group       : 'Visualization',
 
         items       : [
-            {
-                pageUrl     : 'pages/cytoscape.html',
-                url         : 'visualization/010_replica.t.js'
-            }
+            // {
+            //     pageUrl     : 'pages/cytoscape.html',
+            //     url         : 'visualization/010_replica.t.js'
+            // }
         ]
     }
 )
