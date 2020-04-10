@@ -28,6 +28,7 @@ Reactive computations has become a popular trend recently, popularized by the Re
 
 ChronoGraph, in contrast, focuses on reactive computations, describing some generic data graphs (for example Gantt project plans). It is designed to handle extremely large graphs - up to several hundred thousands of "atoms". It also includes the small Entity/Relation framework, which maps to regular ES6 classes.
 
+<iframe width="100%" height="300px" style="border:0" src="https://bryntum.github.io/chronograph/examples/basic/"></iframe>
 
 Documentation
 =============

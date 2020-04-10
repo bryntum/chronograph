@@ -84,6 +84,11 @@ export class TransactionWalkDepth extends Base {
         for (const outgoingIdentifier of visitInfo.getOutgoing().keys()) {
             this.doCollectNext(from, outgoingIdentifier, toVisit)
         }
+
+        if (visitInfo.$outgoingPast !== undefined)
+            for (const outgoingIdentifier of visitInfo.getOutgoingPast().keys()) {
+                this.doCollectNext(from, outgoingIdentifier, toVisit)
+            }
     }
 
 

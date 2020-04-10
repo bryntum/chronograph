@@ -95,5 +95,15 @@ project.start(
         items       : [
             'schema/010_schema.t.js',
         ]
+    },
+    {
+        group       : 'Visualization',
+
+        items       : [
+            // {
+            //     pageUrl     : 'pages/cytoscape.html',
+            //     url         : 'visualization/010_replica.t.js'
+            // }
+        ]
     }
 )

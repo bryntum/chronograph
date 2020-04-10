@@ -100,7 +100,11 @@ class Quark extends base {
         this.usedProposedOrPrevious          = false
 
         this.cleanupCalculation()
-        this.clearOutgoing()
+        // if there's no value, then generally should be no outgoing edges
+        // (which indicates that the value has been used somewhere else)
+        // but there might be outgoing "past" edges, created if `HasProposedValue`
+        // or similar effect has been used on the identifier
+        if (this.value !== undefined) this.clearOutgoing()
 
         this.promise                        = undefined
 
@@ -121,7 +125,7 @@ class Quark extends base {
             this.value                      = undefined
         }
 
-        if (this.identifier.proposedValueIsBuilt) {
+        if (this.identifier.proposedValueIsBuilt && this.proposedValue !== TombStone) {
             this.needToBuildProposedValue   = true
             this.proposedValue              = undefined
         }
@@ -159,6 +163,20 @@ class Quark extends base {
                 const latest        = latestScope.get(identifier)
 
                 if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
+            }
+        }
+
+        if (origin.$outgoingPast !== undefined) {
+            const outgoingPast      = this.getOutgoingPast()
+
+            for (const [ identifier, quark ] of origin.getOutgoingPast()) {
+                const ownOutgoing       = outgoingPast.get(identifier)
+
+                if (!ownOutgoing) {
+                    const latest        = latestScope.get(identifier)
+
+                    if (!latest || latest.originId === quark.originId) outgoingPast.set(identifier, latest || quark)
+                }
             }
         }
 
