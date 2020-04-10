@@ -399,7 +399,7 @@ class ExcludeFreeDaysFromSalary extends Mixin(
     [ Employee ], 
     (base : ClassUnion<typeof Employee>) => {
 
-    class Employee extends base
+    class ExcludeFreeDaysFromSalary extends base
         @field()
         freeDays            : FreeDay[] // whatever that means
     
@@ -415,7 +415,7 @@ class ExcludeFreeDaysFromSalary extends Mixin(
         }
     }
 
-    return Employee
+    return ExcludeFreeDaysFromSalary
 }){}
 ``` 
 
@@ -426,7 +426,7 @@ class BonusForGoodWork extends Mixin(
     [ Employee ], 
     (base : ClassUnion<typeof Employee>) => {
 
-    class Employee extends base
+    class BonusForGoodWork extends base
         @field()
         wokrPlan            : number
         @field()
@@ -444,7 +444,7 @@ class BonusForGoodWork extends Mixin(
         }
     }
 
-    return Employee
+    return BonusForGoodWork
 }){}
 ```
 
