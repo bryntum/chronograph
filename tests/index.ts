@@ -105,5 +105,12 @@ project.start(
             //     url         : 'visualization/010_replica.t.js'
             // }
         ]
+    },
+    {
+        group       : 'Util',
+
+        items       : [
+            'util/uniqable.t.js'
+        ]
     }
 )
