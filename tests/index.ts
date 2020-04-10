@@ -112,5 +112,12 @@ project.start(
         items       : [
             'util/uniqable.t.js'
         ]
+    },
+    {
+        group       : 'Events',
+
+        items       : [
+            'event/events.t.js'
+        ]
     }
 )
