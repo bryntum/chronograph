@@ -65,4 +65,29 @@ StartTest(t => {
 
         t.is(counter, 1)
     })
+
+
+    t.it('Should ignore duplicated listeners', t => {
+        const arr = new ManagedArray<number>()
+
+        let counter = 0
+
+        const listener = (array, pos, howManyToRemove, newElements) => {
+            counter++
+
+            t.isStrict(array, arr)
+            t.isStrict(pos, 0)
+            t.isStrict(howManyToRemove, 0)
+            t.isDeeply(newElements, [ 11 ])
+        }
+
+        arr.spliceEvent.on(listener)
+        arr.spliceEvent.on(listener)
+        arr.spliceEvent.on(listener)
+
+        arr.push(11)
+
+        t.is(counter, 1)
+    })
+
 })
