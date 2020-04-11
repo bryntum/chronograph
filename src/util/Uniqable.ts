@@ -26,6 +26,7 @@ export const compact = (array : Uniqable[]) => {
         }
     }
 
-    // TODO assuming assigning the same length is no-op, but who knows
-    array.length = uniqueIndex + 1
+    // assuming its better to not touch the array's `length` property
+    // unless we really have to
+    if (array.length !== uniqueIndex + 1) array.length = uniqueIndex + 1
 }

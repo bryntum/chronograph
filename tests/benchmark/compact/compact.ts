@@ -15,8 +15,9 @@ const el1   = getUniqable()
 const el2   = getUniqable()
 const el3   = getUniqable()
 
-const elements : Uniqable[]     = [ el1, el2, el1, el3, el1, el2, el3,  ]
+const elements : Uniqable[]     = [ el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3, ]
 
+const compactees = Array(toCompact).fill(null).map(() => elements)
 
 //---------------------------------------------------------------------------------------------------------------------
 const compactInPlaceBenchmark = BenchmarkC<CompactBenchState>({
@@ -24,7 +25,7 @@ const compactInPlaceBenchmark = BenchmarkC<CompactBenchState>({
 
     async setup () : Promise<CompactBenchState> {
         return {
-            array : Array(toCompact).fill(null).map(() => elements)
+            array : compactees
         }
     },
 
@@ -48,7 +49,7 @@ const compactImmutableBenchmark = BenchmarkC<CompactBenchState>({
 
     async setup () : Promise<CompactBenchState> {
         return {
-            array : Array(toCompact).fill(null).map(() => elements)
+            array : compactees
         }
     },
 
