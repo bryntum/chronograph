@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
 import { Node, WalkForwardContext } from "../../src/graph/Node.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../../src/graph/WalkDepth.js"
 

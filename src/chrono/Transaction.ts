@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { DEBUG } from "../environment/Debug.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"

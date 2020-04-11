@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
 import { Entity } from "../../src/replica/Entity.js"
 
 declare const StartTest : any

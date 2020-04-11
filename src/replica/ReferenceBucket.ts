@@ -1,7 +1,7 @@
 import { CalculatedValueSync, Levels, QuarkSync } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor, TombStone } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
-import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, ClassUnion, Mixin } from "../class/Mixin.js"
 import { Field } from "../schema/Field.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Entity, FieldDecorator, generic_field } from "./Entity.js"

@@ -1,31 +1,50 @@
-import { AnyConstructor, Mixin } from "../../src/class/BetterMixin.js"
-import { Event, event, EventEmitter } from "../../src/event/Events.js"
+import { AnyConstructor, Mixin } from "../../src/class/Mixin.js"
+import { Event } from "../../src/event/Events.js"
+import { Hook } from "../../src/event/Hook.js"
 
 declare const StartTest : any
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ManagedArray<Element> extends Mixin(
-    [ EventEmitter, Array ],
-    <Element>(base : AnyConstructor<EventEmitter & Array<Element>, typeof EventEmitter & typeof Array>) => {
+    [ Array ],
+    <Element>(base : AnyConstructor<Array<Element>, typeof Array>) => {
 
     class ManagedArray extends base {
         Element                 : Element
 
         slice : (start? : number, end? : number) => this[ 'Element' ][]
 
-        @event()
-        spliceEvent             : Event<[ this, number, number, this[ 'Element' ][] ]>
+        // `spliceEvent` start
+        $spliceEvent    : Event<[ this, number, number, this[ 'Element' ][] ]>  = undefined
+        get spliceEvent () : Event<[ this, number, number, this[ 'Element' ][] ]> {
+            if (this.$spliceEvent !== undefined) return this.$spliceEvent
 
+            return this.$spliceEvent    = new Event()
+        }
+        // `spliceEvent` end
+
+        // `spliceHook` start
+        $spliceHook    : Hook<[ this, number, number, this[ 'Element' ][] ]>  = undefined
+        get spliceHook () : Hook<[ this, number, number, this[ 'Element' ][] ]> {
+            if (this.$spliceHook !== undefined) return this.$spliceHook
+
+            return this.$spliceHook    = new Hook()
+        }
+        // `spliceHook` end
 
         push (...args : this[ 'Element' ][]) : number {
             this.spliceEvent.trigger(this, this.length, 0, args)
+            this.spliceHook.trigger(this, this.length, 0, args)
 
             return super.push(...args)
         }
 
 
         pop () : this[ 'Element' ] {
-            if (this.length > 0) this.spliceEvent.trigger(this, this.length - 1, 1, [])
+            if (this.length > 0) {
+                this.spliceEvent.trigger(this, this.length - 1, 1, [])
+                this.spliceHook.trigger(this, this.length - 1, 1, [])
+            }
 
             return super.pop()
         }

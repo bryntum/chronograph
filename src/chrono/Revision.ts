@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { ChronoGraph } from "./Graph.js"
 import { Identifier, throwUnknownIdentifier } from "./Identifier.js"
 import { Quark, TombStone } from "./Quark.js"

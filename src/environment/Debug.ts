@@ -1,20 +1,17 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { CI } from "../collection/Iterator.js"
 import { matchAll } from "../util/Helpers.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const DEBUG = false
+export const DEBUG = true
 
-export const DEBUG_MODE = 'THROW'
+const emptyFn = (...args : any[]) : any => undefined
 
-export const debug = (e : Error) => {
-    if (!DEBUG) return
+export const DEBUG_ONLY = <T extends Function>(func : T) : T => DEBUG ? func : emptyFn as any
 
-    if (DEBUG_MODE === 'THROW')
-        throw e
-    else
-        debugger
-}
+export const debug = DEBUG_ONLY((e : Error) => {
+    throw e
+})
 
 
 //---------------------------------------------------------------------------------------------------------------------

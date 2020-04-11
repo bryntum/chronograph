@@ -1,5 +1,5 @@
 import { ChronoGraph } from "../../src/chrono/Graph.js"
-import { Base } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
 import { Entity } from "../../src/replica/Entity.js"
 import { reference } from "../../src/replica/Reference.js"
 import { bucket } from "../../src/replica/ReferenceBucket.js"

@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { CalculationContext, CalculationGen, CalculationSync, Context, ContextGen, Contexts, ContextSync } from "../primitives/Calculation.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { ProposedOrPrevious } from "./Effect.js"

@@ -1,5 +1,5 @@
 import { ChronoGraph } from "../chrono/Graph.js"
-import { ClassUnion, Mixin } from "../class/BetterMixin.js"
+import { ClassUnion, Mixin } from "../class/Mixin.js"
 import { Schema } from "../schema/Schema.js"
 import { Entity } from "./Entity.js"
 

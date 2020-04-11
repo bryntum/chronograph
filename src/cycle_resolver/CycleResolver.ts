@@ -1,4 +1,5 @@
-import { Base, ClassUnion, Mixin } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
+import { ClassUnion, Mixin } from "../class/Mixin.js"
 import { required, validateRequiredProperties } from "../class/RequiredProperty.js"
 import { ChainedIterator, CI, concatIterable, map, uniqueOnly } from "../collection/Iterator.js"
 import { DEBUG } from "../environment/Debug.js"
@@ -292,7 +293,7 @@ export class CycleResolutionInput extends Base {
      * A cycle resolution instance this input corresponds to.
      */
     @required
-    context             : CycleResolution                = undefined
+    context             : CycleResolution                       = undefined
 
     private input       : Map<Variable, VariableInputState>     = undefined
 

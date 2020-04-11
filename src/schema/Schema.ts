@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { ensureEntityOnPrototype, EntityConstructor } from "../replica/Entity.js"
 import { EntityMeta } from "./EntityMeta.js"
 import { Name } from "./Field.js"

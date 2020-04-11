@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
 import { Node, WalkForwardContext } from "../../src/graph/Node.js"
 
 declare const StartTest : any

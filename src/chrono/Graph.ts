@@ -1,4 +1,5 @@
-import { AnyFunction, Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
+import { AnyFunction } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { warn } from "../environment/Debug.js"
 import { CalculationContext, CalculationFunction, CalculationIterator, Context } from "../primitives/Calculation.js"

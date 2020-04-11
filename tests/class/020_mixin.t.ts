@@ -1,4 +1,5 @@
-import { AnyConstructor, Base, ClassUnion, isInstanceOf, Mixin } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
+import { AnyConstructor, ClassUnion, isInstanceOf, Mixin } from "../../src/class/Mixin.js"
 
 declare const StartTest : any
 

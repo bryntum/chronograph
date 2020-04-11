@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
 import { calculate, Entity, field } from "../../src/replica/Entity.js"
 import { Replica } from "../../src/replica/Replica.js"
 
