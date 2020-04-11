@@ -10,15 +10,14 @@ const emptyFn = (...args : any[]) : any => undefined
 export const DEBUG_ONLY = <T extends Function>(func : T) : T => DEBUG ? func : emptyFn as any
 
 export const debug = DEBUG_ONLY((e : Error) => {
-    throw e
+    debugger
 })
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const warn = (e : Error) => {
+export const warn = DEBUG_ONLY((e : Error) => {
     if (typeof console !== 'undefined') console.warn(e)
-}
-
+})
 
 //---------------------------------------------------------------------------------------------------------------------
 export class StackEntry extends Base {

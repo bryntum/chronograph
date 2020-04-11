@@ -493,6 +493,8 @@ export const field : typeof generic_field = generic_field
  * Decorator for the method, that calculates a value of some field
  *
  * ```ts
+ *
+ * @entity()
  * class Author extends Entity.mix(Base) {
  *     @field()
  *     firstName       : string

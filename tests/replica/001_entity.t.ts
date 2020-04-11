@@ -67,10 +67,11 @@ StartTest(t => {
 
 
     t.it('Entity, created lazily, subclass entry accessed first, through instance', async t => {
+        @entity()
         class Author extends Entity.mix(Base) {
         }
 
-        @entity
+        @entity()
         class SpecialAuthor extends Author {
         }
 

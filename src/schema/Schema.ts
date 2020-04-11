@@ -76,19 +76,30 @@ export const entityDecoratorBody = <T extends EntityConstructor>(target : T) => 
     const name      = target.name
     if (!name) throw new Error(`Can't add entity - the target class has no name`)
 
-    let entity      = ensureEntityOnPrototype(target.prototype)
-
-    // entity possibly is already created by the field decorators, but in such case it should not have name
-    if (entity.name && entity.name != name) throw new Error(`Invalid state`)
-
-    entity.name     = name
-
-    return entity
+    return ensureEntityOnPrototype(target.prototype)
 }
 
 
-export const entity = <T extends EntityConstructor>(target : T) : T => {
-    entityDecoratorBody(target)
+/**
+ * Entity decorator. It is required to be applied only if entity declares no field.
+ * If record declares any field, there no strict need to apply this decorator.
+ * Its better to do it anyway, for consistency.
+ *
+ * ```ts
+ * @entity()
+ * class Author extends Entity.mix(Base) {
+ * }
+ *
+ * @entity()
+ * class SpecialAuthor extends Author {
+ * }
+ * ```
+ */
+export const entity = () : ClassDecorator => {
+    // @ts-ignore : https://github.com/Microsoft/TypeScript/issues/29828
+    return <T extends EntityConstructor>(target : T) : T => {
+        entityDecoratorBody(target)
 
-    return target
+        return target
+    }
 }
