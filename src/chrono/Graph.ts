@@ -3,7 +3,7 @@ import { AnyFunction } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { warn } from "../environment/Debug.js"
 import { CalculationContext, CalculationFunction, CalculationIterator, Context } from "../primitives/Calculation.js"
-import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
+import { copySetInto } from "../util/Helpers.js"
 import {
     BreakCurrentStackExecution,
     Effect,
@@ -193,7 +193,7 @@ export class ChronoGraph extends Base {
 
         this.topRevision    = this.baseRevision
 
-        clearLazyProperty(this, 'followingRevision')
+        this.$followingRevision = undefined
         this.$activeTransaction = undefined
 
         this.markAndSweep()
@@ -294,17 +294,19 @@ export class ChronoGraph extends Base {
     }
 
 
+    $followingRevision : Map<Revision, Revision>    = undefined
+
     get followingRevision () : Map<Revision, Revision> {
-        return lazyProperty(this, 'followingRevision', () => {
-            const revisions     = Array.from(this.topRevision.previousAxis())
+        if (this.$followingRevision !== undefined) return this.$followingRevision
 
-            const entries : [ Revision, Revision ][]    = []
+        const revisions     = Array.from(this.topRevision.previousAxis())
 
-            for (let i = revisions.length - 1; i > 0; i--)
-                entries.push([ revisions[ i ], revisions[ i - 1 ] ])
+        const entries : [ Revision, Revision ][]    = []
 
-            return new Map(entries)
-        })
+        for (let i = revisions.length - 1; i > 0; i--)
+            entries.push([ revisions[ i ], revisions[ i - 1 ] ])
+
+        return this.$followingRevision = new Map(entries)
     }
 
 
@@ -520,7 +522,7 @@ export class ChronoGraph extends Base {
                 if (listener) listener.trigger(quarkEntry.getValue())
             }
 
-            clearLazyProperty(this, 'followingRevision')
+            this.$followingRevision     = undefined
         } else {
             this.baseRevision           = this.baseRevisionStable
             this.baseRevisionStable     = undefined

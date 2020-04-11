@@ -26,30 +26,6 @@ export const defineProperty = <T extends object, S extends keyof T>(target : T, 
 
 
 //---------------------------------------------------------------------------------------------------------------------
-const Storage   = Symbol('Storage')
-
-export function lazyProperty <T extends object, Property extends keyof T> (target : T, property : Property, builder : () => T[ Property ]) : T[ Property ] {
-    if (!target[ Storage ]) Object.defineProperty(target, Storage, { value : {}, enumerable : false })
-
-    if (target[ Storage ][ property ] !== undefined) return target[ Storage ][ property ]
-
-    return target[ Storage ][ property ] = builder()
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export function clearLazyProperty <T extends object, Property extends keyof T> (target : T, property : Property) : T[ Property ] {
-    if (!target[ Storage ]) Object.defineProperty(target, Storage, { value : {}, enumerable : false })
-
-    const value         = target[ Storage ][ property ]
-
-    target[ Storage ][ property ] = undefined
-
-    return value
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
 export const prototypeValue = (value : any) : PropertyDecorator => {
 
     return function (target : object, propertyKey : string | symbol) : void {
