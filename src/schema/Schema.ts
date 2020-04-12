@@ -83,7 +83,7 @@ export const entityDecoratorBody = <T extends EntityConstructor>(target : T) => 
 /**
  * Entity decorator. It is required to be applied only if entity declares no field.
  * If record declares any field, there no strict need to apply this decorator.
- * Its better to do it anyway, for consistency.
+ * Its better to do this anyway, for consistency.
  *
  * ```ts
  * @entity()

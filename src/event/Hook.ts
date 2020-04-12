@@ -1,10 +1,10 @@
 //---------------------------------------------------------------------------------------------------------------------
-type Listener<Payload extends Array<unknown>> = (...payload : Payload) => any
+export type Listener<Payload extends unknown[]> = (...payload : Payload) => any
 
 export type Disposer = () => any
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Hook<Payload extends Array<unknown>> {
+export class Hook<Payload extends unknown[]> {
     hooks       : Listener<Payload> []  = []
 
 

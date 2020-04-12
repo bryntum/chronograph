@@ -1,5 +1,5 @@
 import { AnyConstructor, Mixin } from "../../src/class/Mixin.js"
-import { Event } from "../../src/event/Events.js"
+import { Event } from "../../src/event/Event.js"
 import { Hook } from "../../src/event/Hook.js"
 
 declare const StartTest : any

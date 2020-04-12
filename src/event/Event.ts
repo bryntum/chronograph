@@ -1,13 +1,11 @@
 //---------------------------------------------------------------------------------------------------------------------
 import { MIN_SMI } from "../util/Helpers.js"
 import { compact, Uniqable } from "../util/Uniqable.js"
+import { Disposer, Listener } from "./Hook.js"
 
-type Listener<Payload extends Array<unknown>> = (...payload : Payload) => any
-
-export type Disposer = () => any
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Event<Payload extends Array<unknown>> {
+export class Event<Payload extends unknown[]> {
     compacted       : boolean                           = false
     listeners       : Listener<Payload> [] & Uniqable[] = []
 
