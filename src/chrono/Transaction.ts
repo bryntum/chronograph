@@ -740,6 +740,8 @@ export class Transaction extends Base {
         const queue                             = this.stackGen
 
         while (queue.length) {
+            // TODO if stack calculation is interrupted with BreakCurrentStackExecution we might be loosing
+            // some identifiers from the queue??
             yield* this.calculateTransitionsStackGen(context, queue.takeLowestLevel())
         }
     }
