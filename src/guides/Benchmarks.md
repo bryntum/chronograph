@@ -7,6 +7,7 @@ To run it, clone the repository, then run the following command in the package d
 
 ```plaintext
 > npm i
+> npx tsc
 > node -r esm ./tests/benchmark/suite.js --expose-gc
 ```
 
