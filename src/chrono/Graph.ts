@@ -441,8 +441,6 @@ export class ChronoGraph extends Base {
      * @param args
      */
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
-        this.unScheduleAutoCommit()
-
         if (this.isCommitting) return this.ongoing
 
         this.isCommitting       = true
@@ -462,14 +460,14 @@ export class ChronoGraph extends Base {
             this.baseRevisionTentative  = undefined
             this.isInitialCommit        = false
 
-            if (result && !result.rejectedWith) this.markAndSweep()
-
             this.isCommitting           = false
         })
     }
 
 
     async doCommitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        this.unScheduleAutoCommit()
+
         const activeTransaction = this.activeTransaction
 
         const transactionResult = await activeTransaction.commitAsync(args)
@@ -502,8 +500,6 @@ export class ChronoGraph extends Base {
                 revision.referenceCount--
             }
 
-            // const previousRevision  = this.baseRevision
-
             this.baseRevision       = this.topRevision = revision
 
             // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
@@ -520,6 +516,8 @@ export class ChronoGraph extends Base {
             }
 
             clearLazyProperty(this, 'followingRevision')
+
+            this.markAndSweep()
         } else {
             this.baseRevision           = this.baseRevisionStable
             this.baseRevisionStable     = undefined
