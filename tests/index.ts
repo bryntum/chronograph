@@ -49,6 +49,7 @@ project.start(
             'chrono/030_propagation.t.js',
             'chrono/030_propagation_2.t.js',
             'chrono/030_transaction_reject.t.js',
+            'chrono/030_iteration.t.js',
             'chrono/031_garbage_collection.t.js',
             'chrono/032_propagation_options.t.js',
             'chrono/032_commit_async.t.js',
