@@ -136,7 +136,7 @@ class Quark extends base {
         this.value                  = origin.value
         this.proposedValue          = origin.proposedValue
         this.proposedArguments      = origin.proposedArguments
-        this.usedProposedOrPrevious  = origin.usedProposedOrPrevious
+        this.usedProposedOrPrevious = origin.usedProposedOrPrevious
     }
 
 

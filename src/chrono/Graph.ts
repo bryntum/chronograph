@@ -418,8 +418,6 @@ export class ChronoGraph extends Base {
 
         this.isInitialCommit    = false
 
-        if (!activeTransaction.rejectedWith) this.markAndSweep()
-
         return result
     }
 
