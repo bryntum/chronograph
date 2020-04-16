@@ -6,7 +6,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Should be able to reject transaction using graph api', async t => {
+    t.it('Should be able to write to graph in the `finalizeCommitAsync`', async t => {
         class CustomGraph extends ChronoGraph {
 
             async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
