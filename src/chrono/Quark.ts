@@ -278,6 +278,9 @@ class Quark extends base {
         if (this.origin && this.origin !== this) throw new Error('Can not set value to the shadow entry')
 
         this.getOrigin().value = value
+
+        // // @ts-ignore
+        // if (value !== TombStone) this.identifier.DATA = value
     }
 
 
