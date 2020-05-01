@@ -2,7 +2,7 @@ import { AnyFunction, Base } from "../class/BetterMixin.js"
 import { concat } from "../collection/Iterator.js"
 import { warn } from "../environment/Debug.js"
 import { CalculationContext, CalculationFunction, CalculationIterator, Context } from "../primitives/Calculation.js"
-import { clearLazyProperty, copySetInto, lazyProperty } from "../util/Helpers.js"
+import { clearLazyProperty, copySetInto, isGeneratorFunction, lazyProperty } from "../util/Helpers.js"
 import {
     BreakCurrentStackExecution,
     Effect,
@@ -581,7 +581,7 @@ export class ChronoGraph extends Base {
      * @param context The [[Identifier.context|context]] property of the newly created identifier
      */
     identifier<ContextT extends Context, ValueT> (calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
-        const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
+        const identifier : Identifier<ValueT, ContextT>  = isGeneratorFunction(calculation) ?
             CalculatedValueGenC<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
             :
             CalculatedValueSyncC<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
