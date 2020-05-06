@@ -357,12 +357,16 @@ class Quark extends base {
 
         while (current) {
             for (const outgoing of current.getOutgoing().values()) {
-                if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                const latestEntry = revision.getLatestEntryFor(outgoing.identifier)
+
+                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
             }
 
             if (current.$outgoingPast !== undefined) {
                 for (const outgoing of current.$outgoingPast.values()) {
-                    if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                    const latestEntry = revision.getLatestEntryFor(outgoing.identifier)
+
+                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
                 }
             }
 
@@ -380,7 +384,9 @@ class Quark extends base {
 
         while (current) {
             for (const outgoing of current.getOutgoing().values()) {
-                if (outgoing.originId === transaction.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                const latestEntry = transaction.getLatestEntryFor(outgoing.identifier)
+
+                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
             }
 
             if (current.isShadow())
