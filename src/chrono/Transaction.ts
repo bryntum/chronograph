@@ -91,6 +91,7 @@ export class Transaction extends Base {
 
         this.walkContext    = TransactionWalkDepth.new({
             visited         : this.entries,
+            transaction     : this,
             baseRevision    : this.baseRevision,
             pushTo          : this.stackGen
         })
@@ -650,6 +651,25 @@ export class Transaction extends Base {
     }
 
 
+    // check the transaction "entries" first, but only return an entry
+    // from that, if it is already calculated, otherwise - take it
+    // from the base revision
+    getLatestStableEntryFor (identifier : Identifier) : Quark {
+        let entry : Quark       = this.entries.get(identifier)
+
+        if (entry) {
+            const value         = entry.getValue()
+
+            if (value === TombStone) return undefined
+
+            return value === undefined ? this.baseRevision.getLatestEntryFor(identifier) : entry
+
+        } else {
+            return this.baseRevision.getLatestEntryFor(identifier)
+        }
+    }
+
+
     addEdge (identifierRead : Identifier, activeEntry : Quark, type : EdgeType) : Quark {
         const identifier    = activeEntry.identifier
 
@@ -688,7 +708,7 @@ export class Transaction extends Base {
         const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
         if (sameAsPrevious) {
-            previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, previousOutgoingEntry => {
+            previousEntry.outgoingInTheFutureAndPastTransactionCb(this, previousOutgoingEntry => {
                 const outgoingEntry = this.entries.get(previousOutgoingEntry.identifier)
 
                 if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -858,7 +878,7 @@ export class Transaction extends Base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastTransactionCb(this, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -976,7 +996,7 @@ export class Transaction extends Base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastTransactionCb(this, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--

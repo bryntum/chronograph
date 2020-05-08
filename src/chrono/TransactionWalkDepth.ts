@@ -4,6 +4,7 @@ import { LeveledQueue } from "../util/LeveledQueue.js"
 import { Identifier, Levels } from "./Identifier.js"
 import { Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
+import { Transaction } from "./Transaction.js"
 
 
 export type WalkStep = Identifier
@@ -12,6 +13,7 @@ export type WalkStep = Identifier
 export class TransactionWalkDepth extends Base {
     visited         : Map<Identifier, Quark>    = new Map()
 
+    transaction     : Transaction               = undefined
     baseRevision    : Revision                  = undefined
 
     pushTo          : LeveledQueue<Quark>       = undefined
@@ -76,7 +78,7 @@ export class TransactionWalkDepth extends Base {
             // will have the `previous` property populated
             visitInfo.previous      = latestEntry
 
-            latestEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoingEntry => {
+            latestEntry.outgoingInTheFutureAndPastTransactionCb(this.transaction, outgoingEntry => {
                 this.doCollectNext(from, outgoingEntry.identifier, toVisit)
             })
         }

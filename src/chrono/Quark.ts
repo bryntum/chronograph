@@ -378,6 +378,33 @@ class Quark extends base {
     }
 
 
+    outgoingInTheFutureAndPastTransactionCb (transaction : Transaction, forEach : (quark : Quark) => any) {
+        let current : Quark = this
+
+        while (current) {
+            for (const outgoing of current.getOutgoing().values()) {
+                const latestEntry = transaction.getLatestStableEntryFor(outgoing.identifier)
+
+                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+            }
+
+            if (current.$outgoingPast !== undefined) {
+                for (const outgoing of current.$outgoingPast.values()) {
+                    const latestEntry = transaction.getLatestStableEntryFor(outgoing.identifier)
+
+                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+                }
+            }
+
+            if (current.isShadow())
+                current     = current.previous
+            else
+                current     = null
+        }
+    }
+
+
+
     // ignores the "past" edges by design, as they do not form cycles
     outgoingInTheFutureTransactionCb (transaction : Transaction, forEach : (quark : Quark) => any) {
         let current : Quark = this
