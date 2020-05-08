@@ -388,7 +388,7 @@ export class Transaction extends Base {
             if (dirtyQuark.proposedValue !== undefined) return dirtyQuark.proposedValue
         }
 
-        return this.read(identifier)
+        return this.readPrevious(identifier)
     }
 
 
@@ -403,7 +403,7 @@ export class Transaction extends Base {
             if (dirtyQuark.proposedValue !== undefined) return dirtyQuark.proposedValue
         }
 
-        return this.readAsync(identifier)
+        return this.readPreviousAsync(identifier)
     }
 
 
