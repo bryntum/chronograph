@@ -1,7 +1,8 @@
-import { ProposedOrPrevious } from "../../src/chrono/Effect.js"
+import { HasProposedValue, ProposedOrPrevious, ProposedValueOf } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync } from "../../src/chrono/Identifier.js"
 import { Revision } from "../../src/chrono/Revision.js"
+import { Transaction } from "../../src/chrono/Transaction.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 
 declare const StartTest : any
@@ -152,7 +153,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should not use stale deep history', async t => {
+    t.iit('Should not use stale deep history', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableNamed('i1', 0)
@@ -169,7 +170,7 @@ StartTest(t => {
 
         graph1.commit()
 
-        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated #1")
 
         // ----------------
         const c1Spy         = t.spyOn(c1, 'calculation')
@@ -180,7 +181,7 @@ StartTest(t => {
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
-        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Original branch not affected")
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Correct result calculated #2")
 
         t.expect(c1Spy).toHaveBeenCalled(1)
 
@@ -193,7 +194,7 @@ StartTest(t => {
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
-        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, i2, 2 ], "Correct result calculated")
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, i2, 2 ], "Correct result calculated #3")
 
         t.expect(c1Spy).toHaveBeenCalled(0)
     })
@@ -344,16 +345,44 @@ StartTest(t => {
         t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 0, 1, 1, 2, 3 ], "Correct result calculated")
 
         // ----------------
-        const c1Spy         = t.spyOn(Revision.prototype, 'calculateLazyQuarkEntry')
+        const c1Spy         = t.spyOn(Transaction.prototype, 'calculateTransitionsStackSync')
 
         graph1.write(i1, 1)
 
         graph1.commit()
 
-        // reading `c3` should calculate `c2` and `c1` inside the `calculateTransitionsStack`, not as separate
-        // calls to `calculateLazyEntry`
+        // reading `c3` should calculate `c2` and `c1` inside the `calculateTransitionsStack` once, not as
+        // separate calls for every lazy identifier
         t.isDeeply([ c3 ].map(node => graph1.read(node)), [ 4 ], "Correct result calculated")
 
         t.expect(c1Spy).toHaveBeenCalled(1)
     })
+
+
+    t.it('Should calculate lazy identifiers in the current transaction', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1            = graph1.addIdentifier(CalculatedValueGen.new({
+            name            : 'i1',
+            calculation     : function * () : CalculationIterator<number> {
+                return yield ProposedOrPrevious
+            }
+        }))
+
+        const c1            = graph1.addIdentifier(CalculatedValueGen.new({
+            name            : 'c1',
+            lazy            : true,
+            calculation     : function * () : CalculationIterator<number> {
+                return (yield ProposedValueOf(i1)) != null ? 1 : 0
+            }
+        }))
+
+        graph1.commit()
+
+        // ----------------
+        graph1.write(i1, 1)
+
+        t.is(graph1.read(c1), 1)
+    })
+
 })
