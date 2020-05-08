@@ -869,7 +869,7 @@ export class ChronoGraph extends Base {
         if (proposedValue !== undefined) return proposedValue
 
         // newly added identifier
-        if (!activeEntry.previous) return null
+        if (!activeEntry.previous) return undefined
 
         const identifier        = activeEntry.identifier
 

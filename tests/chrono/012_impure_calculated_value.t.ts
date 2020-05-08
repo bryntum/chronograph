@@ -222,6 +222,27 @@ StartTest(t => {
     })
 
 
+    t.it('`ProposedOrPrevious` for newly added calculable identifier w/o value should return `undefined`', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new()
+
+        let called = false
+
+        const var1      = graph.identifier(function * () : CalculationIterator<number> {
+            called = true
+
+            const proposedValue : number    = yield ProposedOrPrevious
+
+            t.isStrict(proposedValue, undefined, "No proposed value")
+
+            return proposedValue || 10
+        })
+
+        t.is(graph.read(var1), 10, 'Correct value #1')
+
+        t.ok(called, 'Calculation called')
+    })
+
+
     t.it('Lazily calculated impure identifier, generators', async t => {
         const graph : ChronoGraph   = ChronoGraph.new()
 
