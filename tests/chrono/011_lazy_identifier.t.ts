@@ -153,7 +153,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should not use stale deep history', async t => {
+    t.it('Should not use stale deep history', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = graph1.variableNamed('i1', 0)
