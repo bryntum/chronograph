@@ -233,7 +233,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
 
 
     /**
-     * Template method, which is called, when this identifier first "enters" the graph.
+     * Template method, which is called, when this identifier "enters" the graph.
      *
      * @param graph
      */

@@ -262,7 +262,7 @@ StartTest(t => {
     })
 
 
-    t.todo('Should be able to add the removed entity back during the same transaction', async t => {
+    t.it('Should be able to add the removed entity back during the same transaction', async t => {
         const schema            = Schema.new({ name : 'Cool data schema' })
 
         const entity            = schema.getEntityDecorator()

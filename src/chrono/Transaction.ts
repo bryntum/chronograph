@@ -496,8 +496,29 @@ export class Transaction extends Base {
     }
 
 
+    // touchInvalidate (identifier : Identifier) : Quark {
+    //     const existingEntry         = this.entries.get(identifier)
+    //
+    //     if (existingEntry && existingEntry.hasValue()) {
+    //         this.walkContext.startNewEpoch()
+    //     }
+    //
+    //     if (!existingEntry || existingEntry.visitEpoch < this.walkContext.currentEpoch) this.walkContext.continueFrom([ identifier ])
+    //
+    //     const entry                 = existingEntry || this.entries.get(identifier)
+    //
+    //     entry.forceCalculation()
+    //
+    //     return entry
+    // }
+
+
     hasIdentifier (identifier : Identifier) : boolean {
-        return Boolean(this.entries.get(identifier) || this.baseRevision.getLatestEntryFor(identifier))
+        const activeEntry = this.entries.get(identifier)
+
+        if (activeEntry && activeEntry.getValue() === TombStone) return false
+
+        return Boolean(activeEntry || this.baseRevision.getLatestEntryFor(identifier))
     }
 
 
@@ -526,6 +547,11 @@ export class Transaction extends Base {
             entry.startOrigin()
             identifier.write.call(identifier.context || identifier, identifier, this, entry, proposedValue === undefined && isVariable ? null : proposedValue, ...args)
         }
+
+        // if we are re-adding the same identifier in the same transaction, clear the TombStone flag
+        if (entry.getValue() === TombStone) entry.value = undefined
+
+        identifier.enterGraph(this.graph)
 
         return entry
     }

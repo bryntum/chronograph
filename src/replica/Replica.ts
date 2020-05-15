@@ -1,4 +1,5 @@
 import { ChronoGraph } from "../chrono/Graph.js"
+import { Identifier } from "../chrono/Identifier.js"
 import { ClassUnion, Mixin } from "../class/BetterMixin.js"
 import { Schema } from "../schema/Schema.js"
 import { Entity } from "./Entity.js"
@@ -89,5 +90,16 @@ class Replica extends base {
     removeEntities (entities : Entity[]) {
         entities.forEach(entity => this.removeEntity(entity))
     }
+
+
+    removeIdentifier (identifier : Identifier) {
+        const entry = this.activeTransaction.getLatestStableEntryFor(identifier)
+
+        // @ts-ignore
+        if (entry) identifier.DATA = entry.getValue()
+
+        super.removeIdentifier(identifier)
+    }
+
 
 }){}
