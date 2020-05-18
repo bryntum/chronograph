@@ -77,6 +77,15 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     }
 
 
+    leaveGraph (graph : ChronoGraph) {
+        const entry = graph.activeTransaction.getLatestStableEntryFor(this)
+
+        if (entry) this.DATA = entry.getValue()
+
+        super.leaveGraph(graph)
+    }
+
+
     toString () : string {
         return this.name
     }

@@ -90,16 +90,4 @@ class Replica extends base {
     removeEntities (entities : Entity[]) {
         entities.forEach(entity => this.removeEntity(entity))
     }
-
-
-    removeIdentifier (identifier : Identifier) {
-        const entry = this.activeTransaction.getLatestStableEntryFor(identifier)
-
-        // @ts-ignore
-        if (entry) identifier.DATA = entry.getValue()
-
-        super.removeIdentifier(identifier)
-    }
-
-
 }){}
