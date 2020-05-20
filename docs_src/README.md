@@ -10,7 +10,7 @@ ChronoGraph has the following properties:
 
 - Cancelable transactions
 - O(1) undo/redo
-- lazy/eager, sync/async computations
+- Lazy/strict, sync/async computations
 - Data branching
 - Mixed computational unit (user input/calculated value)
 - Unlimited stack depth
