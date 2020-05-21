@@ -1,3 +1,4 @@
+import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueSync, Levels, QuarkSync } from "../chrono/Identifier.js"
 import { Quark, QuarkConstructor, TombStone } from "../chrono/Quark.js"
 import { Transaction } from "../chrono/Transaction.js"
@@ -105,7 +106,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
             const baseRevision  = transaction.baseRevision
 
-            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this, transaction.graph)
+            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = transaction.readPrevious(this)
         }
 
 
@@ -121,7 +122,7 @@ export class ReferenceBucketIdentifier extends Mixin(
 
             const baseRevision  = transaction.baseRevision
 
-            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = baseRevision.read(this, transaction.graph)
+            if (!quark.previousValue && baseRevision.hasIdentifier(this)) quark.previousValue = transaction.readPrevious(this)
         }
 
 
@@ -141,6 +142,13 @@ export class ReferenceBucketIdentifier extends Mixin(
             }
 
             return newValue
+        }
+
+
+        leaveGraph (graph : ChronoGraph) {
+            super.leaveGraph(graph)
+
+            this.DATA = undefined
         }
     }
 

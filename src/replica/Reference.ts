@@ -110,6 +110,20 @@ export class ReferenceIdentifier extends Mixin(
         }
 
 
+        enterGraph (graph : ChronoGraph) {
+            if (this.hasBucket()) {
+                const value  = graph.activeTransaction.readProposedOrPrevious(this) as Entity
+
+                if (value instanceof Entity) {
+                    // should probably involve `touchInvalidate` here
+                    this.getBucket(value).addToBucket(graph.activeTransaction, this.self)
+                }
+            }
+
+            super.enterGraph(graph)
+        }
+
+
         leaveGraph (graph : ChronoGraph) {
             if (this.hasBucket()) {
                 // here we only need to remove from the "previous", "stable" bucket, because
@@ -137,7 +151,7 @@ export class ReferenceIdentifier extends Mixin(
                     }
                 }
                 else if (transaction.baseRevision.hasIdentifier(me)) {
-                    const value  = transaction.baseRevision.read(me, transaction.graph) as Entity
+                    const value  = transaction.readPrevious(me) as Entity
 
                     if (value instanceof Entity) {
                         me.getBucket(value).removeFromBucket(transaction, me.self)

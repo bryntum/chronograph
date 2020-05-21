@@ -53,7 +53,12 @@ StartTest(t => {
         //--------------------
         replica1.removeEntity(tomSoyer)
 
-        t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
+        t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference #3')
+
+        //--------------------
+        replica1.addEntity(tomSoyer)
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference #4')
     })
 
 
@@ -112,6 +117,13 @@ StartTest(t => {
         replica1.commit()
 
         t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference')
+
+        //--------------------
+        replica1.addEntity(tomSoyer)
+
+        replica1.commit()
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference')
     })
 
 

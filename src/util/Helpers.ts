@@ -70,3 +70,19 @@ export const allMatches = function (regexp : RegExp, testStr : string) : string[
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+declare const regeneratorRuntime : any
+
+let isRegeneratorRuntime : boolean | null = null
+
+export const isGeneratorFunction = function (func : any) : boolean {
+    if (isRegeneratorRuntime === null) isRegeneratorRuntime = typeof regeneratorRuntime !== 'undefined'
+
+    if (isRegeneratorRuntime === true) {
+        return regeneratorRuntime.isGeneratorFunction(func)
+    } else {
+        return func.constructor.name === 'GeneratorFunction'
+    }
+}
+
+

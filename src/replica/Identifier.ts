@@ -52,7 +52,7 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     getFromGraph (graph : Replica) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
         if (graph) {
             if (graph.readMode === ReadMode.Current) return graph.get(this)
-            if (graph.readMode === ReadMode.Previous) return graph.baseRevision.get(this, graph)
+            if (graph.readMode === ReadMode.Previous) return graph.activeTransaction.readPrevious(this)
             if (graph.readMode === ReadMode.ProposedOrPrevious) graph.activeTransaction.readProposedOrPrevious(this)
 
             return graph.activeTransaction.readCurrentOrProposedOrPrevious(this)
@@ -74,6 +74,15 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
             graph.write(this, proposedValue, ...args)
         else
             this.DATA = proposedValue
+    }
+
+
+    leaveGraph (graph : ChronoGraph) {
+        const entry = graph.activeTransaction.getLatestStableEntryFor(this)
+
+        if (entry) this.DATA = entry.getValue()
+
+        super.leaveGraph(graph)
     }
 
 

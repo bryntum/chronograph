@@ -13,10 +13,14 @@ StartTest(t => {
 
         const var1      = graph.variableNamed('v1', 1)
 
+        let count       = 0
+
         const iden1     = graph.addIdentifier(CalculatedValueGen.new({
             sync        : false,
 
             *calculation (YIELD : SyncEffectHandler) : CalculationIterator<number> {
+                count++
+
                 yield delay(10)
 
                 return (yield var1) + 1
@@ -29,6 +33,7 @@ StartTest(t => {
 
         t.is(await promise1, 2, 'Correct value')
         t.is(await promise2, 2, 'Correct value')
+        t.is(count, 1, 'Calculated once')
     })
 
 

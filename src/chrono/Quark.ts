@@ -136,7 +136,7 @@ class Quark extends base {
         this.value                  = origin.value
         this.proposedValue          = origin.proposedValue
         this.proposedArguments      = origin.proposedArguments
-        this.usedProposedOrPrevious  = origin.usedProposedOrPrevious
+        this.usedProposedOrPrevious = origin.usedProposedOrPrevious
     }
 
 
@@ -189,36 +189,36 @@ class Quark extends base {
     }
 
 
-    mergePreviousIntoItself () {
-        const origin                = this.origin
-
-        if (origin === this.previous) {
-            this.mergePreviousOrigin(this)
-        } else {
-
-        }
-
-        // this.copyFrom(origin)
-        //
-        // const outgoing              = this.getOutgoing()
-        //
-        // for (const [ identifier, quark ] of origin.getOutgoing()) {
-        //     const ownOutgoing       = outgoing.get(identifier)
-        //
-        //     if (!ownOutgoing) {
-        //         const latest        = latestScope.get(identifier)
-        //
-        //         if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
-        //     }
-        // }
-        //
-        // // changing `origin`, but keeping `originId`
-        // this.origin                 = this
-        //
-        // // some help for garbage collector
-        // origin.clearProperties()
-        // origin.clear()
-    }
+    // mergePreviousIntoItself () {
+    //     const origin                = this.origin
+    //
+    //     if (origin === this.previous) {
+    //         this.mergePreviousOrigin(this)
+    //     } else {
+    //
+    //     }
+    //
+    //     // this.copyFrom(origin)
+    //     //
+    //     // const outgoing              = this.getOutgoing()
+    //     //
+    //     // for (const [ identifier, quark ] of origin.getOutgoing()) {
+    //     //     const ownOutgoing       = outgoing.get(identifier)
+    //     //
+    //     //     if (!ownOutgoing) {
+    //     //         const latest        = latestScope.get(identifier)
+    //     //
+    //     //         if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
+    //     //     }
+    //     // }
+    //     //
+    //     // // changing `origin`, but keeping `originId`
+    //     // this.origin                 = this
+    //     //
+    //     // // some help for garbage collector
+    //     // origin.clearProperties()
+    //     // origin.clear()
+    // }
 
 
     setOrigin (origin : Quark) {
@@ -278,6 +278,9 @@ class Quark extends base {
         if (this.origin && this.origin !== this) throw new Error('Can not set value to the shadow entry')
 
         this.getOrigin().value = value
+
+        // // @ts-ignore
+        // if (value !== TombStone) this.identifier.DATA = value
     }
 
 
@@ -354,12 +357,16 @@ class Quark extends base {
 
         while (current) {
             for (const outgoing of current.getOutgoing().values()) {
-                if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                const latestEntry = revision.getLatestEntryFor(outgoing.identifier)
+
+                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
             }
 
             if (current.$outgoingPast !== undefined) {
                 for (const outgoing of current.$outgoingPast.values()) {
-                    if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                    const latestEntry = revision.getLatestEntryFor(outgoing.identifier)
+
+                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
                 }
             }
 
@@ -371,12 +378,42 @@ class Quark extends base {
     }
 
 
+    outgoingInTheFutureAndPastTransactionCb (transaction : Transaction, forEach : (quark : Quark) => any) {
+        let current : Quark = this
+
+        while (current) {
+            for (const outgoing of current.getOutgoing().values()) {
+                const latestEntry = transaction.getLatestStableEntryFor(outgoing.identifier)
+
+                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+            }
+
+            if (current.$outgoingPast !== undefined) {
+                for (const outgoing of current.$outgoingPast.values()) {
+                    const latestEntry = transaction.getLatestStableEntryFor(outgoing.identifier)
+
+                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+                }
+            }
+
+            if (current.isShadow())
+                current     = current.previous
+            else
+                current     = null
+        }
+    }
+
+
+
+    // ignores the "past" edges by design, as they do not form cycles
     outgoingInTheFutureTransactionCb (transaction : Transaction, forEach : (quark : Quark) => any) {
         let current : Quark = this
 
         while (current) {
             for (const outgoing of current.getOutgoing().values()) {
-                if (outgoing.originId === transaction.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                const latestEntry = transaction.getLatestEntryFor(outgoing.identifier)
+
+                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
             }
 
             if (current.isShadow())

@@ -35,7 +35,7 @@ StartTest(t => {
         const var1      = graph1.variable(0)
 
         const iden1     = graph1.identifier(function * () {
-            yield var1
+            return yield var1
         })
 
         t.livesOk(() => graph1.read(var1))
@@ -57,4 +57,31 @@ StartTest(t => {
     })
 
 
+    t.it('Remove identifier', async t => {
+        const graph1 : ChronoGraph   = ChronoGraph.new()
+
+        const var1      = graph1.variable(0)
+
+        const iden1     = graph1.identifier(function * () {
+            return (yield var1) + 1
+        })
+
+        const iden2     = graph1.identifier(function * () {
+            return (yield iden1) + 1
+        })
+
+        t.is(graph1.read(iden2), 2)
+
+        graph1.commit()
+
+        // remove identifier with incoming edge and commit
+        graph1.removeIdentifier(iden2)
+
+        graph1.commit()
+
+        // should not trigger a crash
+        graph1.write(var1, 1)
+
+        t.is(graph1.read(iden1), 2)
+    })
 })

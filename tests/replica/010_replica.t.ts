@@ -215,7 +215,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Replica async', async t => {
+    t.it('Replica async', async t => {
         const schema            = Schema.new({ name : 'Cool data schema' })
 
         const entity            = schema.getEntityDecorator()
@@ -260,4 +260,48 @@ StartTest(t => {
 
         t.is(await markTwain.fullName, 'MARK Twain', 'Correct name calculated')
     })
+
+
+    t.it('Should be able to add the removed entity back during the same transaction', async t => {
+        const schema            = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = schema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity.mix(Base) {
+            @field()
+            firstName       : string
+
+            @field()
+            lastName        : string
+        }
+
+        const replica1          = Replica.new({ schema : schema })
+
+        const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
+
+        t.is(markTwain.firstName, 'Mark', 'Correct data after creation')
+        t.is(markTwain.lastName, 'Twain')
+
+        replica1.addEntity(markTwain)
+
+        t.is(markTwain.firstName, 'Mark', 'Correct data after add to graph')
+        t.is(markTwain.lastName, 'Twain')
+
+        replica1.commit()
+
+        t.is(markTwain.firstName, 'Mark', 'Correct data after commit')
+        t.is(markTwain.lastName, 'Twain')
+
+        replica1.removeEntity(markTwain)
+
+        t.is(markTwain.firstName, 'Mark', 'Correct data after remove')
+        t.is(markTwain.lastName, 'Twain')
+
+        replica1.addEntity(markTwain)
+
+        t.is(markTwain.firstName, 'Mark', 'Correct data after add back')
+        t.is(markTwain.lastName, 'Twain')
+    })
+
 })

@@ -3,7 +3,7 @@ import { AnyFunction } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { warn } from "../environment/Debug.js"
 import { CalculationContext, CalculationFunction, CalculationIterator, Context } from "../primitives/Calculation.js"
-import { copySetInto } from "../util/Helpers.js"
+import { clearLazyProperty, copySetInto, isGeneratorFunction, lazyProperty } from "../util/Helpers.js"
 import {
     BreakCurrentStackExecution,
     Effect,
@@ -421,8 +421,6 @@ export class ChronoGraph extends Base {
 
         this.isInitialCommit    = false
 
-        if (!activeTransaction.rejectedWith) this.markAndSweep()
-
         return result
     }
 
@@ -444,8 +442,6 @@ export class ChronoGraph extends Base {
      * @param args
      */
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
-        this.unScheduleAutoCommit()
-
         if (this.isCommitting) return this.ongoing
 
         this.isCommitting       = true
@@ -465,14 +461,14 @@ export class ChronoGraph extends Base {
             this.baseRevisionTentative  = undefined
             this.isInitialCommit        = false
 
-            if (result && !result.rejectedWith) this.markAndSweep()
-
             this.isCommitting           = false
         })
     }
 
 
     async doCommitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        this.unScheduleAutoCommit()
+
         const activeTransaction = this.activeTransaction
 
         const transactionResult = await activeTransaction.commitAsync(args)
@@ -505,8 +501,6 @@ export class ChronoGraph extends Base {
                 revision.referenceCount--
             }
 
-            // const previousRevision  = this.baseRevision
-
             this.baseRevision       = this.topRevision = revision
 
             // activating listeners BEFORE the `markAndSweep`, because in that call, `baseRevision`
@@ -523,6 +517,8 @@ export class ChronoGraph extends Base {
             }
 
             this.$followingRevision     = undefined
+
+            this.markAndSweep()
         } else {
             this.baseRevision           = this.baseRevisionStable
             this.baseRevisionStable     = undefined
@@ -588,7 +584,7 @@ export class ChronoGraph extends Base {
      * @param context The [[Identifier.context|context]] property of the newly created identifier
      */
     identifier<ContextT extends Context, ValueT> (calculation : CalculationFunction<ContextT, ValueT, any, [ CalculationContext<any>, ...any[] ]>, context? : any) : Identifier<ValueT, ContextT> {
-        const identifier : Identifier<ValueT, ContextT>  = calculation.constructor.name === 'GeneratorFunction' ?
+        const identifier : Identifier<ValueT, ContextT>  = isGeneratorFunction(calculation) ?
             CalculatedValueGenC<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
             :
             CalculatedValueSyncC<ValueT>({ calculation, context }) as Identifier<ValueT, ContextT>
@@ -702,7 +698,7 @@ export class ChronoGraph extends Base {
     // Synchronous read can not calculate lazy asynchronous identifiers and will throw exception
     // Lazy identifiers supposed to be "total" (or accept repeating observes?)
     readPrevious<T> (identifier : Identifier<T>) : T {
-        return this.baseRevision.read(identifier, this)
+        return this.activeTransaction.readPrevious(identifier)
     }
 
 
@@ -710,7 +706,7 @@ export class ChronoGraph extends Base {
     // Asynchronous read can calculate both synchornous and asynchronous lazy identifiers.
     // Lazy identifiers supposed to be "total" (or accept repeating observes?)
     readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
-        return this.baseRevision.readAsync(identifier, this)
+        return this.activeTransaction.readPreviousAsync(identifier)
     }
 
 
@@ -868,22 +864,27 @@ export class ChronoGraph extends Base {
 
 
     [ProposedOrPreviousSymbol] (effect : Effect, transaction : Transaction) : any {
-        const activeEntry   = transaction.getActiveEntry()
+        const activeEntry       = transaction.getActiveEntry()
         activeEntry.usedProposedOrPrevious = true
 
         const proposedValue     = activeEntry.getProposedValue(transaction)
 
         if (proposedValue !== undefined) return proposedValue
 
-        const baseRevision      = transaction.baseRevision
-        const identifier        = activeEntry.identifier
-        const latestEntry       = baseRevision.getLatestEntryFor(identifier)
+        // newly added identifier
+        if (!activeEntry.previous) return undefined
 
-        if (latestEntry === activeEntry) {
-            return baseRevision.previous ? baseRevision.previous.read(identifier, this) : undefined
-        } else {
-            return latestEntry ? baseRevision.read(identifier, this) : undefined
+        const identifier        = activeEntry.identifier
+
+        if (identifier.lazy) {
+            if (activeEntry.previous.hasValue()) return activeEntry.previous.getValue()
+
+            if (activeEntry.previous.hasProposedValue()) return activeEntry.previous.getProposedValue(transaction)
+
+            return null
         }
+
+        return transaction.readPrevious(activeEntry.identifier)
     }
 
 
@@ -967,7 +968,7 @@ export class ChronoGraph extends Base {
 
         transaction.addEdge(source, activeEntry, EdgeTypePast)
 
-        return transaction.baseRevision.readIfExists(source, this)
+        return transaction.readPrevious(source)
     }
 
 
@@ -1013,7 +1014,7 @@ export class ChronoGraph extends Base {
 
 
     [UnsafePreviousValueOfSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
-        return transaction.baseRevision.readIfExistsAsync(effect.identifier, transaction.graph)
+        return transaction.readPrevious(effect.identifier)
     }
 
 

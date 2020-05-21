@@ -91,6 +91,7 @@ export class Transaction extends Base {
 
         this.walkContext    = TransactionWalkDepth.new({
             visited         : this.entries,
+            transaction     : this,
             baseRevision    : this.baseRevision,
             pushTo          : this.stackGen
         })
@@ -152,7 +153,6 @@ export class Transaction extends Base {
 
     yieldAsync (effect : Effect) : Promise<any> {
         if (effect instanceof Promise) return effect
-            // throw new Error("Effect resolved to promise in the synchronous context, check that you marked the asynchronous calculations accordingly")
 
         return this.graph[ effect.handler ](effect, this)
     }
@@ -160,6 +160,10 @@ export class Transaction extends Base {
 
     // see the comment for the `onEffectSync`
     yieldSync (effect : Effect) : any {
+        if (effect instanceof Promise) {
+            throw new Error("Can not yield a promise in the synchronous context")
+        }
+
         return this.graph[ effect.handler ](effect, this)
     }
 
@@ -184,7 +188,13 @@ export class Transaction extends Base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.readAsync(identifier, this.graph)
+            if (!entry) {
+                const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+
+                if (!previousEntry) throwUnknownIdentifier(identifier)
+
+                entry = previousEntry.hasValue() ? previousEntry : this.touch(identifier)
+            }
         }
 
         if (entry.hasValue()) return entry.getValue()
@@ -233,7 +243,13 @@ export class Transaction extends Base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.get(identifier, this.graph)
+            if (!entry) {
+                const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+
+                if (!previousEntry) throwUnknownIdentifier(identifier)
+
+                entry = previousEntry.hasValue() ? previousEntry : this.touch(identifier)
+            }
         }
 
         const value1        = entry.getValue()
@@ -325,7 +341,13 @@ export class Transaction extends Base {
         } else {
             entry           = this.entries.get(identifier)
 
-            if (!entry) return this.baseRevision.read(identifier, this.graph)
+            if (!entry) {
+                const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+
+                if (!previousEntry) throwUnknownIdentifier(identifier)
+
+                entry = previousEntry.hasValue() ? previousEntry : this.touch(identifier)
+            }
         }
 
         const value1        = entry.getValue()
@@ -333,7 +355,7 @@ export class Transaction extends Base {
         if (value1 === TombStone) throwUnknownIdentifier(identifier)
         if (value1 !== undefined) return value1
 
-        if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
+        // if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
 
         // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
         // now need to repeat the logic
@@ -366,7 +388,7 @@ export class Transaction extends Base {
             if (dirtyQuark.proposedValue !== undefined) return dirtyQuark.proposedValue
         }
 
-        return this.baseRevision.readIfExists(identifier, this.graph)
+        return this.readPrevious(identifier)
     }
 
 
@@ -381,7 +403,29 @@ export class Transaction extends Base {
             if (dirtyQuark.proposedValue !== undefined) return dirtyQuark.proposedValue
         }
 
-        return this.baseRevision.readIfExistsAsync(identifier, this.graph)
+        return this.readPreviousAsync(identifier)
+    }
+
+
+    readPrevious<T> (identifier : Identifier<T>) : T {
+        const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+
+        if (!previousEntry) return undefined
+
+        const value         = previousEntry.getValue()
+
+        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
+    }
+
+
+    readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
+        const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+
+        if (!previousEntry) return undefined
+
+        const value         = previousEntry.getValue()
+
+        return value !== TombStone ? (value !== undefined ? value : this.readAsync(identifier)) : undefined
     }
 
 
@@ -390,8 +434,9 @@ export class Transaction extends Base {
 
         if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
             return dirtyQuark.proposedValue
-        } else
-            return this.baseRevision.readIfExists(identifier, this.graph)
+        } else {
+            return this.readPrevious(identifier)
+        }
     }
 
 
@@ -400,8 +445,9 @@ export class Transaction extends Base {
 
         if (dirtyQuark && dirtyQuark.proposedValue !== undefined) {
             return dirtyQuark.proposedValue
-        } else
-            return this.baseRevision.readIfExistsAsync(identifier, this.graph)
+        } else {
+            return this.readPreviousAsync(identifier)
+        }
     }
 
 
@@ -450,8 +496,29 @@ export class Transaction extends Base {
     }
 
 
+    // touchInvalidate (identifier : Identifier) : Quark {
+    //     const existingEntry         = this.entries.get(identifier)
+    //
+    //     if (existingEntry && existingEntry.hasValue()) {
+    //         this.walkContext.startNewEpoch()
+    //     }
+    //
+    //     if (!existingEntry || existingEntry.visitEpoch < this.walkContext.currentEpoch) this.walkContext.continueFrom([ identifier ])
+    //
+    //     const entry                 = existingEntry || this.entries.get(identifier)
+    //
+    //     entry.forceCalculation()
+    //
+    //     return entry
+    // }
+
+
     hasIdentifier (identifier : Identifier) : boolean {
-        return Boolean(this.entries.get(identifier) || this.baseRevision.getLatestEntryFor(identifier))
+        const activeEntry = this.entries.get(identifier)
+
+        if (activeEntry && activeEntry.getValue() === TombStone) return false
+
+        return Boolean(activeEntry || this.baseRevision.getLatestEntryFor(identifier))
     }
 
 
@@ -480,6 +547,11 @@ export class Transaction extends Base {
             entry.startOrigin()
             identifier.write.call(identifier.context || identifier, identifier, this, entry, proposedValue === undefined && isVariable ? null : proposedValue, ...args)
         }
+
+        // if we are re-adding the same identifier in the same transaction, clear the TombStone flag
+        if (entry.getValue() === TombStone) entry.value = undefined
+
+        identifier.enterGraph(this.graph)
 
         return entry
     }
@@ -605,6 +677,25 @@ export class Transaction extends Base {
     }
 
 
+    // check the transaction "entries" first, but only return an entry
+    // from that, if it is already calculated, otherwise - take it
+    // from the base revision
+    getLatestStableEntryFor (identifier : Identifier) : Quark {
+        let entry : Quark       = this.entries.get(identifier)
+
+        if (entry) {
+            const value         = entry.getValue()
+
+            if (value === TombStone) return undefined
+
+            return value === undefined ? this.baseRevision.getLatestEntryFor(identifier) : entry
+
+        } else {
+            return this.baseRevision.getLatestEntryFor(identifier)
+        }
+    }
+
+
     addEdge (identifierRead : Identifier, activeEntry : Quark, type : EdgeType) : Quark {
         const identifier    = activeEntry.identifier
 
@@ -643,7 +734,7 @@ export class Transaction extends Base {
         const sameAsPrevious    = Boolean(previousEntry && previousEntry.hasValue() && identifier.equality(value, previousEntry.getValue()))
 
         if (sameAsPrevious) {
-            previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, previousOutgoingEntry => {
+            previousEntry.outgoingInTheFutureAndPastTransactionCb(this, previousOutgoingEntry => {
                 const outgoingEntry = this.entries.get(previousOutgoingEntry.identifier)
 
                 if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -815,7 +906,7 @@ export class Transaction extends Base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastTransactionCb(this, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--
@@ -933,7 +1024,7 @@ export class Transaction extends Base {
 
                 const previousEntry = entry.previous
 
-                previousEntry && previousEntry.outgoingInTheFutureAndPastCb(this.baseRevision, outgoing => {
+                previousEntry && previousEntry.outgoingInTheFutureAndPastTransactionCb(this, outgoing => {
                     const outgoingEntry     = entries.get(outgoing.identifier)
 
                     if (outgoingEntry) outgoingEntry.edgesFlow--

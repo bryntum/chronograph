@@ -2,6 +2,7 @@ import { Meta } from "../chrono/Identifier.js"
 import { AnyFunction } from "../class/Mixin.js"
 import { Context } from "../primitives/Calculation.js"
 import { FieldIdentifierConstructor, MinimalFieldIdentifierGen, MinimalFieldIdentifierSync, MinimalFieldVariable } from "../replica/Identifier.js"
+import { isGeneratorFunction } from "../util/Helpers.js"
 import { EntityMeta } from "./EntityMeta.js"
 
 /**
@@ -43,7 +44,7 @@ export class Field<ValueT = any, ContextT extends Context = Context> extends Met
 
         if (!calculationFunction) return MinimalFieldVariable
 
-        return calculationFunction.constructor.name === 'GeneratorFunction' ? MinimalFieldIdentifierGen : MinimalFieldIdentifierSync
+        return isGeneratorFunction(calculationFunction) ? MinimalFieldIdentifierGen : MinimalFieldIdentifierSync
     }
 }
 
