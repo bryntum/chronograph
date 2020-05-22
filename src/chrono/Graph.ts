@@ -3,7 +3,7 @@ import { AnyFunction } from "../class/Mixin.js"
 import { concat } from "../collection/Iterator.js"
 import { warn } from "../environment/Debug.js"
 import { CalculationContext, CalculationFunction, CalculationIterator, Context } from "../primitives/Calculation.js"
-import { clearLazyProperty, copySetInto, isGeneratorFunction, lazyProperty } from "../util/Helpers.js"
+import { copySetInto, isGeneratorFunction } from "../util/Helpers.js"
 import {
     BreakCurrentStackExecution,
     Effect,
@@ -646,7 +646,7 @@ export class ChronoGraph extends Base {
             if (this.onWriteDuringCommit === 'throw')
                 throw new Error('Removing identifier during commit')
             else if (this.onWriteDuringCommit === 'warn')
-                warn(new Error('Removing identifier during commit'))
+                warn(new Error('Removinfg identifier during commit'))
         }
 
         this.activeTransaction.removeIdentifier(identifier)
