@@ -6,7 +6,7 @@ ChronoGraph
 
 Chronograph is an open-source reactive computational engine, implemented in TypeScript and developed by [Bryntum](https://www.bryntum.com/). It powers the business logic of the [Bryntum Gantt](https://www.bryntum.com/examples/gantt/advanced).
 
-ChronoGraph has the following properties: 
+ChronoGraph has the following features: 
 
 - Cancelable transactions
 - O(1) undo/redo
@@ -17,7 +17,7 @@ ChronoGraph has the following properties:
 - Disciplined approach to cyclic computations
 - Entity/Relation framework
 
-And the following properties are very feasible:
+And the following features are very feasible:
 
 - Possibility to split the whole computation into chunks (think `requestAnimationFrame`) 
 - Possibility for breadth-first computation (think network latency)
