@@ -26,7 +26,7 @@ And the following features are very feasible:
 
 Reactive computations has become a popular trend recently, popularized by the React, Vue and Angular triade. However, all of the latter are user interface frameworks. 
 
-ChronoGraph, in contrast, focuses on reactive computations, describing some generic data graphs (for example Gantt project plans). It is designed to handle extremely large graphs - up to several hundred thousands of "atoms". It also includes the small Entity/Relation framework, which maps to regular ES6 classes.
+ChronoGraph, in contrast, focuses on reactive computations, describing generic data graphs (such as Gantt project plans). It is designed to handle extremely large graphs - up to several hundred thousands "atoms". It also includes a small Entity/Relation framework, which maps to regular ES6 classes.
 
 
 
@@ -37,7 +37,7 @@ You should be able to quickly pick up the base concept of reactivity from the [B
 
 To find out about the remaining (and most interesting) features of ChronoGraph, continue to the [Advanced features](https://bryntum.github.io/chronograph/docs/modules/_src_guides_advancedfeatures_.html#advancedfeaturesguide) guide.
 
-Guides contains extensive references to the [API docs](https://bryntum.github.io/chronograph/docs/)
+The guides contain extensive references to the [API docs](https://bryntum.github.io/chronograph/docs/)
 
 The API surface is currently intentionally small and some features are not documented. Please [reach out](https://discordapp.com/channels/681424024445780014/681424024449974316) if you need something specific.
 
@@ -51,11 +51,11 @@ More details in the [Benchmarks](https://bryntum.github.io/chronograph/docs/modu
 Connect
 =======
 
-We welcome all feedback. Please tell us what works well in ChronoGraph, what causes troubles and what other features you would like to see in it.
+We welcome all feedback! Please tell us what works well in ChronoGraph, what causes trouble and any other features you would like to see implemented.
 
 [Issues tracker](https://github.com/bryntum/chronograph/issues)
 
-Post at the [forum](https://bryntum.com/forum/viewforum.php?f=53)
+Post in the [forum](https://bryntum.com/forum/viewforum.php?f=53)
 
 Discord [live chat](https://discordapp.com/channels/681424024445780014/681424024449974316)
 
