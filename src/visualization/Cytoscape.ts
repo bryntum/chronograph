@@ -1,6 +1,6 @@
 import { ChronoGraph } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { EntityIdentifier, FieldIdentifier } from "../replica/Identifier.js"
 
 declare const cytoscape, cytoscapeDagre, cytoscapeKlay, cytoscapeCoseBilkent : any

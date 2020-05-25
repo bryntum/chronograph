@@ -1,4 +1,5 @@
-import { AnyConstructor, Base, Mixin } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { Node, WalkableBackward, WalkableForward, WalkBackwardContext, WalkForwardContext } from "./Node.js"
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import { Meta } from "../chrono/Identifier.js"
-import { AnyFunction } from "../class/BetterMixin.js"
+import { AnyFunction } from "../class/Mixin.js"
 import { Context } from "../primitives/Calculation.js"
 import { FieldIdentifierConstructor, MinimalFieldIdentifierGen, MinimalFieldIdentifierSync, MinimalFieldVariable } from "../replica/Identifier.js"
 import { isGeneratorFunction } from "../util/Helpers.js"

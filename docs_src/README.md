@@ -30,6 +30,13 @@ ChronoGraph, in contrast, focuses on reactive computations, describing some gene
 
 <iframe width="100%" height="300px" style="border:0" src="https://bryntum.github.io/chronograph/examples/basic/"></iframe>
 
+Installation
+=============
+
+```
+npm install @bryntum/chronograph --save 
+```
+
 Documentation
 =============
 

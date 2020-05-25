@@ -1,4 +1,4 @@
-import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 /**

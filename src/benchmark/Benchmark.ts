@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 
 const performance : { now : () => number }  = globalThis.performance || Date
 
@@ -61,7 +61,7 @@ const fmt           = new Intl.NumberFormat([], { maximumFractionDigits : 3, use
 const format        = num => fmt.format(num)
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Benchmark<StateT, InfoT> extends Base {
+export class Benchmark<StateT, InfoT = any> extends Base {
     name                    : string    = 'Noname benchmark'
 
     // planned relative margin of error
@@ -275,3 +275,5 @@ export class Benchmark<StateT, InfoT> extends Base {
     }
 }
 
+export const BenchmarkC = <StateT, InfoT = any>(config : Partial<Benchmark<StateT, InfoT>>) : Benchmark<StateT, InfoT> =>
+    Benchmark.new(config) as Benchmark<StateT, InfoT>

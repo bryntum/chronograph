@@ -1,4 +1,4 @@
-import { AnyConstructor, ClassUnion, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, ClassUnion, Mixin } from "../class/Mixin.js"
 import { WalkContext, WalkStep } from "./WalkDepth.js"
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 import { ChronoGraph } from "../chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier, Variable } from "../chrono/Identifier.js"
-import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field } from "../schema/Field.js"
 import { Entity } from "./Entity.js"

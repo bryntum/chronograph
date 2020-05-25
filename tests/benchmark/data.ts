@@ -1,7 +1,8 @@
 import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
-import { AnyConstructor, Base, ClassUnion, Mixin, MixinAny } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
+import { AnyConstructor, ClassUnion, Mixin, MixinAny } from "../../src/class/Mixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
 import { Replica } from "../../src/replica/Replica.js"
 

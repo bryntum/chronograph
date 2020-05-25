@@ -1,4 +1,4 @@
-import { Base } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
 import { Entity, field } from "../../src/replica/Entity.js"
 import { Name } from "../../src/schema/Field.js"
 
@@ -27,20 +27,20 @@ StartTest(t => {
        const carFields             = new Set<Name>()
        const boatFields            = new Set<Name>()
 
-       Vehicle.getEntity().forEachField(field => vehicleFields.add(field.name))
-       Car.getEntity().forEachField(field => carFields.add(field.name))
-       Boat.getEntity().forEachField(field => boatFields.add(field.name))
+       Vehicle.$entity.forEachField(field => vehicleFields.add(field.name))
+       Car.$entity.forEachField(field => carFields.add(field.name))
+       Boat.$entity.forEachField(field => boatFields.add(field.name))
 
        t.isDeeply(vehicleFields, new Set([ 'name' ]), "Vehicle fields are ok")
        t.isDeeply(carFields, new Set([ 'name', 'drivingWheel' ]), "Car fields are ok")
        t.isDeeply(boatFields, new Set([ 'name', 'helm' ]), "Boat fields are ok")
 
-       t.ok(Vehicle.getEntity().hasField('name'), "Vehicle has own field")
+       t.ok(Vehicle.$entity.hasField('name'), "Vehicle has own field")
 
-       t.ok(Boat.getEntity().hasField('name'), "Boat has inherited field")
-       t.ok(Boat.getEntity().hasField('helm'), "Boat has own field")
+       t.ok(Boat.$entity.hasField('name'), "Boat has inherited field")
+       t.ok(Boat.$entity.hasField('helm'), "Boat has own field")
 
-       t.ok(Car.getEntity().hasField('name'), "Car has inherited field")
-       t.ok(Car.getEntity().hasField('drivingWheel'), "Car has own field")
+       t.ok(Car.$entity.hasField('name'), "Car has inherited field")
+       t.ok(Car.$entity.hasField('drivingWheel'), "Car has own field")
    })
 })

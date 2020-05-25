@@ -3,7 +3,7 @@ import { ProposedArgumentsOf, ProposedOrPrevious, ProposedValueOf } from "../../
 import { Identifier } from "../../src/chrono/Identifier.js"
 import { Quark } from "../../src/chrono/Quark.js"
 import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
-import { Base } from "../../src/class/BetterMixin.js"
+import { Base } from "../../src/class/Base.js"
 import { Formula, CycleDescription, CycleResolution, FormulaId, CalculateProposed } from "../../src/cycle_resolver/CycleResolver.js"
 import { CalculationIterator } from "../../src/primitives/Calculation.js"
 import { build_proposed, calculate, Entity, field } from "../../src/replica/Entity.js"

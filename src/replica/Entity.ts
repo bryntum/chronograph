@@ -1,8 +1,8 @@
 import { ChronoGraph, CommitArguments, CommitResult, CommitZero } from "../chrono/Graph.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
-import { AnyConstructor, Mixin } from "../class/BetterMixin.js"
-import { DEBUG, debug, SourceLinePoint } from "../environment/Debug.js"
+import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { DEBUG, debug, DEBUG_ONLY, SourceLinePoint } from "../environment/Debug.js"
 import { CalculationIterator, runGeneratorSyncWithEffect } from "../primitives/Calculation.js"
 import { EntityMeta } from "../schema/EntityMeta.js"
 import { Field, Name } from "../schema/Field.js"
@@ -94,6 +94,8 @@ export class Entity extends Mixin(
          * ```
          */
         get $ () : { [s in keyof this] : FieldIdentifier } {
+            if (this._$ !== undefined) return this._$
+
             const $ = {}
 
             this.$entity.forEachField((field, name) => {
@@ -111,17 +113,21 @@ export class Entity extends Mixin(
                     }
                 })
 
-                return defineProperty(this as any, '$', proxy)
+                return this._$ = proxy as any
             } else {
-                return defineProperty(this as any, '$', $)
+                return this._$ = $ as any
             }
         }
+        _$ : { [s in keyof this] : FieldIdentifier } = undefined
+
 
         /**
          * A graph identifier, that represents the whole entity.
          */
         get $$ () : EntityIdentifier {
-            return defineProperty(this, '$$', MinimalEntityIdentifier.new({
+            if (this.__$ !== undefined) return this.__$
+
+            return this.__$ = MinimalEntityIdentifier.new({
                 name                : this.$entityName,
                 entity              : this.$entity,
 
@@ -129,8 +135,9 @@ export class Entity extends Mixin(
 
                 context             : this,
                 self                : this,
-            }))
+            })
         }
+        __$ : EntityIdentifier = undefined
 
 
         get $entityName () : string {
@@ -249,19 +256,10 @@ export class Entity extends Mixin(
 
 
         /**
-         * A [[Field]] instance, representing the "meta" information about the class field. It is shared among all identifiers of the certain field
-         * in the class.
-         */
-        static getField (name : Name) : Field {
-            return this.getEntity().getField(name)
-        }
-
-
-        /**
          * An [[EntityMeta]] instance, representing the "meta" information about the entity class. It is shared among all instances
          * of the class.
          */
-        static getEntity () : EntityMeta {
+        static get $entity () : EntityMeta {
             return ensureEntityOnPrototype(this.prototype)
         }
 
@@ -400,11 +398,9 @@ export const createEntityOnPrototype = (proto : any) : EntityMeta => {
 
 //---------------------------------------------------------------------------------------------------------------------
 export const ensureEntityOnPrototype = (proto : any) : EntityMeta => {
-    let entity      = proto.$entity
+    if (!proto.hasOwnProperty('$entity')) createEntityOnPrototype(proto)
 
-    if (!proto.hasOwnProperty('$entity')) entity = createEntityOnPrototype(proto)
-
-    return entity
+    return proto.$entity
 }
 
 
@@ -497,6 +493,8 @@ export const field : typeof generic_field = generic_field
  * Decorator for the method, that calculates a value of some field
  *
  * ```ts
+ *
+ * @entity()
  * class Author extends Entity.mix(Base) {
  *     @field()
  *     firstName       : string

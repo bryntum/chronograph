@@ -1,4 +1,4 @@
-import { Base } from "../../class/BetterMixin.js"
+import { Base } from "../../class/Base.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class WalkDepthNoCyclesNoVisitStateRecursive<Element> extends Base {

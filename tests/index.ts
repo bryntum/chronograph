@@ -84,6 +84,7 @@ project.start(
             'replica/002_fields.t.js',
             'replica/010_replica.t.js',
             'replica/020_reference.t.js',
+            'replica/025_tree_node.t.js',
             'replica/030_cycle_dispatcher_example.t.js',
             'replica/033_cycle_info.t.js',
             'replica/040_calculate_only.t.js'
@@ -104,6 +105,20 @@ project.start(
             //     pageUrl     : 'pages/cytoscape.html',
             //     url         : 'visualization/010_replica.t.js'
             // }
+        ]
+    },
+    {
+        group       : 'Util',
+
+        items       : [
+            'util/uniqable.t.js'
+        ]
+    },
+    {
+        group       : 'Events',
+
+        items       : [
+            'event/events.t.js'
         ]
     }
 )

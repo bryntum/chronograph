@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { NOT_VISITED, OnCycleAction, VISITED_TOPOLOGICALLY } from "../graph/WalkDepth.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
 import { Identifier, Levels } from "./Identifier.js"

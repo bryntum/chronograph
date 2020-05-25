@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { DEBUG } from "../environment/Debug.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
@@ -831,6 +831,8 @@ export class Transaction extends Base {
         const queue                             = this.stackGen
 
         while (queue.length) {
+            // TODO if stack calculation is interrupted with BreakCurrentStackExecution we might be loosing
+            // some identifiers from the queue??
             yield* this.calculateTransitionsStackGen(context, queue.takeLowestLevel())
         }
     }

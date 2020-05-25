@@ -1,4 +1,4 @@
-import { Base } from "../class/BetterMixin.js"
+import { Base } from "../class/Base.js"
 import { Field, Name } from "./Field.js"
 import { Schema } from "./Schema.js"
 
@@ -11,11 +11,11 @@ export class EntityMeta extends Base {
     /**
      * The name of the entity
      */
-    name                : Name
+    name                : Name                  = undefined
 
     ownFields           : Map<Name, Field>      = new Map()
 
-    schema              : Schema
+    schema              : Schema                = undefined
 
     /**
      * The parent entity
@@ -75,11 +75,11 @@ export class EntityMeta extends Base {
     }
 
 
-    _allFields : Map<Name, Field>       = undefined
+    $allFields : Map<Name, Field>       = undefined
 
 
     get allFields () : Map<Name, Field> {
-        if (this._allFields !== undefined) return this._allFields
+        if (this.$allFields !== undefined) return this.$allFields
 
         const allFields : Map<Name, Field>  = new Map()
         const visited : Set<Name>           = new Set()
@@ -94,13 +94,13 @@ export class EntityMeta extends Base {
             })
         })
 
-        return this._allFields = allFields
+        return this.$allFields = allFields
     }
 
 
     /**
      * Iterator for all fields of this entity (including inherited).
-     * 
+     *
      * @param func
      */
     forEachField (func : (field : Field, name : Name) => any) {
