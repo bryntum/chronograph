@@ -121,7 +121,6 @@ export class ChronoGraph extends Base {
     listeners               : Map<Identifier, Listener> = new Map()
 
     $activeTransaction      : Transaction       = undefined
-    runningTransaction      : Transaction       = undefined
 
     isCommitting            : boolean           = false
 
