@@ -94,8 +94,6 @@ export class Entity extends Mixin(
          * ```
          */
         get $ () : { [s in keyof this] : FieldIdentifier } {
-            if (this._$ !== undefined) return this._$
-
             const $ = {}
 
             this.$entity.forEachField((field, name) => {
@@ -113,21 +111,17 @@ export class Entity extends Mixin(
                     }
                 })
 
-                return this._$ = proxy as any
+                return defineProperty(this as any, '$', proxy)
             } else {
-                return this._$ = $ as any
+                return defineProperty(this as any, '$', $)
             }
         }
-        _$ : { [s in keyof this] : FieldIdentifier } = undefined
-
 
         /**
          * A graph identifier, that represents the whole entity.
          */
         get $$ () : EntityIdentifier {
-            if (this.__$ !== undefined) return this.__$
-
-            return this.__$ = MinimalEntityIdentifier.new({
+            return defineProperty(this, '$$', MinimalEntityIdentifier.new({
                 name                : this.$entityName,
                 entity              : this.$entity,
 
@@ -135,9 +129,8 @@ export class Entity extends Mixin(
 
                 context             : this,
                 self                : this,
-            })
+            }))
         }
-        __$ : EntityIdentifier = undefined
 
 
         get $entityName () : string {
