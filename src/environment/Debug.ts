@@ -3,7 +3,7 @@ import { CI } from "../collection/Iterator.js"
 import { matchAll } from "../util/Helpers.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const DEBUG = true
+export const DEBUG = false
 
 const emptyFn = (...args : any[]) : any => undefined
 
