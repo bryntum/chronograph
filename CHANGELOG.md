@@ -19,6 +19,10 @@ performed in the currently running transaction.
 - Fixed a bug, that removing and adding an entity back to the graph right away was not updating
 the related buckets.
 
+- Fixed a bug, that transaction rejection could lead to exception if there were writes during
+`finalizeCommitAsync` method.
+
+
 ## 1.0.1        2020-04-07 19:56
 
 - Fixed links to docs

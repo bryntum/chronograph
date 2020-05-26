@@ -1,5 +1,5 @@
 import { Base } from "../class/Base.js"
-import { DEBUG } from "../environment/Debug.js"
+import { DEBUG, warn } from "../environment/Debug.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
 import { delay } from "../util/Helpers.js"
@@ -821,7 +821,16 @@ export class Transaction extends Base {
                 //@ts-ignore
                 exception.cycle = cycle
 
-                throw exception
+                switch (this.graph.onComputationCycle) {
+                    case 'throw' :
+                        throw exception
+                    case 'reject' :
+                        this.graph.reject(exception)
+                        break
+                    case 'warn' :
+                        warn(exception)
+                        break
+                }
             }
         }
     }

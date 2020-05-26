@@ -520,7 +520,9 @@ export class ChronoGraph extends Base {
 
             this.markAndSweep()
         } else {
-            this.baseRevision           = this.baseRevisionStable
+            // `baseRevisionStable` might be already cleared in the `reject` method of the graph
+            if (this.baseRevisionStable) this.baseRevision = this.baseRevisionStable
+
             this.baseRevisionStable     = undefined
             this.baseRevisionTentative  = undefined
         }
@@ -889,7 +891,7 @@ export class ChronoGraph extends Base {
 
 
     [RejectSymbol] (effect : RejectEffect<any>, transaction : Transaction) : any {
-        transaction.reject(effect)
+        this.reject(effect.reason)
 
         return BreakCurrentStackExecution
     }
