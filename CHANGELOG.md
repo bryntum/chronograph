@@ -22,6 +22,8 @@ the related buckets.
 - Fixed a bug, that transaction rejection could lead to exception if there were writes during
 `finalizeCommitAsync` method.
 
+- Fixed a bug, that identifier could be considered as unchanged mistakenly and its calculation
+method not called.
 
 ## 1.0.1        2020-04-07 19:56
 

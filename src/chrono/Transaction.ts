@@ -2,7 +2,7 @@ import { Base } from "../class/Base.js"
 import { DEBUG, warn } from "../environment/Debug.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
-import { delay } from "../util/Helpers.js"
+import { delay, MAX_SMI } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
 import { BreakCurrentStackExecution, Effect, RejectEffect } from "./Effect.js"
 import { ChronoGraph, CommitArguments } from "./Graph.js"
@@ -739,6 +739,16 @@ export class Transaction extends Base {
 
                 if (outgoingEntry) outgoingEntry.edgesFlow--
             })
+
+            // this is a "workaround" for the following problem:
+            // there might be several copies of the same quark in the calculation stack, this is normal
+            // because if quark is requested by some other quark it is just pushed to the stack,
+            // which may already contain this quark
+            // then when the quark is calculated (this code) it propagates the `edgesFlow` decrease
+            // but next time it will be encountered in the stack, its `edgesFlow` might be decreased by other
+            // identifiers, which will trigger another round of `edgesFlow` decrease propagation
+            // so we set the `edgesFlow` to MAX_SMI after decrease been propagated to prevent repeated such propagation
+            entry.edgesFlow = MAX_SMI
 
             entry.setOrigin(previousEntry.origin)
 
