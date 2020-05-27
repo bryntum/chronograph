@@ -1,6 +1,14 @@
-declare const Siesta : any
+declare let Siesta : any
 
-const project       = new Siesta.Project.Browser()
+let project : any
+
+if (typeof process !== 'undefined' && typeof require !== 'undefined') {
+    Siesta          = require('siesta-lite')
+
+    project         = new Siesta.Project.NodeJS()
+} else {
+    project         = new Siesta.Project.Browser()
+}
 
 project.configure({
     title                   : 'ChronoGraph Test Suite',
