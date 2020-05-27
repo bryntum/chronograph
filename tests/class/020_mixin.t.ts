@@ -404,6 +404,7 @@ StartTest(t => {
             }
         ){}
 
+        //-------------------------------------------------------------------------------
         // in this mixin, the SomeMixin1 requirement first sets the base class to Base
         // but later the SomeMixin2, "upgrades" it to MyClass
         class SomeMixin3 extends Mixin(
@@ -420,9 +421,33 @@ StartTest(t => {
 
         const instance  = SomeMixin3.new()
 
+        t.is(instance.myProp, 'myProp')
         t.is(instance.prop1, '1')
         t.is(instance.prop2, '2')
         t.is(instance.prop3, '3')
+
+        //-------------------------------------------------------------------------------
+        // in this mixin, we have `Base` as base class,
+        // but the SomeMixin2, "upgrades" it to MyClass
+        class SomeMixin4 extends Mixin(
+            [ SomeMixin1, SomeMixin2, Base ],
+            (base : ClassUnion<typeof SomeMixin1 & typeof SomeMixin2>) =>
+
+            class SomeMixin4 extends base {
+                prop4       : string    = '4'
+            }
+        ){}
+
+        //@ts-ignore
+        t.is(SomeMixin4.$.baseClass, MyClass)
+
+        const instance4  = SomeMixin4.new()
+
+        t.is(instance4.myProp, 'myProp')
+        t.is(instance4.prop1, '1')
+        t.is(instance4.prop2, '2')
+        t.is(instance4.prop4, '4')
+
     })
 
 

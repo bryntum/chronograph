@@ -114,7 +114,7 @@ export const identity              = a => class extends a {}
 // export const IdentityMixin             = <Base extends object>() : IdentityMixin<Base> => identity
 
 //---------------------------------------------------------------------------------------------------------------------
-class ZeroBaseClass {}
+export class ZeroBaseClass {}
 
 //---------------------------------------------------------------------------------------------------------------------
 class MixinState {
@@ -135,8 +135,8 @@ class MixinState {
 
     name                        : string                = ''
 
-    static minimalClassesByLinearHash : Map<MixinHash, AnyConstructor> = new Map()
-    static baseClassesIds : Map<AnyConstructor, MixinId> = new Map()
+    static minimalClassesByLinearHash : Map<MixinHash, AnyConstructor>  = new Map()
+    static baseClassesIds : Map<AnyConstructor, MixinId>                = new Map()
 
 
     static new (props : Partial<MixinState>) {
@@ -149,12 +149,12 @@ class MixinState {
         const symbol                        = me.identitySymbol = Symbol(mixinLambda.name)
 
         const mixinLambdaWrapper : MixinFunction          = Object.assign(function (base : AnyConstructor) : AnyConstructor {
-            const extendedClass = mixinLambda(base)
-            extendedClass.prototype[ symbol ] = true
+            const extendedClass                 = mixinLambda(base)
+            extendedClass.prototype[ symbol ]   = true
             return extendedClass
         }, {
-            [ MixinInstanceOfProperty ]       : symbol,
-            [ MixinStateProperty ]  : me
+            [ MixinInstanceOfProperty ]     : symbol,
+            [ MixinStateProperty ]          : me
         })
 
         Object.defineProperty(mixinLambdaWrapper, Symbol.hasInstance, { value : isInstanceOfStatic })
@@ -199,7 +199,7 @@ class MixinState {
 
 
     buildMinimalClass () : MixinClass {
-        const constructor       = this.constructor as typeof MixinState
+        const self      = this.constructor as typeof MixinState
 
         let baseCls : AnyConstructor = this.baseClass
 
@@ -208,13 +208,13 @@ class MixinState {
                 const { cls, hash } = acc
                 const nextHash      = hash + String.fromCharCode(mixin.id)
 
-                let wrapperCls      = constructor.minimalClassesByLinearHash.get(nextHash)
+                let wrapperCls      = self.minimalClassesByLinearHash.get(nextHash)
 
                 if (!wrapperCls) {
                     wrapperCls      = mixin.mixinLambda(cls)
                     mixin.name      = wrapperCls.name
 
-                    constructor.minimalClassesByLinearHash.set(nextHash, wrapperCls)
+                    self.minimalClassesByLinearHash.set(nextHash, wrapperCls)
                 }
 
                 acc.cls             = wrapperCls
@@ -252,6 +252,7 @@ class MixinState {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+// translates all properties of the given type T, except its "new-ability" (which will mess up the typing)
 type SuppressNew<T> = {
     [ K in keyof T ] : T[ K ]
 }
@@ -317,6 +318,7 @@ type MixinClassConstructor<T> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
+//region type helpers
 type MixinHelperFuncAny = <T>(required : AnyConstructor[], arg : T) =>
     T extends AnyFunction ?
         MixinClassConstructor<T>
@@ -443,20 +445,19 @@ type MixinHelperFunc10 = <A1 extends AnyConstructor, A2 extends AnyConstructor, 
             : never
         : never
     : never
+//endregion type helpers
 
 //---------------------------------------------------------------------------------------------------------------------
 const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) : MixinClassConstructor<T> => {
-    let ownBaseClass : AnyConstructor
+    let baseClass : AnyConstructor
 
     if (required.length > 0) {
         const lastRequirement    = required[ required.length - 1 ]
 
         // absence of `[ MixinStateProperty ]` indicates its a regular class and not a mixin class
         // avoid assigning ZeroBaseClass - it will be applied as default at the end
-        if (!lastRequirement[ MixinStateProperty ] && lastRequirement !== ZeroBaseClass) ownBaseClass = lastRequirement
+        if (!lastRequirement[ MixinStateProperty ] && lastRequirement !== ZeroBaseClass) baseClass = lastRequirement
     }
-
-    let baseClassFromRequirements : AnyConstructor
 
     const requirements : MixinState[]    = []
 
@@ -468,28 +469,20 @@ const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) :
 
             // ignore ZeroBaseClass - since those are compatible with any other base class
             if (currentBaseClass !== ZeroBaseClass) {
-                if (ownBaseClass) {
-                    if (currentBaseClass !== ownBaseClass) {
-                        // all base classes from the requirements should match or be a superclass of our "own" base class (listed in our requirements)
-                        if (!currentBaseClass.prototype.isPrototypeOf(ownBaseClass.prototype)) throw new Error("Base class mismatch")
+                if (baseClass) {
+                    // already found a base class from requirements earlier
+                    if (baseClass !== currentBaseClass) {
+                        const currentIsSub      = currentBaseClass.prototype.isPrototypeOf(baseClass.prototype)
+                        const currentIsSuper    = baseClass.prototype.isPrototypeOf(currentBaseClass.prototype)
+
+                        if (!currentIsSub && !currentIsSuper) throw new Error("Base class mismatch")
+
+                        baseClass   = currentIsSuper ? currentBaseClass : baseClass
                     }
-                }
-                else {
-                    if (baseClassFromRequirements) {
-                        // already found a base class from requirements earlier
-                        if (baseClassFromRequirements !== currentBaseClass) {
-                            const currentIsSub      = currentBaseClass.prototype.isPrototypeOf(baseClassFromRequirements.prototype)
-                            const currentIsSuper    = baseClassFromRequirements.prototype.isPrototypeOf(currentBaseClass.prototype)
 
-                            if (!currentIsSub && !currentIsSuper) throw new Error("Base class mismatch")
-
-                            baseClassFromRequirements   = currentIsSuper ? currentBaseClass : baseClassFromRequirements
-                        }
-
-                    } else
-                        // first base class from requirements
-                        baseClassFromRequirements = currentBaseClass
-                }
+                } else
+                    // first base class from requirements
+                    baseClass = currentBaseClass
             }
 
             requirements.push(mixinState)
@@ -500,7 +493,11 @@ const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) :
     })
 
     //------------------
-    const mixinState    = MixinState.new({ requirements, mixinLambda : mixinLambda as any, baseClass: ownBaseClass || baseClassFromRequirements || ZeroBaseClass })
+    const mixinState    = MixinState.new({
+        requirements,
+        mixinLambda     : mixinLambda as any,
+        baseClass       : baseClass || ZeroBaseClass
+    })
 
     return mixinState.minimalClass as any
 }
