@@ -17,6 +17,7 @@ type MixinClass      = AnyConstructor & MixinStateExtension
 
 //---------------------------------------------------------------------------------------------------------------------
 class MixinWalkDepthState {
+    baseEl                          : MixinState                    = undefined
     sourceEl                        : MixinState                    = undefined
 
     private $elementsByTopoLevel    : Map<number, MixinState[]>     = undefined
@@ -70,6 +71,9 @@ class MixinWalkDepthState {
     buildElementsByTopoLevel () : Map<number, MixinState[]> {
         let maxTopoLevel : number    = 0
 
+        const baseElements : Set<MixinState> =
+            this.baseEl ? CI(this.baseEl.walkDepthState.elementsByTopoLevel.values()).concat().toSet() : new Set()
+
         const map =
             CI(this.sourceEl.requirements)
             .map(mixin => mixin.walkDepthState.elementsByTopoLevel)
@@ -88,7 +92,7 @@ class MixinWalkDepthState {
         this.getOrCreateLevel(map, maxTopoLevel + 1).push([ this.sourceEl ])
 
         return CI(map).map(([ level, elements ]) => {
-            return [ level, CI(elements).concat().uniqueOnly().sort((mixin1, mixin2) => mixin1.id - mixin2.id) ]
+            return [ level, CI(elements).concat().uniqueOnly().filter(mixin => !baseElements.has(mixin)).sort((mixin1, mixin2) => mixin1.id - mixin2.id) ]
         }).toMap()
     }
 
@@ -128,7 +132,7 @@ class MixinState {
 
     mixinLambda                 : (base : AnyConstructor) => AnyConstructor  = identity
 
-    walkDepthState              : MixinWalkDepthState   = MixinWalkDepthState.new({ sourceEl : this })
+    walkDepthState              : MixinWalkDepthState   = undefined
 
     // private $hash               : MixinHash             = ''
     private $minimalClass       : MixinClass            = undefined
@@ -143,6 +147,8 @@ class MixinState {
         const me    = new this()
 
         props && Object.assign(me, props)
+
+        me.walkDepthState   = MixinWalkDepthState.new({ sourceEl : me, baseEl : getMixinState(me.baseClass) })
 
         //------------------
         const mixinLambda                   = me.mixinLambda
@@ -448,6 +454,16 @@ type MixinHelperFunc10 = <A1 extends AnyConstructor, A2 extends AnyConstructor, 
 //endregion type helpers
 
 //---------------------------------------------------------------------------------------------------------------------
+const isMixinClass = (func : AnyConstructor) : boolean => {
+    return Object.getPrototypeOf(func.prototype).constructor.hasOwnProperty(MixinStateProperty)
+}
+
+const getMixinState = (func : AnyConstructor) : MixinState => {
+    return Object.getPrototypeOf(func.prototype).constructor[ MixinStateProperty ]
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) : MixinClassConstructor<T> => {
     let baseClass : AnyConstructor
 
@@ -456,7 +472,7 @@ const mixin = <T>(required : (AnyConstructor | MixinClass)[], mixinLambda : T) :
 
         // absence of `[ MixinStateProperty ]` indicates its a regular class and not a mixin class
         // avoid assigning ZeroBaseClass - it will be applied as default at the end
-        if (!lastRequirement[ MixinStateProperty ] && lastRequirement !== ZeroBaseClass) baseClass = lastRequirement
+        if (!isMixinClass(lastRequirement) && lastRequirement !== ZeroBaseClass) baseClass = lastRequirement
     }
 
     const requirements : MixinState[]    = []

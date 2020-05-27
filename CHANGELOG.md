@@ -25,6 +25,10 @@ the related buckets.
 - Fixed a bug, that identifier could be considered as unchanged mistakenly and its calculation
 method not called.
 
+- Fixed a bug, that using `derive` method of the mixin over the base class, that has extended
+another class, in turn created with `derive`, could skip some mixin requirements.
+
+
 ## 1.0.1        2020-04-07 19:56
 
 - Fixed links to docs
