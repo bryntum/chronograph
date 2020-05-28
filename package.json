@@ -37,7 +37,7 @@
     "deoptigate": "^0.5.0",
     "mobx": "^5.13.0",
     "regenerator-runtime": "^0.13.1",
-    "siesta-lite": "^5.4.0",
+    "siesta-lite": "^5.5.0",
     "tslint": "^5.16.0",
     "typedoc": "git://github.com/bryntum/typedoc.git#custom",
     "typedoc-default-themes": "git://github.com/bryntum/typedoc-default-themes.git",
