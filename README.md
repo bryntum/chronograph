@@ -29,6 +29,7 @@ Reactive computations has become a popular trend recently, popularized by the Re
 ChronoGraph, in contrast, focuses on reactive computations, describing generic data graphs (such as Gantt project plans). It is designed to handle extremely large graphs - up to several hundred thousands "atoms". It also includes a small Entity/Relation framework, which maps to regular ES6 classes.
 
 
+
 Installation
 =============
 
