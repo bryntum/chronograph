@@ -10,7 +10,7 @@ ChronoGraph has the following features:
 
 - Cancelable transactions
 - O(1) undo/redo
-- lazy/eager, sync/async computations
+- Lazy/strict, sync/async computations
 - Data branching
 - Mixed computational unit (user input/calculated value)
 - Unlimited stack depth
@@ -29,6 +29,12 @@ Reactive computations has become a popular trend recently, popularized by the Re
 ChronoGraph, in contrast, focuses on reactive computations, describing generic data graphs (such as Gantt project plans). It is designed to handle extremely large graphs - up to several hundred thousands "atoms". It also includes a small Entity/Relation framework, which maps to regular ES6 classes.
 
 
+Installation
+=============
+
+```
+npm install @bryntum/chronograph --save 
+```
 
 Documentation
 =============
@@ -51,7 +57,7 @@ More details in the [Benchmarks](https://bryntum.github.io/chronograph/docs/modu
 Connect
 =======
 
-We welcome all feedback! Please tell us what works well in ChronoGraph, what causes trouble and any other features you would like to see implemented.
+We welcome all feedback. Please tell us what works well in ChronoGraph, what causes trouble and any other features you would like to see implemented.
 
 [Issues tracker](https://github.com/bryntum/chronograph/issues)
 

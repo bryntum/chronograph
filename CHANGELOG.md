@@ -6,6 +6,8 @@
 
 - Chronograph now supports running in the "regenerator" environment (transpiled generators)
 
+- Added experimental "hook" utility
+
 #### API CHANGES
 
 - None
