@@ -14,7 +14,7 @@ const versionStr    = `${version}        ${now.getFullYear()}-${ prependZero(now
 const updateVersion = () => {
     let changelog = fs.readFileSync('CHANGELOG.md', 'utf8')
 
-    changelog = changelog.replace(/^\{\{ \$NEXT \}\}/m, versionStr)
+    changelog = changelog.replace(/\{\{ \$NEXT \}\}/m, versionStr)
 
     fs.writeFileSync('CHANGELOG.md', changelog, 'utf8')
 }
@@ -23,7 +23,7 @@ const updateVersion = () => {
 const updateVersionAndStartNew = () => {
     let changelog = fs.readFileSync('CHANGELOG.md', 'utf8')
 
-    changelog = changelog.replace(/^\{\{ \$NEXT \}\}/m, `{{ $NEXT }}\n\n${versionStr}`)
+    changelog = changelog.replace(/\{\{ \$NEXT \}\}/m, `{{ $NEXT }}\n\n${versionStr}`)
 
     fs.writeFileSync('CHANGELOG.md', changelog, 'utf8')
 }

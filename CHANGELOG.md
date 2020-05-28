@@ -2,6 +2,9 @@
 
 ## {{ $NEXT }}
 
+
+## 1.0.2        2020-05-28 13:31
+
 #### FEATURES / ENHANCEMENTS
 
 - Chronograph now supports running in the "regenerator" environment (transpiled generators)
