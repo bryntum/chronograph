@@ -17,5 +17,13 @@ StartTest(t => {
         compact(elements)
 
         t.isDeeply(elements, [ el1, el2, el3 ])
+
+        //--------------------------
+        // trying to compact the same array
+        elements.push(el1, el1, el2, el2, el3, el3)
+
+        compact(elements)
+
+        t.isDeeply(elements, [ el1, el2, el3 ])
     })
 })

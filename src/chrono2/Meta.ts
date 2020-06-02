@@ -17,7 +17,7 @@ import { EffectHandler } from "./Effect.js"
  * This class has 2 generic arguments - `ValueT` and `ContextT`. The 1st one defines the type of the identifier's value.
  * The 2nd - the identifier's computation context (synchronous or generator).
  */
-export class Meta extends Base {
+export class Meta<V> extends Base {
     /**
      * The name of the identifiers. Not an id, does not imply uniqueness.
      */
@@ -27,7 +27,7 @@ export class Meta extends Base {
      * The type of the effects that can be "yielded" from the calculation function
      */
     YieldT              : unknown
-    ValueT              : unknown
+    ValueT              : V
     CalcContextT        : unknown
 
     /**

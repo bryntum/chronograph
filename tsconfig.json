@@ -4,6 +4,7 @@
         "experimentalDecorators"    : true,
 
         "target"                : "ES2017",
+//        "strictNullChecks"      : true,
 
         "sourceMap"             : false,
         "lib"                   : [

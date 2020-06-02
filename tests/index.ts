@@ -42,6 +42,13 @@ project.start(
         ]
     },
     {
+        group       : 'ChronoGraph2',
+
+        items       : [
+            'chrono2/chrono_atom.t.js',
+        ]
+    },
+    {
         group       : 'ChronoGraph',
 
         items       : [

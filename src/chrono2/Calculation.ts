@@ -3,7 +3,6 @@ import { AnyConstructor, AnyFunction, Mixin } from "../class/Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface GenericCalculation {
-    // this is just a scope for the `calculation` function, not related to `CalculationContext` type
     context                     : unknown
 
     calculation                 : AnyFunction
@@ -59,6 +58,7 @@ export class CalculationGen extends Mixin(
 
         continueCalculation (value : unknown) : IteratorResult<any> {
             // MAYBE: cleanup the `this.iterator` right away if `done`
+            // still need to cleanup, since there might be unfinished calculations
             return this.iterationResult = this.iterator.next(value)
         }
 
