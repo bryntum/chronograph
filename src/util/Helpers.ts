@@ -1,7 +1,7 @@
-//---------------------------------------------------------------------------------------------------------------------
-// assume 32-bit platform (https://v8.dev/blog/react-cliff)
 import { CI } from "../collection/Iterator.js"
 
+//---------------------------------------------------------------------------------------------------------------------
+// assume 32-bit platform (https://v8.dev/blog/react-cliff)
 export const MIN_SMI = -Math.pow(2, 30)
 export const MAX_SMI = Math.pow(2, 30) - 1
 
