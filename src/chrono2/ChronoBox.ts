@@ -4,7 +4,7 @@ import { Immutable, Owner } from "./Immutable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ChronoBoxImmutable<V> implements Immutable {
-    //region ChronoBox as Immutable
+    //region ChronoBoxImmutable as Immutable
     previous            : this              = undefined
 
     frozen              : boolean           = false
@@ -67,12 +67,19 @@ export class ChronoBoxOwner<V> extends ChronoBoxImmutable<V> implements Owner<Ch
     //region ChronoBox as Owner
     immutable       : ChronoBoxImmutable<V>        = this
 
+
     setCurrent (immutable : ChronoBoxImmutable<V>) {
         if (immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
         this.immutable = immutable
     }
+    //endregion
 
+
+    //region ChronoBoxOwner as ChronoBoxImmutable interface
+
+    // @ts-ignore
+    owner           : Owner<this> & ChronoBoxOwner<V> = this
 
     createNext () : this {
         this.freeze()
@@ -88,14 +95,6 @@ export class ChronoBoxOwner<V> extends ChronoBoxImmutable<V> implements Owner<Ch
     }
 
     static immutableCls : AnyConstructor<ChronoBoxImmutable<unknown>, typeof ChronoBoxImmutable> = ChronoBoxImmutable
-    //endregion
-
-
-    //region ChronoBoxOwner as ChronoBoxImmutable interface
-
-    // @ts-ignore
-    owner           : Owner<this> & ChronoBoxOwner<V> = this
-
     //endregion
 
 

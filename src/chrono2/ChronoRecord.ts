@@ -1,18 +1,39 @@
-import { Base } from "../class/Base.js"
-import { Hook } from "../event/Hook.js"
+import { AnyConstructor } from "../class/Mixin.js"
+import { Immutable, Owner } from "./Immutable.js"
 
+//---------------------------------------------------------------------------------------------------------------------
 export type RecordDefinition = object
 
-export class ChronoRecordQuark<V extends RecordDefinition> extends Base {
+export class ChronoRecordImmutable<V extends RecordDefinition> implements Immutable {
+    //region ChronoRecordImmutable as Immutable
     previous            : this              = undefined
-
-    value               : V                 = undefined
 
     frozen              : boolean           = false
 
-    outerContext        : ChronoRecord<V>  = undefined
+    owner               : Owner<this> & ChronoRecordOwner<V> = undefined
 
-    refCount            : number            = 0
+
+    freeze () {
+        this.frozen = true
+    }
+
+
+    createNext () : this {
+        this.freeze()
+
+        const self      = this.constructor as AnyConstructor<this, typeof ChronoRecordImmutable>
+        const next      = new self()
+
+        next.previous   = this
+        next.owner      = this.owner
+
+        return next
+    }
+    //endregion
+
+
+    //region ChronoRecordImmutable's own interface
+    value               : V                 = undefined
 
 
     get <FieldName extends keyof V> (fieldName : FieldName) : V[ FieldName ] {
@@ -36,7 +57,7 @@ export class ChronoRecordQuark<V extends RecordDefinition> extends Base {
         if (this.frozen && this.value !== undefined) {
             const next = this.createNext()
 
-            this.outerContext.setCurrent(next)
+            this.owner.setCurrent(next)
 
             next.set(fieldName, value)
 
@@ -46,119 +67,59 @@ export class ChronoRecordQuark<V extends RecordDefinition> extends Base {
             this.value[ fieldName ]  = value
         }
     }
+}
 
 
-    clear () {
-        if (this.frozen) throw new Error("Can not clear the frozen record")
+//---------------------------------------------------------------------------------------------------------------------
+export class ChronoRecordOwner<V extends RecordDefinition> extends ChronoRecordImmutable<V> implements Owner<any>{
+    //region ChronoBox as Owner
+    immutable       : ChronoRecordImmutable<V>        = this
 
-        this.value = undefined
+
+    setCurrent (immutable : ChronoRecordImmutable<V>) {
+        if (immutable.previous !== this.immutable) throw new Error("Invalid state thread")
+
+        this.immutable = immutable
     }
+    //endregion
 
 
-    freeze () {
-        this.frozen = true
-    }
+    //region ChronoRecordOwner as ChronoRecordImmutable interface
 
+    // @ts-ignore
+    owner           : Owner<this> & ChronoRecordOwner<V> = this
 
     createNext () : this {
         this.freeze()
 
-        const cls : typeof ChronoRecordQuark   = this.constructor as any
+        const self      = this.constructor as AnyConstructor<this, typeof ChronoRecordOwner>
+        const next      = new self.immutableCls()
 
-        const next          = cls.new() as this
+        next.previous   = this
+        next.owner      = this
 
-        next.previous       = this
-
+        // @ts-ignore
         return next
     }
-}
 
-export const ChronoRecordQuarkC = <V extends RecordDefinition>(config : Partial<ChronoRecordQuark<V>>) : ChronoRecordQuark<V> =>
-    ChronoRecordQuark.new(config) as ChronoRecordQuark<V>
-
-
-// TODO: refine
-type SyncEffectHandler = (...args : any[]) => any
-
-
-export class ChronoRecord<V extends RecordDefinition> extends Base {
-    // atom should have quark merged, so that creation of atom does not have to create quark separately
-    // further writes should create regular quarks
-    record         : ChronoRecordQuark<V>     = ChronoRecordQuarkC<V>({ outerContext : this })
-
-
-    setCurrent (record : ChronoRecordQuark<V>) {
-        if (record.previous !== this.record) throw new Error("Invalid state thread")
-
-        this.record = record
-    }
-
-    //region Meta
-
-    // TODO : move to own class - ChronoRecordMeta
-
-    equality (v1 : V, v2 : V) : boolean {
-        return v1 === v2
-    }
-
-
-    calculation (Y : SyncEffectHandler) {
-
-    }
-
+    static immutableCls : AnyConstructor<ChronoRecordImmutable<object>, typeof ChronoRecordImmutable> = ChronoRecordImmutable
     //endregion
 
 
-    //region messaging / read / write
+    //region ChronoRecordOwner as both ChronoRecordOwner & ChronoRecordImmutable interface
 
     get <FieldName extends keyof V> (fieldName : FieldName) : V[ FieldName ] {
-        return this.record.get(fieldName)
+        if (this.immutable === this) return super.get(fieldName)
+
+        return this.immutable.get(fieldName)
     }
 
 
     set <FieldName extends keyof V> (fieldName : FieldName, value : V[ FieldName ]) {
-        return this.record.set(fieldName, value)
-    }
+        if (this.immutable === this) return super.set(fieldName, value)
 
-
-    onNewValue : Hook<any>
-
-    //endregion
-
-
-    //region transaction
-
-    commit () {
-        this.record.freeze()
-    }
-
-    reject () {
-        if (this.record.previous)
-            this.undo()
-        else
-            this.record.clear()
-    }
-
-    //endregion
-
-    //region threaded state (undo/redo) / garbage collection
-
-    // with this parameter 0 should behave exactly as Mobx box
-    historyLimit        : number    = 0
-
-
-    undo () {
-        if (this.record.previous)
-            this.record = this.record.previous
-        else
-            this.record.clear()
-    }
-
-    redo () {
-
+        return this.immutable.set(fieldName, value)
     }
     //endregion
+
 }
-
-export const ChronoRecordAtomC = <V extends RecordDefinition>(config : Partial<ChronoRecord<V>>) : ChronoRecord<V> =>
-    ChronoRecord.new(config) as ChronoRecord<V>
