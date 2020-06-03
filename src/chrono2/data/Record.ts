@@ -1,16 +1,16 @@
-import { AnyConstructor } from "../class/Mixin.js"
+import { AnyConstructor } from "../../class/Mixin.js"
 import { Immutable, Owner } from "./Immutable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type RecordDefinition = object
 
-export class ChronoRecordImmutable<V extends RecordDefinition> implements Immutable {
+export class RecordImmutable<V extends RecordDefinition> implements Immutable {
     //region ChronoRecordImmutable as Immutable
     previous            : this              = undefined
 
     frozen              : boolean           = false
 
-    owner               : Owner<this> & ChronoRecordOwner<V> = undefined
+    owner               : Owner<this> & Record<V> = undefined
 
 
     freeze () {
@@ -21,7 +21,7 @@ export class ChronoRecordImmutable<V extends RecordDefinition> implements Immuta
     createNext () : this {
         this.freeze()
 
-        const self      = this.constructor as AnyConstructor<this, typeof ChronoRecordImmutable>
+        const self      = this.constructor as AnyConstructor<this, typeof RecordImmutable>
         const next      = new self()
 
         next.previous   = this
@@ -71,12 +71,12 @@ export class ChronoRecordImmutable<V extends RecordDefinition> implements Immuta
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ChronoRecordOwner<V extends RecordDefinition> extends ChronoRecordImmutable<V> implements Owner<any>{
+export class Record<Def extends RecordDefinition> extends RecordImmutable<Def> implements Owner<RecordImmutable<Def>>{
     //region ChronoBox as Owner
-    immutable       : ChronoRecordImmutable<V>        = this
+    immutable       : RecordImmutable<Def>        = this
 
 
-    setCurrent (immutable : ChronoRecordImmutable<V>) {
+    setCurrent (immutable : RecordImmutable<Def>) {
         if (immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
         this.immutable = immutable
@@ -87,12 +87,12 @@ export class ChronoRecordOwner<V extends RecordDefinition> extends ChronoRecordI
     //region ChronoRecordOwner as ChronoRecordImmutable interface
 
     // @ts-ignore
-    owner           : Owner<this> & ChronoRecordOwner<V> = this
+    owner           : Owner<this> & Record<Def> = this
 
     createNext () : this {
         this.freeze()
 
-        const self      = this.constructor as AnyConstructor<this, typeof ChronoRecordOwner>
+        const self      = this.constructor as AnyConstructor<this, typeof Record>
         const next      = new self.immutableCls()
 
         next.previous   = this
@@ -102,24 +102,23 @@ export class ChronoRecordOwner<V extends RecordDefinition> extends ChronoRecordI
         return next
     }
 
-    static immutableCls : AnyConstructor<ChronoRecordImmutable<object>, typeof ChronoRecordImmutable> = ChronoRecordImmutable
+    static immutableCls : AnyConstructor<RecordImmutable<object>, typeof RecordImmutable> = RecordImmutable
     //endregion
 
 
     //region ChronoRecordOwner as both ChronoRecordOwner & ChronoRecordImmutable interface
 
-    get <FieldName extends keyof V> (fieldName : FieldName) : V[ FieldName ] {
+    get <FieldName extends keyof Def> (fieldName : FieldName) : Def[ FieldName ] {
         if (this.immutable === this) return super.get(fieldName)
 
         return this.immutable.get(fieldName)
     }
 
 
-    set <FieldName extends keyof V> (fieldName : FieldName, value : V[ FieldName ]) {
+    set <FieldName extends keyof Def> (fieldName : FieldName, value : Def[ FieldName ]) {
         if (this.immutable === this) return super.set(fieldName, value)
 
         return this.immutable.set(fieldName, value)
     }
     //endregion
-
 }

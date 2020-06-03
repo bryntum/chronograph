@@ -1,6 +1,6 @@
 import { Base } from "../class/Base.js"
 import { AnyConstructor } from "../class/Mixin.js"
-import { Identifiable, Immutable, Owner } from "./Immutable.js"
+import { Identifiable, Immutable, Owner } from "./data/Immutable.js"
 import { ChronoId, chronoId } from "./Id.js"
 
 

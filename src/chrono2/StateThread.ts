@@ -1,5 +1,5 @@
 import { AnyConstructor } from "../class/Mixin.js"
-import { Immutable, Owner } from "./Immutable.js"
+import { Immutable, Owner } from "./data/Immutable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

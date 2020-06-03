@@ -1,15 +1,15 @@
-import { AnyConstructor } from "../class/Mixin.js"
+import { AnyConstructor } from "../../class/Mixin.js"
 import { Immutable, Owner } from "./Immutable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ChronoBoxImmutable<V> implements Immutable {
+export class BoxImmutable<V> implements Immutable {
     //region ChronoBoxImmutable as Immutable
     previous            : this              = undefined
 
     frozen              : boolean           = false
 
-    owner               : Owner<this> & ChronoBoxOwner<V> = undefined
+    owner               : Owner<this> & Box<V> = undefined
 
 
     freeze () {
@@ -20,7 +20,7 @@ export class ChronoBoxImmutable<V> implements Immutable {
     createNext () : this {
         this.freeze()
 
-        const self      = this.constructor as AnyConstructor<this, typeof ChronoBoxImmutable>
+        const self      = this.constructor as AnyConstructor<this, typeof BoxImmutable>
         const next      = new self()
 
         next.previous   = this
@@ -63,12 +63,12 @@ export class ChronoBoxImmutable<V> implements Immutable {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ChronoBoxOwner<V> extends ChronoBoxImmutable<V> implements Owner<ChronoBoxImmutable<V>> {
+export class Box<V> extends BoxImmutable<V> implements Owner<BoxImmutable<V>> {
     //region ChronoBox as Owner
-    immutable       : ChronoBoxImmutable<V>        = this
+    immutable       : BoxImmutable<V>        = this
 
 
-    setCurrent (immutable : ChronoBoxImmutable<V>) {
+    setCurrent (immutable : BoxImmutable<V>) {
         if (immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
         this.immutable = immutable
@@ -79,12 +79,12 @@ export class ChronoBoxOwner<V> extends ChronoBoxImmutable<V> implements Owner<Ch
     //region ChronoBoxOwner as ChronoBoxImmutable interface
 
     // @ts-ignore
-    owner           : Owner<this> & ChronoBoxOwner<V> = this
+    owner           : Owner<this> & Box<V> = this
 
     createNext () : this {
         this.freeze()
 
-        const self      = this.constructor as AnyConstructor<this, typeof ChronoBoxOwner>
+        const self      = this.constructor as AnyConstructor<this, typeof Box>
         const next      = new self.immutableCls()
 
         next.previous   = this
@@ -94,7 +94,7 @@ export class ChronoBoxOwner<V> extends ChronoBoxImmutable<V> implements Owner<Ch
         return next
     }
 
-    static immutableCls : AnyConstructor<ChronoBoxImmutable<unknown>, typeof ChronoBoxImmutable> = ChronoBoxImmutable
+    static immutableCls : AnyConstructor<BoxImmutable<unknown>, typeof BoxImmutable> = BoxImmutable
     //endregion
 
 

@@ -1,18 +1,18 @@
-import { ChronoBoxOwner, ChronoBoxAtomC } from "../../src/chrono2/ChronoBox.js"
+import { Box, ChronoBoxAtomC } from "../../src/chrono2/data/Box.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Newly created ChronoBoxAtom should be initialized to `null`', t => {
-        const chronoBoxAtom     = new ChronoBoxOwner()
+        const chronoBoxAtom     = new Box()
 
         t.isStrict(chronoBoxAtom.read(), null)
     })
 
 
     t.it('Should read your own writes', t => {
-        const chronoBoxAtom     = new ChronoBoxOwner<number>()
+        const chronoBoxAtom     = new Box<number>()
 
         chronoBoxAtom.write(10)
 
@@ -26,7 +26,7 @@ StartTest(t => {
 
 
     t.it('Writing `undefined` should be converted to `null`', t => {
-        const chronoBoxAtom     = new ChronoBoxOwner<number>()
+        const chronoBoxAtom     = new Box<number>()
 
         chronoBoxAtom.write(undefined)
 
@@ -35,7 +35,7 @@ StartTest(t => {
 
 
     t.it('Reject before the very first commit should clear the atom to `null`', t => {
-        const chronoBoxAtom     = new ChronoBoxOwner<number>()
+        const chronoBoxAtom     = new Box<number>()
 
         chronoBoxAtom.write(10)
 
@@ -48,7 +48,7 @@ StartTest(t => {
 
 
     t.it('Should be able undo after commit', t => {
-        const chronoBoxAtom     = new ChronoBoxOwner<number>()
+        const chronoBoxAtom     = new Box<number>()
 
         chronoBoxAtom.write(10)
 

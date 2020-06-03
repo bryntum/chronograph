@@ -1,4 +1,4 @@
-import { ChronoId } from "./Id.js"
+import { ChronoId } from "../Id.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface GarbageCollectable {
