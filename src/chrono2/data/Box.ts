@@ -1,16 +1,19 @@
 import { AnyConstructor, Mixin } from "../../class/Mixin.js"
-import { Immutable, Owner } from "./Immutable.js"
+import { MIN_SMI } from "../../util/Helpers.js"
+import { globalContext } from "../GlobalContext.js"
+import { Atom, Immutable, Owner } from "./Immutable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class BoxImmutable<V> implements Immutable {
+export class BoxImmutable<V> implements Immutable, Atom {
+    uniqable            : number            = MIN_SMI
+
     //region ChronoBoxImmutable as Immutable
     previous            : this              = undefined
 
     frozen              : boolean           = false
 
     owner               : Owner<this> & Box<V> = undefined
-
 
     freeze () {
         this.frozen = true
@@ -30,13 +33,71 @@ export class BoxImmutable<V> implements Immutable {
     }
     //endregion
 
+    isStale () : boolean {
+        return false
+    }
+
+    onBecomeStale () {
+    }
+
+
+    incoming            : Atom[]        = undefined
+    outgoing            : Atom[]        = undefined
+
+    getIncoming () : this[ 'incoming' ] {
+        if (this.incoming !== undefined) return this.incoming
+
+        return this.incoming = []
+    }
+    getOutgoing () : this[ 'outgoing' ] {
+        if (this.outgoing !== undefined) return this.outgoing
+
+        return this.outgoing = []
+    }
+
+
+    addIncoming (atom : Atom, calledFromPartner : boolean) {
+        this.getIncoming().push(atom)
+        if (!calledFromPartner) atom.addOutgoing(this, true)
+    }
+
+    addOutgoing (atom : Atom, calledFromPartner : boolean) {
+        this.getOutgoing().push(atom)
+        if (!calledFromPartner)  atom.addIncoming(this, true)
+    }
+
+
+    propagateChanged () {
+        const toVisit : Atom[]       = [ this ]
+
+        while (toVisit.length) {
+            const el        = toVisit.pop()
+
+            if (!el.isStale()) {
+                el.onBecomeStale()
+
+                toVisit.push(...el.getOutgoing())
+            }
+        }
+    }
+
+
+    hasValue () : boolean {
+        return this.readValuePure() !== undefined
+    }
 
     //region ChronoBox's own interface
     value               : V                 = undefined
 
 
     read () : V {
+        if (globalContext.activeAtom) globalContext.activeAtom.addIncoming(this, false)
+
         return this.readValuePure()
+    }
+
+
+    calculate () {
     }
 
 
@@ -69,7 +130,11 @@ export class BoxImmutable<V> implements Immutable {
     writeToUnfrozen (value : V) {
         if (value === undefined) value = null
 
+        if (value === this.value) return
+
         this.value  = value
+
+        this.propagateChanged()
     }
     //endregion
 }

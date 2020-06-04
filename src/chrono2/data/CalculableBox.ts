@@ -1,13 +1,14 @@
 import { AnyConstructor } from "../../class/Mixin.js"
-import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
+import { CalculationFunction, CalculationMode, CalculationModeSync, CalculationReturnValue } from "../CalculationMode.js"
+import { globalContext } from "../GlobalContext.js"
 import { defaultMeta, Meta } from "../Meta.js"
 import { BoxImmutable } from "./Box.js"
-import { Owner, OwnerManaged } from "./Immutable.js"
+import { Atom, Owner, OwnerManaged } from "./Immutable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculableBoxImmutable<V, Mode extends CalculationMode = CalculationModeSync>
-    extends BoxImmutable<V>
+    extends BoxImmutable<V> implements Atom
 {
     owner               : Owner<this> & CalculableBox<V, Mode> = undefined
 
@@ -29,16 +30,53 @@ export class CalculableBoxImmutable<V, Mode extends CalculationMode = Calculatio
 
 
     read () : V {
+        if (globalContext.activeAtom) globalContext.activeAtom.addIncoming(this)
+
         if (this.frozen) return this.readValuePure()
 
         if (!this.dirty && this.value !== undefined) return this.value
 
-        let value : V = this.calculation.call(this.calculationContext)
+        let value : V = this.calculate()
 
         if (value === undefined) value = null
 
-        this.value = value
+        this.setValue(value)
         this.dirty = false
+
+        return value
+    }
+
+
+    setValue (value : V) {
+        if (this.equality(this.readValuePure(), value)) return
+
+        this.value = value
+
+        this.propagateChanged()
+    }
+
+
+    isStale () : boolean {
+        return this.dirty
+    }
+
+
+    onBecomeStale () {
+        this.dirty = true
+    }
+
+
+    calculate () {
+        const calculationContext    = this.calculationContext
+        const calculation           = this.calculation
+
+        const prevActive            = globalContext.activeAtom
+
+        globalContext.activeAtom    = this
+
+        let value : V = calculation.call(calculationContext)
+
+        globalContext.activeAtom    = prevActive
 
         return value
     }
@@ -47,7 +85,7 @@ export class CalculableBoxImmutable<V, Mode extends CalculationMode = Calculatio
     writeToUnfrozen (value : V) {
         if (value === undefined) value = null
 
-        // ignore write of the same value
+        // ignore the write of the same value? what about `keepIfPossible` => `pin`
         if (this.equality(this.readValuePure(), value)) return
 
         this.proposedValue  = value
@@ -66,11 +104,6 @@ export class CalculableBoxImmutable<V, Mode extends CalculationMode = Calculatio
     get calculationContext () : unknown {
         return this.owner.context
     }
-
-    calculationProposed () : V {
-        throw new Error("Abstract method called")
-    }
-
 }
 
 

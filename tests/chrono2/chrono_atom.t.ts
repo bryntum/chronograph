@@ -69,7 +69,7 @@ StartTest(t => {
     })
 
 
-    t.it("Should be possible to reactively observe the value of the box in another box's calculation", t => {
+    t.iit("Should be possible to reactively observe the value of the box in calculable box", t => {
         const box1     = new Box<number>()
 
         box1.write(10)
@@ -85,43 +85,30 @@ StartTest(t => {
         t.is(box2.read(), 21)
     })
 
-    // t.it('Observe variable in generator calculation', async t => {
-    //     const graph : ChronoGraph   = ChronoGraph.new()
-    //
-    //     const var1      = graph.variableNamed('variable', 0)
-    //
-    //     const iden1     = graph.identifierNamed('identifier', function * () {
-    //         return yield var1
-    //     })
-    //
-    //     t.isDeeply(graph.read(var1), 0, 'Correct value')
-    //     t.isDeeply(graph.read(iden1), 0, 'Correct value')
-    //
-    //     graph.write(var1, 1)
-    //
-    //     t.isDeeply(graph.read(var1), 1, 'Correct value')
-    //     t.isDeeply(graph.read(iden1), 1, 'Correct value')
-    // })
-    //
-    //
-    // t.it('Observe variable in synchronous calculation', async t => {
-    //     const graph : ChronoGraph   = ChronoGraph.new()
-    //
-    //     const var1      = graph.variable(0)
-    //
-    //     const iden1     = graph.identifier(function (YIELD) {
-    //         return YIELD(var1)
-    //     })
-    //
-    //     t.isDeeply(graph.read(var1), 0, 'Correct value')
-    //     t.isDeeply(graph.read(iden1), 0, 'Correct value')
-    //
-    //     graph.write(var1, 1)
-    //
-    //     t.isDeeply(graph.read(var1), 1, 'Correct value')
-    //     t.isDeeply(graph.read(iden1), 1, 'Correct value')
-    // })
-    //
+
+    t.iit("Should be possible to reactively observe the value of the calculable box in another calculable box", t => {
+        const box1     = new Box<number>()
+
+        box1.write(10)
+
+        const box2     = new CalculableBox<number>({
+            calculation : () => box1.read() + 1
+        })
+
+        const box3     = new CalculableBox<number>({
+            calculation : () => box2.read() + 1
+        })
+
+        t.is(box2.read(), 11)
+        t.is(box3.read(), 12)
+
+        box1.write(20)
+
+        t.is(box2.read(), 21)
+        t.is(box3.read(), 22)
+    })
+
+
     //
     // t.it('Observe calculation in generator calculation', async t => {
     //     const graph : ChronoGraph = ChronoGraph.new()

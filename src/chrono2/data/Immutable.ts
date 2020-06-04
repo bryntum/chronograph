@@ -1,3 +1,4 @@
+import { Uniqable } from "../../util/Uniqable.js"
 import { CalculationMode } from "../CalculationMode.js"
 import { ChronoId } from "../Id.js"
 import { Meta } from "../Meta.js"
@@ -28,9 +29,16 @@ export interface Immutable {
 }
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export interface QuarkWithValue<V> extends Immutable {
-//     read () : V
+//---------------------------------------------------------------------------------------------------------------------
+// export interface Observable {
+//     observers       : Observer
+// }
+//
+//
+// export interface Observer {
+//     // addObservation (observable : Observable)
+//
+//     onObservable
 // }
 
 
@@ -47,8 +55,19 @@ export interface Owner<I extends Immutable> {
 //     read () : V
 // }
 
-export interface Atom extends Owner<Immutable> {
+export interface Atom extends Uniqable {
+    isStale () : boolean
+    hasValue () : boolean
 
+    onBecomeStale ()
+
+    addIncoming (atom : Atom, calledFromPartner : boolean)
+    addOutgoing (atom : Atom, calledFromPartner : boolean)
+
+    getIncoming () : Atom[]
+    getOutgoing () : Atom[]
+
+    calculate ()
 }
 
 
