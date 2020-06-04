@@ -30,7 +30,7 @@ export type CalculationModeUnknown  = CalculationModeSync | CalculationModeAsync
 /**
  * Type of return value of the calculation in generator calculation mode.
  */
-export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, ResultT, any>
+export type CalculationIterator<Result> = Generator<any, Result, any>
 
 
 /**
@@ -38,11 +38,14 @@ export type CalculationIterator<ResultT, YieldT = any> = Generator<YieldT, Resul
  *
  * This type allows generic typization of the identifiers's calculation function (a single type for all calculation modes).
  */
-export type CalculationReturnValue<Ctx extends CalculationModeUnknown, ResultT, YieldT> =
-    Ctx extends typeof CalculationModeSync ?
-        ResultT
+export type CalculationReturnValue<Mode extends CalculationModeUnknown, Result> =
+    Mode extends CalculationModeSync ?
+        Result
         :
-        Ctx extends typeof CalculationModeGen ?
-            CalculationIterator<ResultT, YieldT>
+        Mode extends CalculationModeGen ?
+            CalculationIterator<Result>
             :
-            Promise<ResultT>
+            Mode extends CalculationModeAsync ?
+                Promise<Result>
+                :
+                never
