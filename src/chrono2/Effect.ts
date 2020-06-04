@@ -1,9 +1,9 @@
 import { Base } from "../class/Base.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { CalculationModeGen, CalculationModeSync, CalculationModeUnknown } from "./CalculationMode.js"
+import { CalculationModeGen, CalculationModeSync, CalculationMode, CalculationModeAsync } from "./CalculationMode.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
+// export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -13,14 +13,17 @@ export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution'
  *
  * When using generators-based calculation, there's no need to use this function directly - the syntax construct `yield` plays its role.
  */
-export type EffectHandler<Ctx extends CalculationModeUnknown> =
-    Ctx extends typeof CalculationModeSync ?
+export type EffectHandler<Mode extends CalculationMode> =
+    Mode extends CalculationModeSync ?
         (effect : unknown) => unknown
         :
-        Ctx extends typeof CalculationModeGen ?
+        Mode extends CalculationModeGen ?
             (effect : unknown) => unknown
             :
-            (effect : unknown) => Promise<unknown>
+            Mode extends CalculationModeAsync ?
+                (effect : unknown) => Promise<unknown>
+                :
+                never
 
 
 // // //---------------------------------------------------------------------------------------------------------------------
@@ -66,76 +69,76 @@ export type EffectHandler<Ctx extends CalculationModeUnknown> =
 // //
 // //     return iteration.value
 // // }
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// /**
-//  * The base class for effect. Effect is some value, that can be send to the "outer" calculation context, using the
-//  * effect handler function. Effect handler then will process an effect and return some resulting value.
-//  *
-//  * ```ts
-//  * const identifier  = graph.identifier((Y : SyncEffectHandler) : number => {
-//  *     const proposedValue : number    = Y(ProposedOrPrevious)
-//  *
-//  *     const maxValue : number         = Y(max)
-//  *
-//  *     return proposedValue <= maxValue ? proposedValue : maxValue
-//  * })
-//  * ```
-//  */
-// export class Effect extends Base {
-//     handler     : symbol
-//
-//     /**
-//      * Whether the effect is synchronous. Default value, defined in the prototype, is `true`.
-//      */
-//     @prototypeValue(true)
-//     sync        : boolean
-//
-//     @prototypeValue(true)
-//     pure        : boolean
-// }
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const ProposedOrPreviousSymbol    = Symbol('ProposedOrPreviousSymbol')
-//
-// /**
-//  * The constant that represents a request for either user input (proposed value) or previous value of the
-//  * identifier, currently being calculated.
-//  *
-//  * Important note, is that if an identifier yields a `ProposedOrPrevious` effect and its computed value does not match the value of this effect,
-//  * it will be re-calculated (computation function called) again on the next read. This is because the value of its `ProposedOrPrevious` input changes.
-//  *
-//  * ```ts
-//  * const graph4 = ChronoGraph.new()
-//  *
-//  * const max           = graph4.variable(100)
-//  *
-//  * const identifier15  = graph4.identifier((Y) : number => {
-//  *     const proposedValue : number    = Y(ProposedOrPrevious)
-//  *
-//  *     const maxValue : number         = Y(max)
-//  *
-//  *     return proposedValue <= maxValue ? proposedValue : maxValue
-//  * })
-//  *
-//  * graph4.write(identifier15, 18)
-//  *
-//  * const value15_1 = graph4.read(identifier15) // 18
-//  *
-//  * graph4.write(identifier15, 180)
-//  *
-//  * const value15_2 = graph4.read(identifier15) // 100
-//  *
-//  * graph4.write(max, 50)
-//  *
-//  * const value15_3 = graph4.read(identifier15) // 50
-//  * ```
-//  */
-// export const ProposedOrPrevious : Effect = Effect.new({ handler : ProposedOrPreviousSymbol })
-//
-//
+
+
+//---------------------------------------------------------------------------------------------------------------------
+/**
+ * The base class for effect. Effect is some value, that can be send to the "outer" calculation context, using the
+ * effect handler function. Effect handler then will process an effect and return some resulting value.
+ *
+ * ```ts
+ * const identifier  = graph.identifier((Y : SyncEffectHandler) : number => {
+ *     const proposedValue : number    = Y(ProposedOrPrevious)
+ *
+ *     const maxValue : number         = Y(max)
+ *
+ *     return proposedValue <= maxValue ? proposedValue : maxValue
+ * })
+ * ```
+ */
+export class Effect extends Base {
+    handler     : symbol    = undefined
+
+    /**
+     * Whether the effect is synchronous. Default value, defined in the prototype, is `true`.
+     */
+    @prototypeValue(true)
+    sync        : boolean
+
+    @prototypeValue(true)
+    pure        : boolean
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedOrPreviousSymbol    = Symbol('ProposedOrPreviousSymbol')
+
+/**
+ * The constant that represents a request for either user input (proposed value) or previous value of the
+ * identifier, currently being calculated.
+ *
+ * Important note, is that if an identifier yields a `ProposedOrPrevious` effect and its computed value does not match the value of this effect,
+ * it will be re-calculated (computation function called) again on the next read. This is because the value of its `ProposedOrPrevious` input changes.
+ *
+ * ```ts
+ * const graph4 = ChronoGraph.new()
+ *
+ * const max           = graph4.variable(100)
+ *
+ * const identifier15  = graph4.identifier((Y) : number => {
+ *     const proposedValue : number    = Y(ProposedOrPrevious)
+ *
+ *     const maxValue : number         = Y(max)
+ *
+ *     return proposedValue <= maxValue ? proposedValue : maxValue
+ * })
+ *
+ * graph4.write(identifier15, 18)
+ *
+ * const value15_1 = graph4.read(identifier15) // 18
+ *
+ * graph4.write(identifier15, 180)
+ *
+ * const value15_2 = graph4.read(identifier15) // 100
+ *
+ * graph4.write(max, 50)
+ *
+ * const value15_3 = graph4.read(identifier15) // 50
+ * ```
+ */
+export const ProposedOrPrevious : Effect = Effect.new({ handler : ProposedOrPreviousSymbol })
+
+
 // //---------------------------------------------------------------------------------------------------------------------
 // export const RejectSymbol    = Symbol('RejectSymbol')
 //

@@ -1,15 +1,15 @@
-import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
-import { CalculationModeSync, CalculationModeUnknown } from "../CalculationMode.js"
-import { EffectHandler } from "../Effect.js"
-import { globalContext } from "../GlobalContext.js"
-import { Meta } from "../Meta.js"
+import { AnyConstructor } from "../../class/Mixin.js"
+import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
+import { defaultMeta, Meta } from "../Meta.js"
 import { BoxImmutable } from "./Box.js"
 import { Owner, OwnerManaged } from "./Immutable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculableBoxImmutable<V> extends BoxImmutable<V> {
-    owner               : Owner<this> & CalculableBox<V> = undefined
+export class CalculableBoxImmutable<V, Mode extends CalculationMode = CalculationModeSync>
+    extends BoxImmutable<V>
+{
+    owner               : Owner<this> & CalculableBox<V, Mode> = undefined
 
     proposedValue       : V             = undefined
 
@@ -59,7 +59,7 @@ export class CalculableBoxImmutable<V> extends BoxImmutable<V> {
         return this.owner.meta.equality
     }
 
-    get calculation () : AnyFunction {
+    get calculation () : CalculationFunction<V, Mode> {
         return this.owner.calculation
     }
 
@@ -76,9 +76,12 @@ export class CalculableBoxImmutable<V> extends BoxImmutable<V> {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculableBox<V, Ctx extends CalculationModeUnknown = CalculationModeSync> extends CalculableBoxImmutable<V> implements OwnerManaged<CalculableBoxImmutable<V>> {
+export class CalculableBox<V, Mode extends CalculationMode = CalculationModeSync>
+    extends CalculableBoxImmutable<V, Mode>
+    implements OwnerManaged<CalculableBoxImmutable<V, Mode>>
+{
 
-    constructor (config : Partial<CalculableBox<V>>) {
+    constructor (config : Partial<CalculableBox<V, Mode>>) {
         super()
 
         if (config) {
@@ -88,27 +91,27 @@ export class CalculableBox<V, Ctx extends CalculationModeUnknown = CalculationMo
     }
 
 
-    get meta () : Meta<V> {
+    get meta () : Meta<V, Mode> {
         const cls = this.constructor as AnyConstructor<this, typeof CalculableBox>
 
-        return cls.meta as Meta<V>
+        return cls.meta as Meta<V, Mode>
     }
 
 
-    static meta : Meta<unknown>     = undefined
+    static meta : Meta<unknown>     = defaultMeta
 
 
     context     : unknown           = undefined
 
 
-    $calculation : AnyFunction      = undefined
+    $calculation : CalculationFunction<V, Mode>      = undefined
 
-    get calculation () : AnyFunction {
+    get calculation () : CalculationFunction<V, Mode> {
         if (this.$calculation !== undefined) return this.$calculation
 
         return this.meta.calculation
     }
-    set calculation (value : AnyFunction) {
+    set calculation (value : CalculationFunction<V, Mode>) {
         this.$calculation = value
     }
 
@@ -117,12 +120,12 @@ export class CalculableBox<V, Ctx extends CalculationModeUnknown = CalculationMo
 
 
     // //region ChronoBox as Owner
-    immutable       : CalculableBoxImmutable<V>        = this
+    immutable       : CalculableBoxImmutable<V, Mode>        = this
 
     // proposedValue           : V             = undefined
 
 
-    setCurrent (immutable : CalculableBoxImmutable<V>) {
+    setCurrent (immutable : CalculableBoxImmutable<V, Mode>) {
         if (immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
         this.immutable = immutable
@@ -138,23 +141,22 @@ export class CalculableBox<V, Ctx extends CalculationModeUnknown = CalculationMo
 
     //region ChronoBoxOwner as ChronoBoxImmutable interface
 
-    // @ts-ignore
-    owner           : Owner<this> & CalculableBox<V> = this
+    owner           : Owner<this> & CalculableBox<V, Mode> = this as any
 
     createNext () : this {
         this.freeze()
 
         const self      = this.constructor as AnyConstructor<this, typeof CalculableBox>
-        const next      = new self.immutableCls()
+        const next      = new self.immutableCls() as this
 
         next.previous   = this
-        next.owner      = this
+        next.owner      = this as any
 
         // @ts-ignore
         return next
     }
 
-    static immutableCls : AnyConstructor<CalculableBoxImmutable<unknown>, typeof CalculableBoxImmutable> = CalculableBoxImmutable
+    static immutableCls : AnyConstructor<CalculableBoxImmutable<unknown, CalculationMode>, typeof CalculableBoxImmutable> = CalculableBoxImmutable
     //endregion
 
 

@@ -1,3 +1,4 @@
+import { CalculationMode } from "../CalculationMode.js"
 import { ChronoId } from "../Id.js"
 import { Meta } from "../Meta.js"
 
@@ -52,5 +53,5 @@ export interface Atom extends Owner<Immutable> {
 
 
 export interface OwnerManaged<I extends Immutable> extends Owner<I> {
-    meta        : Meta<unknown>
+    meta        : Meta<unknown, CalculationMode>
 }

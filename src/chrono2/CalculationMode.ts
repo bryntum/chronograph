@@ -1,4 +1,6 @@
 //---------------------------------------------------------------------------------------------------------------------
+import { EffectHandler } from "./Effect.js"
+
 /**
  * Symbol to denote the synchronous calculation mode
  */
@@ -23,7 +25,7 @@ export type CalculationModeGen      = typeof CalculationModeGen
 /**
  * Type, denoting the unknown calculation mode
  */
-export type CalculationModeUnknown  = CalculationModeSync | CalculationModeAsync | CalculationModeGen
+export type CalculationMode         = CalculationModeSync | CalculationModeAsync | CalculationModeGen
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -32,13 +34,12 @@ export type CalculationModeUnknown  = CalculationModeSync | CalculationModeAsync
  */
 export type CalculationIterator<Result> = Generator<any, Result, any>
 
-
 /**
  * Calculation mode "picker".
  *
  * This type allows generic typization of the identifiers's calculation function (a single type for all calculation modes).
  */
-export type CalculationReturnValue<Mode extends CalculationModeUnknown, Result> =
+export type CalculationReturnValue<Result, Mode extends CalculationMode> =
     Mode extends CalculationModeSync ?
         Result
         :
@@ -49,3 +50,6 @@ export type CalculationReturnValue<Mode extends CalculationModeUnknown, Result> 
                 Promise<Result>
                 :
                 never
+
+
+export type CalculationFunction<Result, Mode extends CalculationMode> = (Y : EffectHandler<Mode>) => CalculationReturnValue<Result, Mode>
