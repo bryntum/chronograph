@@ -21,14 +21,9 @@ export class Meta<V> extends Base {
     /**
      * The name of the identifiers. Not an id, does not imply uniqueness.
      */
-    name                : string        = undefined
+    name                : string    = undefined
 
-    /**
-     * The type of the effects that can be "yielded" from the calculation function
-     */
-    YieldT              : unknown
     ValueT              : V
-    CalcContextT        : unknown
 
     /**
      * Whether this identifier is lazy (`true`) or strict (`false`).
@@ -76,8 +71,8 @@ export class Meta<V> extends Base {
      *
      * @param Y
      */
-    calculation (this : this[ 'CalcContextT' ], Y : EffectHandler<CalculationModeUnknown, this[ 'YieldT' ]>)
-        : CalculationReturnValue<CalculationModeUnknown, this[ 'ValueT' ], this[ 'YieldT' ]>
+    calculation (Y : EffectHandler<CalculationModeUnknown>)
+        : CalculationReturnValue<CalculationModeUnknown, this[ 'ValueT' ], unknown>
     {
         throw new Error("Abstract method `calculation` called")
     }

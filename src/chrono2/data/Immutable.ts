@@ -1,4 +1,5 @@
 import { ChronoId } from "../Id.js"
+import { Meta } from "../Meta.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface GarbageCollectable {
@@ -44,3 +45,12 @@ export interface Owner<I extends Immutable> {
 // export interface AtomWithValue<V> extends IoRef {
 //     read () : V
 // }
+
+export interface Atom extends Owner<Immutable> {
+
+}
+
+
+export interface OwnerManaged<I extends Immutable> extends Owner<I> {
+    meta        : Meta<unknown>
+}

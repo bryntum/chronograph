@@ -1,4 +1,4 @@
-import { AnyConstructor } from "../../class/Mixin.js"
+import { AnyConstructor, Mixin } from "../../class/Mixin.js"
 import { Immutable, Owner } from "./Immutable.js"
 
 
@@ -36,30 +36,43 @@ export class BoxImmutable<V> implements Immutable {
 
 
     read () : V {
-        if (this.value !== undefined) return this.value
+        return this.readValuePure()
+    }
 
-        if (this.previous !== undefined) return this.previous.read()
+
+    readValuePure () : V {
+        let box : this = this
+
+        while (box) {
+            if (box.value !== undefined) return box.value
+
+            box     = box.previous
+        }
 
         return null
     }
 
 
     write (value : V) {
-        if (value === undefined) value = null
-
         if (this.frozen) {
             const next = this.createNext()
 
             this.owner.setCurrent(next)
 
-            next.write(value)
+            next.writeToUnfrozen(value)
         } else {
-            this.value  = value
+            this.writeToUnfrozen(value)
         }
+    }
+
+
+    writeToUnfrozen (value : V) {
+        if (value === undefined) value = null
+
+        this.value  = value
     }
     //endregion
 }
-
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -78,8 +91,7 @@ export class Box<V> extends BoxImmutable<V> implements Owner<BoxImmutable<V>> {
 
     //region ChronoBoxOwner as ChronoBoxImmutable interface
 
-    // @ts-ignore
-    owner           : Owner<this> & Box<V> = this
+    owner           : Owner<this> & Box<V> = this as any
 
     createNext () : this {
         this.freeze()
@@ -90,8 +102,7 @@ export class Box<V> extends BoxImmutable<V> implements Owner<BoxImmutable<V>> {
         next.previous   = this
         next.owner      = this
 
-        // @ts-ignore
-        return next
+        return next as this
     }
 
     static immutableCls : AnyConstructor<BoxImmutable<unknown>, typeof BoxImmutable> = BoxImmutable

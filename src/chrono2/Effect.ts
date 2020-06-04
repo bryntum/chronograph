@@ -13,14 +13,14 @@ export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution'
  *
  * When using generators-based calculation, there's no need to use this function directly - the syntax construct `yield` plays its role.
  */
-export type EffectHandler<Ctx extends CalculationModeUnknown, YieldT> =
+export type EffectHandler<Ctx extends CalculationModeUnknown> =
     Ctx extends typeof CalculationModeSync ?
-        (effect : YieldT) => unknown
+        (effect : unknown) => unknown
         :
         Ctx extends typeof CalculationModeGen ?
-            (effect : YieldT) => unknown
+            (effect : unknown) => unknown
             :
-            (effect : YieldT) => Promise<unknown>
+            (effect : unknown) => Promise<unknown>
 
 
 // // //---------------------------------------------------------------------------------------------------------------------

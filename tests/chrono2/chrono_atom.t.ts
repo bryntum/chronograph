@@ -1,78 +1,56 @@
-import { Box, ChronoBoxAtomC } from "../../src/chrono2/data/Box.js"
+import { Box } from "../../src/chrono2/data/Box.js"
+import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Newly created ChronoBoxAtom should be initialized to `null`', t => {
-        const chronoBoxAtom     = new Box()
+    t.it('Newly created ChronoBoxAtom should return `null` on read', t => {
+        const box     = new Box()
 
-        t.isStrict(chronoBoxAtom.read(), null)
+        t.isStrict(box.read(), null)
     })
 
 
     t.it('Should read your own writes', t => {
-        const chronoBoxAtom     = new Box<number>()
+        const box     = new Box<number>()
 
-        chronoBoxAtom.write(10)
+        box.write(10)
 
-        t.is(chronoBoxAtom.read(), 10)
+        t.is(box.read(), 10)
 
-        chronoBoxAtom.write(11)
-        chronoBoxAtom.write(12)
+        box.write(11)
+        box.write(12)
 
-        t.is(chronoBoxAtom.read(), 12)
+        t.is(box.read(), 12)
     })
 
 
     t.it('Writing `undefined` should be converted to `null`', t => {
-        const chronoBoxAtom     = new Box<number>()
+        const box     = new Box<number>()
 
-        chronoBoxAtom.write(undefined)
+        box.write(10)
 
-        t.isStrict(chronoBoxAtom.read(), null)
+        t.is(box.read(), 10)
+
+        box.write(undefined)
+
+        t.isStrict(box.read(), null)
     })
 
 
-    t.it('Reject before the very first commit should clear the atom to `null`', t => {
-        const chronoBoxAtom     = new Box<number>()
+    t.it('Should be possible to calculate the value of the box', t => {
+        const context = {}
 
-        chronoBoxAtom.write(10)
+        const box     = new CalculableBox<number>({
+            calculation : function () {
+                t.is(this, context, 'Correct context')
+                return 11
+            },
+            context
+        })
 
-        t.isStrict(chronoBoxAtom.read(), 10)
-
-        chronoBoxAtom.reject()
-
-        t.isStrict(chronoBoxAtom.read(), null)
+        t.is(box.read(), 11)
     })
-
-
-    t.it('Should be able undo after commit', t => {
-        const chronoBoxAtom     = new Box<number>()
-
-        chronoBoxAtom.write(10)
-
-        t.isStrict(chronoBoxAtom.read(), 10)
-
-        chronoBoxAtom.commit()
-
-        chronoBoxAtom.write(11)
-        chronoBoxAtom.write(12)
-
-        chronoBoxAtom.undo()
-
-        t.isStrict(chronoBoxAtom.read(), 10)
-    })
-
-
-    // t.it('Should be possible to calculate the value of the box', t => {
-    //     const chronoBoxAtom     = ChronoBoxAtomC({
-    //         calculation : () => 11
-    //     })
-    //
-    //     chronoBoxAtom.write(undefined)
-    //
-    //     t.isStrict(chronoBoxAtom.read(), null)
-    // })
 
 })
