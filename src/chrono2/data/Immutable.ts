@@ -1,93 +1,86 @@
 import { AnyConstructor, Mixin } from "../../class/Mixin.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { ChronoId } from "../Identifiable.js"
-import { defaultMeta, Meta } from "../Meta.js"
+import { defaultMetaSync, Meta } from "../Meta.js"
+
+
+// //---------------------------------------------------------------------------------------------------------------------
+// export interface GarbageCollectable {
+//     refCount    : number
+//
+//     destroy ()
+// }
+
 
 //---------------------------------------------------------------------------------------------------------------------
-export interface GarbageCollectable {
-    refCount    : number
+export class Immutable {
+    owner       : Owner         = undefined
 
-    destroy ()
+    previous    : this          = undefined
+
+    frozen      : boolean       = false
+
+
+    freeze () {
+        this.frozen = true
+    }
+
+
+    createNext () : this {
+        this.freeze()
+
+        const self      = this.constructor as AnyConstructor<this, typeof Immutable>
+        const next      = new self()
+
+        next.previous   = this
+        next.owner      = this.owner
+
+        return next
+    }
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Immutable extends Mixin(
-    [],
-    (base : AnyConstructor) =>
-
-    class Immutable extends base {
-        owner       : Owner         = undefined
-
-        previous    : this          = undefined
-
-        frozen      : boolean       = false
+export class Owner {
+    immutable   : Immutable     = undefined
 
 
-        freeze () {
-            this.frozen = true
-        }
+    setCurrent (immutable : this[ 'immutable' ]) {
+        if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
-
-        createNext () : this {
-            this.freeze()
-
-            const self      = this.constructor as AnyConstructor<this, typeof Immutable>
-            const next      = new self()
-
-            next.previous   = this
-            next.owner      = this.owner
-
-            return next
-        }
+        this.immutable = immutable
     }
-){}
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Owner extends Mixin(
-    [],
-    (base : AnyConstructor) =>
-
-    class Owner extends base {
-        immutable   : Immutable     = undefined
+export class CombinedOwnerAndImmutable extends Immutable implements Owner {
+    owner           : Owner         = this
 
 
-        setCurrent (immutable : Immutable) {
-            if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
+    createNext () : this {
+        this.freeze()
 
-            this.immutable = immutable
-        }
+        const self      = this.constructor as AnyConstructor<this, typeof CombinedOwnerAndImmutable>
+        const next      = new self.immutableCls()
+
+        next.previous   = this
+        next.owner      = this
+
+        return next as this
     }
-){}
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export class CombinedOwnerAndImmutable extends Mixin(
-    [ Owner, Immutable ],
-    (base : AnyConstructor<Owner & Immutable, typeof Owner & typeof Immutable>) =>
+    immutable       : Immutable         = this
 
-    class CombinedOwnerAndImmutable extends base {
-        immutable       : Immutable         = this
+    setCurrent (immutable : this[ 'immutable' ]) {
+        if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
-        owner           : Owner             = this
-
-
-        createNext () : this {
-            this.freeze()
-
-            const self      = this.constructor as AnyConstructor<this, typeof CombinedOwnerAndImmutable>
-            const next      = new self.immutableCls()
-
-            next.previous   = this
-            next.owner      = this
-
-            return next as this
-        }
-
-        static immutableCls : AnyConstructor<Immutable, typeof Immutable> = Immutable
+        this.immutable = immutable
     }
-){}
+
+    static immutableCls : AnyConstructor<Immutable, typeof Immutable> = Immutable
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -131,6 +124,6 @@ export class OwnerManaged extends Mixin(
             this.$equality = value
         }
 
-        static meta : Meta              = defaultMeta
+        static meta : Meta              = defaultMetaSync
     }
 ){}

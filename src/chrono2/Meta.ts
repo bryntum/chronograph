@@ -84,8 +84,8 @@ export class Meta extends Base {
     }
 }
 
-export const defaultCalculation = (Y : EffectHandler<CalculationModeSync>) => Y(ProposedOrPrevious)
+export const defaultCalculationSync = (Y : EffectHandler<CalculationModeSync>) => Y(ProposedOrPrevious)
 
-export const defaultMeta = Meta.new({
-    calculation : defaultCalculation
+export const defaultMetaSync = Meta.new({
+    calculation : defaultCalculationSync
 })

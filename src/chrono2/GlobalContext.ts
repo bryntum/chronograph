@@ -1,7 +1,5 @@
 import { Base } from "../class/Base.js"
-import { QuarkState, Quark, Atom } from "./Quark.js"
-import { CalculationMode } from "./CalculationMode.js"
-import { EffectHandler } from "./Effect.js"
+import { Quark } from "./Quark.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GlobalContext extends Base {

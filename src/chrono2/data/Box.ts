@@ -1,120 +1,79 @@
-import { AnyConstructor, Mixin } from "../../class/Mixin.js"
-import { strictEquality } from "../../util/Helpers.js"
 import { globalContext } from "../GlobalContext.js"
-import { Quark, QuarkState } from "../Quark.js"
-import { CombinedOwnerAndImmutable } from "./Immutable.js"
+import { Atom, AtomState, Quark } from "../Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class BoxImmutable extends Mixin(
-    [ Quark ],
-    (base : AnyConstructor<Quark, typeof Quark>) =>
+export class BoxImmutable extends Quark {
+    value               : unknown                 = undefined
 
-    class BoxImmutable extends base {
+    constructor (owner : Atom) {
+        super()
 
-        //region ChronoBox's own interface
-        value               : unknown                 = undefined
-
-
-        hasValue () : boolean {
-            return this.readValuePure() !== undefined
-        }
-
-
-        hasOwnValue () : boolean {
-            return this.value !== undefined
-        }
-
-
-        read () : unknown {
-            if (globalContext.activeQuark) this.addOutgoing(globalContext.activeQuark)
-
-            return this.readValuePure()
-        }
-
-
-        readValuePure () : unknown {
-            let box : this = this
-
-            while (box) {
-                if (box.value !== undefined) return box.value
-
-                box     = box.previous
-            }
-
-            return null
-        }
-
-
-        write (value : unknown) {
-            if (this.frozen) {
-                const next = this.createNext()
-
-                this.owner.setCurrent(next)
-
-                next.writeToUnfrozen(value)
-            } else {
-                this.writeToUnfrozen(value)
-            }
-        }
-
-
-        writeToUnfrozen (value : unknown) {
-            // TODO should use `updateValue`
-            if (value === undefined) value = null
-
-            if (value === this.readValuePure()) return
-
-            this.propagatePossiblyStale()
-
-            this.value  = value
-            this.state  = QuarkState.UpToDate
-
-            this.propagateStale()
-        }
-
-
-        updateValue (newValue : unknown) {
-            // if (newValue === undefined) newValue = null
-            //
-            // const oldValue              = this.readValuePure()
-            //
-            // this.value                  = newValue
-            // this.state                  = QuarkState.UpToDate
-            //
-            // if (!this.equality(oldValue, newValue)) this.propagateStale()
-        }
-
-
-        get equality () : (v1 : unknown, v2 : unknown) => boolean {
-            return strictEquality
-        }
+        this.owner      = owner
     }
-){}
+
+
+    hasValue () : boolean {
+        return this.read() !== undefined
+    }
+
+
+    hasOwnValue () : boolean {
+        return this.value !== undefined
+    }
+
+
+    read () : unknown {
+        let box : this = this
+
+        while (box) {
+            if (box.value !== undefined) return box.value
+
+            box     = box.previous
+        }
+
+        return null
+    }
+
+
+    write (value : unknown) {
+        if (this.frozen) throw new Error("Can't write to frozen box")
+
+        this.value = value
+    }
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Box extends Mixin(
-    [ BoxImmutable, CombinedOwnerAndImmutable ],
-    (base : AnyConstructor<BoxImmutable & CombinedOwnerAndImmutable, typeof BoxImmutable & typeof CombinedOwnerAndImmutable>) =>
-
-    class BoxImmutable extends base {
-        immutable       : BoxImmutable
-
-        static immutableCls : AnyConstructor<BoxImmutable, typeof BoxImmutable> = BoxImmutable
+// TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
+export class Box extends Atom {
+    immutable       : BoxImmutable  = new BoxImmutable(this)
 
 
-        read () : any {
-            if (this.immutable === this) return super.read()
+    immutableForWrite () : this[ 'immutable' ] {
+        if (this.immutable.frozen) this.setCurrent(this.immutable.createNext())
 
-            return this.immutable.read()
-        }
-
-
-        write (value : unknown) {
-            if (this.immutable === this) return super.write(value)
-
-            return this.immutable.write(value)
-        }
+        return this.immutable
     }
-){}
+
+
+    read () : any {
+        if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
+
+        return this.immutable.read()
+    }
+
+
+    write (value : unknown) {
+        if (value === undefined) value = null
+
+        if (value === this.immutable.read()) return
+
+        this.propagatePossiblyStale()
+
+        this.immutableForWrite().write(value)
+        this.state  = AtomState.UpToDate
+
+        this.propagateStale()
+    }
+}
