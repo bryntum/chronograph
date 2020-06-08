@@ -1,37 +1,35 @@
 import { Base } from "../class/Base.js"
+import { QuarkState, Quark, Atom } from "./Quark.js"
 import { CalculationMode } from "./CalculationMode.js"
-import { Atom } from "./data/Immutable.js"
 import { EffectHandler } from "./Effect.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GlobalContext extends Base {
 
-    activeAtom          : Atom      = undefined
+    activeQuark         : Quark          = undefined
 
-    effectHandler       : EffectHandler<CalculationMode>    = undefined
-
-
-    initialize () {
-        super.initialize(...arguments)
-
-        this.effectHandler = () => {
-        }
-    }
+    // effectHandler       : EffectHandler<CalculationMode>    = undefined
 
 
-    calculateAtoms (stack : Atom[]) {
-        while (stack.length) {
-            const atom      = stack[ stack.length - 1 ]
+    // initialize () {
+    //     super.initialize(...arguments)
+    //
+    //     this.effectHandler = () => {
+    //     }
+    // }
 
-            if (atom.hasValue() && !atom.isStale()) {
-                stack.pop()
-                continue
-            }
 
-            stack.push(...atom.getIncoming())
-
-            atom.calculate()
-        }
+    calculateAtoms (stack : Quark[]) {
+        // while (stack.length) {
+        //     const atom      = stack[ stack.length - 1 ]
+        //
+        //     if (atom.state === QuarkState.UpToDate) {
+        //         stack.pop()
+        //         continue
+        //     }
+        //
+        //     atom.calculate(stack)
+        // }
     }
 }
 

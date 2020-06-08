@@ -15,7 +15,7 @@ export class Node extends Mixin(
 
         outgoingCompacted   : boolean       = false
 
-        lastAddedTo         : Node          = undefined
+        lastOutgoingTo      : Node          = undefined
 
 
         getIncoming () : this[ '$incoming' ] {
@@ -52,9 +52,9 @@ export class Node extends Mixin(
 
 
         addOutgoing (to : Node, calledFromPartner : boolean = false) {
-            if (this.lastAddedTo === to) return
+            if (this.lastOutgoingTo === to) return
 
-            this.lastAddedTo        = to
+            this.lastOutgoingTo     = to
 
             this.outgoingCompacted  = false
 

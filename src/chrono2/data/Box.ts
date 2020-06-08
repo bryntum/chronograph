@@ -1,192 +1,100 @@
 import { AnyConstructor, Mixin } from "../../class/Mixin.js"
-import { MIN_SMI } from "../../util/Helpers.js"
 import { globalContext } from "../GlobalContext.js"
-import { Atom, Immutable, Owner } from "./Immutable.js"
+import { Quark, QuarkState } from "../Quark.js"
+import { CombinedOwnerAndImmutable } from "./Immutable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class BoxImmutable<V> implements Immutable, Atom {
-    uniqable            : number            = MIN_SMI
+export class BoxImmutable extends Mixin(
+    [ Quark ],
+    (base : AnyConstructor<Quark, typeof Quark>) =>
 
-    //region ChronoBoxImmutable as Immutable
-    previous            : this              = undefined
+    class BoxImmutable extends base {
 
-    frozen              : boolean           = false
-
-    owner               : Owner<this> & Box<V> = undefined
-
-    freeze () {
-        this.frozen = true
-    }
+        //region ChronoBox's own interface
+        value               : unknown                 = undefined
 
 
-    createNext () : this {
-        this.freeze()
-
-        const self      = this.constructor as AnyConstructor<this, typeof BoxImmutable>
-        const next      = new self()
-
-        next.previous   = this
-        next.owner      = this.owner
-
-        return next
-    }
-    //endregion
-
-    isStale () : boolean {
-        return false
-    }
-
-    onBecomeStale () {
-    }
+        hasValue () : boolean {
+            return this.readValuePure() !== undefined
+        }
 
 
-    incoming            : Atom[]        = undefined
-    outgoing            : Atom[]        = undefined
-
-    getIncoming () : this[ 'incoming' ] {
-        if (this.incoming !== undefined) return this.incoming
-
-        return this.incoming = []
-    }
-    getOutgoing () : this[ 'outgoing' ] {
-        if (this.outgoing !== undefined) return this.outgoing
-
-        return this.outgoing = []
-    }
+        hasOwnValue () : boolean {
+            return this.value !== undefined
+        }
 
 
-    addIncoming (atom : Atom, calledFromPartner : boolean) {
-        this.getIncoming().push(atom)
-        if (!calledFromPartner) atom.addOutgoing(this, true)
-    }
+        read () : unknown {
+            if (globalContext.activeQuark) this.addOutgoing(globalContext.activeQuark)
 
-    addOutgoing (atom : Atom, calledFromPartner : boolean) {
-        this.getOutgoing().push(atom)
-        if (!calledFromPartner)  atom.addIncoming(this, true)
-    }
+            return this.readValuePure()
+        }
 
 
-    propagateChanged () {
-        const toVisit : Atom[]       = [ this ]
+        readValuePure () : unknown {
+            let box : this = this
 
-        while (toVisit.length) {
-            const el        = toVisit.pop()
+            while (box) {
+                if (box.value !== undefined) return box.value
 
-            if (!el.isStale()) {
-                el.onBecomeStale()
+                box     = box.previous
+            }
 
-                toVisit.push(...el.getOutgoing())
+            return null
+        }
+
+
+        write (value : unknown) {
+            if (this.frozen) {
+                const next = this.createNext()
+
+                this.owner.setCurrent(next)
+
+                next.writeToUnfrozen(value)
+            } else {
+                this.writeToUnfrozen(value)
             }
         }
-    }
 
 
-    hasValue () : boolean {
-        return this.readValuePure() !== undefined
-    }
+        writeToUnfrozen (value : unknown) {
+            if (value === undefined) value = null
 
-    //region ChronoBox's own interface
-    value               : V                 = undefined
+            if (value === this.value) return
 
+            this.value  = value
+            this.state  = QuarkState.UpToDate
 
-    read () : V {
-        if (globalContext.activeAtom) globalContext.activeAtom.addIncoming(this, false)
-
-        return this.readValuePure()
-    }
-
-
-    calculate () {
-    }
-
-
-    readValuePure () : V {
-        let box : this = this
-
-        while (box) {
-            if (box.value !== undefined) return box.value
-
-            box     = box.previous
-        }
-
-        return null
-    }
-
-
-    write (value : V) {
-        if (this.frozen) {
-            const next = this.createNext()
-
-            this.owner.setCurrent(next)
-
-            next.writeToUnfrozen(value)
-        } else {
-            this.writeToUnfrozen(value)
+            this.propagatePossiblyStale()
+            this.propagateStale()
         }
     }
-
-
-    writeToUnfrozen (value : V) {
-        if (value === undefined) value = null
-
-        if (value === this.value) return
-
-        this.value  = value
-
-        this.propagateChanged()
-    }
-    //endregion
-}
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Box<V> extends BoxImmutable<V> implements Owner<BoxImmutable<V>> {
-    //region ChronoBox as Owner
-    immutable       : BoxImmutable<V>        = this
+export class Box extends Mixin(
+    [ BoxImmutable, CombinedOwnerAndImmutable ],
+    (base : AnyConstructor<BoxImmutable & CombinedOwnerAndImmutable, typeof BoxImmutable & typeof CombinedOwnerAndImmutable>) =>
+
+    class BoxImmutable extends base {
+        immutable       : BoxImmutable
+
+        static immutableCls : AnyConstructor<BoxImmutable, typeof BoxImmutable> = BoxImmutable
 
 
-    setCurrent (immutable : BoxImmutable<V>) {
-        if (immutable.previous !== this.immutable) throw new Error("Invalid state thread")
+        read () : any {
+            if (this.immutable === this) return super.read()
 
-        this.immutable = immutable
+            return this.immutable.read()
+        }
+
+
+        write (value : unknown) {
+            if (this.immutable === this) return super.write(value)
+
+            return this.immutable.write(value)
+        }
     }
-    //endregion
-
-
-    //region ChronoBoxOwner as ChronoBoxImmutable interface
-
-    owner           : Owner<this> & Box<V> = this as any
-
-    createNext () : this {
-        this.freeze()
-
-        const self      = this.constructor as AnyConstructor<this, typeof Box>
-        const next      = new self.immutableCls()
-
-        next.previous   = this
-        next.owner      = this
-
-        return next as this
-    }
-
-    static immutableCls : AnyConstructor<BoxImmutable<unknown>, typeof BoxImmutable> = BoxImmutable
-    //endregion
-
-
-    //region ChronoBoxOwner as both ChronoBoxOwner & ChronoBoxImmutable interface
-
-    read () : V {
-        if (this.immutable === this) return super.read()
-
-        return this.immutable.read()
-    }
-
-
-    write (value : V) {
-        if (this.immutable === this) return super.write(value)
-
-        return this.immutable.write(value)
-    }
-    //endregion
-}
+){}

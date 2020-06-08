@@ -1,6 +1,6 @@
 import { AnyConstructor, Mixin } from "../../class/Mixin.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
-import { ChronoId } from "../Id.js"
+import { ChronoId } from "../Identifiable.js"
 import { defaultMeta, Meta } from "../Meta.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -8,12 +8,6 @@ export interface GarbageCollectable {
     refCount    : number
 
     destroy ()
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export interface Identifiable {
-    id          : ChronoId
 }
 
 
@@ -63,6 +57,33 @@ export class Owner extends Mixin(
 
             this.immutable = immutable
         }
+    }
+){}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export class CombinedOwnerAndImmutable extends Mixin(
+    [ Owner, Immutable ],
+    (base : AnyConstructor<Owner & Immutable, typeof Owner & typeof Immutable>) =>
+
+    class CombinedOwnerAndImmutable extends base {
+        immutable       : Immutable         = this
+
+        owner           : Owner             = this as any
+
+        createNext () : this {
+            this.freeze()
+
+            const self      = this.constructor as AnyConstructor<this, typeof CombinedOwnerAndImmutable>
+            const next      = new self.immutableCls()
+
+            next.previous   = this
+            next.owner      = this
+
+            return next as this
+        }
+
+        static immutableCls : AnyConstructor<Immutable, typeof Immutable> = Immutable
     }
 ){}
 

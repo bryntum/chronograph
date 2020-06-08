@@ -19,13 +19,11 @@ import { EffectHandler, ProposedOrPrevious } from "./Effect.js"
  * This class has 2 generic arguments - `ValueT` and `ContextT`. The 1st one defines the type of the identifier's value.
  * The 2nd - the identifier's computation context (synchronous or generator).
  */
-export class Meta<V, Mode extends CalculationMode = CalculationModeSync> extends Base {
+export class Meta extends Base {
     /**
      * The name of the identifiers. Not an id, does not imply uniqueness.
      */
     name                : string    = 'Default Meta instance'
-
-    ValueT              : V
 
     /**
      * Whether this identifier is lazy (`true`) or strict (`false`).
@@ -73,7 +71,7 @@ export class Meta<V, Mode extends CalculationMode = CalculationModeSync> extends
      *
      * @param Y
      */
-    calculation : CalculationFunction<V, Mode>
+    calculation : CalculationFunction<unknown, CalculationMode>
 
     /**
      * The equality check of the identifier. By default is performed with `===`.
@@ -81,18 +79,13 @@ export class Meta<V, Mode extends CalculationMode = CalculationModeSync> extends
      * @param v1 First value
      * @param v2 Second value
      */
-    equality (v1 : this[ 'ValueT' ], v2 : this[ 'ValueT' ]) : boolean {
+    equality (v1 : unknown, v2 : unknown) : boolean {
         return v1 === v2
     }
 }
 
-export const MetaC = <Value, Mode extends CalculationMode>(config : Partial<Meta<unknown, CalculationMode>>) : Meta<Value, Mode> =>
-    Meta.new(config) as Meta<Value, Mode>
-
-
 export const defaultCalculation = (Y : EffectHandler<CalculationModeSync>) => Y(ProposedOrPrevious)
 
-
-export const defaultMeta = MetaC<unknown, CalculationModeSync>({
+export const defaultMeta = Meta.new({
     calculation : defaultCalculation
 })

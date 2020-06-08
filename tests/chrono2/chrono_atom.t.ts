@@ -13,7 +13,7 @@ StartTest(t => {
 
 
     t.it('Should read your own writes', t => {
-        const box     = new Box<number>()
+        const box     = new Box()
 
         box.write(10)
 
@@ -27,7 +27,7 @@ StartTest(t => {
 
 
     t.it('Writing `undefined` should be converted to `null`', t => {
-        const box     = new Box<number>()
+        const box     = new Box()
 
         box.write(10)
 
@@ -42,7 +42,7 @@ StartTest(t => {
     t.it('Should be possible to calculate the value of the box', t => {
         const context = {}
 
-        const box     = new CalculableBox<number>({
+        const box     = new CalculableBox({
             calculation : function () {
                 t.is(this, context, 'Correct context')
                 return 11
@@ -54,28 +54,13 @@ StartTest(t => {
     })
 
 
-    t.it('Should be possible to calculate the value of the box', t => {
-        const context = {}
-
-        const box     = new CalculableBox<number>({
-            calculation : function () {
-                t.is(this, context, 'Correct context')
-                return 11
-            },
-            context
-        })
-
-        t.is(box.read(), 11)
-    })
-
-
-    t.iit("Should be possible to reactively observe the value of the box in calculable box", t => {
-        const box1     = new Box<number>()
+    t.it("Should be possible to observe the value of the box in calculable box", t => {
+        const box1     = new Box()
 
         box1.write(10)
 
-        const box2     = new CalculableBox<number>({
-            calculation : () => box1.read() + 1
+        const box2     = new CalculableBox({
+            calculation : () => box1.read()  + 1
         })
 
         t.is(box2.read(), 11)
@@ -86,16 +71,16 @@ StartTest(t => {
     })
 
 
-    t.iit("Should be possible to reactively observe the value of the calculable box in another calculable box", t => {
-        const box1     = new Box<number>()
+    t.it("Should be possible to observe the value of the calculable box in another calculable box", t => {
+        const box1     = new Box()
 
         box1.write(10)
 
-        const box2     = new CalculableBox<number>({
+        const box2     = new CalculableBox({
             calculation : () => box1.read() + 1
         })
 
-        const box3     = new CalculableBox<number>({
+        const box3     = new CalculableBox({
             calculation : () => box2.read() + 1
         })
 

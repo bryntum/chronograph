@@ -1,211 +1,172 @@
-import { AnyConstructor } from "../../class/Mixin.js"
-import { CalculationFunction, CalculationMode, CalculationModeSync, CalculationReturnValue } from "../CalculationMode.js"
+import { AnyConstructor, Mixin } from "../../class/Mixin.js"
+import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { globalContext } from "../GlobalContext.js"
 import { defaultMeta, Meta } from "../Meta.js"
+import { QuarkState } from "../Quark.js"
 import { BoxImmutable } from "./Box.js"
-import { Atom, Owner, OwnerManaged } from "./Immutable.js"
+import { CombinedOwnerAndImmutable, OwnerManaged } from "./Immutable.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculableBoxImmutable<V, Mode extends CalculationMode = CalculationModeSync>
-    extends BoxImmutable<V> implements Atom
-{
-    owner               : Owner<this> & CalculableBox<V, Mode> = undefined
+export class CalculableBoxImmutable extends Mixin(
+    [ BoxImmutable ],
+    (base : AnyConstructor<BoxImmutable, typeof BoxImmutable>) =>
 
-    proposedValue       : V             = undefined
+    class CalculableBoxImmutable extends base {
+        proposedValue       : unknown             = undefined
 
-    dirty               : boolean       = false
+        owner               : OwnerManaged
 
 
-    createNext () : this {
-        const next  = super.createNext()
+        createNext () : this {
+            const next  = super.createNext()
 
-        if (this.dirty) {
-            next.proposedValue  = this.proposedValue
-            next.dirty          = true
+            if (this.state === QuarkState.Stale) {
+                next.proposedValue  = this.proposedValue
+            }
+
+            return next
         }
 
-        return next
+
+        read () : unknown {
+            if (globalContext.activeQuark) this.addOutgoing(globalContext.activeQuark)
+
+            if (this.frozen) return this.readValuePure()
+
+            if (this.state === QuarkState.UpToDate && this.value !== undefined) return this.value
+
+            this.calculate()
+
+            return this.value
+        }
+
+
+        updateValue (value : unknown) {
+            if (this.equality(this.readValuePure(), value)) return
+
+            this.value                  = value
+            this.state                  = QuarkState.UpToDate
+
+            this.propagateStale()
+        }
+
+
+        calculate () {
+            const calculationContext    = this.calculationContext
+            const calculation           = this.calculation
+
+            const prevActive            = globalContext.activeQuark
+            globalContext.activeQuark   = this
+
+            const newValue              = calculation.call(calculationContext)
+
+            globalContext.activeQuark   = prevActive
+
+            this.updateValue(newValue)
+        }
+
+
+        writeToUnfrozen (value : unknown) {
+            if (value === undefined) value = null
+
+            // ignore the write of the same value? what about `keepIfPossible` => `pin`
+            if (this.proposedValue === undefined && this.equality(this.readValuePure(), value)) return
+
+            this.proposedValue  = value
+
+            if (this.state === QuarkState.UpToDate) {
+                this.state  = QuarkState.PossiblyStale
+
+                this.propagatePossiblyStale()
+            }
+        }
+
+
+        get equality () : (v1 : unknown, v2 : unknown) => boolean {
+            return this.owner.equality
+        }
+
+        get calculation () : CalculationFunction<unknown, CalculationMode> {
+            return this.owner.calculation
+        }
+
+        get calculationContext () : unknown {
+            return this.owner.context
+        }
     }
-
-
-    read () : V {
-        if (globalContext.activeAtom) globalContext.activeAtom.addIncoming(this)
-
-        if (this.frozen) return this.readValuePure()
-
-        if (!this.dirty && this.value !== undefined) return this.value
-
-        let value : V = this.calculate()
-
-        if (value === undefined) value = null
-
-        this.setValue(value)
-        this.dirty = false
-
-        return value
-    }
-
-
-    setValue (value : V) {
-        if (this.equality(this.readValuePure(), value)) return
-
-        this.value = value
-
-        this.propagateChanged()
-    }
-
-
-    isStale () : boolean {
-        return this.dirty
-    }
-
-
-    onBecomeStale () {
-        this.dirty = true
-    }
-
-
-    calculate () {
-        const calculationContext    = this.calculationContext
-        const calculation           = this.calculation
-
-        const prevActive            = globalContext.activeAtom
-
-        globalContext.activeAtom    = this
-
-        let value : V = calculation.call(calculationContext)
-
-        globalContext.activeAtom    = prevActive
-
-        return value
-    }
-
-
-    writeToUnfrozen (value : V) {
-        if (value === undefined) value = null
-
-        // ignore the write of the same value? what about `keepIfPossible` => `pin`
-        if (this.equality(this.readValuePure(), value)) return
-
-        this.proposedValue  = value
-        this.dirty          = true
-    }
-
-
-    get equality () : (v1 : V, v2 : V) => boolean {
-        return this.owner.meta.equality
-    }
-
-    get calculation () : CalculationFunction<V, Mode> {
-        return this.owner.calculation
-    }
-
-    get calculationContext () : unknown {
-        return this.owner.context
-    }
-}
-
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculableBox<V, Mode extends CalculationMode = CalculationModeSync>
-    extends CalculableBoxImmutable<V, Mode>
-    implements OwnerManaged<CalculableBoxImmutable<V, Mode>>
-{
+export class CalculableBox extends Mixin(
+    [ CalculableBoxImmutable, CombinedOwnerAndImmutable ],
+    (base : AnyConstructor<CalculableBoxImmutable & CombinedOwnerAndImmutable, typeof CalculableBoxImmutable & typeof CombinedOwnerAndImmutable>) =>
 
-    constructor (config : Partial<CalculableBox<V, Mode>>) {
-        super()
+    class CalculableBox extends base {
+        immutable       : CalculableBoxImmutable
 
-        if (config) {
-            this.calculation    = config.calculation
-            this.context        = config.context || this
+        constructor (config : Partial<CalculableBox>) {
+            super()
+
+            if (config) {
+                this.calculation    = config.calculation
+                this.context        = config.context || this
+            }
+        }
+
+
+        get meta () : Meta {
+            const cls = this.constructor as AnyConstructor<this, typeof CalculableBox>
+
+            return cls.meta as Meta
+        }
+
+
+        static meta : Meta     = defaultMeta
+
+
+        context     : unknown           = undefined
+
+
+        $calculation : CalculationFunction<unknown, CalculationMode>      = undefined
+
+        get calculation () : CalculationFunction<unknown, CalculationMode> {
+            if (this.$calculation !== undefined) return this.$calculation
+
+            return this.meta.calculation
+        }
+        set calculation (value : CalculationFunction<unknown, CalculationMode>) {
+            this.$calculation = value
+        }
+
+
+        $equality       : (v1 : unknown, v2 : unknown) => boolean   = undefined
+
+        get equality () : (v1 : unknown, v2 : unknown) => boolean {
+            if (this.$equality !== undefined) return this.$equality
+
+            return this.meta.equality
+        }
+        set equality (value : (v1 : unknown, v2 : unknown) => boolean) {
+            this.$equality = value
+        }
+
+
+        static immutableCls : AnyConstructor<CalculableBoxImmutable, typeof CalculableBoxImmutable> = CalculableBoxImmutable
+
+
+        read () : any {
+            if (this.immutable === this) return super.read()
+
+            return this.immutable.read()
+        }
+
+
+        write (value : unknown) {
+            if (this.immutable === this) return super.write(value)
+
+            return this.immutable.write(value)
         }
     }
-
-
-    get meta () : Meta<V, Mode> {
-        const cls = this.constructor as AnyConstructor<this, typeof CalculableBox>
-
-        return cls.meta as Meta<V, Mode>
-    }
-
-
-    static meta : Meta<unknown>     = defaultMeta
-
-
-    context     : unknown           = undefined
-
-
-    $calculation : CalculationFunction<V, Mode>      = undefined
-
-    get calculation () : CalculationFunction<V, Mode> {
-        if (this.$calculation !== undefined) return this.$calculation
-
-        return this.meta.calculation
-    }
-    set calculation (value : CalculationFunction<V, Mode>) {
-        this.$calculation = value
-    }
-
-
-
-
-
-    // //region ChronoBox as Owner
-    immutable       : CalculableBoxImmutable<V, Mode>        = this
-
-    // proposedValue           : V             = undefined
-
-
-    setCurrent (immutable : CalculableBoxImmutable<V, Mode>) {
-        if (immutable.previous !== this.immutable) throw new Error("Invalid state thread")
-
-        this.immutable = immutable
-    }
-
-
-    // get effectHandler () : EffectHandler<CalculationModeUnknown, any> {
-    //     return
-    // }
-
-    //endregion
-
-
-    //region ChronoBoxOwner as ChronoBoxImmutable interface
-
-    owner           : Owner<this> & CalculableBox<V, Mode> = this as any
-
-    createNext () : this {
-        this.freeze()
-
-        const self      = this.constructor as AnyConstructor<this, typeof CalculableBox>
-        const next      = new self.immutableCls() as this
-
-        next.previous   = this
-        next.owner      = this as any
-
-        // @ts-ignore
-        return next
-    }
-
-    static immutableCls : AnyConstructor<CalculableBoxImmutable<unknown, CalculationMode>, typeof CalculableBoxImmutable> = CalculableBoxImmutable
-    //endregion
-
-
-    //region ChronoBoxOwner as both ChronoBoxOwner & ChronoBoxImmutable interface
-
-    read () : V {
-        if (this.immutable === this) return super.read()
-
-        return this.immutable.read()
-    }
-
-
-    write (value : V) {
-        if (this.immutable === this) return super.write(value)
-
-        return this.immutable.write(value)
-    }
-    //endregion
-}
+){}
