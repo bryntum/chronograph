@@ -1,7 +1,7 @@
-import { Uniqable } from "../../util/Uniqable.js"
-import { CalculationMode } from "../CalculationMode.js"
+import { AnyConstructor, Mixin } from "../../class/Mixin.js"
+import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { ChronoId } from "../Id.js"
-import { Meta } from "../Meta.js"
+import { defaultMeta, Meta } from "../Meta.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface GarbageCollectable {
@@ -18,59 +18,96 @@ export interface Identifiable {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export interface Immutable {
-    owner       : Owner<this>
+export class Immutable extends Mixin(
+    [],
+    (base : AnyConstructor) =>
 
-    previous    : this | undefined
+    class Immutable extends base {
+        owner       : Owner         = undefined
 
-    freeze ()
+        previous    : this          = undefined
 
-    createNext () : this
-}
+        frozen      : boolean       = false
+
+
+        freeze () {
+            this.frozen = true
+        }
+
+        createNext () : this {
+            this.freeze()
+
+            const self      = this.constructor as AnyConstructor<this, typeof Immutable>
+            const next      = new self()
+
+            next.previous   = this
+            next.owner      = this.owner
+
+            return next
+        }
+    }
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// export interface Observable {
-//     observers       : Observer
-// }
-//
-//
-// export interface Observer {
-//     // addObservation (observable : Observable)
-//
-//     onObservable
-// }
+export class Owner extends Mixin(
+    [],
+    (base : AnyConstructor) =>
+
+    class Owner extends base {
+        immutable   : Immutable     = undefined
+
+
+        setCurrent (immutable : Immutable) {
+            if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
+
+            this.immutable = immutable
+        }
+    }
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export interface Owner<I extends Immutable> {
-    immutable   : I
+export class OwnerManaged extends Mixin(
+    [ Owner ],
+    (base : AnyConstructor<Owner, typeof Owner>) =>
 
-    setCurrent (immutable : I)
-}
+    class Owner extends base {
+        context     : unknown           = undefined
 
+        $calculation : CalculationFunction<unknown, CalculationMode>      = undefined
+        $equality : (v1 : unknown, v2 : unknown) => boolean               = undefined
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export interface AtomWithValue<V> extends IoRef {
-//     read () : V
-// }
+        get meta () : Meta {
+            const cls = this.constructor as AnyConstructor<this, typeof OwnerManaged>
 
-export interface Atom extends Uniqable {
-    isStale () : boolean
-    hasValue () : boolean
-
-    onBecomeStale ()
-
-    addIncoming (atom : Atom, calledFromPartner : boolean)
-    addOutgoing (atom : Atom, calledFromPartner : boolean)
-
-    getIncoming () : Atom[]
-    getOutgoing () : Atom[]
-
-    calculate ()
-}
+            return cls.meta as Meta
+        }
 
 
-export interface OwnerManaged<I extends Immutable> extends Owner<I> {
-    meta        : Meta<unknown, CalculationMode>
-}
+        get calculation () : CalculationFunction<unknown, CalculationMode> {
+            if (this.$calculation !== undefined) return this.$calculation
+
+            // IIRC should return the value from meta, not caching on itself - seems
+            // this is treated by V8 as another function
+            return this.meta.calculation
+        }
+        set calculation (value : CalculationFunction<unknown, CalculationMode>) {
+            this.$calculation = value
+        }
+
+
+        get equality () : (v1 : unknown, v2 : unknown) => boolean {
+            if (this.$equality !== undefined) return this.$equality
+
+            // IIRC should return the value from meta, not caching on itself - seems
+            // this is treated by V8 as another function
+            return this.meta.equality
+        }
+        set equality (value : (v1 : unknown, v2 : unknown) => boolean) {
+            this.$equality = value
+        }
+
+        static meta : Meta              = defaultMeta
+    }
+){}
