@@ -3,9 +3,9 @@ import { runAllDeepChanges } from "./deep_changes.js"
 import { runAllShallowChanges } from "./shallow_changes.js"
 
 export const runAll = async () => {
-    await runAllDeepChanges()
+    // await runAllDeepChanges()
     await runAllShallowChanges()
-    await runAllGraphPopulation()
+    // await runAllGraphPopulation()
 
     // await runAllMemoryLeak()
 }

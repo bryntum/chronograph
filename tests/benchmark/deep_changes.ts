@@ -1,5 +1,13 @@
 import { Benchmark } from "../../src/benchmark/Benchmark.js"
-import { deepGraphGen, deepGraphGenShared, deepGraphSync, GraphGenerationResult, mobxGraph, MobxGraphGenerationResult } from "./data.js"
+import {
+    Chrono2GenerationResult, chrono2Graph,
+    deepGraphGen,
+    deepGraphGenShared,
+    deepGraphSync,
+    GraphGenerationResult,
+    mobxGraph,
+    MobxGraphGenerationResult
+} from "./data.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 type PostBenchInfo = {
@@ -66,6 +74,37 @@ class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo
 
 
 //---------------------------------------------------------------------------------------------------------------------
+class DeepChangesChrono2 extends Benchmark<Chrono2GenerationResult, PostBenchInfo> {
+
+    gatherInfo (state : Chrono2GenerationResult) : PostBenchInfo {
+        const { boxes } = state
+
+        return {
+            totalCount      : state.counter,
+            result          : boxes[ boxes.length - 1 ].read()
+        }
+    }
+
+
+    stringifyInfo (info : PostBenchInfo) : string {
+        return `Total calculation: ${info.totalCount}\nResult in last box: ${info.result}`
+    }
+
+
+    cycle (iteration : number, cycle : number, setup : Chrono2GenerationResult) {
+        const { boxes } = setup
+
+        boxes[ 0 ].write(iteration + cycle)
+
+        // seems mobx does not have concept of eager computation, need to manually read all atoms
+        for (let k = 0; k < boxes.length; k++) boxes[ k ].read()
+    }
+}
+
+
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export const deepChangesGenSmall = DeepChangesChronoGraph.new({
     name        : 'Deep graph changes - generators',
 
@@ -90,6 +129,15 @@ export const deepChangesMobxSmall = DeepChangesMobx.new({
         return mobxGraph(1000)
     }
 })
+
+export const deepChangesChrono2Small = DeepChangesChrono2.new({
+    name        : 'Deep graph changes - Chrono2',
+
+    setup       : async () => {
+        return chrono2Graph(1000)
+    }
+})
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const deepChangesGenBig = DeepChangesChronoGraph.new({
@@ -121,7 +169,8 @@ export const runAllDeepChanges = async () => {
 
     await deepChangesSyncSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
     await deepChangesMobxSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+    await deepChangesChrono2Small.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
 
-    await deepChangesGenBig.measureTillMaxTime()
-    await deepChangesGenBigShared.measureTillMaxTime()
+    // await deepChangesGenBig.measureTillMaxTime()
+    // await deepChangesGenBigShared.measureTillMaxTime()
 }

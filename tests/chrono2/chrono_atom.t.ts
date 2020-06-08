@@ -94,6 +94,16 @@ StartTest(t => {
     })
 
 
+    t.it('`undefined` as a result of calculation should be converted to `null`', async t => {
+        const box1     = new CalculableBox({
+            calculation : () => undefined
+        })
+
+        t.isStrict(box1.read(), null, 'Undefined normalized to `null` in sync identifier')
+    })
+
+
+
     //
     // t.it('Observe calculation in generator calculation', async t => {
     //     const graph : ChronoGraph = ChronoGraph.new()
@@ -186,25 +196,6 @@ StartTest(t => {
     //     t.is(graph.read(iden1), 3, 'Correct value')
     //     t.is(graph.read(iden2), 4, 'Correct value')
     //     t.is(graph.read(iden3), 5, 'Correct value')
-    // })
-    //
-    //
-    // t.it('`undefined` as a result of calculation is converted to `null`', async t => {
-    //     const graph : ChronoGraph = ChronoGraph.new()
-    //
-    //     const var1      = graph.variable(undefined)
-    //
-    //     const iden1     = graph.identifier(function () {
-    //         return undefined
-    //     })
-    //
-    //     const iden2     = graph.identifier(function * () {
-    //         return undefined
-    //     })
-    //
-    //     t.isStrict(graph.read(var1), null, 'Undefined normalized to `null` in variable')
-    //     t.isStrict(graph.read(iden1), null, 'Undefined normalized to `null` in sync identifier')
-    //     t.isStrict(graph.read(iden2), null, 'Undefined normalized to `null` in gen identifier')
     // })
     //
     //

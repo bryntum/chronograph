@@ -1,6 +1,8 @@
 import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
+import { Box } from "../../src/chrono2/data/Box.js"
+import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { Base } from "../../src/class/Base.js"
 import { AnyConstructor, ClassUnion, Mixin, MixinAny } from "../../src/class/Mixin.js"
 import { Entity, field } from "../../src/replica/Entity.js"
@@ -281,6 +283,85 @@ export const mobxGraph = (atomNum : number = 1000) : MobxGraphGenerationResult =
 
     return res
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export type Chrono2GenerationResult  = { boxes : CalculableBox[], counter : number }
+
+export const chrono2Graph = (atomNum : number = 1000) : Chrono2GenerationResult => {
+    let boxes       = []
+
+    const res       = { boxes, counter : 0 }
+
+    for (let i = 0; i < atomNum; i++) {
+        if (i <= 3) {
+            const box = new Box()
+
+            box.write(1)
+
+            boxes.push(box)
+        }
+        else if (i <= 10) {
+            const box = new CalculableBox({
+                calculation : function () {
+                    res.counter++
+
+                    const input = [
+                        boxes[0].read(),
+                        boxes[1].read(),
+                        boxes[2].read(),
+                        boxes[3].read(),
+                    ]
+
+                    return input.reduce((sum, op) => sum + op, 0)
+                },
+                context : i
+            })
+
+            boxes.push(box)
+        }
+        else if (i % 2 == 0) {
+            const box = new CalculableBox({
+                calculation : function () {
+                    res.counter++
+
+                    const input = [
+                        boxes[this - 1].read(),
+                        boxes[this - 2].read(),
+                        boxes[this - 3].read(),
+                        boxes[this - 4].read(),
+                    ]
+
+                    return input.reduce((sum, op) => (sum + op) % 10000, 0)
+                },
+                context : i
+            })
+
+            boxes.push(box)
+        } else {
+            const box = new CalculableBox({
+                calculation : function () {
+                    res.counter++
+
+                    const input = [
+                        boxes[this - 1].read(),
+                        boxes[this - 2].read(),
+                        boxes[this - 3].read(),
+                        boxes[this - 4].read(),
+                    ]
+
+                    return input.reduce((sum, op) => (sum - op) % 10000, 0)
+                },
+                context : i
+            })
+
+            boxes.push(box)
+        }
+    }
+
+    return res
+}
+
 
 
 //---------------------------------------------------------------------------------------------------------------------

@@ -28,6 +28,7 @@ export class Immutable extends Mixin(
             this.frozen = true
         }
 
+
         createNext () : this {
             this.freeze()
 
@@ -69,7 +70,8 @@ export class CombinedOwnerAndImmutable extends Mixin(
     class CombinedOwnerAndImmutable extends base {
         immutable       : Immutable         = this
 
-        owner           : Owner             = this as any
+        owner           : Owner             = this
+
 
         createNext () : this {
             this.freeze()

@@ -130,6 +130,8 @@ export class Quark extends Mixin(
                 for (let i = 0; i < outgoing.length; i++) {
                     outgoing[ i ].state = QuarkState.Stale
                 }
+
+                this.clearOutgoing()
             }
         }
 

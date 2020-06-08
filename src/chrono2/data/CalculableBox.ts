@@ -3,7 +3,7 @@ import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { globalContext } from "../GlobalContext.js"
 import { defaultMeta, Meta } from "../Meta.js"
 import { QuarkState } from "../Quark.js"
-import { BoxImmutable } from "./Box.js"
+import { Box, BoxImmutable } from "./Box.js"
 import { CombinedOwnerAndImmutable, OwnerManaged } from "./Immutable.js"
 
 
@@ -42,13 +42,15 @@ export class CalculableBoxImmutable extends Mixin(
         }
 
 
-        updateValue (value : unknown) {
-            if (this.equality(this.readValuePure(), value)) return
+        updateValue (newValue : unknown) {
+            if (newValue === undefined) newValue = null
 
-            this.value                  = value
+            const oldValue              = this.readValuePure()
+
+            this.value                  = newValue
             this.state                  = QuarkState.UpToDate
 
-            this.propagateStale()
+            if (!this.equality(oldValue, newValue)) this.propagateStale()
         }
 
 
@@ -58,6 +60,8 @@ export class CalculableBoxImmutable extends Mixin(
 
             const prevActive            = globalContext.activeQuark
             globalContext.activeQuark   = this
+
+            this.$incoming              = undefined
 
             const newValue              = calculation.call(calculationContext)
 
@@ -100,10 +104,11 @@ export class CalculableBoxImmutable extends Mixin(
 
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculableBox extends Mixin(
-    [ CalculableBoxImmutable, CombinedOwnerAndImmutable ],
-    (base : AnyConstructor<CalculableBoxImmutable & CombinedOwnerAndImmutable, typeof CalculableBoxImmutable & typeof CombinedOwnerAndImmutable>) =>
+    [ CalculableBoxImmutable, Box ],
+    (base : AnyConstructor<CalculableBoxImmutable & Box, typeof CalculableBoxImmutable & typeof Box>) =>
 
     class CalculableBox extends base {
+        //@ts-ignore
         immutable       : CalculableBoxImmutable
 
         constructor (config : Partial<CalculableBox>) {
@@ -156,17 +161,17 @@ export class CalculableBox extends Mixin(
         static immutableCls : AnyConstructor<CalculableBoxImmutable, typeof CalculableBoxImmutable> = CalculableBoxImmutable
 
 
-        read () : any {
-            if (this.immutable === this) return super.read()
-
-            return this.immutable.read()
-        }
-
-
-        write (value : unknown) {
-            if (this.immutable === this) return super.write(value)
-
-            return this.immutable.write(value)
-        }
+        // read () : any {
+        //     if (this.immutable === this) return super.read()
+        //
+        //     return this.immutable.read()
+        // }
+        //
+        //
+        // write (value : unknown) {
+        //     if (this.immutable === this) return super.write(value)
+        //
+        //     return this.immutable.write(value)
+        // }
     }
 ){}
