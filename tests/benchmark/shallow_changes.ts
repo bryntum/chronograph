@@ -153,7 +153,7 @@ export const shallowChangesGenBig = ShallowChangesChronoGraph.new({
 export const runAllShallowChanges = async () => {
     const runInfo   = await shallowChangesGen.measureTillMaxTime()
 
-    await shallowChangesSync.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+    // await shallowChangesSync.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
     await shallowChangesMobx.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
     await shallowChangesChrono2.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
 

@@ -22,5 +22,6 @@
     ],
 
     "exclude" : [
+        "tests/chrono2/todo/**/*.ts"
     ]
 }

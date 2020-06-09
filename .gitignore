@@ -26,6 +26,7 @@
 
 # misc local files
 /misc
+/tests/chrono2/todo/**/*
 
 # Libre Office lock files
 .~lock*
