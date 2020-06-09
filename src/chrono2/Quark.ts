@@ -1,21 +1,27 @@
 import { AnyConstructor } from "../class/Mixin.js"
 import { Immutable, Owner } from "./data/Immutable.js"
+import { chronoId, ChronoId, Identifiable } from "./Identifiable.js"
 import { Node } from "./Node.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+// TODO benchmark if numbers are faster
 export enum AtomState {
-    UpToDate        = 1,
-    PossiblyStale   = 2,
-    Stale           = 3
+    UpToDate        = 'UpToDate',
+    PossiblyStale   = 'PossiblyStale',
+    Stale           = 'Stale'
 }
 
-export class Quark extends Node implements Immutable {
+export class Quark extends Node implements Immutable, Identifiable {
+    id          : ChronoId      = chronoId()
+
     owner       : Atom          = undefined
 
     previous    : this          = undefined
 
     frozen      : boolean       = false
+
+    usedProposedOrPrevious : unknown = undefined
 
 
     freeze () {
@@ -78,6 +84,7 @@ export class Atom extends Owner {
             }
 
             this.immutable.clearOutgoing()
+            this.immutable.lastOutgoingTo = undefined
         }
     }
 }

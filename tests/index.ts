@@ -45,7 +45,9 @@ project.start(
         group       : 'ChronoGraph2',
 
         items       : [
-            'chrono2/chrono_atom.t.js',
+            'chrono2/box.t.js',
+            'chrono2/calculable_box.t.js',
+            'chrono2/calculable_box_proposed_value.t.js',
         ]
     },
     {

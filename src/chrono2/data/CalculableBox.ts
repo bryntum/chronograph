@@ -55,6 +55,32 @@ export class CalculableBox extends Box {
 
 
     proposedValue           : unknown   = undefined
+    proposedValueState      : AtomState = AtomState.UpToDate
+
+
+    readProposedOrPrevious () {
+        // if (globalContext.activeQuark) this.immutableForWrite().getIncoming().push(invalidatingBoxImmutable)
+
+        if (globalContext.activeQuark === this.immutable) {
+            // this.usedProposedOrPrevious = true
+            // this.immutableForWrite().getIncoming().push(invalidatingBoxImmutable)
+
+            this.immutableForWrite().usedProposedOrPrevious = true
+        }
+
+        if (this.proposedValue !== undefined) return this.proposedValue
+
+        return this.readPrevious()
+    }
+
+
+    readPrevious () : any {
+        if (this.state === AtomState.UpToDate)
+            return this.immutable.previous ? this.immutable.previous.read() : undefined
+        else
+            // TODO should return `undefined` for non-previous case - `read` always returns `null`
+            return this.immutable.read()
+    }
 
 
     read () : any {
@@ -74,18 +100,39 @@ export class CalculableBox extends Box {
         const oldValue              = this.immutable.read()
 
         this.immutableForWrite().write(newValue)
-        this.state                  = AtomState.UpToDate
+
+        if (this.immutable.usedProposedOrPrevious) {
+            this.state              = this.equality(newValue, this.proposedValue) ? AtomState.UpToDate : AtomState.Stale
+        } else {
+            this.state              = AtomState.UpToDate
+        }
+
+        this.proposedValue          = undefined
 
         if (!this.equality(oldValue, newValue)) this.propagateStale()
     }
 
 
     calculate () {
+        if (this.shouldCalculate())
+            this.doCalculate()
+        else
+            this.state = AtomState.UpToDate
+    }
+
+
+    shouldCalculate () {
+        if (this.state === AtomState.Stale) return true
+
+        if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return true
+
         const incoming  = this.immutable.$incoming
 
         if (incoming) {
             for (let i = 0; i < incoming.length; i++) {
-                const dependencyAtom        = incoming[ i ].owner as Box
+                const dependency            = incoming[ i ]
+
+                const dependencyAtom        = dependency.owner as Box
 
                 const prevActive            = globalContext.activeQuark
                 globalContext.activeQuark   = null
@@ -93,20 +140,20 @@ export class CalculableBox extends Box {
                 if (dependencyAtom.state !== AtomState.UpToDate) dependencyAtom.read()
 
                 globalContext.activeQuark   = prevActive
-            }
 
-            if (this.state !== AtomState.Stale) {
-                this.state = AtomState.UpToDate
-                return
+                // TODO check in 3.9, 4.0, looks like a bug in TS
+                //@ts-ignore
+                if (this.state === AtomState.Stale) return true
             }
         }
 
-        this.doCalculate()
+        return false
     }
 
 
     doCalculate () {
-        this.immutableForWrite().$incoming = undefined
+        this.immutableForWrite().$incoming              = undefined
+        this.immutableForWrite().usedProposedOrPrevious = false
 
         const prevActive            = globalContext.activeQuark
         globalContext.activeQuark   = this.immutable
@@ -122,8 +169,25 @@ export class CalculableBox extends Box {
     write (value : unknown) {
         if (value === undefined) value = null
 
-        // ignore the write of the same value? what about `keepIfPossible` => `pin`
-        if (this.proposedValue === undefined && this.equality(this.immutable.read(), value)) return
+        // // ignore the write of the same value? what about `keepIfPossible` => `pin`
+        // if (this.proposedValue === undefined && this.equality(this.immutable.read(), value)) return
+
+        if (this.proposedValue === undefined) {
+            // still update the `proposedValue` to indicate the user input?
+            this.proposedValue  = value
+
+            // ignore the write of the same value? what about `keepIfPossible` => `pin`
+            if (this.equality(this.immutable.read(), value)) return
+
+            // this.proposedValueState = AtomState.UpToDate
+        } else {
+            const valueToCompareWith = this.proposedValue
+
+            if (this.equality(valueToCompareWith, value)) return
+
+            // this.proposedValueState = AtomState.Stale
+        }
+
 
         this.proposedValue  = value
 

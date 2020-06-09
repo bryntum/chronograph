@@ -77,3 +77,15 @@ export class Box extends Atom {
         this.propagateStale()
     }
 }
+
+// export class InvalidatingBoxImmutable extends BoxImmutable {
+// }
+//
+// export class InvalidatingBox extends Box {
+//     read () : any {
+//         if (globalContext.activeQuark) globalContext.activeQuark.owner.state = AtomState.Stale
+//     }
+// }
+//
+// export const invalidatingBox            = new InvalidatingBox()
+// export const invalidatingBoxImmutable   = new InvalidatingBoxImmutable(invalidatingBox)

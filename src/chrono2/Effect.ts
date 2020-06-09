@@ -15,13 +15,13 @@ import { CalculationModeGen, CalculationModeSync, CalculationMode, CalculationMo
  */
 export type EffectHandler<Mode extends CalculationMode> =
     Mode extends CalculationModeSync ?
-        (effect : unknown) => unknown
+        (effect : unknown) => any
         :
         Mode extends CalculationModeGen ?
-            (effect : unknown) => unknown
+            (effect : unknown) => any
             :
             Mode extends CalculationModeAsync ?
-                (effect : unknown) => Promise<unknown>
+                (effect : unknown) => Promise<any>
                 :
                 never
 

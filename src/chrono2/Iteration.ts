@@ -1,44 +1,16 @@
 // import { Base } from "../class/Base.js"
 // import { AnyConstructor } from "../class/Mixin.js"
-// import { Identifiable, Immutable, Owner } from "./data/Immutable.js"
-// import { ChronoId, chronoId } from "./Id.js"
+// import { Immutable, Owner } from "./data/Immutable.js"
+// import { ChronoId, Identifiable } from "./Identifiable.js"
+// import { Atom, Quark } from "./Quark.js"
 //
 //
 // const TombStone = null
 //
 // //----------------------------------------------------------------------------------------------------------------------
 // export class ChronoIteration extends Base implements Immutable {
-//     //region Iteration as Immutable
-//     owner       : Owner<this> & ChronoTransaction = undefined
 //
-//     previous    : this                  = undefined
-//
-//     frozen      : boolean               = false
-//
-//
-//     createNext () : this {
-//         this.freeze()
-//
-//         const self      = this.constructor as AnyConstructor<this, typeof ChronoIteration>
-//         const next      = self.new()
-//
-//         next.previous   = this
-//         next.owner      = this.owner
-//
-//         return next
-//     }
-//
-//
-//     freeze () {
-//         this.frozen = true
-//     }
-//     //endregion
-//
-//
-//     //region Iteration's own interface
-//     atoms       : Map<ChronoId, Owner<Immutable> & Identifiable> = new Map()
-//
-//     quarks      : Map<ChronoId, Immutable & Identifiable> = new Map()
+//     quarks      : Map<ChronoId, Quark> = new Map()
 //
 //
 //     getAtomById (id : ChronoId) : Owner<Immutable> & Identifiable | null {
@@ -108,7 +80,7 @@
 //
 //
 // //----------------------------------------------------------------------------------------------------------------------
-// export class ChronoTransaction extends Base implements Owner<ChronoIteration>, Immutable {
+// export class ChronoTransaction extends Base implements Owner, Immutable {
 //     //region Transaction as Owner
 //     $immutable      : ChronoIteration       = undefined
 //
@@ -207,7 +179,7 @@
 //
 //
 // //----------------------------------------------------------------------------------------------------------------------
-// export class ChronoGraph extends Base implements Owner<ChronoTransaction> {
+// export class ChronoGraph extends Base implements Owner {
 //     //region ChronoGraph as Owner
 //     immutable       : ChronoTransaction     = ChronoTransaction.new({ owner : this })
 //
@@ -220,28 +192,21 @@
 //     //endregion
 //
 //
-//     // commit () {
-//     //     this.immutable.freeze()
-//     // }
-//     //
-//     // reject () {
-//     //     // we are at the stable frozen state - do nothing
-//     //     if (this.immutable.frozen) return
-//     //
-//     //     // TODO `this.immutable.dereference/destroy/cleanup()`
-//     //
-//     //     this.immutable = this.immutable.previous
-//     //
-//     //     // TODO handle the `undefined` case
-//     // }
+//     commit () {
+//     }
 //
+//     reject () {
+//     }
+//
+//
+//     atoms       : Map<ChronoId, Atom> = new Map()
 //
 //     //region ChronoGraph as Iteration
-//     getAtomById (id : ChronoId) : Owner<Immutable> & Identifiable | null {
+//     getAtomById (id : ChronoId) : Atom | null {
 //         return this.immutable.getAtomById(id)
 //     }
 //
-//     hasAtom <I extends Immutable> (atom : Owner<Immutable> & Identifiable) : boolean {
+//     hasAtom (atom : Atom) : boolean {
 //         return this.immutable.hasAtom(atom)
 //     }
 //
@@ -249,11 +214,11 @@
 //         return this.immutable.hasAtomById(id)
 //     }
 //
-//     addAtom <I extends Immutable> (atom : Owner<Immutable> & Identifiable) {
+//     addAtom (atom : Atom) {
 //         this.immutable.addAtom(atom)
 //     }
 //
-//     removeAtom <I extends Immutable> (atom : Owner<Immutable> & Identifiable) {
+//     removeAtom (atom : Atom) {
 //         this.immutable.removeAtom(atom)
 //     }
 //
