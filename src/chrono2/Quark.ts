@@ -1,6 +1,8 @@
 import { AnyConstructor } from "../class/Mixin.js"
+import { compact } from "../util/Uniqable.js"
 import { Immutable, Owner } from "./data/Immutable.js"
 import { chronoId, ChronoId, Identifiable } from "./Identifiable.js"
+import { ChronoGraph } from "./Iteration.js"
 import { Node } from "./Node.js"
 
 
@@ -13,8 +15,8 @@ export enum AtomState {
     Stale           = 'Stale'
 }
 
-export class Quark extends Node implements Immutable, Identifiable {
-    id          : ChronoId      = chronoId()
+export class Quark extends Node implements Immutable/*, Identifiable*/ {
+    // id          : ChronoId      = chronoId()
 
     owner       : Atom          = undefined
 
@@ -49,10 +51,53 @@ export class Quark extends Node implements Immutable, Identifiable {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Atom extends Owner {
+export class Atom extends Owner implements Identifiable {
+    id                  : ChronoId      = chronoId()
+
     immutable           : Quark         = undefined
 
     state               : AtomState     = AtomState.Stale
+
+    // TODO benchmark if its faster to just create it strictly
+    $belongsTo          : ChronoGraph[] = undefined
+    $belongsToCompacted : boolean       = false
+
+    get belongsTo () : ChronoGraph[] {
+        if (this.$belongsTo !== undefined) {
+            if (this.$belongsToCompacted)
+                return this.$belongsTo
+            else {
+                compact(this.$belongsTo)
+
+                this.$belongsToCompacted = true
+
+                return this.$belongsTo
+            }
+        }
+
+        return this.$belongsTo = []
+    }
+
+
+    enterGraph (graph : ChronoGraph) {
+        this.belongsTo.push(graph)
+
+        this.$belongsToCompacted = false
+    }
+
+
+    leaveGraph (graph : ChronoGraph) {
+        if (this.$belongsTo) {
+            const index     = this.belongsTo.indexOf(graph)
+
+            if (index >= 0) this.belongsTo.splice(index, 1)
+        }
+    }
+
+
+    freeze () {
+        this.immutable.freeze()
+    }
 
 
     propagatePossiblyStale () {
