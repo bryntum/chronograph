@@ -135,7 +135,10 @@ export class ChronoTransaction extends Owner implements Immutable {
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner, Uniqable {
-    uniqable        : number                = MIN_SMI
+    uniqable                : number            = MIN_SMI
+
+    historyLimit            : number            = 0
+
 
     //region ChronoGraph as Owner
     immutable       : ChronoTransaction     = ChronoTransaction.new({ owner : this })
