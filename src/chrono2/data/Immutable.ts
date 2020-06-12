@@ -1,7 +1,7 @@
 import { AnyConstructor, Mixin } from "../../class/Mixin.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { ChronoId } from "../Identifiable.js"
-import { defaultMetaSync, Meta } from "../Meta.js"
+import { DefaultMetaSync, Meta } from "../Meta.js"
 
 
 // //---------------------------------------------------------------------------------------------------------------------
@@ -124,6 +124,6 @@ export class OwnerManaged extends Mixin(
             this.$equality = value
         }
 
-        static meta : Meta              = defaultMetaSync
+        static meta : Meta              = DefaultMetaSync
     }
 ){}

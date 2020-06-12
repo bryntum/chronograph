@@ -53,3 +53,5 @@ export type CalculationReturnValue<Result, Mode extends CalculationMode> =
 
 
 export type CalculationFunction<Result, Mode extends CalculationMode> = (Y : EffectHandler<Mode>) => CalculationReturnValue<Result, Mode>
+
+export type CalculationFunction2 = <Result, Mode extends CalculationMode>(Y : EffectHandler<Mode>) => CalculationReturnValue<Result, Mode>

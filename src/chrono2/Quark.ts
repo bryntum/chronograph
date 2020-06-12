@@ -2,7 +2,7 @@ import { AnyConstructor } from "../class/Mixin.js"
 import { compact } from "../util/Uniqable.js"
 import { Immutable, Owner } from "./data/Immutable.js"
 import { chronoId, ChronoId, Identifiable } from "./Identifiable.js"
-import { ChronoGraph } from "./Iteration.js"
+import { ChronoGraph, ChronoIteration, Revision } from "./Graph.js"
 import { Node } from "./Node.js"
 
 
@@ -24,7 +24,15 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
     frozen      : boolean       = false
 
+    // synthetic incoming edge, reading from the "proposed" value
     usedProposedOrPrevious : unknown = undefined
+
+    iteration       : ChronoIteration   = undefined
+
+
+    get level () {
+        return this.owner.level
+    }
 
 
     freeze () {
@@ -58,40 +66,40 @@ export class Atom extends Owner implements Identifiable {
 
     state               : AtomState     = AtomState.Stale
 
-    // TODO benchmark if its faster to just create it strictly
-    $belongsTo          : ChronoGraph[] = undefined
-    $belongsToCompacted : boolean       = false
+    graph               : ChronoGraph   = undefined
 
-    get belongsTo () : ChronoGraph[] {
-        if (this.$belongsTo !== undefined) {
-            if (this.$belongsToCompacted)
-                return this.$belongsTo
-            else {
-                compact(this.$belongsTo)
 
-                this.$belongsToCompacted = true
+    level               : number        = 0
+    lazy                : boolean       = false
 
-                return this.$belongsTo
+
+    actualize () : any {
+        const graph     = this.graph
+
+        if (graph) {
+            let immutable   = this.immutable
+
+            while (immutable && immutable.iteration && immutable.iteration.revision > graph.getCurrentRevision()) {
+                immutable  = immutable.previous
             }
-        }
 
-        return this.$belongsTo = []
+            this.immutable  = immutable
+        }
     }
 
 
     enterGraph (graph : ChronoGraph) {
-        this.belongsTo.push(graph)
+        if (this.graph) throw new Error("Can only belong to a single graph for now")
 
-        this.$belongsToCompacted = false
+        this.graph                  = graph
+        // this.immutable.revision     = graph.revision
     }
 
 
     leaveGraph (graph : ChronoGraph) {
-        if (this.$belongsTo) {
-            const index     = this.belongsTo.indexOf(graph)
+        if (this.graph !== graph) throw new Error("Atom not in graph")
 
-            if (index >= 0) this.belongsTo.splice(index, 1)
-        }
+        this.graph      = undefined
     }
 
 
@@ -100,17 +108,28 @@ export class Atom extends Owner implements Identifiable {
     }
 
 
+    // fromUpToDateToPossiblyStale () {
+    //
+    // }
+
+
     propagatePossiblyStale () {
-        const toVisit : Quark[]       = [ this.immutable ]
+        const toVisit : Quark[]         = [ this.immutable ]
 
         while (toVisit.length) {
-            const el        = toVisit.pop()
+            const quark     = toVisit.pop()
+            const atom      = quark.owner
 
-            if (el.owner.state === AtomState.UpToDate) {
-                el.owner.state = AtomState.PossiblyStale
+            if (atom.state === AtomState.UpToDate) {
+                atom.state = AtomState.PossiblyStale
 
-                if (el.$outgoing) {
-                    const outgoing = el.getOutgoing()
+                if (atom.graph && !atom.lazy) {
+                    atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                }
+
+                if (quark.$outgoing) {
+                    // TODO inline the `compact` code here, to avoid double pass through the `outgoing` array
+                    const outgoing = quark.getOutgoing()
 
                     for (let i = 0; i < outgoing.length; i++) {
                         if (outgoing[ i ].owner.state === AtomState.UpToDate) toVisit.push(outgoing[ i ])
@@ -118,6 +137,7 @@ export class Atom extends Owner implements Identifiable {
                 }
             }
         }
+
     }
 
 
@@ -130,7 +150,8 @@ export class Atom extends Owner implements Identifiable {
             }
 
             this.immutable.clearOutgoing()
-            this.immutable.lastOutgoingTo = undefined
         }
+
+        if (this.graph) this.graph.addChangedAtomToTransaction(this)
     }
 }

@@ -10,6 +10,7 @@ export class Node implements Uniqable {
 
     outgoingCompacted   : boolean       = false
 
+    // TODO we can also just check the last element in the `$outgoing`, need to benchmark
     lastOutgoingTo      : Node          = undefined
 
 
@@ -37,6 +38,7 @@ export class Node implements Uniqable {
     clearOutgoing () {
         this.$outgoing          = undefined
         this.outgoingCompacted  = false
+        this.lastOutgoingTo     = undefined
     }
 
 
@@ -53,7 +55,9 @@ export class Node implements Uniqable {
 
         this.outgoingCompacted  = false
 
-        this.getOutgoing().push(to)
+        if (this.$outgoing === undefined) this.$outgoing = []
+
+        this.$outgoing.push(to)
         if (!calledFromPartner) to.addIncoming(this, true)
     }
 }

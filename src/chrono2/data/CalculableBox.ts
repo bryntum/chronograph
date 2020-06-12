@@ -1,7 +1,7 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { globalContext } from "../GlobalContext.js"
-import { defaultMetaSync, Meta } from "../Meta.js"
+import { DefaultMetaSync, Meta } from "../Meta.js"
 import { AtomState } from "../Quark.js"
 import { Box } from "./Box.js"
 
@@ -9,23 +9,34 @@ import { Box } from "./Box.js"
 //---------------------------------------------------------------------------------------------------------------------
 export class CalculableBox extends Box {
 
-    constructor (config : Partial<CalculableBox>) {
+    constructor (config? : Partial<CalculableBox>) {
         super()
 
         if (config) {
-            this.calculation    = config.calculation
             this.context        = config.context || this
+
+            this.calculation    = config.calculation
+            this.equality       = config.equality
+            this.lazy           = config.lazy
+            this.sync           = config.sync
         }
     }
 
+    $meta   : Meta      = undefined
 
     get meta () : Meta {
+        if (this.$meta !== undefined) return this.$meta
+
         const cls = this.constructor as AnyConstructor<this, typeof CalculableBox>
 
-        return cls.meta as Meta
+        return this.$meta = cls.meta
     }
 
-    static meta : Meta     = defaultMetaSync
+    set meta (value : Meta) {
+        this.$meta  = value
+    }
+
+    static meta : Meta     = DefaultMetaSync
 
 
     context     : unknown           = undefined
@@ -54,8 +65,31 @@ export class CalculableBox extends Box {
     }
 
 
+    $lazy : boolean      = undefined
+
+    get lazy () : boolean {
+        if (this.$lazy !== undefined) return this.$lazy
+
+        return this.meta.lazy
+    }
+    set lazy (value : boolean) {
+        this.$lazy = value
+    }
+
+
+    $sync : boolean      = undefined
+
+    get sync () : boolean {
+        if (this.$sync !== undefined) return this.$sync
+
+        return this.meta.sync
+    }
+    set sync (value : boolean) {
+        this.$sync = value
+    }
+
+
     proposedValue           : unknown   = undefined
-    proposedValueState      : AtomState = AtomState.UpToDate
 
 
     readProposedOrPrevious () {

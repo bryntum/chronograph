@@ -1,8 +1,10 @@
 import { Identifier } from "../chrono/Identifier.js"
 import { Base } from "../class/Base.js"
 import { Context } from "../primitives/Calculation.js"
+import { Equality, strictEquality } from "../util/Helpers.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync, CalculationReturnValue } from "./CalculationMode.js"
 import { EffectHandler, ProposedOrPrevious } from "./Effect.js"
+import { globalContext } from "./GlobalContext.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
@@ -23,7 +25,7 @@ export class Meta extends Base {
     /**
      * The name of the identifiers. Not an id, does not imply uniqueness.
      */
-    name                : string    = 'Default Meta instance'
+    name                : string    = undefined
 
     /**
      * Whether this identifier is lazy (`true`) or strict (`false`).
@@ -32,11 +34,10 @@ export class Meta extends Base {
      *
      * Strict identifiers will be calculated on read or during the [[ChronoGraph.commit|commit]] call.
      */
-    lazy                : boolean   = false
+    lazy                : boolean   = true
 
     /**
      * Whether this identifier is sync (`true`) or generator-based (`false`). Default value is `true`.
-     * This attribute is supposed to be defined on the prototype level only.
      */
     sync                : boolean   = true
 
@@ -71,7 +72,7 @@ export class Meta extends Base {
      *
      * @param Y
      */
-    calculation : CalculationFunction<unknown, CalculationMode>
+    calculation : CalculationFunction<unknown, CalculationMode>     = defaultCalculationSync
 
     /**
      * The equality check of the identifier. By default is performed with `===`.
@@ -79,13 +80,13 @@ export class Meta extends Base {
      * @param v1 First value
      * @param v2 Second value
      */
-    equality (v1 : unknown, v2 : unknown) : boolean {
-        return v1 === v2
-    }
+    equality : Equality     = strictEquality
 }
 
-export const defaultCalculationSync = (Y : EffectHandler<CalculationModeSync>) => Y(ProposedOrPrevious)
+export const defaultCalculationSync = (Y : EffectHandler<CalculationModeSync>) => {
+    // return Y(ProposedOrPrevious)
 
-export const defaultMetaSync = Meta.new({
-    calculation : defaultCalculationSync
-})
+    return globalContext.activeQuark.owner.readProposeOrPrevious()
+}
+
+export const DefaultMetaSync = Meta.new({ name : 'DefaultMetaSync' })

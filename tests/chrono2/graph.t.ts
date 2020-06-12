@@ -1,5 +1,5 @@
 import { Box } from "../../src/chrono2/data/Box.js"
-import { ChronoGraph } from "../../src/chrono2/Iteration.js"
+import { ChronoGraph } from "../../src/chrono2/Graph.js"
 
 declare const StartTest : any
 

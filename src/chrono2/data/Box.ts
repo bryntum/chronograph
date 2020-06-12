@@ -58,6 +58,8 @@ export class Box extends Atom {
 
 
     read () : any {
+        if (this.graph) this.actualize()
+
         if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
 
         return this.immutable.read()
@@ -65,6 +67,8 @@ export class Box extends Atom {
 
 
     write (value : unknown) {
+        if (this.graph) this.actualize()
+
         if (value === undefined) value = null
 
         if (value === this.immutable.read()) return

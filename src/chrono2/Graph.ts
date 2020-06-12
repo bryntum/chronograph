@@ -1,39 +1,60 @@
 import { Base } from "../class/Base.js"
 import { AnyConstructor } from "../class/Mixin.js"
 import { MIN_SMI } from "../util/Helpers.js"
+import { LeveledQueue } from "../util/LeveledQueue.js"
 import { Uniqable } from "../util/Uniqable.js"
 import { Box } from "./data/Box.js"
 import { Immutable, Owner } from "./data/Immutable.js"
-import { ChronoId, Identifiable } from "./Identifiable.js"
-import { Atom, Quark } from "./Quark.js"
+import { Atom, AtomState, Quark } from "./Quark.js"
 
 
-const TombStone = null
+// const TombStone = null
+
+let revisionIdSource = MIN_SMI
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoIteration extends Immutable {
     owner       : ChronoTransaction
 
-    quarks      : Map<ChronoId, Quark> = new Map()
+    quarks      : Quark[]       = []
 
+    revision    : Revision      = revisionIdSource++
 
-    getQuarkById (id : ChronoId) : Quark | null {
-        let iteration : this = this
-
-        while (iteration) {
-            const quark = iteration.quarks.get(id)
-
-            if (quark !== undefined) return quark
-
-            iteration   = iteration.previous
-        }
-
-        return null
-    }
+    // quarks      : Map<ChronoId, Quark> = new Map()
+    //
+    //
+    // getQuarkById (id : ChronoId) : Quark | null {
+    //     let iteration : this = this
+    //
+    //     while (iteration) {
+    //         const quark = iteration.quarks.get(id)
+    //
+    //         if (quark !== undefined) return quark
+    //
+    //         iteration   = iteration.previous
+    //     }
+    //
+    //     return null
+    // }
 
 
     addQuark (quark : Quark) {
-        this.quarks.set(quark.owner.id, quark)
+        // TODO setup dev/prod builds
+        // <debug>
+        if (this.frozen) throw new Error("Can't modify frozen data")
+        // </debug>
+
+        // this.quarks.set(quark.owner.id, quark)
+        this.quarks.push(quark)
+
+        quark.iteration = this
+    }
+
+
+    freeze () {
+        for (let i = 0; i < this.quarks.length; i++) this.quarks[ i ].freeze()
+
+        super.freeze()
     }
 
 
@@ -55,7 +76,7 @@ export class ChronoTransaction extends Owner implements Immutable {
     get immutable () : ChronoIteration {
         if (this.$immutable !== undefined) return this.$immutable
 
-        return this.$immutable = ChronoIteration.new({ owner : this })
+        return this.$immutable = ChronoIteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
     }
 
     set immutable (value : ChronoIteration) {
@@ -71,7 +92,7 @@ export class ChronoTransaction extends Owner implements Immutable {
 
             this.owner.setCurrent(next)
 
-            next.setCurrent(immutable)
+            // next.immutable  = immutable
         } else {
             this.immutable  = immutable
         }
@@ -134,14 +155,26 @@ export class ChronoTransaction extends Owner implements Immutable {
 
 
 //----------------------------------------------------------------------------------------------------------------------
+export type Revision     = number
+
+//----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner, Uniqable {
     uniqable                : number            = MIN_SMI
 
     historyLimit            : number            = 0
 
+    stack                   : LeveledQueue<Quark>   = new LeveledQueue()
+
+
 
     //region ChronoGraph as Owner
     immutable       : ChronoTransaction     = ChronoTransaction.new({ owner : this })
+
+    immutableForWrite () : this[ 'immutable' ] {
+        if (this.immutable.frozen) this.setCurrent(this.immutable.createNext())
+
+        return this.immutable
+    }
 
 
     setCurrent (immutable : this[ 'immutable' ]) {
@@ -152,49 +185,58 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     //endregion
 
 
+    getCurrentRevision () : Revision {
+        return this.immutable.immutable.revision
+    }
+
+
     commit () {
-        const atoms = this.atomsA
-
-        for (let i = 0; i < atoms.length; i++) {
-            const atom = atoms[ i ] as Box
-
-            atom.read()
-
-            atom.freeze()
-
-            this.immutable.addQuark(atom.immutable)
-        }
+        this.calculateTransitionsSync()
 
         this.immutable.freeze()
+
+        // this.revision++
     }
 
     reject () {
+        // nothing to reject
+        if (this.immutable.frozen) return
+
+        this.immutable  = this.immutable.previous
     }
 
 
-    atoms       : Set<Atom>                 = new Set()
+    undo () {
+    }
 
+    redo () {
 
-    $atomsA     : Atom[]                    = undefined
-
-    get atomsA () : Atom[] {
-        if (this.$atomsA !== undefined) return this.$atomsA
-
-        return this.$atomsA = Array.from(this.atoms)
     }
 
 
-    hasAtom (atom : Atom) : boolean {
-        return this.atoms.has(atom)
+    calculateTransitionsSync () {
+        const queue                             = this.stack
+
+        while (queue.length) {
+            this.calculateTransitionsStackSync(queue.takeLowestLevel())
+        }
+    }
+
+    calculateTransitionsStackSync (stack : Quark[]) {
+        for (let i = 0; i < stack.length; i++) {
+            const atom = stack[ i ].owner as Box
+
+            if (atom.state !== AtomState.UpToDate) atom.read()
+
+            atom.freeze()
+        }
     }
 
 
     addAtom (atom : Atom) {
-        this.atoms.add(atom)
-
         atom.enterGraph(this)
 
-        this.$atomsA = undefined
+        this.immutable.addQuark(atom.immutable)
     }
 
     addAtoms (atoms : Atom[]) {
@@ -203,10 +245,20 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
 
 
     removeAtom (atom : Atom) {
-        this.atoms.delete(atom)
-
         atom.leaveGraph(this)
+    }
 
-        this.$atomsA = undefined
+    removeAtoms (atoms : Atom[]) {
+        atoms.forEach(atom => this.removeAtom(atom))
+    }
+
+
+    addPossiblyStaleStrictAtomToTransaction (atom : Atom) {
+        this.stack.push(atom.immutable)
+    }
+
+
+    addChangedAtomToTransaction (atom : Atom) {
+        this.immutableForWrite().addQuark(atom.immutable)
     }
 }

@@ -10,7 +10,9 @@ export const identity = <V>(value : V) : V => value
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const strictEquality = <V>(v1 : V, v2 : V) : boolean => v1 === v2
+export type Equality = <V>(v1 : V, v2 : V) => boolean
+
+export const strictEquality : Equality = <V>(v1 : V, v2 : V) : boolean => v1 === v2
 
 
 //---------------------------------------------------------------------------------------------------------------------

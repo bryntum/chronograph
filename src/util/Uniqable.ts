@@ -4,7 +4,7 @@ export interface Uniqable {
     uniqable        : number
 }
 
-
+// TODO should cycle back to MIN_SMI once we reach the MAX_SMI
 let UNIQABLE : number = MIN_SMI
 
 
