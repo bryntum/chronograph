@@ -6,30 +6,36 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it('Undo/redo of variable value', async t => {
-        const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
-        const var1      = new Box(0)
+        const box      = new Box(0)
 
-        graph1.commit()
+        t.is(box.read(), 0, 'Correct value #1')
 
-        t.is(var1.read(), 0, 'Correct value')
+        graph.addAtom(box)
 
-        //--------------
-        var1.write(1)
+        t.is(box.read(), 0, 'Correct value #2')
 
-        graph1.commit()
+        graph.commit()
 
-        t.is(var1.read(), 1, 'Correct value')
+        t.is(box.read(), 0, 'Correct value #3')
 
-        //--------------
-        graph1.undo()
-
-        t.is(var1.read(), 0, 'Correct value')
-
-        //--------------
-        graph1.redo()
-
-        t.is(var1.read(), 1, 'Correct value')
+        // //--------------
+        // box.write(10)
+        //
+        // graph.commit()
+        //
+        // t.is(box.read(), 10, 'Correct value')
+        //
+        // //--------------
+        // graph.undo()
+        //
+        // t.is(box.read(), 0, 'Correct value')
+        //
+        // //--------------
+        // graph.redo()
+        //
+        // t.is(box.read(), 10, 'Correct value')
     })
 
 

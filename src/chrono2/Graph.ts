@@ -170,6 +170,8 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
 
     topTransaction          : ChronoTransaction     = undefined
 
+    nextTransaction         : ChronoTransaction[]   = []
+
 
 
     //region ChronoGraph as Owner
@@ -197,16 +199,18 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
         if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
         this.immutable = immutable
+
+        this.nextTransaction    = []
     }
     //endregion
 
 
-    currentTransaction () : ChronoTransaction {
+    get currentTransaction () : ChronoTransaction {
         return this.immutable
     }
 
 
-    currentIteration () : ChronoIteration {
+    get currentIteration () : ChronoIteration {
         return this.immutable.immutable
     }
 
@@ -228,10 +232,17 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
 
     undo () {
         this.reject()
+
+        this.nextTransaction.push(this.immutable)
+
+        this.immutable  = this.immutable.previous
     }
 
-    redo () {
 
+    redo () {
+        if (!this.nextTransaction.length) return
+
+        this.immutable = this.nextTransaction.pop()
     }
 
 

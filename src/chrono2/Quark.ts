@@ -76,18 +76,18 @@ export class Atom extends Owner implements Identifiable {
     actualize () : any {
         const graph     = this.graph
 
-        if (graph) {
-            if (!graph.currentIteration().previous) {
-                this.immutable  = undefined
-            } else {
-                let immutable   = this.immutable
+        if (this.immutable.iteration === graph.currentIteration) return
 
-                while (immutable && immutable.iteration.revision > graph.currentIteration().revision) {
-                    immutable  = immutable.previous
-                }
+        if (!graph.currentIteration.previous) {
+            this.immutable  = undefined
+        } else {
+            let immutable   = this.immutable
 
-                this.immutable  = immutable
+            while (immutable && immutable.iteration.revision > graph.currentIteration.revision) {
+                immutable  = immutable.previous
             }
+
+            this.immutable  = immutable
         }
     }
 

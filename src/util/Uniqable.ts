@@ -5,6 +5,7 @@ export interface Uniqable {
 }
 
 // TODO should cycle back to MIN_SMI once we reach the MAX_SMI
+// or rather use uniquely allocated objects per call (Symbol? or {}?)
 let UNIQABLE : number = MIN_SMI
 
 
