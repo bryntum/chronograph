@@ -77,22 +77,25 @@ export class Atom extends Owner implements Identifiable {
         const graph     = this.graph
 
         if (graph) {
-            let immutable   = this.immutable
+            if (!graph.currentIteration().previous) {
+                this.immutable  = undefined
+            } else {
+                let immutable   = this.immutable
 
-            while (immutable && immutable.iteration && immutable.iteration.revision > graph.getCurrentRevision()) {
-                immutable  = immutable.previous
+                while (immutable && immutable.iteration.revision > graph.currentIteration().revision) {
+                    immutable  = immutable.previous
+                }
+
+                this.immutable  = immutable
             }
-
-            this.immutable  = immutable
         }
     }
 
 
     enterGraph (graph : ChronoGraph) {
-        if (this.graph) throw new Error("Can only belong to a single graph for now")
+        if (this.graph && this.graph !== graph) throw new Error("Can only belong to a single graph for now")
 
         this.graph                  = graph
-        // this.immutable.revision     = graph.revision
     }
 
 

@@ -42,7 +42,10 @@ export class ChronoIteration extends Immutable {
         // TODO setup dev/prod builds
         // <debug>
         if (this.frozen) throw new Error("Can't modify frozen data")
+        if (quark.iteration && quark.iteration !== this) throw new Error("Quark already in another iteration")
         // </debug>
+
+        if (quark.iteration === this) return
 
         // this.quarks.set(quark.owner.id, quark)
         this.quarks.push(quark)
@@ -92,7 +95,7 @@ export class ChronoTransaction extends Owner implements Immutable {
 
             this.owner.setCurrent(next)
 
-            // next.immutable  = immutable
+            next.immutable  = immutable
         } else {
             this.immutable  = immutable
         }
@@ -165,10 +168,23 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
 
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
 
+    topTransaction          : ChronoTransaction     = undefined
+
 
 
     //region ChronoGraph as Owner
-    immutable       : ChronoTransaction     = ChronoTransaction.new({ owner : this })
+    $immutable              : ChronoTransaction     = undefined
+
+    get immutable () : ChronoTransaction {
+        if (this.$immutable !== undefined) return this.$immutable
+
+        return this.$immutable = ChronoTransaction.new({ owner : this })
+    }
+
+    set immutable (value : ChronoTransaction) {
+        this.$immutable = value
+    }
+
 
     immutableForWrite () : this[ 'immutable' ] {
         if (this.immutable.frozen) this.setCurrent(this.immutable.createNext())
@@ -185,8 +201,13 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     //endregion
 
 
-    getCurrentRevision () : Revision {
-        return this.immutable.immutable.revision
+    currentTransaction () : ChronoTransaction {
+        return this.immutable
+    }
+
+
+    currentIteration () : ChronoIteration {
+        return this.immutable.immutable
     }
 
 
@@ -194,9 +215,8 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
         this.calculateTransitionsSync()
 
         this.immutable.freeze()
-
-        // this.revision++
     }
+
 
     reject () {
         // nothing to reject
@@ -207,6 +227,7 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
 
 
     undo () {
+        this.reject()
     }
 
     redo () {
@@ -224,11 +245,9 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
 
     calculateTransitionsStackSync (stack : Quark[]) {
         for (let i = 0; i < stack.length; i++) {
-            const atom = stack[ i ].owner as Box
+            const atom = stack[ i ].owner as Box<any>
 
             if (atom.state !== AtomState.UpToDate) atom.read()
-
-            atom.freeze()
         }
     }
 
@@ -236,7 +255,7 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     addAtom (atom : Atom) {
         atom.enterGraph(this)
 
-        this.immutable.addQuark(atom.immutable)
+        this.immutableForWrite().addQuark(atom.immutable)
     }
 
     addAtoms (atoms : Atom[]) {

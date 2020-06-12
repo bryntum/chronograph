@@ -286,7 +286,7 @@ export const mobxGraph = (atomNum : number = 1000) : MobxGraphGenerationResult =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type Chrono2GenerationResult  = { boxes : CalculableBox[], counter : number }
+export type Chrono2GenerationResult  = { boxes : CalculableBox<number>[], counter : number }
 
 export const chrono2Graph = (atomNum : number = 1000) : Chrono2GenerationResult => {
     let boxes       = []

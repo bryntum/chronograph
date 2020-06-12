@@ -21,9 +21,7 @@ StartTest(t => {
 
 
     t.it("Should be possible to observe the value of the box in calculable box", t => {
-        const box1     = new Box()
-
-        box1.write(10)
+        const box1     = new Box(10)
 
         const box2     = new CalculableBox({
             calculation : () => box1.read()  + 1
@@ -38,9 +36,7 @@ StartTest(t => {
 
 
     t.it("Should be possible to observe the value of the calculable box in another calculable box", t => {
-        const box1     = new Box()
-
-        box1.write(10)
+        const box1     = new Box(10)
 
         const box2     = new CalculableBox({
             calculation : () => box1.read() + 1
@@ -61,11 +57,19 @@ StartTest(t => {
 
 
     t.it('`undefined` as a result of calculation should be converted to `null`', async t => {
+        let called = false
+
         const box1     = new CalculableBox({
-            calculation : () => undefined
+            calculation : () => {
+                called = true
+
+                return undefined
+            }
         })
 
         t.isStrict(box1.read(), null, 'Undefined normalized to `null` in sync identifier')
+
+        t.ok(called)
     })
 
 

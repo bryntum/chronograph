@@ -1,4 +1,5 @@
 import { globalContext } from "../GlobalContext.js"
+import { ChronoTransaction } from "../Graph.js"
 import { Atom, AtomState, Quark } from "../Quark.js"
 
 
@@ -46,8 +47,27 @@ export class BoxImmutable extends Quark {
 
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
-export class Box extends Atom {
-    immutable       : BoxImmutable  = new BoxImmutable(this)
+export class Box<V> extends Atom {
+
+    constructor (value? : V) {
+        super()
+
+        if (value !== undefined) this.write(value)
+    }
+
+
+    $immutable              : BoxImmutable     = undefined
+
+    get immutable () : BoxImmutable {
+        if (this.$immutable !== undefined) return this.$immutable
+
+        return this.$immutable = new BoxImmutable(this)
+    }
+
+    set immutable (value : BoxImmutable) {
+        this.$immutable = value
+    }
+
 
 
     immutableForWrite () : this[ 'immutable' ] {
@@ -57,16 +77,16 @@ export class Box extends Atom {
     }
 
 
-    read () : any {
+    read () : V {
         if (this.graph) this.actualize()
 
         if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
 
-        return this.immutable.read()
+        return this.immutable.read() as any
     }
 
 
-    write (value : unknown) {
+    write (value : V) {
         if (this.graph) this.actualize()
 
         if (value === undefined) value = null

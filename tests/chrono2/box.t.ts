@@ -11,6 +11,13 @@ StartTest(t => {
     })
 
 
+    t.it('Should be possible to provide value as constructor argument', t => {
+        const box     = new Box(10)
+
+        t.isStrict(box.read(), 10)
+    })
+
+
     t.it('Should read your own writes', t => {
         const box     = new Box()
 

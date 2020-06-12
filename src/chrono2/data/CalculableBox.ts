@@ -7,9 +7,9 @@ import { Box } from "./Box.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculableBox extends Box {
+export class CalculableBox<V> extends Box<V> {
 
-    constructor (config? : Partial<CalculableBox>) {
+    constructor (config? : Partial<CalculableBox<V>>) {
         super()
 
         if (config) {
@@ -166,7 +166,7 @@ export class CalculableBox extends Box {
             for (let i = 0; i < incoming.length; i++) {
                 const dependency            = incoming[ i ]
 
-                const dependencyAtom        = dependency.owner as Box
+                const dependencyAtom        = dependency.owner as Box<V>
 
                 const prevActive            = globalContext.activeQuark
                 globalContext.activeQuark   = null
