@@ -118,7 +118,7 @@ export class CalculableBox<V> extends Box<V> {
 
 
     read () : any {
-        if (this.graph) this.actualize()
+        // if (this.graph) this.actualize()
 
         if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
 

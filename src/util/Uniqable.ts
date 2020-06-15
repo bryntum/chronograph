@@ -8,6 +8,8 @@ export interface Uniqable {
 // or rather use uniquely allocated objects per call (Symbol? or {}?)
 let UNIQABLE : number = MIN_SMI
 
+export const getUniqable = () => ++UNIQABLE
+
 
 // in-place mutation
 export const compact = <T extends Uniqable>(array : T[]) : T[] => {

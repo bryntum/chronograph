@@ -20,18 +20,18 @@ StartTest(t => {
 
         t.is(box.read(), 0, 'Correct value #3')
 
-        // //--------------
-        // box.write(10)
-        //
-        // graph.commit()
-        //
-        // t.is(box.read(), 10, 'Correct value')
-        //
-        // //--------------
-        // graph.undo()
-        //
-        // t.is(box.read(), 0, 'Correct value')
-        //
+        //--------------
+        box.write(10)
+
+        graph.commit()
+
+        t.is(box.read(), 10, 'Correct value')
+
+        //--------------
+        graph.undo()
+
+        t.is(box.read(), 0, 'Correct value')
+
         // //--------------
         // graph.redo()
         //

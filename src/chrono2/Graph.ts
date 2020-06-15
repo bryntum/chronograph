@@ -2,7 +2,7 @@ import { Base } from "../class/Base.js"
 import { AnyConstructor } from "../class/Mixin.js"
 import { MIN_SMI } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { Uniqable } from "../util/Uniqable.js"
+import { getUniqable, Uniqable } from "../util/Uniqable.js"
 import { Box } from "./data/Box.js"
 import { Immutable, Owner } from "./data/Immutable.js"
 import { Atom, AtomState, Quark } from "./Quark.js"
@@ -226,9 +226,7 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
         // nothing to reject
         if (this.immutable.frozen) return
 
-        this.forEachAtom(this.immutable, this.immutable.previous, (atom : Atom) => {
-            // atom.
-        })
+        this.rejectTo(this.immutable, this.immutable.previous)
 
         this.immutable  = this.immutable.previous
     }
@@ -297,7 +295,44 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     }
 
 
-    forEachAtom (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction, func : (atom : Atom) => any) {
+    rejectTo (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction) {
+        let iteration           = sourceTransaction.immutable
+        const stopAt : ChronoIteration  = tillTransaction ? tillTransaction.immutable : undefined
 
+        const uniqable          = getUniqable()
+
+        const atoms : Atom[]    = []
+
+        while (true) {
+            const quarks        = iteration.quarks
+
+            for (let i = 0; i < quarks.length; i++) {
+                const quark     = quarks[ i ]
+                const atom      = quark.owner
+
+                if (atom.uniqable !== uniqable) {
+                    atom.uniqable = uniqable
+
+                    atom.uniqableBoxed  = { boxState : quark }
+
+                    atoms.push(atom)
+                } else {
+                    atom.uniqableBoxed.boxState = quark
+                }
+            }
+
+            iteration           = iteration.previous
+
+            if (iteration === stopAt) break
+        }
+
+        for (let i = 0; i < atoms.length; i++) {
+            const atom          = atoms[ i ]
+            const deepestQuark  = atom.uniqableBoxed.boxState as Quark
+
+            atom.immutable      = deepestQuark.previous
+
+            atom.uniqableBoxed  = undefined
+        }
     }
 }

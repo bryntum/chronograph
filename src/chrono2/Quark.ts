@@ -1,5 +1,6 @@
 import { AnyConstructor, AnyFunction } from "../class/Mixin.js"
-import { compact } from "../util/Uniqable.js"
+import { MIN_SMI } from "../util/Helpers.js"
+import { compact, Uniqable } from "../util/Uniqable.js"
 import { Immutable, Owner } from "./data/Immutable.js"
 import { chronoId, ChronoId, Identifiable } from "./Identifiable.js"
 import { ChronoGraph, ChronoIteration, Revision } from "./Graph.js"
@@ -81,8 +82,12 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Atom extends Owner implements Identifiable {
+export class Atom extends Owner implements Identifiable, Uniqable {
     id                  : ChronoId      = chronoId()
+
+    uniqable            : number        = MIN_SMI
+
+    uniqableBoxed       : any           = undefined
 
     immutable           : Quark         = undefined
 
@@ -171,6 +176,6 @@ export class Atom extends Owner implements Identifiable {
     propagateStale () {
         this.immutable.forEachOutgoing(quark => quark.owner.state = AtomState.Stale)
 
-        this.immutable.clearOutgoing()
+        if (!this.immutable.frozen) this.immutable.clearOutgoing()
     }
 }
