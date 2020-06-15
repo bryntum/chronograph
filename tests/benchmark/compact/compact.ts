@@ -20,8 +20,8 @@ const elements : Uniqable[]     = [ el1, el2, el1, el3, el1, el2, el3, el1, el2,
 const compactees = Array(toCompact).fill(null).map(() => elements)
 
 //---------------------------------------------------------------------------------------------------------------------
-const compactInPlaceBenchmark = BenchmarkC<CompactBenchState>({
-    name : `Compact in place ${toCompact}`,
+const compactUsingUniqableBenchmark = BenchmarkC<CompactBenchState>({
+    name : `Compact using "uniqable" ${toCompact}`,
 
     async setup () : Promise<CompactBenchState> {
         return {
@@ -44,8 +44,8 @@ const compactInPlaceBenchmark = BenchmarkC<CompactBenchState>({
 
 
 //---------------------------------------------------------------------------------------------------------------------
-const compactImmutableBenchmark = BenchmarkC<CompactBenchState>({
-    name : `Compact immutable ${toCompact}`,
+const compactUsingSetBenchmark = BenchmarkC<CompactBenchState>({
+    name : `Compact using Set ${toCompact}`,
 
     async setup () : Promise<CompactBenchState> {
         return {
@@ -67,8 +67,8 @@ const compactImmutableBenchmark = BenchmarkC<CompactBenchState>({
 })
 
 const runAll = async () => {
-    await compactInPlaceBenchmark.measureTillMaxTime()
-    await compactImmutableBenchmark.measureTillMaxTime()
+    await compactUsingUniqableBenchmark.measureTillMaxTime()
+    await compactUsingSetBenchmark.measureTillMaxTime()
 }
 
 
