@@ -313,11 +313,11 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
                 if (atom.uniqable !== uniqable) {
                     atom.uniqable = uniqable
 
-                    atom.uniqableBoxed  = { boxState : quark }
+                    atom.uniqableBox    = quark
 
                     atoms.push(atom)
                 } else {
-                    atom.uniqableBoxed.boxState = quark
+                    atom.uniqableBox    = quark
                 }
             }
 
@@ -328,11 +328,11 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
 
         for (let i = 0; i < atoms.length; i++) {
             const atom          = atoms[ i ]
-            const deepestQuark  = atom.uniqableBoxed.boxState as Quark
+            const deepestQuark  = atom.uniqableBox as Quark
 
             atom.immutable      = deepestQuark.previous
 
-            atom.uniqableBoxed  = undefined
+            atom.uniqableBox  = undefined
         }
     }
 }

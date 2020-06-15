@@ -87,7 +87,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
     uniqable            : number        = MIN_SMI
 
-    uniqableBoxed       : any           = undefined
+    uniqableBox         : any           = undefined
 
     immutable           : Quark         = undefined
 

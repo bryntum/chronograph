@@ -45,6 +45,10 @@ export class BoxImmutable extends Quark {
 }
 
 
+const ZeroBoxImmutable = new BoxImmutable(undefined)
+ZeroBoxImmutable.freeze()
+
+
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
 export class Box<V> extends Atom {
@@ -57,11 +61,15 @@ export class Box<V> extends Atom {
 
 
     // this property should be a "real" property, not an accessor, to be optimizable by v8
-    immutable              : BoxImmutable     = new BoxImmutable(this)
+    immutable              : BoxImmutable     = this.buildDefaultImmutable()
 
 
-    buildDefaultImmutable () : Quark {
-        return new BoxImmutable(this)
+    buildDefaultImmutable () : BoxImmutable {
+        const defaultBoxImmutable = new BoxImmutable(this)
+
+        defaultBoxImmutable.previous    = ZeroBoxImmutable
+
+        return defaultBoxImmutable
     }
 
 
