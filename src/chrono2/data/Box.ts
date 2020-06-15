@@ -60,6 +60,11 @@ export class Box<V> extends Atom {
     immutable              : BoxImmutable     = new BoxImmutable(this)
 
 
+    buildDefaultImmutable () : Quark {
+        return new BoxImmutable(this)
+    }
+
+
     immutableForWrite () : this[ 'immutable' ] {
         if (this.immutable.frozen) this.setCurrent(this.immutable.createNext())
 
@@ -84,11 +89,10 @@ export class Box<V> extends Atom {
         if (value === this.immutable.read()) return
 
         this.propagatePossiblyStale()
+        this.propagateStale()
 
         this.immutableForWrite().write(value)
         this.state  = AtomState.UpToDate
-
-        this.propagateStale()
     }
 }
 

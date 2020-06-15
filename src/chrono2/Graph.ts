@@ -162,9 +162,9 @@ export type Revision     = number
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner, Uniqable {
-    uniqable                : number            = MIN_SMI
+    uniqable                : number                = MIN_SMI
 
-    historyLimit            : number            = 0
+    historyLimit            : number                = 0
 
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
 
@@ -225,6 +225,10 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     reject () {
         // nothing to reject
         if (this.immutable.frozen) return
+
+        this.forEachAtom(this.immutable, this.immutable.previous, (atom : Atom) => {
+            // atom.
+        })
 
         this.immutable  = this.immutable.previous
     }
@@ -288,7 +292,12 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     }
 
 
-    addChangedAtomToTransaction (atom : Atom) {
-        this.immutableForWrite().addQuark(atom.immutable)
+    registerQuark (quark : Quark) {
+        this.immutableForWrite().addQuark(quark)
+    }
+
+
+    forEachAtom (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction, func : (atom : Atom) => any) {
+
     }
 }

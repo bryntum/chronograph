@@ -1,4 +1,4 @@
-import { AnyConstructor } from "../class/Mixin.js"
+import { AnyConstructor, AnyFunction } from "../class/Mixin.js"
 import { compact } from "../util/Uniqable.js"
 import { Immutable, Owner } from "./data/Immutable.js"
 import { chronoId, ChronoId, Identifiable } from "./Identifiable.js"
@@ -49,12 +49,34 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         next.previous   = this
         next.owner      = this.owner
 
+        if (this.owner.graph) this.owner.graph.registerQuark(next)
+
         return next
     }
 
 
     $incoming           : Quark[]
     $outgoing           : Quark[]
+
+
+    forEachOutgoing (func : (quark : Quark) => any) {
+        let quark : this = this
+
+        do {
+            if (this.$outgoing) {
+                const outgoing = this.getOutgoing()
+
+                for (let i = 0; i < outgoing.length; i++) {
+                    func(outgoing[ i ])
+                }
+            }
+
+            if (quark.value !== undefined) break
+
+            quark       = quark.previous
+
+        } while (quark)
+    }
 }
 
 
@@ -89,6 +111,13 @@ export class Atom extends Owner implements Identifiable {
 
             this.immutable  = immutable
         }
+
+        if (!this.immutable) this.immutable = this.buildDefaultImmutable()
+    }
+
+
+    buildDefaultImmutable () : Quark {
+        throw new Error("Abstract method called")
     }
 
 
@@ -130,14 +159,9 @@ export class Atom extends Owner implements Identifiable {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
                 }
 
-                if (quark.$outgoing) {
-                    // TODO inline the `compact` code here, to avoid double pass through the `outgoing` array
-                    const outgoing = quark.getOutgoing()
-
-                    for (let i = 0; i < outgoing.length; i++) {
-                        if (outgoing[ i ].owner.state === AtomState.UpToDate) toVisit.push(outgoing[ i ])
-                    }
-                }
+                quark.forEachOutgoing(outgoing => {
+                    if (outgoing.owner.state === AtomState.UpToDate) toVisit.push(outgoing)
+                })
             }
         }
 
@@ -145,16 +169,8 @@ export class Atom extends Owner implements Identifiable {
 
 
     propagateStale () {
-        if (this.immutable.$outgoing) {
-            const outgoing = this.immutable.getOutgoing()
+        this.immutable.forEachOutgoing(quark => quark.owner.state = AtomState.Stale)
 
-            for (let i = 0; i < outgoing.length; i++) {
-                outgoing[ i ].owner.state = AtomState.Stale
-            }
-
-            this.immutable.clearOutgoing()
-        }
-
-        if (this.graph) this.graph.addChangedAtomToTransaction(this)
+        this.immutable.clearOutgoing()
     }
 }

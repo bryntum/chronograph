@@ -2,7 +2,7 @@ import { AnyConstructor } from "../../class/Mixin.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { globalContext } from "../GlobalContext.js"
 import { DefaultMetaSync, Meta } from "../Meta.js"
-import { AtomState } from "../Quark.js"
+import { AtomState, Quark } from "../Quark.js"
 import { Box } from "./Box.js"
 
 
@@ -135,6 +135,8 @@ export class CalculableBox<V> extends Box<V> {
 
         const oldValue              = this.immutable.read()
 
+        if (!this.equality(oldValue, newValue)) this.propagateStale()
+
         this.immutableForWrite().write(newValue)
 
         if (this.immutable.usedProposedOrPrevious) {
@@ -144,8 +146,6 @@ export class CalculableBox<V> extends Box<V> {
         }
 
         this.proposedValue          = undefined
-
-        if (!this.equality(oldValue, newValue)) this.propagateStale()
     }
 
 
@@ -167,15 +167,16 @@ export class CalculableBox<V> extends Box<V> {
         if (incoming) {
             for (let i = 0; i < incoming.length; i++) {
                 const dependency            = incoming[ i ]
-
                 const dependencyAtom        = dependency.owner as Box<V>
 
-                const prevActive            = globalContext.activeQuark
-                globalContext.activeQuark   = null
+                if (dependencyAtom.state !== AtomState.UpToDate) {
+                    const prevActive            = globalContext.activeQuark
+                    globalContext.activeQuark   = null
 
-                if (dependencyAtom.state !== AtomState.UpToDate) dependencyAtom.read()
+                    dependencyAtom.read()
 
-                globalContext.activeQuark   = prevActive
+                    globalContext.activeQuark   = prevActive
+                }
 
                 // TODO check in 3.9, 4.0, looks like a bug in TS
                 //@ts-ignore
