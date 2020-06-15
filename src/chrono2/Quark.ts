@@ -64,8 +64,8 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         let quark : this = this
 
         do {
-            if (this.$outgoing) {
-                const outgoing = this.getOutgoing()
+            if (quark.$outgoing) {
+                const outgoing = quark.getOutgoing()
 
                 for (let i = 0; i < outgoing.length; i++) {
                     func(outgoing[ i ])

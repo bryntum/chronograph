@@ -6,7 +6,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.iit('Reject before the 1st commit should nullify the values', t => {
+    t.it('Reject before the 1st commit should nullify the values', t => {
         const box1      = new Box(10)
 
         const box2     = new CalculableBox({
