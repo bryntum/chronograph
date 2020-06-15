@@ -6,8 +6,7 @@ declare const StartTest : any
 StartTest(t => {
 
     t.it('`ProposedOrPrevious` effect', async t => {
-        const max       = new Box()
-        max.write(100)
+        const max       = new Box(100)
 
         const box1      = new CalculableBox({
             calculation : () => {

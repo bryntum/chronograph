@@ -86,7 +86,7 @@ export class Meta extends Base {
 export const defaultCalculationSync = (Y : EffectHandler<CalculationModeSync>) => {
     // return Y(ProposedOrPrevious)
 
-    return globalContext.activeQuark.owner.readProposeOrPrevious()
+    // return globalContext.activeQuark.owner.readProposeOrPrevious()
 }
 
 export const DefaultMetaSync = Meta.new({ name : 'DefaultMetaSync' })
