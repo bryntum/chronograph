@@ -149,6 +149,21 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     //
     // }
 
+    updateQuark (quark : Quark) {
+        if (this.equality && this.equality(quark.read(), this.immutable.read())) {
+            this.immutable  = quark
+            this.state      = AtomState.UpToDate
+
+            return
+        }
+
+        this.propagatePossiblyStale()
+        this.propagateStale()
+
+        this.immutable  = quark
+        this.state      = AtomState.PossiblyStale
+    }
+
 
     propagatePossiblyStale () {
         const toVisit : Quark[]         = [ this.immutable ]

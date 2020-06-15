@@ -104,6 +104,10 @@ export class Box<V> extends Atom {
     }
 }
 
+const ZeroBox = new Box()
+
+ZeroBoxImmutable.owner = ZeroBox
+
 // export class InvalidatingBoxImmutable extends BoxImmutable {
 // }
 //

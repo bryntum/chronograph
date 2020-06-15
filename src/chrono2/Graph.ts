@@ -235,6 +235,8 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     undo () {
         this.reject()
 
+        this.rejectTo(this.immutable, this.immutable.previous)
+
         this.nextTransaction.push(this.immutable)
 
         this.immutable  = this.immutable.previous
@@ -330,9 +332,9 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
             const atom          = atoms[ i ]
             const deepestQuark  = atom.uniqableBox as Quark
 
-            atom.immutable      = deepestQuark.previous
+            atom.updateQuark(deepestQuark.previous)
 
-            atom.uniqableBox  = undefined
+            atom.uniqableBox    = undefined
         }
     }
 }

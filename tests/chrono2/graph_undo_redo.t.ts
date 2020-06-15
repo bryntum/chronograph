@@ -10,27 +10,23 @@ StartTest(t => {
 
         const box      = new Box(0)
 
-        t.is(box.read(), 0, 'Correct value #1')
-
         graph.addAtom(box)
-
-        t.is(box.read(), 0, 'Correct value #2')
 
         graph.commit()
 
-        t.is(box.read(), 0, 'Correct value #3')
+        t.is(box.read(), 0, 'Correct value #1')
 
         //--------------
         box.write(10)
 
         graph.commit()
 
-        t.is(box.read(), 10, 'Correct value')
+        t.is(box.read(), 10, 'Correct value #2')
 
         //--------------
         graph.undo()
 
-        t.is(box.read(), 0, 'Correct value')
+        t.is(box.read(), 0, 'Correct value #3')
 
         // //--------------
         // graph.redo()
