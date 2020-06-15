@@ -56,18 +56,8 @@ export class Box<V> extends Atom {
     }
 
 
-    $immutable              : BoxImmutable     = undefined
-
-    get immutable () : BoxImmutable {
-        if (this.$immutable !== undefined) return this.$immutable
-
-        return this.$immutable = new BoxImmutable(this)
-    }
-
-    set immutable (value : BoxImmutable) {
-        this.$immutable = value
-    }
-
+    // this property should be a "real" property, not an accessor, to be optimizable by v8
+    immutable              : BoxImmutable     = new BoxImmutable(this)
 
 
     immutableForWrite () : this[ 'immutable' ] {
