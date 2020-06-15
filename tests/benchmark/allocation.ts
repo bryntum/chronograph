@@ -53,10 +53,10 @@ export const replicaPopulation = Benchmark.new({
 
 //---------------------------------------------------------------------------------------------------------------------
 export const runAllGraphPopulation = async () => {
-    await graphPopulationGen.measureTillRelativeMoe()
-    await graphPopulationSync.measureTillRelativeMoe()
+    // await graphPopulationGen.measureTillRelativeMoe()
+    // await graphPopulationSync.measureTillRelativeMoe()
     await graphPopulationMobx.measureTillRelativeMoe()
     await graphPopulationChrono2.measureTillRelativeMoe()
 
-    await replicaPopulation.measureTillRelativeMoe()
+    // await replicaPopulation.measureTillRelativeMoe()
 }

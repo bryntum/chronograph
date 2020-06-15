@@ -96,7 +96,6 @@ class DeepChangesChrono2 extends Benchmark<Chrono2GenerationResult, PostBenchInf
 
         boxes[ 0 ].write(iteration + cycle)
 
-        // seems mobx does not have concept of eager computation, need to manually read all atoms
         for (let k = 0; k < boxes.length; k++) boxes[ k ].read()
     }
 }
