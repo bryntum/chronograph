@@ -3,7 +3,7 @@ import { compact, Uniqable } from "../util/Uniqable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Node implements Uniqable {
-    uniqable            : number        = MIN_SMI
+    uniqable            : number        = Number.MIN_SAFE_INTEGER
 
     $incoming           : Node[]        = undefined
     $outgoing           : Node[]        = undefined

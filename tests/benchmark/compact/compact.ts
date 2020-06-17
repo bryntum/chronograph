@@ -9,13 +9,16 @@ type CompactBenchState = {
     array       : Uniqable[][]
 }
 
-const getUniqable   = () => { return { uniqable : MIN_SMI } }
+const getUniqable   = () => { return { uniqable : Number.MIN_SAFE_INTEGER } }
 
 const el1   = getUniqable()
 const el2   = getUniqable()
 const el3   = getUniqable()
 
-const elements : Uniqable[]     = [ el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3, ]
+const elements : Uniqable[]     = [
+    el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3,
+    el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3, el1, el2, el1, el3, el1, el2, el3,
+]
 
 const compactees = Array(toCompact).fill(null).map(() => elements)
 

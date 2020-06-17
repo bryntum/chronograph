@@ -4,9 +4,30 @@ export interface Uniqable {
     uniqable        : number
 }
 
-// TODO should cycle back to MIN_SMI once we reach the MAX_SMI
-// or rather use uniquely allocated objects per call (Symbol? or {}?)
-let UNIQABLE : number = MIN_SMI
+/*
+Why is it safe to use this approach for "uniqable"?
+
+On my (decent) machine, this benchmark:
+
+    const max = Number.MIN_SAFE_INTEGER + 1e10
+
+    console.time('uniq')
+    for (let i = Number.MIN_SAFE_INTEGER; i < MAX; i++) {}
+    console.timeEnd('uniq');
+
+runs in 22.8s
+
+This gives us:
+    (Number.MAX_SAFE_INTEGER - Number.MIN_SAFE_INTEGER) / 1e10 * 22.8 / 60 / 24 / 365 = 78 years
+
+to exhaust the integers range.
+
+Considering that this benchmarks exercise only integers exhausting and in real-world code
+on every integer used, there will be at least 10x (in reality 1000x) of other instructions,
+the real time for exhausting the interval is ~780 years
+
+ */
+let UNIQABLE : number = Number.MIN_SAFE_INTEGER
 
 export const getUniqable = () => ++UNIQABLE
 
