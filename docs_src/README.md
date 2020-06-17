@@ -64,7 +64,7 @@ We welcome all feedback. Please tell us what works well in ChronoGraph, what cau
 
 Post in the [forum](https://bryntum.com/forum/viewforum.php?f=53)
 
-Discord [live chat](https://discordapp.com/channels/681424024445780014/681424024449974316)
+Discord [live chat](https://discord.gg/jErxFxY)
 
 
 COPYRIGHT AND LICENSE
