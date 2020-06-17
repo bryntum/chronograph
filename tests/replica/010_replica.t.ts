@@ -304,4 +304,54 @@ StartTest(t => {
         t.is(markTwain.lastName, 'Twain')
     })
 
+
+    t.it('Should not leak fields/calculation functions to super class', async t => {
+        const schema            = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = schema.getEntityDecorator()
+
+        @entity
+        class Author1 extends Entity.mix(Base) {
+            @field()
+            firstName       : string
+
+            @field()
+            lastName        : string
+
+            @field()
+            fullName        : string
+
+            @field()
+            someField       : string
+
+            @calculate('someField')
+            * calculateSomeField () : CalculationIterator<string> {
+                return 'someField'
+            }
+        }
+
+        class Author2 extends Author1 {
+            @calculate('fullName')
+            * calculateFullName () : CalculationIterator<string> {
+                t.is(this, author2, 'Should not call this method on `author1` instance')
+
+                return (yield this.$.firstName) + ' ' + (yield this.$.lastName)
+            }
+        }
+
+        const replica2          = Replica.new({ schema : schema })
+
+        const author2           = Author2.new({ firstName : 'Mark', lastName : 'Twain', fullName : "some name" })
+        replica2.addEntity(author2)
+
+        const replica1          = Replica.new({ schema : schema })
+
+        const author1           = Author1.new({ firstName : 'Mark', lastName : 'Twain', fullName : "some name" })
+        replica1.addEntity(author1)
+
+        t.is(author1.fullName, 'some name', 'Correct name calculated')
+        t.is(author2.fullName, 'Mark Twain', 'Correct name calculated')
+    })
+
+
 })

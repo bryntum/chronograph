@@ -2,6 +2,17 @@
 
 ## {{ $NEXT }}
 
+#### FEATURES / ENHANCEMENTS
+
+- None
+
+#### API CHANGES
+
+- None
+
+#### BUG FIXES
+
+- Fixed a bug, that calculation function from the entity super-class could leak to the sub-class.
 
 ## 1.0.2        2020-05-28 13:31
 
