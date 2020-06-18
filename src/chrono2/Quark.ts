@@ -65,11 +65,12 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
     forEachOutgoing (func : (quark : Quark) => any) {
         let quark : this = this
 
+        const uniqable  = getUniqable()
+
         do {
             const outgoing = quark.$outgoing
 
             if (outgoing) {
-                const uniqable  = getUniqable()
 
                 for (let i = 0; i < outgoing.length; i += 2) {
                     const outgoingQuark     = outgoing[ i ] as Quark
@@ -104,7 +105,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 export class Atom extends Owner implements Identifiable, Uniqable {
     id                  : ChronoId      = chronoId()
 
-    uniqable            : number        = MIN_SMI
+    uniqable            : number        = Number.MIN_SAFE_INTEGER
 
     uniqableBox         : any           = undefined
 
@@ -196,10 +197,19 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
 
     propagatePossiblyStale () {
+        // TODO: also benchmark the following on big graphs
+        //         const toVisit : Quark[]         = new Array(1000)
+        //
+        //         toVisit[ 0 ] = this.immutable
+
         const toVisit : Quark[]         = [ this.immutable ]
 
-        while (toVisit.length) {
-            const quark     = toVisit.pop()
+        // avoiding `push/pop` is noticeably faster
+        let length : number = 1
+
+        while (length) {
+            const quark     = toVisit[ --length ]
+
             const atom      = quark.owner
 
             if (atom.state === AtomState.UpToDate) {
@@ -210,7 +220,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
                 }
 
                 quark.forEachOutgoing(outgoing => {
-                    if (outgoing.owner.state === AtomState.UpToDate) toVisit.push(outgoing)
+                    if (outgoing.owner.state === AtomState.UpToDate) toVisit[ length++ ] = quark
                 })
             }
         }
