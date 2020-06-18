@@ -49,9 +49,10 @@ project.start(
             'chrono2/calculable_box.t.js',
             'chrono2/calculable_box_proposed_value.t.js',
             'chrono2/calculable_box_lazyness.t.js',
+            'chrono2/calculable_box_propagation.t.js',
             'chrono2/graph_reject.t.js',
-            'chrono2/record.t.js',
             'chrono2/graph_undo_redo.t.js',
+            'chrono2/record.t.js',
         ]
     },
     {

@@ -21,7 +21,7 @@ export class Node implements Uniqable {
     outgoingCompacted   : boolean       = false
 
     // TODO we can also just check the last element in the `$outgoing`, need to benchmark
-    lastOutgoingTo      : Node          = undefined
+    lastOutgoingTo          : Node          = undefined
 
 
     getIncoming () : this[ '$incoming' ] {
@@ -46,6 +46,7 @@ export class Node implements Uniqable {
 
 
     clearOutgoing () {
+        // seems to be faster to just assign `undefined` instead of setting length to 0
         this.$outgoing          = undefined
         this.outgoingCompacted  = false
         this.lastOutgoingTo     = undefined
@@ -59,15 +60,21 @@ export class Node implements Uniqable {
 
 
     addOutgoing (to : Node, calledFromPartner : boolean = false) {
-        if (this.lastOutgoingTo === to) return
+        const toRevision            = to.revision
 
-        this.lastOutgoingTo     = to
+        if (this.lastOutgoingTo === to) {
+            this.$outgoing[ this.$outgoing.length - 1 ] = to.revision
+
+            return
+        }
+
+        this.lastOutgoingTo         = to
 
         this.outgoingCompacted  = false
 
         if (this.$outgoing === undefined) this.$outgoing = []
 
-        this.$outgoing.push(to, to.revision)
+        this.$outgoing.push(to, toRevision)
         if (!calledFromPartner) to.addIncoming(this, true)
     }
 }

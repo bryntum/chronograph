@@ -84,7 +84,7 @@ StartTest(t => {
             }
         })
 
-        // during these reads the `c1` will acuire a dependency on `i1`
+        // during these reads the `c1` will acquire a dependency on `i1`
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i1, 1 ], "Correct result calculated #1")
 
         // ----------------
@@ -94,7 +94,7 @@ StartTest(t => {
 
         t.expect(c1Spy).toHaveBeenCalled(0)
 
-        // during these reads the `c1` will acuire a dependency on `i2` and old dependency on `i1` will become "stale"
+        // during these reads the `c1` will acquire a dependency on `i2` and old dependency on `i1` will become "stale"
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i2, 2 ], "Correct result calculated #2")
 
         t.expect(c1Spy).toHaveBeenCalled(1)
@@ -161,116 +161,109 @@ StartTest(t => {
     })
 
 
-    // t.it('Should be able to calculate lazy identifier that uses `ProposedOrPrevious`', async t => {
-    //     const graph1 : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1            = graph1.variableNamed('i1', 0)
-    //     const i2            = graph1.variableNamed('i2', 1)
-    //
-    //     const dispatcher    = graph1.variableNamed('dispatcher', 'pure')
-    //
-    //     const c1            = graph1.addIdentifier(CalculatedValueGen.new({
-    //         name            : 'c1',
-    //         lazy            : true,
-    //         calculation     : function * () : CalculationIterator<number> {
-    //             const dispatch : string = yield dispatcher
-    //
-    //             if (dispatch === 'pure') {
-    //                 return (yield i1) + (yield i2)
-    //             } else {
-    //                 return (yield ProposedOrPrevious)
-    //             }
-    //         }
-    //     }))
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'pure', 1 ], "Correct result calculated")
-    //
-    //     // ----------------
-    //     const c1Spy         = t.spyOn(c1, 'calculation')
-    //
-    //     graph1.write(dispatcher, 'proposed')
-    //     graph1.write(c1, 10)
-    //
-    //     graph1.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'proposed', 10 ], "Correctly calculated lazy value")
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(1)
-    //
-    //     // ----------------
-    //     c1Spy.reset()
-    //
-    //     graph1.write(i1, 10)
-    //
-    //     graph1.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, 'proposed', 10 ], "Correct result calculated")
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    // })
-    //
-    //
-    // t.it('Should be able to calculate lazy identifier that uses `ProposedOrPrevious` - sync', async t => {
-    //     const graph1 : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1            = graph1.variableNamed('i1', 0)
-    //     const i2            = graph1.variableNamed('i2', 1)
-    //
-    //     const dispatcher    = graph1.variableNamed('dispatcher', 'pure')
-    //
-    //     const c1            = graph1.addIdentifier(CalculatedValueSync.new({
-    //         name            : 'c1',
-    //         lazy            : true,
-    //         calculation     : function (YIELD) : number {
-    //             const dispatch : string = YIELD(dispatcher)
-    //
-    //             if (dispatch === 'pure') {
-    //                 return YIELD(i1) + YIELD(i2)
-    //             } else {
-    //                 return YIELD(ProposedOrPrevious)
-    //             }
-    //         }
-    //     }))
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'pure', 1 ], "Correct result calculated")
-    //
-    //     // ----------------
-    //     const c1Spy         = t.spyOn(c1, 'calculation')
-    //
-    //     graph1.write(dispatcher, 'proposed')
-    //     graph1.write(c1, 10)
-    //
-    //     graph1.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, 'proposed', 10 ], "Correctly calculated lazy value")
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(1)
-    //
-    //     // ----------------
-    //     c1Spy.reset()
-    //
-    //     graph1.write(i1, 10)
-    //
-    //     graph1.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, 'proposed', 10 ], "Correct result calculated")
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    // })
-    //
-    //
+    t.it('Should be able to calculate lazy identifier that uses `ProposedOrPrevious` - sync', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1            = new Box(0)
+        const i2            = new Box(1)
+
+        const dispatcher    = new Box('pure')
+
+        const c1            = new CalculableBox({
+            calculation     : function () : number {
+                const dispatch : string = dispatcher.read()
+
+                if (dispatch === 'pure') {
+                    return i1.read() + i2.read()
+                } else {
+                    return c1.readProposedOrPrevious()
+                }
+            }
+        })
+
+        graph1.commit()
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, 'pure', 1 ], "Correct result calculated")
+
+        // ----------------
+        const c1Spy         = t.spyOn(c1, 'calculation')
+
+        dispatcher.write('proposed')
+        c1.write(10)
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, 'proposed', 10 ], "Correctly calculated lazy value")
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+
+        // ----------------
+        c1Spy.reset()
+
+        i1.write(10)
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 10, 1, 'proposed', 10 ], "Correct result calculated")
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+    })
+
+
+    t.it('Should be able to calculate lazy identifier that uses `ProposedOrPrevious` - sync, with commits', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1            = new Box(0)
+        const i2            = new Box(1)
+
+        const dispatcher    = new Box('pure')
+
+        const c1            = new CalculableBox({
+            lazy            : true,
+            calculation     : function () : number {
+                const dispatch : string = dispatcher.read()
+
+                if (dispatch === 'pure') {
+                    return i1.read() + i2.read()
+                } else {
+                    return c1.readProposedOrPrevious()
+                }
+            }
+        })
+
+        graph1.commit()
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, 'pure', 1 ], "Correct result calculated")
+
+        // ----------------
+        const c1Spy         = t.spyOn(c1, 'calculation')
+
+        dispatcher.write('proposed')
+        c1.write(10)
+
+        graph1.commit()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, 'proposed', 10 ], "Correctly calculated lazy value")
+
+        t.expect(c1Spy).toHaveBeenCalled(1)
+
+        // ----------------
+        c1Spy.reset()
+
+        i1.write(10)
+
+        graph1.commit()
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 10, 1, 'proposed', 10 ], "Correct result calculated")
+
+        t.expect(c1Spy).toHaveBeenCalled(0)
+    })
+
+
     // t.it('Should calculate lazy identifiers in a batch', async t => {
     //     const graph1 : ChronoGraph       = ChronoGraph.new()
     //
