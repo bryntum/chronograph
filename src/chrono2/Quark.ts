@@ -82,11 +82,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
                         const outgoingRevision  = outgoing[ i ] as number
 
-                        if (
-                            outgoingOwner.immutable.revision === outgoingRevision
-                        ) {
-                            func(outgoingQuark)
-                        }
+                        if (outgoingOwner.immutable.revision === outgoingRevision) func(outgoingQuark)
                     }
                 }
             }
