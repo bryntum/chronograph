@@ -135,9 +135,7 @@ export class CalculableBox<V> extends Box<V> {
     updateValue (newValue : unknown) {
         if (newValue === undefined) newValue = null
 
-        const oldValue              = this.immutable.read()
-
-        if (!this.equality(oldValue, newValue)) this.propagateStale()
+        if (this.state !== AtomState.Empty && !this.equality(this.immutable.read(), newValue)) this.propagateStale()
 
         this.immutableForWrite().write(newValue)
 
@@ -160,9 +158,7 @@ export class CalculableBox<V> extends Box<V> {
 
 
     shouldCalculate () {
-        if (this.state === AtomState.Stale) return true
-
-        if (this.immutable.read() === undefined) return true
+        if (this.state === AtomState.Stale || this.state === AtomState.Empty) return true
 
         if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return true
 

@@ -11,6 +11,7 @@ import { Node } from "./Node.js"
 // Benchmarking showed that there's no difference when using numbers
 // v8 optimizes comparison of immutable strings to pointer comparison I guess
 export enum AtomState {
+    Empty           = 'Empty',
     UpToDate        = 'UpToDate',
     PossiblyStale   = 'PossiblyStale',
     Stale           = 'Stale'
@@ -112,7 +113,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
     immutable           : Quark         = undefined
 
-    state               : AtomState     = AtomState.Stale
+    state               : AtomState     = AtomState.Empty
 
     graph               : ChronoGraph   = undefined
 
