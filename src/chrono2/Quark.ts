@@ -72,14 +72,14 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
             if (outgoing) {
 
-                for (let i = 0; i < outgoing.length; i += 2) {
-                    const outgoingQuark     = outgoing[ i ] as Quark
+                for (let i = outgoing.length - 1; i > 0; i -= 2) {
+                    const outgoingQuark     = outgoing[ i - 1 ] as Quark
                     const outgoingOwner     = outgoingQuark.owner
 
                     if (outgoingOwner.uniqable !== uniqable) {
                         outgoingOwner.uniqable      = uniqable
 
-                        const outgoingRevision  = outgoing[ i + 1 ] as number
+                        const outgoingRevision  = outgoing[ i ] as number
 
                         if (
                             outgoingOwner.immutable.revision === outgoingRevision
@@ -104,6 +104,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 //---------------------------------------------------------------------------------------------------------------------
 export class Atom extends Owner implements Identifiable, Uniqable {
     id                  : ChronoId      = chronoId()
+    name                : string        = undefined
 
     uniqable            : number        = Number.MIN_SAFE_INTEGER
 

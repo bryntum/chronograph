@@ -69,10 +69,12 @@ ZeroBoxImmutable.freeze()
 // TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
 export class Box<V> extends Atom {
 
-    constructor (value? : V) {
+    constructor (value? : V, name? : string) {
         super()
 
         if (value !== undefined) this.write(value)
+
+        this.name   = name
     }
 
 

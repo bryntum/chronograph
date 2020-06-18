@@ -14,6 +14,7 @@ export class CalculableBox<V> extends Box<V> {
         super()
 
         if (config) {
+            this.name           = config.name
             this.context        = config.context || this
 
             this.calculation    = config.calculation

@@ -65,116 +65,131 @@ StartTest(t => {
     })
 
 
-    // t.it('Should eliminate unchanged subtrees', async t => {
-    //     const graph : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 10)
-    //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
-    //     })
-    //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield i1) + (yield c1)
-    //     })
-    //
-    //     const c3        = graph.identifierNamed('c3', function* () {
-    //         return (yield c1)
-    //     })
-    //
-    //     const c4        = graph.identifierNamed('c4', function* () {
-    //         return (yield c3)
-    //     })
-    //
-    //     const c5        = graph.identifierNamed('c5', function* () {
-    //         return (yield c3)
-    //     })
-    //
-    //     const c6        = graph.identifierNamed('c6', function* () {
-    //         return (yield c5) + (yield i2)
-    //     })
-    //
-    //     // ----------------
-    //     const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
-    //
-    //     const spies             = nodes.map(identifier => t.spyOn(identifier, 'calculation'))
-    //
-    //     graph.commit()
-    //
-    //     t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
-    //
-    //     spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1, 1, 1, 1 ][ index ]))
-    //
-    //     // ----------------
-    //     spies.forEach(spy => spy.reset())
-    //
-    //     i1.write(5)
-    //     i2.write(5)
-    //
-    //     graph.commit()
-    //
-    //     t.isDeeply(nodes.map(node => node.read()), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
-    //
-    //     const expectedCalls     = [ 0, 0, 1, 1, 0, 0, 0, 1 ]
-    //
-    //     spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled(expectedCalls[ index ]))
-    // })
-    //
-    //
-    // t.it('Should determine all potentially changed nodes', async t => {
-    //     const graph : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const atom0     = new Box(0)
-    //
-    //     const atom1     = new CalculableBox({
-    //         calculation : function * () {
-    //             return (yield atom0) + 1
-    //         }
-    //     })
-    //
-    //     const atom2     = new CalculableBox({
-    //         calculation : function * () {
-    //             return (yield atom1) + 1
-    //         }
-    //     })
-    //
-    //     const atom3     = new CalculableBox({
-    //         calculation : function * () {
-    //             return (yield atom0) + (yield atom2)
-    //         }
-    //     })
-    //
-    //     graph.commit()
-    //
-    //     t.is(atom2.read(), 2, "Correct result calculated for atom2")
-    //     t.is(atom3.read(), 2, "Correct result calculated for atom3")
-    //
-    //     atom0.write(1)
-    //
-    //     graph.commit()
-    //
-    //     t.is(atom2.read(), 3, "Correct result calculated for atom2")
-    //     t.is(atom3.read(), 4, "Correct result calculated for atom3")
-    // })
-    //
-    //
+    t.it('Should eliminate unchanged subtrees', async t => {
+        const i1        = new Box(0, 'i1')
+        const i2        = new Box(10, 'i2')
+
+        const c1        = new CalculableBox({
+            name : 'c1',
+            calculation : function () {
+                return i1.read() + i2.read()
+            }
+        })
+
+        const c2        = new CalculableBox({
+            name : 'c2',
+            calculation : function () {
+                return i1.read() + c1.read()
+            }
+        })
+
+        const c3        = new CalculableBox({
+            name : 'c3',
+            calculation : function () {
+                return c1.read()
+            }
+        })
+
+        const c4        = new CalculableBox({
+            name : 'c4',
+            calculation : function () {
+                return c3.read()
+            }
+        })
+
+        const c5        = new CalculableBox({
+            name : 'c5',
+            calculation : function () {
+                return c3.read()
+            }
+        })
+
+        const c6        = new CalculableBox({
+            name : 'c6',
+            calculation : function () {
+                return c5.read() + i2.read()
+            }
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
+
+        const spies             = [ c1, c2, c3, c4, c5, c6 ].map(identifier => t.spyOn(identifier, 'calculation'))
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 1, 1, 1, 1, 1, 1 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        i1.write(5)
+        i2.write(5)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
+
+        const expectedCalls     = [ 1, 1, 0, 0, 0, 1 ]
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled(expectedCalls[ index ]))
+    })
+
+
+    t.it('Should determine all potentially changed nodes', async t => {
+        const atom0     = new Box(0)
+
+        const atom1     = new CalculableBox({
+            calculation : function () {
+                return atom0.read() + 1
+            }
+        })
+
+        const atom2     = new CalculableBox({
+            calculation : function () {
+                return atom1.read() + 1
+            }
+        })
+
+        const atom3     = new CalculableBox({
+            calculation : function () {
+                return atom0.read() + atom2.read()
+            }
+        })
+
+        t.is(atom2.read(), 2, "Correct result calculated for atom2")
+        t.is(atom3.read(), 2, "Correct result calculated for atom3")
+
+        atom0.write(1)
+
+        t.is(atom2.read(), 3, "Correct result calculated for atom2")
+        t.is(atom3.read(), 4, "Correct result calculated for atom3")
+    })
+
+
     // t.it('Should preserve dependencies from eliminated subtrees #1', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 10)
+    //     const i1        = new Box(0, 'i1')
+    //     const i2        = new Box(10, 'i2')
     //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
+    //     const c1        = new CalculableBox({
+    //         name : 'c1',
+    //         calculation : function () {
+    //             return i1.read() + i2.read()
+    //         }
     //     })
     //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield c1) + 1
+    //     const c2        = new CalculableBox({
+    //         name : 'c2',
+    //         calculation : function () {
+    //             return c1.read() + 1
+    //         }
     //     })
     //
-    //     const c3        = graph.identifierNamed('c3', function* () {
-    //         return (yield c1) + 2
+    //     const c3        = new CalculableBox({
+    //         name : 'c3',
+    //         calculation : function () {
+    //             return c1.read() + 2
+    //         }
     //     })
     //
     //     // ----------------
@@ -229,22 +244,31 @@ StartTest(t => {
     // t.it('Should preserve dependencies from eliminated subtrees #2', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 10)
-    //     const i3        = graph.variableNamed('i3', 20)
+    //     const i1        = new Box(0, 'i1')
+    //     const i2        = new Box(10, 'i2')
+    //     const i3        = new Box(20, 'i3')
     //
-    //     const dispatcher = graph.variableNamed('d', i3)
+    //     const dispatcher = new Box(3 i'd',)
     //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
+    //     const c1        = new CalculableBox({
+    //         name : 'c1',
+    //         calculation : function () {
+    //             return i1.read() + i2.read()
+    //         }
     //     })
     //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield c1) + 1
+    //     const c2        = new CalculableBox({
+    //         name : 'c2',
+    //         calculation : function () {
+    //             return c1.read() + 1
+    //         }
     //     })
     //
-    //     const c3        = graph.identifierNamed('c3', function* () {
-    //         return (yield (yield dispatcher))
+    //     const c3        = new CalculableBox({
+    //         name : 'c3',
+    //         calculation : function () {
+    //             return (.read())
+    //         }
     //     })
     //
     //     // ----------------
@@ -289,16 +313,22 @@ StartTest(t => {
     // t.it('Should preserve dependencies from shadowed entries #1', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const i1        = graph.variableNamed('i1', 1)
-    //     const i2        = graph.variableNamed('i2', 2)
-    //     const i3        = graph.variableNamed('i3', 3)
+    //     const i1        = new Box(1, 'i1')
+    //     const i2        = new Box(2, 'i2')
+    //     const i3        = new Box(3, 'i3')
     //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
+    //     const c1        = new CalculableBox({
+    //         name : 'c1',
+    //         calculation : function () {
+    //             return dispatcher.read() + i1.read()
+    //         }
     //     })
     //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield i3) + (yield i2)
+    //     const c2        = new CalculableBox({
+    //         name : 'c2',
+    //         calculation : function () {
+    //             return i2.read() + i3.read()
+    //         }
     //     })
     //
     //     // ----------------
@@ -339,18 +369,24 @@ StartTest(t => {
     // t.it('Should preserve dependencies from shadowed entries #2', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const i1        = graph.variableNamed('i1', 1)
-    //     const i2        = graph.variableNamed('i2', 2)
-    //     const i3        = graph.variableNamed('i3', 3)
+    //     const i1        = new Box(1, 'i1')
+    //     const i2        = new Box(2, 'i2')
+    //     const i3        = new Box(3, 'i3')
     //
-    //     const dispatcher = graph.variableNamed('d', i3)
+    //     const dispatcher = new Box(3 i'd',)
     //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
+    //     const c1        = new CalculableBox({
+    //         name : 'c1',
+    //         calculation : function () {
+    //             return i2.read() + i1.read()
+    //         }
     //     })
     //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return yield (yield dispatcher)
+    //     const c2        = new CalculableBox({
+    //         name : 'c2',
+    //         calculation : function () {
+    //             returni2.read )
+    //         }
     //     })
     //
     //     // ----------------
@@ -403,19 +439,28 @@ StartTest(t => {
     // t.it('Should preserve dependencies from shadowed entries #3', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 1)
+    //     const i1        = new Box(0, 'i1')
+    //     const i2        = new Box(1, 'i2')
     //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1)
+    //     const c1        = new CalculableBox({
+    //         name : 'c1',
+    //         calculation : function () {
+    //             return (.read()
+    //         }
     //     })
     //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield i2)
+    //     const c2        = new CalculableBox({
+    //         name : 'c2',
+    //         calculation : function () {
+    //             return dispatcher.read()
+    //         }
     //     })
     //
-    //     const c3        = graph.identifierNamed('c3', function* () {
-    //         return (yield c1) + (yield c2)
+    //     const c3        = new CalculableBox({
+    //         name : 'c3',
+    //         calculation : function () {
+    //             return i1.read() + i2.read()
+    //         }
     //     })
     //
     //
@@ -457,20 +502,29 @@ StartTest(t => {
     // t.it('Should be smart about counting incoming edges from different walk epoch', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 10)
-    //     const i3        = graph.variableNamed('i3', 0)
+    //     const i1        = new Box(0, 'i1')
+    //     const i2        = new Box(10, 'i2')
+    //     const i3        = new Box(0, 'i3')
     //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
+    //     const c1        = new CalculableBox({
+    //         name : 'c1',
+    //         calculation : function () {
+    //             return c1.read() + c2.read()
+    //         }
     //     })
     //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield c1) + 1
+    //     const c2        = new CalculableBox({
+    //         name : 'c2',
+    //         calculation : function () {
+    //             return i1.read() + 1
+    //         }
     //     })
     //
-    //     const c3        = graph.identifierNamed('c3', function* () {
-    //         return (yield c2) + (yield i3)
+    //     const c3        = new CalculableBox({
+    //         name : 'c3',
+    //         calculation : function () {
+    //             return i2.read() + c1.read()
+    //         }
     //     })
     //
     //     graph.commit()
@@ -501,20 +555,29 @@ StartTest(t => {
     // t.it('Should ignore eliminated quarks from previous calculations, which still remains in stack', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 10)
-    //     const i3        = graph.variableNamed('i3', 0)
+    //     const i1        = new Box(0, 'i1')
+    //     const i2        = new Box(10, 'i2')
+    //     const i3        = new Box(0, 'i3')
     //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
+    //     const c1        = new CalculableBox({
+    //         name : 'c1',
+    //         calculation : function () {
+    //             return c2.read() + i3.read()
+    //         }
     //     })
     //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield c1) + 1
+    //     const c2        = new CalculableBox({
+    //         name : 'c2',
+    //         calculation : function () {
+    //             return i1.read() + 1
+    //         }
     //     })
     //
-    //     const c3        = graph.identifierNamed('c3', function* () {
-    //         return (yield c2) + 1
+    //     const c3        = new CalculableBox({
+    //         name : 'c3',
+    //         calculation : function () {
+    //             return i2.read() + 1
+    //         }
     //     })
     //
     //     graph.commit()
