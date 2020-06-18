@@ -14,14 +14,14 @@ StartTest(t => {
 
         const ident1                = new CalculableBox({
             lazy            : true,
-            calculation     : function (YIELD) {
+            calculation     : function () {
                 return var1.read() + var2.read()
             }
         })
 
         const ident2                = new CalculableBox({
             lazy            : true,
-            calculation     : function (YIELD) {
+            calculation     : function () {
                 return ident1.read() + 1
             }
         })
@@ -72,7 +72,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should not use stale deep history', t => {
+    t.it('Should not use stale deep history', t => {
         const i1            = new Box(0)
         const i2            = new Box(1)
         const dispatcher    = new Box(i1)
@@ -113,7 +113,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should not use stale deep history', t => {
+    t.it('Should not use stale deep history, with commits', t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = new Box(0)

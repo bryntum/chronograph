@@ -212,17 +212,15 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
             const atom      = quark.owner
 
-            if (atom.state === AtomState.UpToDate) {
-                atom.state = AtomState.PossiblyStale
+            atom.state      = AtomState.PossiblyStale
 
-                if (atom.graph && !atom.lazy) {
-                    atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
-                }
-
-                quark.forEachOutgoing(outgoing => {
-                    if (outgoing.owner.state === AtomState.UpToDate) toVisit[ length++ ] = quark
-                })
+            if (atom.graph && !atom.lazy) {
+                atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
             }
+
+            quark.forEachOutgoing(outgoing => {
+                if (outgoing.owner.state === AtomState.UpToDate) toVisit[ length++ ] = outgoing
+            })
         }
 
     }
