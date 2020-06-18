@@ -204,11 +204,8 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
         const toVisit : Quark[]         = [ this.immutable ]
 
-        // avoiding `push/pop` is noticeably faster
-        let length : number = 1
-
-        while (length) {
-            const quark     = toVisit[ --length ]
+        while (toVisit.length) {
+            const quark     = toVisit.pop()
 
             const atom      = quark.owner
 
@@ -219,7 +216,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             }
 
             quark.forEachOutgoing(outgoing => {
-                if (outgoing.owner.state === AtomState.UpToDate) toVisit[ length++ ] = outgoing
+                if (outgoing.owner.state === AtomState.UpToDate) toVisit.push(outgoing)
             })
         }
 
