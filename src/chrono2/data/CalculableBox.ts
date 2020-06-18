@@ -90,10 +90,10 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    proposedValue           : unknown   = undefined
+    proposedValue           : V     = undefined
 
 
-    readProposedOrPrevious () {
+    readProposedOrPrevious () : V {
         // if (globalContext.activeQuark) this.immutableForWrite().getIncoming().push(invalidatingBoxImmutable)
 
         if (globalContext.activeQuark === this.immutable) {
@@ -208,7 +208,7 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    write (value : unknown) {
+    write (value : V) {
         if (value === undefined) value = null
 
         // // ignore the write of the same value? what about `keepIfPossible` => `pin`
