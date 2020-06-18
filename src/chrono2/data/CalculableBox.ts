@@ -195,6 +195,8 @@ export class CalculableBox<V> extends Box<V> {
         this.immutableForWrite().$incoming      = undefined
         this.immutable.usedProposedOrPrevious   = false
 
+        this.immutable.revision     = getRevision()
+
         const prevActive            = globalContext.activeQuark
         globalContext.activeQuark   = this.immutable
 
