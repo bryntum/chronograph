@@ -164,8 +164,13 @@ export const deepChangesGenBigShared = DeepChangesChronoGraph.new({
 
 
 export const runAllDeepChanges = async () => {
-    await deepChangesChrono2Small.measureTillMaxTime()
+    // console.profile()
     // await deepChangesMobxSmall.measureTillMaxTime()
+    // console.profileEnd()
+
+    // console.profile()
+    await deepChangesChrono2Small.measureTillMaxTime()
+    // console.profileEnd()
     // const runInfo   = await deepChangesGenSmall.measureTillMaxTime()
     //
     // // await deepChangesSyncSmall.measureFixed(runInfo.cyclesCount, runInfo.samples.length)

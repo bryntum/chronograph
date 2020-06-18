@@ -68,21 +68,24 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
         const uniqable  = getUniqable()
 
+        const forEach = []
+
         do {
             const outgoing = quark.$outgoing
 
             if (outgoing) {
 
                 for (let i = outgoing.length - 1; i > 0; i -= 2) {
+                    // const outgoingRevision  = outgoing[ i ] as number
                     const outgoingQuark     = outgoing[ i - 1 ] as Quark
                     const outgoingOwner     = outgoingQuark.owner
 
                     if (outgoingOwner.uniqable !== uniqable) {
                         outgoingOwner.uniqable      = uniqable
 
-                        const outgoingRevision  = outgoing[ i ] as number
+                        // const outgoingRevision  = outgoing[ i ] as number
 
-                        if (outgoingOwner.immutable.revision === outgoingRevision) func(outgoingQuark)
+                        if (outgoingOwner.immutable.revision === outgoing[ i ]) func(outgoingQuark)
                     }
                 }
             }
@@ -94,6 +97,8 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
             quark       = quark.previous
 
         } while (quark)
+
+        for (let i = forEach.length - 1; i >= 0; i--) func(forEach[ i ])
     }
 }
 
