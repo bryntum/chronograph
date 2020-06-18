@@ -1,11 +1,13 @@
 import { globalContext } from "../GlobalContext.js"
 import { ChronoTransaction } from "../Graph.js"
+import { getRevision } from "../Node.js"
 import { Atom, AtomState, Quark } from "../Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+// TODO add <V> generic arg
 export class BoxImmutable extends Quark {
-    value               : unknown                 = undefined
+    value               : unknown               = undefined
 
     constructor (owner : Atom) {
         super()
@@ -24,7 +26,7 @@ export class BoxImmutable extends Quark {
     }
 
 
-    read () : unknown {
+    read () : any {
         let box : this = this
 
         while (box) {
@@ -34,6 +36,20 @@ export class BoxImmutable extends Quark {
         }
 
         return null
+    }
+
+
+    // TODO
+    readRaw () : any {
+        let box : this = this
+
+        while (box) {
+            if (box.value !== undefined) return box.value
+
+            box     = box.previous
+        }
+
+        return undefined
     }
 
 
@@ -100,6 +116,7 @@ export class Box<V> extends Atom {
         this.propagateStale()
 
         this.immutableForWrite().write(value)
+        this.immutable.revision = getRevision()
         this.state  = AtomState.UpToDate
     }
 }
@@ -108,14 +125,3 @@ const ZeroBox = new Box()
 
 ZeroBoxImmutable.owner = ZeroBox
 
-// export class InvalidatingBoxImmutable extends BoxImmutable {
-// }
-//
-// export class InvalidatingBox extends Box {
-//     read () : any {
-//         if (globalContext.activeQuark) globalContext.activeQuark.owner.state = AtomState.Stale
-//     }
-// }
-//
-// export const invalidatingBox            = new InvalidatingBox()
-// export const invalidatingBoxImmutable   = new InvalidatingBoxImmutable(invalidatingBox)

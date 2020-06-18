@@ -1,11 +1,12 @@
 import { Box } from "../../src/chrono2/data/Box.js"
+import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { ChronoGraph } from "../../src/chrono2/Graph.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Undo/redo of variable value', async t => {
+    t.it('Undo/redo of the box value', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
         const box      = new Box(0)
@@ -28,59 +29,87 @@ StartTest(t => {
 
         t.is(box.read(), 0, 'Correct value #3')
 
-        // //--------------
-        // graph.redo()
-        //
-        // t.is(box.read(), 10, 'Correct value')
+        //--------------
+        graph.redo()
+
+        t.is(box.read(), 10, 'Correct value')
     })
 
 
-    // t.it('Undo/redo of new identifier', async t => {
-    //     const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
-    //
-    //     const var1      = graph1.variable(0)
-    //
-    //     graph1.commit()
-    //
-    //     t.is(graph1.read(var1), 0, 'Correct value')
-    //
-    //     //--------------
-    //     graph1.undo()
-    //
-    //     t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
-    //
-    //     //--------------
-    //     graph1.redo()
-    //
-    //     t.is(graph1.read(var1), 0, 'Correct value')
-    // })
-    //
-    //
-    // t.it('Undo/redo of identifier removal', async t => {
-    //     const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
-    //
-    //     const var1      = graph1.variable(0)
-    //
-    //     graph1.commit()
-    //
-    //     t.is(graph1.read(var1), 0, 'Correct value')
-    //
-    //     //--------------
-    //     graph1.removeIdentifier(var1)
-    //
-    //     graph1.commit()
-    //
-    //     t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
-    //
-    //     //--------------
-    //     graph1.undo()
-    //
-    //     t.is(graph1.read(var1), 0, 'Correct value')
-    //
-    //     //--------------
-    //     graph1.redo()
-    //
-    //     t.throwsOk(() => graph1.read(var1), 'Unknown identifier')
-    // })
+    t.it('Undo/redo of the box value - commit after read', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
+
+        const box1     = new Box(0)
+
+        const box2     = new CalculableBox({
+            calculation : () => box1.read()  + 1
+        })
+
+        graph.addAtoms([ box1, box2 ])
+
+        t.is(box1.read(), 0, 'Correct value #1')
+        t.is(box2.read(), 1, 'Correct value #1')
+
+        graph.commit()
+
+        //--------------
+        box1.write(10)
+
+        t.is(box1.read(), 10, 'Correct value #2')
+        t.is(box2.read(), 11, 'Correct value #2')
+
+        graph.commit()
+
+        //--------------
+        graph.undo()
+
+        t.is(box1.read(), 0, 'Correct value #3')
+        t.is(box2.read(), 1, 'Correct value #3')
+
+        //--------------
+        graph.redo()
+
+        t.is(box1.read(), 10, 'Correct value #4')
+        t.is(box2.read(), 11, 'Correct value #4')
+    })
+
+
+    t.it('Undo/redo of the box value - commit in random place', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
+
+        const box1     = new Box(0)
+
+        const box2     = new CalculableBox({
+            calculation : () => box1.read()  + 1
+        })
+
+        graph.addAtoms([ box1, box2 ])
+
+        graph.commit()
+
+        t.is(box1.read(), 0, 'Correct value #1')
+        t.is(box2.read(), 1, 'Correct value #1')
+
+        //--------------
+        box1.write(10)
+
+        graph.commit()
+
+        t.is(box1.read(), 10, 'Correct value #2')
+        t.is(box2.read(), 11, 'Correct value #2')
+
+        //--------------
+        graph.undo()
+
+        t.is(box1.read(), 0, 'Correct value #3')
+        t.is(box2.read(), 1, 'Correct value #3')
+
+        // //--------------
+        // graph.redo()
+        //
+        // t.is(box1.read(), 10, 'Correct value #4')
+        // t.is(box2.read(), 11, 'Correct value #4')
+    })
+
 
 })

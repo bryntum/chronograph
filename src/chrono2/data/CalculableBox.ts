@@ -2,6 +2,7 @@ import { AnyConstructor } from "../../class/Mixin.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { globalContext } from "../GlobalContext.js"
 import { DefaultMetaSync, Meta } from "../Meta.js"
+import { getRevision } from "../Node.js"
 import { AtomState, Quark } from "../Quark.js"
 import { Box } from "./Box.js"
 
@@ -41,14 +42,14 @@ export class CalculableBox<V> extends Box<V> {
 
     context     : unknown           = undefined
 
-    $calculation : CalculationFunction<unknown, CalculationMode>      = undefined
+    $calculation : CalculationFunction<V, CalculationMode>      = undefined
 
-    get calculation () : CalculationFunction<unknown, CalculationMode> {
+    get calculation () : CalculationFunction<V, CalculationMode> {
         if (this.$calculation !== undefined) return this.$calculation
 
-        return this.meta.calculation
+        return this.meta.calculation as any
     }
-    set calculation (value : CalculationFunction<unknown, CalculationMode>) {
+    set calculation (value : CalculationFunction<V, CalculationMode>) {
         this.$calculation = value
     }
 
@@ -108,7 +109,7 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    readPrevious () : any {
+    readPrevious () : V {
         if (this.state === AtomState.UpToDate)
             return this.immutable.previous ? this.immutable.previous.read() : undefined
         else
@@ -117,7 +118,7 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    read () : any {
+    read () : V {
         // if (this.graph) this.actualize()
 
         if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
@@ -160,6 +161,8 @@ export class CalculableBox<V> extends Box<V> {
     shouldCalculate () {
         if (this.state === AtomState.Stale) return true
 
+        if (this.immutable.read() === undefined) return true
+
         if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return true
 
         const incoming  = this.immutable.$incoming
@@ -189,8 +192,8 @@ export class CalculableBox<V> extends Box<V> {
 
 
     doCalculate () {
-        this.immutableForWrite().$incoming              = undefined
-        this.immutableForWrite().usedProposedOrPrevious = false
+        this.immutableForWrite().$incoming      = undefined
+        this.immutable.usedProposedOrPrevious   = false
 
         const prevActive            = globalContext.activeQuark
         globalContext.activeQuark   = this.immutable

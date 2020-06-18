@@ -10,7 +10,7 @@ import { Atom, AtomState, Quark } from "./Quark.js"
 
 // const TombStone = null
 
-let revisionIdSource = MIN_SMI
+let revisionIdSource = Number.MIN_SAFE_INTEGER
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoIteration extends Immutable {
@@ -161,9 +161,7 @@ export class ChronoTransaction extends Owner implements Immutable {
 export type Revision     = number
 
 //----------------------------------------------------------------------------------------------------------------------
-export class ChronoGraph extends Base implements Owner, Uniqable {
-    uniqable                : number                = MIN_SMI
-
+export class ChronoGraph extends Base implements Owner {
     historyLimit            : number                = 0
 
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
@@ -198,7 +196,7 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     setCurrent (immutable : this[ 'immutable' ]) {
         if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
-        this.immutable = immutable
+        this.immutable          = immutable
 
         this.nextTransaction    = []
     }
@@ -226,7 +224,7 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
         // nothing to reject
         if (this.immutable.frozen) return
 
-        this.rejectTo(this.immutable, this.immutable.previous)
+        this.undoTo(this.immutable, this.immutable.previous)
 
         this.immutable  = this.immutable.previous
     }
@@ -235,7 +233,7 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     undo () {
         this.reject()
 
-        this.rejectTo(this.immutable, this.immutable.previous)
+        this.undoTo(this.immutable, this.immutable.previous)
 
         this.nextTransaction.push(this.immutable)
 
@@ -246,7 +244,11 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     redo () {
         if (!this.nextTransaction.length) return
 
-        this.immutable = this.nextTransaction.pop()
+        const nextTransaction   = this.nextTransaction.pop()
+
+        this.redoTo(this.immutable, nextTransaction)
+
+        this.immutable          = nextTransaction
     }
 
 
@@ -297,7 +299,8 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
     }
 
 
-    rejectTo (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction) {
+    // TODO remove the `sourceTransaction` argument
+    undoTo (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction) {
         let iteration           = sourceTransaction.immutable
         const stopAt : ChronoIteration  = tillTransaction ? tillTransaction.immutable : undefined
 
@@ -313,7 +316,7 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
                 const atom      = quark.owner
 
                 if (atom.uniqable !== uniqable) {
-                    atom.uniqable = uniqable
+                    atom.uniqable       = uniqable
 
                     atom.uniqableBox    = quark
 
@@ -337,4 +340,48 @@ export class ChronoGraph extends Base implements Owner, Uniqable {
             atom.uniqableBox    = undefined
         }
     }
+
+
+    // TODO remove the `sourceTransaction` argument
+    redoTo (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction) {
+        let iteration           = tillTransaction.immutable
+        const stopAt : ChronoIteration  = sourceTransaction.immutable
+
+        const uniqable          = getUniqable()
+
+        const atoms : Atom[]    = []
+
+        while (true) {
+            const quarks        = iteration.quarks
+
+            for (let i = 0; i < quarks.length; i++) {
+                const quark     = quarks[ i ]
+                const atom      = quark.owner
+
+                if (atom.uniqable !== uniqable) {
+                    atom.uniqable = uniqable
+
+                    atom.uniqableBox    = quark
+
+                    atoms.push(atom)
+                } else {
+                    // atom.uniqableBox    = quark
+                }
+            }
+
+            iteration           = iteration.previous
+
+            if (iteration === stopAt) break
+        }
+
+        for (let i = 0; i < atoms.length; i++) {
+            const atom          = atoms[ i ]
+            const deepestQuark  = atom.uniqableBox as Quark
+
+            atom.updateQuark(deepestQuark)
+
+            atom.uniqableBox    = undefined
+        }
+    }
+
 }

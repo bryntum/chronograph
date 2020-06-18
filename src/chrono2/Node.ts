@@ -1,12 +1,22 @@
 import { MIN_SMI } from "../util/Helpers.js"
 import { compact, Uniqable } from "../util/Uniqable.js"
 
+let revisionId = Number.MIN_SAFE_INTEGER
+
+export const getRevision = () : number => ++revisionId
+
+
+export type Edge = Node | number
+
 //---------------------------------------------------------------------------------------------------------------------
 export class Node implements Uniqable {
     uniqable            : number        = Number.MIN_SAFE_INTEGER
 
+    // initially no revision, revision is acquired with the value
+    revision            : number        = Number.MIN_SAFE_INTEGER
+
     $incoming           : Node[]        = undefined
-    $outgoing           : Node[]        = undefined
+    $outgoing           : Edge[]        = undefined
 
     outgoingCompacted   : boolean       = false
 
@@ -21,18 +31,18 @@ export class Node implements Uniqable {
     }
 
 
-    getOutgoing () : this[ '$outgoing' ] {
-        if (this.$outgoing !== undefined) {
-            if (!this.outgoingCompacted) {
-                compact(this.$outgoing)
-
-                this.outgoingCompacted = true
-            }
-
-            return this.$outgoing
-        } else
-            return this.$outgoing = []
-    }
+    // getOutgoing () : this[ '$outgoing' ] {
+    //     if (this.$outgoing !== undefined) {
+    //         if (!this.outgoingCompacted) {
+    //             compact(this.$outgoing)
+    //
+    //             this.outgoingCompacted = true
+    //         }
+    //
+    //         return this.$outgoing
+    //     } else
+    //         return this.$outgoing = []
+    // }
 
 
     clearOutgoing () {
@@ -57,7 +67,7 @@ export class Node implements Uniqable {
 
         if (this.$outgoing === undefined) this.$outgoing = []
 
-        this.$outgoing.push(to)
+        this.$outgoing.push(to, to.revision)
         if (!calledFromPartner) to.addIncoming(this, true)
     }
 }

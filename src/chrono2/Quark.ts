@@ -1,6 +1,6 @@
 import { AnyConstructor, AnyFunction } from "../class/Mixin.js"
 import { MIN_SMI } from "../util/Helpers.js"
-import { compact, Uniqable } from "../util/Uniqable.js"
+import { compact, getUniqable, Uniqable } from "../util/Uniqable.js"
 import { Immutable, Owner } from "./data/Immutable.js"
 import { chronoId, ChronoId, Identifiable } from "./Identifiable.js"
 import { ChronoGraph, ChronoIteration, Revision } from "./Graph.js"
@@ -50,6 +50,8 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         next.previous   = this
         next.owner      = this.owner
 
+        next.revision   = this.revision
+
         if (this.owner.graph) this.owner.graph.registerQuark(next)
 
         return next
@@ -57,21 +59,38 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
 
     $incoming           : Quark[]
-    $outgoing           : Quark[]
+    $outgoing           : (Quark | number)[]
 
 
     forEachOutgoing (func : (quark : Quark) => any) {
         let quark : this = this
 
         do {
-            if (quark.$outgoing) {
-                const outgoing = quark.getOutgoing()
+            const outgoing = quark.$outgoing
 
-                for (let i = 0; i < outgoing.length; i++) {
-                    func(outgoing[ i ])
+            if (outgoing) {
+                const uniqable  = getUniqable()
+
+                for (let i = 0; i < outgoing.length; i += 2) {
+                    const outgoingQuark     = outgoing[ i ] as Quark
+                    const outgoingOwner     = outgoingQuark.owner
+
+                    if (outgoingOwner.uniqable !== uniqable) {
+                        outgoingOwner.uniqable      = uniqable
+
+                        const outgoingRevision  = outgoing[ i + 1 ] as number
+
+                        if (
+                            outgoingRevision === Number.MIN_SAFE_INTEGER || outgoingOwner.immutable.revision === outgoingRevision
+                        ) {
+                            func(outgoingQuark)
+                        }
+                    }
                 }
             }
 
+            // TODO
+            // @ts-ignore
             if (quark.value !== undefined) break
 
             quark       = quark.previous
@@ -100,25 +119,25 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     lazy                : boolean       = false
 
 
-    actualize () : any {
-        const graph     = this.graph
-
-        if (this.immutable.iteration === graph.currentIteration) return
-
-        if (!graph.currentIteration.previous) {
-            this.immutable  = undefined
-        } else {
-            let immutable   = this.immutable
-
-            while (immutable && immutable.iteration.revision > graph.currentIteration.revision) {
-                immutable  = immutable.previous
-            }
-
-            this.immutable  = immutable
-        }
-
-        if (!this.immutable) this.immutable = this.buildDefaultImmutable()
-    }
+    // actualize () : any {
+    //     const graph     = this.graph
+    //
+    //     if (this.immutable.iteration === graph.currentIteration) return
+    //
+    //     if (!graph.currentIteration.previous) {
+    //         this.immutable  = undefined
+    //     } else {
+    //         let immutable   = this.immutable
+    //
+    //         while (immutable && immutable.iteration.revision > graph.currentIteration.revision) {
+    //             immutable  = immutable.previous
+    //         }
+    //
+    //         this.immutable  = immutable
+    //     }
+    //
+    //     if (!this.immutable) this.immutable = this.buildDefaultImmutable()
+    // }
 
 
     buildDefaultImmutable () : Quark {
@@ -150,18 +169,29 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     // }
 
     updateQuark (quark : Quark) {
-        if (this.equality && this.equality(quark.read(), this.immutable.read())) {
+        // TODO
+        // @ts-ignore
+        const newValue      = quark.readRaw()
+        // TODO
+        // @ts-ignore
+        const oldValue      = this.immutable.readRaw()
+
+        // TODO
+        // @ts-ignore
+        if (this.equality && this.equality(newValue, oldValue)) {
             this.immutable  = quark
-            this.state      = AtomState.UpToDate
+            this.state      = newValue !== undefined ? AtomState.UpToDate : AtomState.Stale
 
             return
         }
 
+        // TODO here it should only propagate outside of the graph - atoms in the graph
+        // should be reset to the previous state, directly to the UpToDate state
         this.propagatePossiblyStale()
         this.propagateStale()
 
         this.immutable  = quark
-        this.state      = AtomState.PossiblyStale
+        this.state      = newValue !== undefined ? AtomState.UpToDate : AtomState.Stale
     }
 
 
