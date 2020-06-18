@@ -550,4 +550,86 @@ StartTest(t => {
 
         t.isDeeply(nodes.map(node => node.read()), [ 5, 4, 1, 9, 10, 11 ], "Correct result calculated #2")
     })
+
+
+    t.it('Should be able to only calculate the specified nodes', async t => {
+        const box1      = new Box(1)
+        const box2      = new Box(2)
+
+        const iden1     = new CalculableBox({
+            calculation : function () {
+                return box1.read() + box2.read()
+            }
+        })
+
+        const box3      = new Box(3)
+
+        const iden2     = new CalculableBox({
+            calculation : function () {
+                return iden1.read() + box3.read()
+            }
+        })
+
+        // ----------------
+        const calculation1Spy   = t.spyOn(iden1, 'calculation')
+        const calculation2Spy   = t.spyOn(iden2, 'calculation')
+
+        iden1.read()
+
+        t.expect(calculation1Spy).toHaveBeenCalled(1)
+        t.expect(calculation2Spy).toHaveBeenCalled(0)
+
+        // ----------------
+        calculation1Spy.reset()
+        calculation2Spy.reset()
+
+        t.is(iden1.read(), 3, "Correct result calculated")
+        t.is(iden2.read(), 6, "Correct result calculated")
+
+        t.expect(calculation1Spy).toHaveBeenCalled(0)
+        t.expect(calculation2Spy).toHaveBeenCalled(1)
+    })
+
+
+    t.it('Should not re-entry synchronous calculations', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new()
+
+        const var1      = new Box(1, 'v1')
+
+        let count : number = 0
+
+        const iden1     = new CalculableBox({
+            calculation () : number {
+                count++
+
+                return var1.read() + 1
+            }
+        })
+
+        const iden2     = new CalculableBox({
+            calculation () : number {
+                count++
+
+                return iden1.read() + 1
+            }
+        })
+
+        const iden3     = new CalculableBox({
+            calculation () : number {
+                count++
+
+                return iden2.read() + 1
+            }
+        })
+
+        graph.commit()
+
+        t.is(iden1.read(), 2, 'Correct value')
+        t.is(iden2.read(), 3, 'Correct value')
+        t.is(iden3.read(), 4, 'Correct value')
+
+        t.is(count, 3, 'Calculated every identifier only once')
+    })
+
+
 })
