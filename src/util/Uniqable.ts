@@ -1,5 +1,3 @@
-import { MIN_SMI } from "./Helpers.js"
-
 export interface Uniqable {
     uniqable        : number
 }
@@ -36,7 +34,7 @@ export const getUniqable = () => ++UNIQABLE
 export const compact = <T extends Uniqable>(array : T[]) : T[] => {
     const uniqableId : number   = ++UNIQABLE
 
-    let uniqueIndex : number    = -1
+    let uniqueIndex : number    = 0
 
     for (let i = 0; i < array.length; ++i) {
         const element : T       = array[ i ]
@@ -44,15 +42,15 @@ export const compact = <T extends Uniqable>(array : T[]) : T[] => {
         if (element.uniqable !== uniqableId) {
             element.uniqable    = uniqableId
 
-            ++uniqueIndex
-
             if (uniqueIndex !== i) array[ uniqueIndex ] = element
+
+            ++uniqueIndex
         }
     }
 
     // assuming its better to not touch the array's `length` property
     // unless we really have to
-    if (array.length !== uniqueIndex + 1) array.length = uniqueIndex + 1
+    if (array.length !== uniqueIndex) array.length = uniqueIndex
 
     return array
 }
