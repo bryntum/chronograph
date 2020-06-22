@@ -141,6 +141,7 @@ export const chrono2MassiveIncomingAndOutgoing = (atomNum : number = 1000) : Chr
 
     for (let i = 0; i < atomNum; i++) {
         outgoing.push(new CalculableBox({
+            context : i,
             calculation : function () {
                 res.counter++
 

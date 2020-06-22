@@ -15,7 +15,7 @@ export class CalculableBox<V> extends Box<V> {
 
         if (config) {
             this.name           = config.name
-            this.context        = config.context || this
+            this.context        = config.context !== undefined ? config.context : this
 
             this.calculation    = config.calculation
             this.equality       = config.equality
