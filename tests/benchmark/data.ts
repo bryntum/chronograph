@@ -286,7 +286,7 @@ export const mobxGraph = (atomNum : number = 1000) : MobxGraphGenerationResult =
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type Chrono2GenerationResult  = { boxes : CalculableBox<number>[], counter : number }
+export type Chrono2GenerationResult  = { boxes : Box<number>[], counter : number }
 
 export const chrono2Graph = (atomNum : number = 1000) : Chrono2GenerationResult => {
     let boxes       = []
@@ -362,6 +362,66 @@ export const chrono2Graph = (atomNum : number = 1000) : Chrono2GenerationResult 
     return res
 }
 
+export const mobxGraph2 = (atomNum : number = 1000, depCount : number = 1) : MobxGraphGenerationResult => {
+    let boxes       = []
+
+    const res       = { boxes, counter : 0 }
+
+    for (let i = 0; i < depCount; i++) {
+        boxes.push(observable.box(0))
+    }
+
+    for (let i = depCount; i < atomNum; i++) {
+        const box = computed(function () {
+            res.counter++
+
+            let sum = 0
+
+            for (let i = 1; i <= depCount; i++) {
+                sum     += boxes[this - i].get() % 10000
+            }
+
+            return sum
+        }, {
+            context : i, keepAlive : true
+        })
+
+        boxes.push(box)
+    }
+
+    return res
+}
+
+export const chrono2Graph2 = (atomNum : number = 1000, depCount : number = 1) : Chrono2GenerationResult => {
+    let boxes       = []
+
+    const res       = { boxes, counter : 0 }
+
+    for (let i = 0; i < depCount; i++) {
+        boxes.push(new Box(0))
+    }
+
+    for (let i = depCount; i < atomNum; i++) {
+        const box = new CalculableBox({
+            calculation : function () {
+                res.counter++
+
+                let sum = 0
+
+                for (let i = 1; i <= depCount; i++) {
+                    sum     += boxes[this - i].read() % 10000
+                }
+
+                return sum
+            },
+            context : i
+        })
+
+        boxes.push(box)
+    }
+
+    return res
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------

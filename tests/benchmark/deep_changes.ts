@@ -1,11 +1,11 @@
 import { Benchmark } from "../../src/benchmark/Benchmark.js"
 import {
-    Chrono2GenerationResult, chrono2Graph,
+    Chrono2GenerationResult, chrono2Graph, chrono2Graph2,
     deepGraphGen,
     deepGraphGenShared,
     deepGraphSync,
     GraphGenerationResult,
-    mobxGraph,
+    mobxGraph, mobxGraph2,
     MobxGraphGenerationResult
 } from "./data.js"
 
@@ -16,7 +16,7 @@ type PostBenchInfo = {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
-class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchInfo> {
+export class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : GraphGenerationResult) : PostBenchInfo {
         const { graph, boxes } = state
@@ -45,7 +45,7 @@ class DeepChangesChronoGraph extends Benchmark<GraphGenerationResult, PostBenchI
 
 
 //---------------------------------------------------------------------------------------------------------------------
-class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo> {
+export class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo> {
 
     gatherInfo (state : MobxGraphGenerationResult) : PostBenchInfo {
         const { boxes } = state
@@ -74,7 +74,7 @@ class DeepChangesMobx extends Benchmark<MobxGraphGenerationResult, PostBenchInfo
 
 
 //---------------------------------------------------------------------------------------------------------------------
-class DeepChangesChrono2 extends Benchmark<Chrono2GenerationResult, PostBenchInfo> {
+export class DeepChangesChrono2 extends Benchmark<Chrono2GenerationResult, PostBenchInfo> {
 
     gatherInfo (state : Chrono2GenerationResult) : PostBenchInfo {
         const { boxes } = state
@@ -129,11 +129,44 @@ export const deepChangesMobxSmall = DeepChangesMobx.new({
     }
 })
 
+export const deepChangesMobxDeps1 = DeepChangesMobx.new({
+    name        : 'Deep graph changes - Mobx, 1 dep',
+
+    setup       : async () => {
+        return mobxGraph2(1000, 1)
+    }
+})
+
+export const deepChangesMobxDeps100 = DeepChangesMobx.new({
+    name        : 'Deep graph changes - Mobx, 100 deps',
+
+    setup       : async () => {
+        return mobxGraph2(1000, 100)
+    }
+})
+
+
 export const deepChangesChrono2Small = DeepChangesChrono2.new({
     name        : 'Deep graph changes - Chrono2',
 
     setup       : async () => {
         return chrono2Graph(1000)
+    }
+})
+
+export const deepChangesChrono2Deps1 = DeepChangesChrono2.new({
+    name        : 'Deep graph changes - Chrono2, 1 dep',
+
+    setup       : async () => {
+        return chrono2Graph2(1000, 1)
+    }
+})
+
+export const deepChangesChrono2Deps100 = DeepChangesChrono2.new({
+    name        : 'Deep graph changes - Chrono2, 100 deps',
+
+    setup       : async () => {
+        return chrono2Graph2(1000, 100)
     }
 })
 
@@ -164,12 +197,16 @@ export const deepChangesGenBigShared = DeepChangesChronoGraph.new({
 
 
 export const runAllDeepChanges = async () => {
-    // console.profile()
-    // await deepChangesMobxSmall.measureTillMaxTime()
-    // console.profileEnd()
-
-    // console.profile()
     await deepChangesChrono2Small.measureTillMaxTime()
+    await deepChangesMobxSmall.measureTillMaxTime()
+
+    await deepChangesChrono2Deps1.measureTillMaxTime()
+    await deepChangesMobxDeps1.measureTillMaxTime()
+
+    await deepChangesChrono2Deps100.measureTillMaxTime()
+    await deepChangesMobxDeps100.measureTillMaxTime()
+
+
     // console.profileEnd()
     // const runInfo   = await deepChangesGenSmall.measureTillMaxTime()
     //

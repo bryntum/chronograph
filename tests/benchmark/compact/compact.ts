@@ -1,5 +1,4 @@
 import { BenchmarkC } from "../../../src/benchmark/Benchmark.js"
-import { MIN_SMI } from "../../../src/util/Helpers.js"
 import { compact, Uniqable } from "../../../src/util/Uniqable.js"
 
 
