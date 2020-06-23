@@ -98,25 +98,50 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                     }
                 }
 
+                // let uniquePos = 0
+                //
+                // for (let i = 0; i < outgoing.length; i += 2) {
+                //     const outgoingQuark     = outgoing[ i ] as Quark
+                //     const outgoingOwner     = outgoingQuark.owner
+                //
+                //     if (outgoingOwner.uniqable2 === uniqable2) {
+                //         if (uniquePos !== i) {
+                //             outgoing[ uniquePos ]       = outgoing[ i ]
+                //             outgoing[ uniquePos + 1 ]   = outgoing[ i + 1 ]
+                //         }
+                //
+                //         uniquePos           += 2
+                //
+                //         func(outgoingQuark)
+                //     }
+                // }
+                //
+                // if (outgoing.length !== uniquePos) outgoing.length = uniquePos
+
                 let uniquePos = 0
+
+                const uniqable3  = getUniqable()
 
                 for (let i = 0; i < outgoing.length; i += 2) {
                     const outgoingQuark     = outgoing[ i ] as Quark
                     const outgoingOwner     = outgoingQuark.owner
 
                     if (outgoingOwner.uniqable2 === uniqable2) {
-                        if (uniquePos !== i) {
-                            outgoing[ uniquePos ]       = outgoing[ i ]
-                            outgoing[ uniquePos + 1 ]   = outgoing[ i + 1 ]
+                        if (outgoingOwner.uniqable !== uniqable3) {
+                            // outgoing[ uniquePos ]       = outgoingOwner.immutable
+                            // outgoing[ uniquePos + 1 ]   = outgoingOwner.immutable.revision
+
+                            outgoingOwner.uniqable = uniqable3
+
+                            // uniquePos           += 2
+
+                            func(outgoingQuark)
                         }
-
-                        uniquePos           += 2
-
-                        func(outgoingQuark)
                     }
                 }
 
-                if (outgoing.length !== uniquePos) outgoing.length = uniquePos
+                // if (outgoing.length !== uniquePos) outgoing.length = uniquePos
+
             }
 
             // TODO
@@ -129,6 +154,80 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
         // for (let i = forEach.length - 1; i >= 0; i--) func(forEach[ i ])
     }
+
+
+    // compactOutgoing () {
+    //     let quark : this = this
+    //
+    //     const uniqable   = getUniqable()
+    //     const uniqable2  = getUniqable()
+    //
+    //     // const forEach = []
+    //
+    //     // do {
+    //         const outgoing = quark.$outgoing
+    //
+    //         if (outgoing) {
+    //
+    //             // for (let i = 0; i < outgoing.length; i += 2) {
+    //             for (let i = outgoing.length - 1; i > 0; i -= 2) {
+    //                 // const outgoingRevision  = outgoing[ i + 1 ] as number
+    //                 // const outgoingQuark     = outgoing[ i ] as Quark
+    //
+    //                 const outgoingRevision  = outgoing[ i ] as number
+    //                 const outgoingQuark     = outgoing[ i - 1 ] as Quark
+    //
+    //                 const outgoingOwner     = outgoingQuark.owner
+    //
+    //                 if (outgoingOwner.uniqable !== uniqable) {
+    //                     outgoingOwner.uniqable      = uniqable
+    //
+    //                     if (outgoingOwner.immutable.revision === outgoingRevision) {
+    //                         outgoingOwner.uniqable2     = uniqable2
+    //                         // outgoingOwner.uniqable3     = outgoingRevision
+    //                     }
+    //
+    //                     // const outgoingRevision  = outgoing[ i ] as number
+    //
+    //                     // if (outgoingOwner.immutable.revision === outgoingRevision) func(outgoingQuark)
+    //                     // if (outgoingOwner.immutable.revision === outgoingRevision) forEach.push(outgoingQuark)
+    //                 }
+    //             }
+    //
+    //             let uniquePos = 0
+    //
+    //             const uniqable3  = getUniqable()
+    //
+    //             for (let i = 0; i < outgoing.length; i += 2) {
+    //                 const outgoingQuark     = outgoing[ i ] as Quark
+    //                 const outgoingOwner     = outgoingQuark.owner
+    //
+    //                 if (outgoingOwner.uniqable2 === uniqable2) {
+    //                     if (outgoingOwner.uniqable !== uniqable3) {
+    //                         outgoingOwner.uniqable = uniqable3
+    //
+    //                         outgoing[ uniquePos ]       = outgoingOwner.immutable
+    //                         outgoing[ uniquePos + 1 ]   = outgoingOwner.immutable.revision
+    //
+    //                         uniquePos           += 2
+    //                     }
+    //
+    //                     // func(outgoingQuark)
+    //                 }
+    //             }
+    //
+    //             if (outgoing.length !== uniquePos) outgoing.length = uniquePos
+    //         }
+    //
+    //     //     // TODO
+    //     //     // @ts-ignore
+    //     //     if (quark.value !== undefined) break
+    //     //
+    //     //     quark       = quark.previous
+    //     //
+    //     // } while (quark)
+    // }
+
 }
 
 
@@ -138,8 +237,10 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     name                : string        = undefined
 
     uniqable            : number        = Number.MIN_SAFE_INTEGER
+    uniqable2           : number        = Number.MIN_SAFE_INTEGER
+    // uniqable3           : number        = Number.MIN_SAFE_INTEGER
 
-    uniqable2           : any           = undefined
+    uniqableBox         : any           = undefined
 
     immutable           : Quark         = undefined
 

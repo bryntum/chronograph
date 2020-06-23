@@ -318,11 +318,11 @@ export class ChronoGraph extends Base implements Owner {
                 if (atom.uniqable !== uniqable) {
                     atom.uniqable       = uniqable
 
-                    atom.uniqable2    = quark
+                    atom.uniqableBox    = quark
 
                     atoms.push(atom)
                 } else {
-                    atom.uniqable2    = quark
+                    atom.uniqableBox    = quark
                 }
             }
 
@@ -333,11 +333,11 @@ export class ChronoGraph extends Base implements Owner {
 
         for (let i = 0; i < atoms.length; i++) {
             const atom          = atoms[ i ]
-            const deepestQuark  = atom.uniqable2 as Quark
+            const deepestQuark  = atom.uniqableBox as Quark
 
             atom.updateQuark(deepestQuark.previous)
 
-            atom.uniqable2    = undefined
+            atom.uniqableBox    = undefined
         }
     }
 
@@ -359,9 +359,9 @@ export class ChronoGraph extends Base implements Owner {
                 const atom      = quark.owner
 
                 if (atom.uniqable !== uniqable) {
-                    atom.uniqable = uniqable
+                    atom.uniqable       = uniqable
 
-                    atom.uniqable2    = quark
+                    atom.uniqableBox    = quark
 
                     atoms.push(atom)
                 } else {
@@ -376,11 +376,11 @@ export class ChronoGraph extends Base implements Owner {
 
         for (let i = 0; i < atoms.length; i++) {
             const atom          = atoms[ i ]
-            const deepestQuark  = atom.uniqable2 as Quark
+            const deepestQuark  = atom.uniqableBox as Quark
 
             atom.updateQuark(deepestQuark)
 
-            atom.uniqable2    = undefined
+            atom.uniqableBox    = undefined
         }
     }
 

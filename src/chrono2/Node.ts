@@ -20,6 +20,8 @@ export class Node implements Uniqable {
 
     outgoingCompacted   : boolean       = false
 
+    // addCounter          : number        = 0
+
     // TODO we can also just check the last element in the `$outgoing`, need to benchmark
     lastOutgoingTo          : Node          = undefined
 
@@ -59,6 +61,11 @@ export class Node implements Uniqable {
     }
 
 
+    compactOutgoing () {
+
+    }
+
+
     addOutgoing (to : Node, calledFromPartner : boolean = false) {
         const toRevision            = to.revision
 
@@ -67,6 +74,13 @@ export class Node implements Uniqable {
 
             return
         }
+
+        // this.addCounter++
+        //
+        // if (this.addCounter > 1000) {
+        //     this.addCounter = 0
+        //     this.compactOutgoing()
+        // }
 
         this.lastOutgoingTo         = to
 
