@@ -63,7 +63,7 @@ export class Node implements Uniqable {
     }
 
 
-    compactOutgoing () {
+    compactOutgoing (startFrom : number) {
 
     }
 
@@ -82,10 +82,16 @@ export class Node implements Uniqable {
             this.$outgoingRev   = []
         }
 
+        // TODO: figure out if these magick numbers
+        // can be tweaked, perhaps dynamically
+        // like - measure the length before/after compact
+        // adjust magick number based on results
         this.addCounter = (this.addCounter + 1) % 500
 
-        if (this.addCounter === 0 /*&& this.$outgoing.length > 1000*/) {
-            this.compactOutgoing()
+        if (this.addCounter === 0) {
+            // idea is - we compact what've added (500),
+            // plus some more (250)
+            this.compactOutgoing(this.$outgoing.length - 750)
         }
 
         this.lastOutgoingTo         = to
