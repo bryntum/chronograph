@@ -21,7 +21,7 @@
 /main.js
 /tsconfig.tsbuildinfo
 
-/examples/basic/**/*.js
+/examples/cytoscape/**/*.js
 
 # docs
 /docs
