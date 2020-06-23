@@ -16,7 +16,8 @@ export class Node implements Uniqable {
     revision            : number        = Number.MIN_SAFE_INTEGER
 
     $incoming           : Node[]        = undefined
-    $outgoing           : Edge[]        = undefined
+    $outgoing           : Node[]        = undefined
+    $outgoingRev        : number[]      = undefined
 
     // outgoingCompacted   : boolean       = false
 
@@ -50,6 +51,7 @@ export class Node implements Uniqable {
     clearOutgoing () {
         // seems to be faster to just assign `undefined` instead of setting length to 0
         this.$outgoing          = undefined
+        this.$outgoingRev       = undefined
         // this.outgoingCompacted  = false
         this.lastOutgoingTo     = undefined
     }
@@ -70,16 +72,19 @@ export class Node implements Uniqable {
         const toRevision            = to.revision
 
         if (this.lastOutgoingTo === to) {
-            this.$outgoing[ this.$outgoing.length - 1 ] = to.revision
+            this.$outgoingRev[ this.$outgoingRev.length - 1 ] = toRevision
 
             return
         }
 
-        if (this.$outgoing === undefined) this.$outgoing = []
+        if (this.$outgoing === undefined) {
+            this.$outgoing      = []
+            this.$outgoingRev   = []
+        }
 
-        this.addCounter = (this.addCounter + 1) % 100
+        this.addCounter = (this.addCounter + 1) % 500
 
-        if (this.addCounter === 0 && this.$outgoing.length > 500) {
+        if (this.addCounter === 0 /*&& this.$outgoing.length > 1000*/) {
             this.compactOutgoing()
         }
 
@@ -87,7 +92,8 @@ export class Node implements Uniqable {
 
         // this.outgoingCompacted  = false
 
-        this.$outgoing.push(to, toRevision)
+        this.$outgoing.push(to)
+        this.$outgoingRev.push(toRevision)
         if (!calledFromPartner) to.addIncoming(this, true)
     }
 }

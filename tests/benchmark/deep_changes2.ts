@@ -15,7 +15,7 @@ export const mobxMassiveOutgoingBench = DeepChangesMobx.new({
     name        : 'Massive outgoing - Mobx',
 
     setup       : async () => {
-        return mobxMassiveOutgoing(1000)
+        return mobxMassiveOutgoing(10000)
     }
 })
 
@@ -23,7 +23,7 @@ export const chrono2MassiveOutgoingBench = DeepChangesChrono2.new({
     name        : 'Massive outgoing - Chrono2',
 
     setup       : async () => {
-        return chrono2MassiveOutgoing(1000)
+        return chrono2MassiveOutgoing(10000)
     }
 })
 

@@ -60,7 +60,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
 
     $incoming           : Quark[]
-    $outgoing           : (Quark | number)[]
+    $outgoing           : Quark[]
 
 
     forEachOutgoing (func : (quark : Quark) => any) {
@@ -71,12 +71,13 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
         do {
             const outgoing = quark.$outgoing
+            const outgoingRev = quark.$outgoingRev
 
             if (outgoing) {
 
-                for (let i = outgoing.length - 1; i > 0; i -= 2) {
-                    const outgoingRevision  = outgoing[ i ] as number
-                    const outgoingQuark     = outgoing[ i - 1 ] as Quark
+                for (let i = outgoing.length - 1; i >= 0; i--) {
+                    const outgoingRevision  = outgoingRev[ i ]
+                    const outgoingQuark     = outgoing[ i ] as Quark
 
                     const outgoingOwner     = outgoingQuark.owner
 
@@ -90,7 +91,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                     }
                 }
 
-                for (let i = 0; i < outgoing.length; i += 2) {
+                for (let i = 0; i < outgoing.length; i++) {
                     const outgoingQuark     = outgoing[ i ] as Quark
                     const outgoingOwner     = outgoingQuark.owner
 
@@ -117,12 +118,13 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         const uniqable2  = getUniqable()
 
         const outgoing = this.$outgoing
+        const outgoingRev = this.$outgoingRev
 
         if (outgoing) {
 
-            for (let i = outgoing.length - 1; i > 0; i -= 2) {
-                const outgoingRevision  = outgoing[ i ] as number
-                const outgoingQuark     = outgoing[ i - 1 ] as Quark
+            for (let i = outgoing.length - 1; i >= 0; i--) {
+                const outgoingRevision  = outgoingRev[ i ] as number
+                const outgoingQuark     = outgoing[ i ] as Quark
 
                 const outgoingOwner     = outgoingQuark.owner
 
@@ -138,7 +140,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
             let uniquePos : number      = 0
 
-            for (let i = 0; i < outgoing.length; i += 2) {
+            for (let i = 0; i < outgoing.length; i++) {
                 const outgoingQuark     = outgoing[ i ] as Quark
                 const outgoingOwner     = outgoingQuark.owner
 
@@ -146,15 +148,77 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                     outgoingOwner.uniqable = uniqable
 
                     outgoing[ uniquePos ]       = outgoingOwner.immutable
-                    outgoing[ uniquePos + 1 ]   = outgoingOwner.immutable.revision
+                    outgoingRev[ uniquePos ]    = outgoingOwner.immutable.revision
 
-                    uniquePos           += 2
+                    uniquePos++
                 }
             }
 
-            if (outgoing.length !== uniquePos) outgoing.length = uniquePos
+            if (outgoing.length !== uniquePos) {
+                outgoing.length = uniquePos
+                outgoingRev.length = uniquePos
+            }
         }
     }
+
+
+    // compactOutgoing () {
+    //     const uniqable   = getUniqable()
+    //     const uniqable2  = getUniqable()
+    //
+    //     const outgoing = this.$outgoing
+    //     const outgoingRev = this.$outgoingRev
+    //
+    //     if (outgoing) {
+    //
+    //         for (let i = outgoing.length - 1; i >= 0; i--) {
+    //             const outgoingRevision  = outgoingRev[ i ] as number
+    //             const outgoingQuark     = outgoing[ i ] as Quark
+    //
+    //             const outgoingOwner     = outgoingQuark.owner
+    //
+    //             const delta             = uniqable2 - outgoingOwner.uniqable
+    //
+    //             if (delta > 1) {
+    //                 if (outgoingOwner.immutable.revision === outgoingRevision)
+    //                     outgoingOwner.uniqable      = uniqable2
+    //                 else
+    //                     outgoingOwner.uniqable      = uniqable
+    //             }
+    //         }
+    //
+    //         // let uniquePos : number      = 0
+    //
+    //         const newOutgoing       = []
+    //         const newOutgoingRev : number[]   = []
+    //
+    //         for (let i = 0; i < outgoing.length; i++) {
+    //             const outgoingQuark     = outgoing[ i ] as Quark
+    //             const outgoingOwner     = outgoingQuark.owner
+    //
+    //             if (outgoingOwner.uniqable === uniqable2) {
+    //                 outgoingOwner.uniqable = uniqable
+    //
+    //                 newOutgoing.push(outgoingOwner.immutable)
+    //                 newOutgoingRev.push(outgoingOwner.immutable.revision)
+    //
+    //                 // outgoing[ uniquePos ]       = outgoingOwner.immutable
+    //                 // outgoingRev[ uniquePos ]    = outgoingOwner.immutable.revision
+    //                 //
+    //                 // uniquePos++
+    //             }
+    //         }
+    //
+    //         this.$outgoing      = newOutgoing
+    //         this.$outgoingRev   = newOutgoingRev
+    //
+    //         // if (outgoing.length !== uniquePos) {
+    //         //     outgoing.length = uniquePos
+    //         //     outgoingRev.length = uniquePos
+    //         // }
+    //     }
+    // }
+
 
 }
 
