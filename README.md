@@ -46,7 +46,7 @@ To find out about the remaining (and most interesting) features of ChronoGraph, 
 
 The guides contain extensive references to the [API docs](https://bryntum.github.io/chronograph/docs/)
 
-The API surface is currently intentionally small and some features are not documented. Please [reach out](https://discordapp.com/channels/681424024445780014/681424024449974316) if you need something specific.
+The API surface is currently intentionally small and some features are not documented. Please [reach out](https://discord.gg/jErxFxY) if you need something specific.
 
 
 Benchmarks
