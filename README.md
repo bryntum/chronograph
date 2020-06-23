@@ -4,7 +4,7 @@
 ChronoGraph
 ===========
 
-Chronograph is an open-source reactive computational engine, implemented in TypeScript and developed by [Bryntum](https://www.bryntum.com/). It powers the business logic of the [Bryntum Gantt](https://www.bryntum.com/examples/gantt/advanced).
+Chronograph is an open-source reactive state management system, implemented in TypeScript and developed at [Bryntum](https://www.bryntum.com/). It powers the business logic of the [Bryntum Gantt](https://www.bryntum.com/examples/gantt/advanced).
 
 ChronoGraph has the following features: 
 
@@ -46,7 +46,7 @@ To find out about the remaining (and most interesting) features of ChronoGraph, 
 
 The guides contain extensive references to the [API docs](https://bryntum.github.io/chronograph/docs/)
 
-The API surface is currently intentionally small and some features are not documented. Please [reach out](https://discordapp.com/channels/681424024445780014/681424024449974316) if you need something specific.
+The API surface is currently intentionally small and some features are not documented. Please [reach out](https://discord.gg/jErxFxY) if you need something specific.
 
 
 Benchmarks
@@ -60,11 +60,13 @@ Connect
 
 We welcome all feedback. Please tell us what works well in ChronoGraph, what causes trouble and any other features you would like to see implemented.
 
-[Issues tracker](https://github.com/bryntum/chronograph/issues)
+Please report any found bugs in the [issues tracker](https://github.com/bryntum/chronograph/issues)
 
-Post in the [forum](https://bryntum.com/forum/viewforum.php?f=53)
+Ask questions in the [forum](https://bryntum.com/forum/viewforum.php?f=53)
 
-Discord [live chat](https://discordapp.com/channels/681424024445780014/681424024449974316)
+Chat live at [Discord](https://discord.gg/jErxFxY)
+
+Follow the [development blog](https://medium.com/chronograph)
 
 
 COPYRIGHT AND LICENSE

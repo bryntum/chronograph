@@ -509,9 +509,18 @@ export const calculate = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
     return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
-        let calculations        = target.$calculations
+        ensureEntityOnPrototype(target)
 
-        if (!calculations) calculations = target.$calculations = {} as any
+        let calculations : Entity[ '$calculations' ]
+
+        if (!target.$calculations) {
+            calculations        = target.$calculations = {} as any
+        } else {
+            if (!target.hasOwnProperty('$calculations')) {
+                calculations    = target.$calculations = Object.create(target.$calculations)
+            } else
+                calculations    = target.$calculations
+        }
 
         calculations[ fieldName ]       = propertyKey
     }
@@ -523,9 +532,18 @@ export const write = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
     return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
-        let writes              = target.$writes
+        ensureEntityOnPrototype(target)
 
-        if (!writes) writes = target.$writes = {} as any
+        let writes : Entity[ '$writes' ]
+
+        if (!target.$writes) {
+            writes        = target.$writes = {} as any
+        } else {
+            if (!target.hasOwnProperty('$writes')) {
+                writes    = target.$writes = Object.create(target.$writes)
+            } else
+                writes    = target.$writes
+        }
 
         writes[ fieldName ]     = propertyKey
     }
@@ -537,9 +555,18 @@ export const build_proposed = function (fieldName : Name) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
     return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
-        let buildProposed       = target.$buildProposed
+        ensureEntityOnPrototype(target)
 
-        if (!buildProposed) buildProposed = target.$buildProposed = {} as any
+        let buildProposed : Entity[ '$buildProposed' ]
+
+        if (!target.$buildProposed) {
+            buildProposed        = target.$buildProposed = {} as any
+        } else {
+            if (!target.hasOwnProperty('$buildProposed')) {
+                buildProposed    = target.$buildProposed = Object.create(target.$buildProposed)
+            } else
+                buildProposed    = target.$buildProposed
+        }
 
         buildProposed[ fieldName ]     = propertyKey
     }
