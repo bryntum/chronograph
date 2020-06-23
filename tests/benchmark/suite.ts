@@ -6,8 +6,8 @@ import { runAllShallowChanges } from "./shallow_changes.js"
 export const runAll = async () => {
     await runAllMassive()
     await runAllDeepChanges()
-    // await runAllShallowChanges()
-    // await runAllGraphPopulation()
+    await runAllShallowChanges()
+    await runAllGraphPopulation()
 
     // await runAllMemoryLeak()
 }

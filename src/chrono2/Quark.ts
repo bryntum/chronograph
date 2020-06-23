@@ -8,7 +8,7 @@ import { Node } from "./Node.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// Benchmarking showed that there's no difference when using numbers
+// Benchmarking has shown that there's no difference when using numbers
 // v8 optimizes comparison of immutable strings to pointer comparison I guess
 export enum AtomState {
     Empty           = 'Empty',
