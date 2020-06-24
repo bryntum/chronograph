@@ -15,7 +15,7 @@ StartTest(t => {
 
         graph1.commit()
 
-        t.isDeeply(var1.read(), 0, 'Correct value initial value')
+        t.isDeeply(var1.read(), 0, 'Correct initial value')
 
         const graph2    = graph1.branch()
 
@@ -35,38 +35,64 @@ StartTest(t => {
     })
 
 
-    // t.it('Should use atoms from branch in formulas', async t => {
-    //     const graph1 : ChronoGraph   = ChronoGraph.new()
-    //
-    //     const var1      = new Box(0)
-    //     const var2      = new CalculableBox({
-    //         calculation () {
-    //             return var1.read() + 1
-    //         }
-    //     })
-    //
-    //     graph1.addAtoms([ var1, var2 ])
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply(var1.read(), 0, 'Correct value initial value')
-    //
-    //     const graph2    = graph1.branch()
-    //
-    //     const var1$     = graph2.checkout(var1)
-    //
-    //     t.isDeeply(var1$.read(), 0, 'Correct value initial branch value ')
-    //
-    //     var1$.write(1)
-    //
-    //     t.isDeeply(var1.read(), 0, 'Correct value in source')
-    //     t.isDeeply(var1$.read(), 1, 'Correct value in branch')
-    //
-    //     var1.write(10)
-    //
-    //     t.isDeeply(var1.read(), 10, 'Correct value in source')
-    //     t.isDeeply(var1$.read(), 1, 'Correct value in branch')
-    // })
+    t.iit('Should use atoms from branch in formulas', async t => {
+        const graph1 : ChronoGraph   = ChronoGraph.new()
+
+        let counter : number = 0
+
+        const var1      = new Box(0)
+        const var2      = new CalculableBox({
+            calculation () {
+                counter++
+
+                return var1.read() + 1
+            }
+        })
+
+        graph1.addAtoms([ var1, var2 ])
+
+        t.isDeeply(var1.read(), 0, 'Correct initial value')
+        t.isDeeply(var2.read(), 1, 'Correct initial value')
+
+        graph1.commit()
+
+        //-------------------
+        counter         = 0
+
+        const graph2    = graph1.branch()
+
+        const var1$     = graph2.checkout(var1)
+        const var2$     = graph2.checkout(var2)
+
+        t.isDeeply(var1$.read(), 0, 'Correct value initial branch value ')
+        t.isDeeply(var2$.read(), 1, 'Correct value initial branch value ')
+
+        t.is(counter, 0, 'Should call the calculation')
+
+        var1$.write(1)
+
+        t.isDeeply(var1.read(), 0, 'Source graph did not change')
+        t.isDeeply(var2.read(), 1, 'Source graph did not change')
+
+        t.isDeeply(var1$.read(), 1, 'Correct value in branch')
+        t.isDeeply(var2$.read(), 2, 'Correct value in branch')
+
+        t.is(counter, 1, 'Should call the calculation')
+
+        // //-------------------
+        // counter         = 0
+        //
+        // var1.write(10)
+        //
+        // t.isDeeply(var1.read(), 10, 'Source graph updated correctly')
+        // t.isDeeply(var2.read(), 11, 'Source graph updated correctly')
+        //
+        // t.isDeeply(var1$.read(), 1, 'Correct value in branch')
+        // t.isDeeply(var2$.read(), 2, 'Correct value in branch')
+        //
+        // t.is(counter, 1, 'Should call the calculation once - in the source graph')
+    })
+
 
     // t.it('Should not recalculate nodes from previous branch', t => {
     //     const graph1 : ChronoGraph       = ChronoGraph.new()
