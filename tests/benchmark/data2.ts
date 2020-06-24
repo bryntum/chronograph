@@ -61,7 +61,7 @@ export const mobxMassiveIncoming = (atomNum : number = 1000) : MobxGraphGenerati
         let sum = 0
 
         for (let i = 0; i < atomNum; i++) {
-            sum += boxes[ 0 ].get()
+            sum += boxes[ i ].get()
         }
 
         return sum
@@ -87,7 +87,7 @@ export const chrono2MassiveIncoming = (atomNum : number = 1000) : Chrono2Generat
             let sum = 0
 
             for (let i = 0; i < atomNum; i++) {
-                sum += boxes[ 0 ].read()
+                sum += boxes[ i ].read()
             }
 
             return sum
