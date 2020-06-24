@@ -53,6 +53,7 @@ export class Node implements Uniqable {
         this.$outgoing          = undefined
         this.$outgoingRev       = undefined
         // this.outgoingCompacted  = false
+        this.addCounter         = 0
         this.lastOutgoingTo     = undefined
     }
 
