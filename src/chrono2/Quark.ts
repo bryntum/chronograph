@@ -66,8 +66,10 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
     forEachOutgoing (func : (quark : Quark) => any) {
         let quark : this = this
 
-        const uniqable   = getUniqable()
-        const uniqable2  = getUniqable()
+        const uniqable  = getUniqable()
+        const uniqable2 = getUniqable()
+
+        const graph     = this.owner.graph
 
         do {
             const outgoing = quark.$outgoing
@@ -80,6 +82,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                     const outgoingQuark     = outgoing[ i ] as Quark
 
                     const outgoingOwner     = outgoingQuark.owner
+                    // const outgoingOwner     = outgoingQuark.owner.graph === graph ? outgoingQuark.owner : graph.checkout(outgoingQuark.owner)
 
                     const delta             = uniqable2 - outgoingOwner.uniqable
 
@@ -94,6 +97,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                 for (let i = 0; i < outgoing.length; i++) {
                     const outgoingQuark     = outgoing[ i ] as Quark
                     const outgoingOwner     = outgoingQuark.owner
+                    // const outgoingOwner     = outgoingQuark.owner.graph === graph ? outgoingQuark.owner : graph.checkout(outgoingQuark.owner)
 
                     if (outgoingOwner.uniqable === uniqable2) {
                         outgoingOwner.uniqable = uniqable

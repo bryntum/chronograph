@@ -111,10 +111,8 @@ StartTest(t => {
 
         const c1            = new CalculableBox({
             name        : 'c1',
-
             calculation () {
                 counter++
-
                 return dispatcher.read().read() + 1
             }
         })
@@ -130,11 +128,9 @@ StartTest(t => {
 
         const graph2    = graph1.branch()
 
-        const dispatcher2   = graph2.checkout(dispatcher)
+        const dispatcher$   = graph2.checkout(dispatcher)
 
-        dispatcher2.write(i2)
-
-        const c1Spy         = t.spyOn(c1, 'calculation')
+        dispatcher$.write(i2)
 
         t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i1, 1 ], "Original branch not affected")
         t.is(counter, 0)
@@ -155,50 +151,58 @@ StartTest(t => {
     })
 
 
-    // t.it('Should not recalculate nodes from alternative branch', async t => {
-    //     const graph1 : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1            = graph1.variableNamed('i1', 0)
-    //     const i2            = graph1.variableNamed('i2', 1)
-    //     const dispatcher    = graph1.variableNamed('dispatcher', i1)
-    //
-    //     const c1            = graph1.identifierNamed('c1', function* () {
-    //         return (yield (yield dispatcher)) + 1
-    //     })
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
-    //
-    //     // ----------------
-    //     const graph2        = graph1.branch()
-    //
-    //     // ----------------
-    //     const c1Spy         = t.spyOn(c1, 'calculation')
-    //
-    //     graph1.write(dispatcher, i2)
-    //
-    //     graph1.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(1)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Original branch not affected")
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph2.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated in new branch ")
-    //
-    //     // ----------------
-    //     c1Spy.reset()
-    //
-    //     graph2.write(i2, 10)
-    //
-    //     graph2.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Correct result calculated")
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph2.read(node)), [ 0, 10, i1, 1 ], "Correct result calculated")
-    // })
-    //
-    //
+    t.it('Should not recalculate nodes from alternative branch', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1            = new Box(0, 'i1')
+        const i2            = new Box(1, 'i2')
+        const dispatcher    = new Box(i1, 'dispatcher')
+
+        let counter         = 0
+
+        const c1            = new CalculableBox({
+            name        : 'c1',
+            calculation () {
+                counter++
+                return dispatcher.read().read() + 1
+            }
+        })
+
+        graph1.addAtoms([ i1, i2, dispatcher, c1 ])
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i1, 1 ], "Correct result calculated")
+
+        t.is(counter, 1)
+
+        // ----------------
+        counter         = 0
+
+        const graph2    = graph1.branch()
+
+        const dispatcher$   = graph2.checkout(dispatcher)
+        const i2$           = graph2.checkout(i2)
+
+        dispatcher$.write(i2$)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i1, 1 ], "Original branch not affected")
+        t.is(counter, 0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph2.checkout(node).read()), [ 0, 1, i2$, 2 ], "Correct result calculated in new branch ")
+        t.is(counter, 1)
+
+        // ----------------
+        counter         = 0
+
+        i2$.write(10)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i1, 1 ], "Correct result calculated")
+        t.is(counter, 0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph2.checkout(node).read()), [ 0, 10, i2$, 11 ], "Correct result calculated")
+        t.is(counter, 1)
+    })
+
+
     // t.it('Should not use stale deep history', async t => {
     //     const graph1 : ChronoGraph       = ChronoGraph.new()
     //

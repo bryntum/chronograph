@@ -93,7 +93,7 @@ export class Node implements Uniqable {
             // idea is - we compact what've added (500),
             // plus some more (250)
             // TODO perform a full compact once every X compacts?
-            this.compactOutgoing(this.$outgoing.length - 750)
+            this.compactOutgoing(this.$outgoing.length - 500)
         }
 
         this.lastOutgoingTo         = to
