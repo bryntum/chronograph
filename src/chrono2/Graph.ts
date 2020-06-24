@@ -1,9 +1,8 @@
 import { Base } from "../class/Base.js"
 import { AnyConstructor } from "../class/Mixin.js"
-import { MIN_SMI } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
-import { getUniqable, Uniqable } from "../util/Uniqable.js"
-import { Box } from "./data/Box.js"
+import { getUniqable } from "../util/Uniqable.js"
+import { Box, BoxImmutable } from "./data/Box.js"
 import { Immutable, Owner } from "./data/Immutable.js"
 import { Atom, AtomState, Quark } from "./Quark.js"
 
@@ -171,6 +170,10 @@ export class ChronoGraph extends Base implements Owner {
     nextTransaction         : ChronoTransaction[]   = []
 
 
+    previous                : this                  = undefined
+
+    atomsById               : { [key : number] : Atom }   = Object.create(null)
+
 
     //region ChronoGraph as Owner
     $immutable              : ChronoTransaction     = undefined
@@ -252,6 +255,58 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    branch () : this {
+        this.immutable.freeze()
+
+        const self      = this.constructor as AnyConstructor<this, typeof ChronoGraph>
+        const next      = new self()
+
+        next.previous   = this
+        next.immutable  = this.immutable
+
+        return next
+    }
+
+
+    checkout<T extends Atom> (atom : T) : T {
+        if (!this.previous) throw new Error("Graph is not a branch - can not checkout")
+
+        const existingAtom  = this.atomsById[ atom.id ]
+
+        if (existingAtom !== undefined) return existingAtom
+
+        const cls       = atom.constructor as AnyConstructor<T, typeof Atom>
+
+        const clone     = new cls()
+
+        clone.id        = atom.id
+        const immutable = clone.immutable = this.getLatestQuarkOf(atom)
+
+        if ((immutable as BoxImmutable).readRaw() !== undefined) clone.state = AtomState.UpToDate
+
+        return this.atomsById[ clone.id ]  = clone
+    }
+
+
+    getLatestQuarkOf<T extends Atom> (atom : T) : Quark {
+        let iteration : ChronoIteration     = this.immutable.immutable
+
+        const atomId    = atom.id
+
+        while (iteration) {
+            const quarks    = iteration.quarks
+
+            for (let i = 0; i < quarks.length; i++) {
+                if (quarks[ i ].owner.id === atomId) return quarks[ i ]
+            }
+
+            iteration   = iteration.previous
+        }
+
+        return undefined
+    }
+
+
     calculateTransitionsSync () {
         const queue                             = this.stack
 
@@ -259,6 +314,7 @@ export class ChronoGraph extends Base implements Owner {
             this.calculateTransitionsStackSync(queue.takeLowestLevel())
         }
     }
+
 
     calculateTransitionsStackSync (stack : Quark[]) {
         for (let i = 0; i < stack.length; i++) {
