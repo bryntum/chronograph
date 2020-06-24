@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------------------------------------------------
-export type ChronoId = string | number
+export type ChronoId = number
 
 let CHRONO_ID : number = 0
 
