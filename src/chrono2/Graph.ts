@@ -275,11 +275,10 @@ export class ChronoGraph extends Base implements Owner {
 
         if (existingAtom !== undefined) return existingAtom
 
-        const cls       = atom.constructor as AnyConstructor<T, typeof Atom>
+        const clone     = atom.clone()
 
-        const clone     = new cls()
+        clone.graph     = this
 
-        clone.id        = atom.id
         const immutable = clone.immutable = this.getLatestQuarkOf(atom)
 
         if ((immutable as BoxImmutable).readRaw() !== undefined) clone.state = AtomState.UpToDate

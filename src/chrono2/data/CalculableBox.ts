@@ -120,7 +120,9 @@ export class CalculableBox<V> extends Box<V> {
 
 
     read () : V {
-        // if (this.graph) this.actualize()
+        if (this.graph && globalContext.activeGraph && globalContext.activeGraph !== this.graph) {
+            return globalContext.activeGraph.checkout(this).read()
+        }
 
         if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
 
@@ -195,11 +197,15 @@ export class CalculableBox<V> extends Box<V> {
         this.immutable.revision     = getRevision()
 
         const prevActive            = globalContext.activeQuark
+        const prevGraph             = globalContext.activeGraph
+
         globalContext.activeQuark   = this.immutable
+        globalContext.activeGraph   = this.graph
 
         const newValue              = this.calculation.call(this.context)
 
         globalContext.activeQuark   = prevActive
+        globalContext.activeGraph   = prevGraph
 
         this.updateValue(newValue)
     }
@@ -236,4 +242,16 @@ export class CalculableBox<V> extends Box<V> {
             this.propagatePossiblyStale()
         }
     }
+
+
+    clone () : this {
+        const clone     = super.clone()
+
+        clone.context       = this.context
+        clone.$calculation  = this.$calculation
+        clone.$equality     = this.$equality
+
+        return clone
+    }
+
 }

@@ -1,10 +1,12 @@
 import { Base } from "../class/Base.js"
+import { ChronoGraph } from "./Graph.js"
 import { Quark } from "./Quark.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GlobalContext extends Base {
 
     activeQuark         : Quark          = undefined
+    activeGraph         : ChronoGraph    = undefined
 
     // effectHandler       : EffectHandler<CalculationMode>    = undefined
 

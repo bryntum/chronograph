@@ -99,7 +99,9 @@ export class Box<V> extends Atom {
 
 
     read () : V {
-        // if (this.graph) this.actualize()
+        if (this.graph && globalContext.activeGraph && globalContext.activeGraph !== this.graph) {
+            return globalContext.activeGraph.checkout(this).read()
+        }
 
         if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
 
@@ -108,8 +110,6 @@ export class Box<V> extends Atom {
 
 
     write (value : V) {
-        // if (this.graph) this.actualize()
-
         if (value === undefined) value = null
 
         if (value === this.immutable.read()) return

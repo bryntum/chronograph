@@ -280,6 +280,17 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     }
 
 
+    clone () : this {
+        const cls       = this.constructor as AnyConstructor<this, typeof Atom>
+
+        const clone     = new cls()
+
+        clone.id        = this.id
+
+        return clone
+    }
+
+
     leaveGraph (graph : ChronoGraph) {
         if (this.graph !== graph) throw new Error("Atom not in graph")
 
@@ -330,6 +341,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         //         toVisit[ 0 ] = this.immutable
 
         const toVisit : Quark[]         = [ this.immutable ]
+        const graph : ChronoGraph       = this.graph
 
         while (toVisit.length) {
             const quark     = toVisit.pop()
@@ -343,7 +355,15 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             }
 
             quark.forEachOutgoing(outgoing => {
-                if (outgoing.owner.state === AtomState.UpToDate) toVisit.push(outgoing)
+                const owner = outgoing.owner
+
+                if (owner.graph === graph) {
+                     if (owner.state === AtomState.UpToDate) toVisit.push(outgoing)
+                } else {
+                    const newAtom   = graph.checkout(owner)
+
+                    if (newAtom.state === AtomState.UpToDate) toVisit.push(outgoing)
+                }
             })
         }
 
@@ -351,7 +371,17 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
 
     propagateStale () {
-        this.immutable.forEachOutgoing(quark => quark.owner.state = AtomState.Stale)
+        const graph : ChronoGraph   = this.graph
+
+        this.immutable.forEachOutgoing(quark => {
+            const owner = quark.owner
+
+            if (owner.graph === graph)
+                owner.state = AtomState.Stale
+            else {
+                graph.checkout(owner).state = AtomState.Stale
+            }
+        })
 
         if (!this.immutable.frozen) this.immutable.clearOutgoing()
     }
