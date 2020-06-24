@@ -203,146 +203,199 @@ StartTest(t => {
     })
 
 
-    // t.it('Should not use stale deep history', async t => {
-    //     const graph1 : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1            = graph1.variableNamed('i1', 0)
-    //     const i2            = graph1.variableNamed('i2', 1)
-    //     const dispatcher    = graph1.variableNamed('dispatcher', i1)
-    //
-    //     const c1            = graph1.identifierNamed('c1', function* () {
-    //         return (yield (yield dispatcher)) + 1
-    //     })
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i1, 1 ], "Correct result calculated")
-    //
-    //     // ----------------
-    //     const c1Spy         = t.spyOn(c1, 'calculation')
-    //
-    //     graph1.write(dispatcher, i2)
-    //
-    //     graph1.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(1)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 0, 1, i2, 2 ], "Original branch not affected")
-    //
-    //     // ----------------
-    //     c1Spy.reset()
-    //
-    //     graph1.write(i1, 10)
-    //
-    //     graph1.commit()
-    //
-    //     t.expect(c1Spy).toHaveBeenCalled(0)
-    //
-    //     t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => graph1.read(node)), [ 10, 1, i2, 2 ], "Correct result calculated")
-    // })
-    //
-    //
-    // t.it('Should recalculate nodes, changed in deep history', async t => {
-    //     const graph1 : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1            = graph1.variableNamed('i1', 0)
-    //     const i2            = graph1.variableNamed('i2', 1)
-    //
-    //     const c1            = graph1.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
-    //     })
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply([ i1, i2, c1 ].map(node => graph1.read(node)), [ 0, 1, 1 ], "Correct result calculated")
-    //
-    //     // ----------------
-    //     const graph2        = graph1.branch()
-    //
-    //     const i3            = graph2.variableNamed('i3', 2)
-    //
-    //     graph2.commit()
-    //
-    //     t.isDeeply([ i1, i2, c1, i3 ].map(node => graph2.read(node)), [ 0, 1, 1, 2 ], "Correct result calculated")
-    //
-    //     // ----------------
-    //     const graph3        = graph2.branch()
-    //
-    //     graph3.write(i1, 1)
-    //
-    //     graph3.commit()
-    //
-    //     t.isDeeply([ i1, i2, c1, i3 ].map(node => graph3.read(node)), [ 1, 1, 2, 2 ], "Correct result calculated")
-    // })
-    //
-    //
-    // t.it('Should eliminate unchanged trees, in cross-branch case', async t => {
-    //     const graph1 : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1        = graph1.variableNamed('i1', 0)
-    //     const i2        = graph1.variableNamed('i2', 10)
-    //
-    //     const c1        = graph1.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
-    //     })
-    //
-    //     const c2        = graph1.identifierNamed('c2', function* () {
-    //         return (yield i1) + (yield c1)
-    //     })
-    //
-    //     const c3        = graph1.identifierNamed('c3', function* () {
-    //         return (yield c1)
-    //     })
-    //
-    //     const c4        = graph1.identifierNamed('c4', function* () {
-    //         return (yield c3)
-    //     })
-    //
-    //     const c5        = graph1.identifierNamed('c5', function* () {
-    //         return (yield c3)
-    //     })
-    //
-    //     const c6        = graph1.identifierNamed('c6', function* () {
-    //         return (yield c5) + (yield i2)
-    //     })
-    //
-    //     // ----------------
-    //     const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
-    //
-    //     const spies             = nodes.map(calculation => t.spyOn(calculation, 'calculation'))
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply(nodes.map(node => graph1.read(node)), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
-    //
-    //     spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 1, 1, 1, 1 ][ index ]))
-    //
-    //     // ----------------
-    //     spies.forEach(spy => spy.reset())
-    //
-    //     const graph2            = graph1.branch()
-    //
-    //     graph2.write(i1, 5)
-    //     graph2.write(i2, 5)
-    //
-    //     graph2.commit()
-    //
-    //     t.isDeeply(nodes.map(node => graph2.read(node)), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
-    //
-    //     spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 0, 0, 0, 1 ][ index ]))
-    //
-    //     // ----------------
-    //     spies.forEach(spy => spy.reset())
-    //
-    //     graph1.write(i1, 3)
-    //     graph1.write(i2, 7)
-    //
-    //     graph1.commit()
-    //
-    //     t.isDeeply(nodes.map(node => graph1.read(node)), [ 3, 7, 10, 13, 10, 10, 10, 17 ], "Correct result calculated")
-    //
-    //     spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 0, 0, 1, 1, 0, 0, 0, 1 ][ index ]))
-    // })
+    t.it('Should not use stale deep history', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1            = new Box(0, 'i1')
+        const i2            = new Box(1, 'i2')
+        const dispatcher    = new Box(i1, 'dispatcher')
+
+        let counter         = 0
+
+        const c1            = new CalculableBox({
+            name        : 'c1',
+            calculation () {
+                counter++
+                return dispatcher.read().read() + 1
+            }
+        })
+
+        graph1.addAtoms([ i1, i2, dispatcher, c1 ])
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i1, 1 ], "Correct result calculated")
+
+        t.is(counter, 1)
+
+        // ----------------
+        dispatcher.write(i2)
+
+        graph1.commit()
+
+        t.is(counter, 1)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 0, 1, i2, 2 ], "Original branch not affected")
+
+        // ----------------
+        counter = 0
+
+        i1.write(10)
+
+        graph1.commit()
+
+        t.is(counter, 0)
+
+        t.isDeeply([ i1, i2, dispatcher, c1 ].map(node => node.read()), [ 10, 1, i2, 2 ], "Correct result calculated")
+    })
+
+
+    t.it('Should recalculate nodes, changed in deep history', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1            = new Box(0, 'i1')
+        const i2            = new Box(1, 'i2')
+
+        const c1            = new CalculableBox({
+            name        : 'c1',
+            calculation () {
+                return i1.read() + i2.read()
+            }
+        })
+
+        graph1.addAtoms([ i1, i2, c1 ])
+
+        graph1.commit()
+
+        t.isDeeply([ i1, i2, c1 ].map(node => node.read()), [ 0, 1, 1 ], "Correct result calculated")
+
+        // ----------------
+        const graph2        = graph1.branch()
+
+        const i3            = new Box(2, 'i3')
+
+        graph2.addAtoms([ i3 ])
+
+        graph2.commit()
+
+        t.isDeeply([ i1, i2, c1, i3 ].map(node => graph2.checkout(node).read()), [ 0, 1, 1, 2 ], "Correct result calculated")
+
+        // ----------------
+        const graph3        = graph2.branch()
+
+        graph3.checkout(i1).write(1)
+
+        graph3.commit()
+
+        t.isDeeply([ i1, i2, c1, i3 ].map(node => graph3.checkout(node).read()), [ 1, 1, 2, 2 ], "Correct result calculated")
+    })
+
+
+    t.it('Should eliminate unchanged trees, in cross-branch case', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1        = new Box(0, 'i1')
+        const i2        = new Box(10, 'i2')
+
+        let counter1    = 0
+        let counter2    = 0
+        let counter3    = 0
+        let counter4    = 0
+        let counter5    = 0
+        let counter6    = 0
+
+        const c1        = new CalculableBox({
+            name        : 'c1',
+            calculation () {
+                counter1++
+                return i1.read() + i2.read()
+            }
+        })
+
+        const c2        = new CalculableBox({
+            name        : 'c2',
+            calculation () {
+                counter2++
+                return i1.read() + c1.read()
+            }
+        })
+
+        const c3        = new CalculableBox({
+            name        : 'c3',
+            calculation () {
+                counter3++
+                return c1.read()
+            }
+        })
+
+        const c4        = new CalculableBox({
+            name        : 'c4',
+            calculation () {
+                counter4++
+                return c3.read()
+            }
+        })
+
+        const c5        = new CalculableBox({
+            name        : 'c5',
+            calculation () {
+                counter5++
+                return c3.read()
+            }
+        })
+
+        const c6        = new CalculableBox({
+            name        : 'c6',
+            calculation () {
+                counter6++
+                return c5.read() + i2.read()
+            }
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
+
+        graph1.addAtoms(nodes)
+
+        graph1.commit()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
+
+        t.isDeeply(
+            [ counter1, counter2, counter3, counter4, counter5, counter6 ],
+            [ 1,        1,        1,        1,        1,        1]
+        )
+
+        // ----------------
+        counter1 = counter2 = counter3 = counter4 = counter5 = counter6 = 0
+
+        const graph2            = graph1.branch()
+
+        graph2.checkout(i1).write(5)
+        graph2.checkout(i2).write(5)
+
+        graph2.commit()
+
+        t.isDeeply(nodes.map(node => graph2.checkout(node).read()), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
+
+        t.isDeeply(
+            [ counter1, counter2, counter3, counter4, counter5, counter6 ],
+            [ 1,        1,        0,        0,        0,        1]
+        )
+
+        // ----------------
+        counter1 = counter2 = counter3 = counter4 = counter5 = counter6 = 0
+
+        i1.write(3)
+        i2.write(7)
+
+        graph1.commit()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 3, 7, 10, 13, 10, 10, 10, 17 ], "Correct result calculated")
+
+        t.isDeeply(
+            [ counter1, counter2, counter3, counter4, counter5, counter6 ],
+            [ 1,        1,        0,        0,        0,        1]
+        )
+    })
 
 })
 
