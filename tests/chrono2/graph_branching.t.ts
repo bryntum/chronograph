@@ -361,7 +361,7 @@ StartTest(t => {
 
         t.isDeeply(
             [ counter1, counter2, counter3, counter4, counter5, counter6 ],
-            [ 1,        1,        1,        1,        1,        1]
+            [ 1,        1,        1,        1,        1,        1 ]
         )
 
         // ----------------
@@ -378,7 +378,7 @@ StartTest(t => {
 
         t.isDeeply(
             [ counter1, counter2, counter3, counter4, counter5, counter6 ],
-            [ 1,        1,        0,        0,        0,        1]
+            [ 1,        1,        0,        0,        0,        1 ]
         )
 
         // ----------------
@@ -393,9 +393,59 @@ StartTest(t => {
 
         t.isDeeply(
             [ counter1, counter2, counter3, counter4, counter5, counter6 ],
-            [ 1,        1,        0,        0,        0,        1]
+            [ 1,        1,        0,        0,        0,        1 ]
         )
     })
+
+
+    t.it('Should not use history from another branch', async t => {
+        const graph1 : ChronoGraph       = ChronoGraph.new()
+
+        const i1            = new Box(0, 'i1')
+        const i2            = new Box(1, 'i2')
+        const dispatcher    = new Box(i1, 'dispatcher')
+
+        let counter         = 0
+
+        const c1            = new CalculableBox({
+            name        : 'c1',
+            calculation () {
+                counter++
+                return dispatcher.read().read() + 1
+            }
+        })
+
+        const nodes         = [ i1, i2, dispatcher, c1 ]
+
+        graph1.addAtoms(nodes)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 1, i1, 1 ], "Correct result calculated")
+
+        t.is(counter, 1)
+
+        // ----------------
+        const graph2        = graph1.branch()
+        const $             = node => graph2.checkout(node)
+
+        // ----------------
+        dispatcher.write(i2)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 1, i2, 2 ], "Original branch not affected")
+
+        t.is(counter, 2)
+
+        // ----------------
+        counter = 0
+
+        $(i1).write(10)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 1, i2, 2 ], "Original branch not affected")
+        t.is(counter, 0)
+
+        t.isDeeply(nodes.map(node => $(node).read()), [ 10, 1, i1, 11 ], "Correct result calculated in new branch ")
+        t.is(counter, 1)
+    })
+
 
 })
 

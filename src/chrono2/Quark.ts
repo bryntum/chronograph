@@ -80,9 +80,9 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                 for (let i = outgoing.length - 1; i >= 0; i--) {
                     const outgoingRevision  = outgoingRev[ i ]
                     const outgoingQuark     = outgoing[ i ] as Quark
+                    const outgoingHistory   = outgoingQuark.owner
 
-                    const outgoingOwner     = outgoingQuark.owner
-                    // const outgoingOwner     = outgoingQuark.owner.graph === graph ? outgoingQuark.owner : graph.checkout(outgoingQuark.owner)
+                    const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
 
                     const delta             = uniqable2 - outgoingOwner.uniqable
 
@@ -96,8 +96,8 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
                 for (let i = 0; i < outgoing.length; i++) {
                     const outgoingQuark     = outgoing[ i ] as Quark
-                    const outgoingOwner     = outgoingQuark.owner
-                    // const outgoingOwner     = outgoingQuark.owner.graph === graph ? outgoingQuark.owner : graph.checkout(outgoingQuark.owner)
+                    const outgoingHistory   = outgoingQuark.owner
+                    const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
 
                     if (outgoingOwner.uniqable === uniqable2) {
                         outgoingOwner.uniqable = uniqable
@@ -127,12 +127,14 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         const outgoingRev = this.$outgoingRev
 
         if (outgoing) {
+            const graph     = this.owner.graph
 
             for (let i = outgoing.length - 1; i >= startFrom; i--) {
-                const outgoingRevision  = outgoingRev[ i ] as number
+                const outgoingRevision  = outgoingRev[ i ]
                 const outgoingQuark     = outgoing[ i ] as Quark
+                const outgoingHistory   = outgoingQuark.owner
 
-                const outgoingOwner     = outgoingQuark.owner
+                const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
 
                 const delta             = uniqable2 - outgoingOwner.uniqable
 
@@ -148,7 +150,8 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
             for (let i = uniquePos; i < outgoing.length; i++) {
                 const outgoingQuark     = outgoing[ i ] as Quark
-                const outgoingOwner     = outgoingQuark.owner
+                const outgoingHistory   = outgoingQuark.owner
+                const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
 
                 if (outgoingOwner.uniqable === uniqable2) {
                     outgoingOwner.uniqable = uniqable
