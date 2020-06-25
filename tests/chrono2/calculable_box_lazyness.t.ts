@@ -2,8 +2,11 @@ import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { ChronoGraph } from "../../src/chrono2/Graph.js"
+import { setCompactCounter } from "../../src/chrono2/Node.js"
 
 declare const StartTest : any
+
+setCompactCounter(1)
 
 StartTest(t => {
 

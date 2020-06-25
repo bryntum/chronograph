@@ -8,6 +8,13 @@ export const getRevision = () : number => ++revisionId
 
 export type Edge = Node | number
 
+let compactCounter  = 500
+let compactAmount   = 500
+
+export const setCompactCounter = (value : number) => compactCounter = value
+export const setCompactAmount = (value : number) => compactAmount = value
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export class Node implements Uniqable {
     uniqable            : number        = Number.MIN_SAFE_INTEGER
@@ -87,13 +94,13 @@ export class Node implements Uniqable {
         // can be tweaked, perhaps dynamically
         // like - measure the length before/after compact
         // adjust magick number based on results
-        this.addCounter = (this.addCounter + 1) % 500
+        this.addCounter = (this.addCounter + 1) % compactCounter
 
         if (this.addCounter === 0) {
             // idea is - we compact what've added (500),
-            // plus some more (250)
+            // plus some more?? (250)
             // TODO perform a full compact once every X compacts?
-            this.compactOutgoing(this.$outgoing.length - 500)
+            this.compactOutgoing(this.$outgoing.length - compactAmount)
         }
 
         this.lastOutgoingTo         = to
