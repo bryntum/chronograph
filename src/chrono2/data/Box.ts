@@ -1,5 +1,4 @@
 import { globalContext } from "../GlobalContext.js"
-import { ChronoTransaction } from "../Graph.js"
 import { getRevision } from "../Node.js"
 import { Atom, AtomState, Quark } from "../Quark.js"
 
