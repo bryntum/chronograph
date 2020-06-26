@@ -249,6 +249,7 @@ export class CalculableBox<V> extends Box<V> {
         const clone     = super.clone()
 
         clone.context       = this.context
+        clone.name          = this.name
         clone.$calculation  = this.$calculation
         clone.$equality     = this.$equality
 

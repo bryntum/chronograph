@@ -3,15 +3,12 @@ import { Atom, Quark } from "../atom/Quark.js"
 import { Immutable } from "../data/Immutable.js"
 import { Transaction } from "./Transaction.js"
 
-let revisionIdSource = Number.MIN_SAFE_INTEGER
 
 //----------------------------------------------------------------------------------------------------------------------
 export class Iteration extends Immutable {
     owner           : Transaction
 
     quarks          : Quark[]           = []
-
-    revision        : Revision          = revisionIdSource++
 
     refCount        : number            = 0
 
@@ -104,5 +101,4 @@ export class Iteration extends Immutable {
     }
 }
 
-//----------------------------------------------------------------------------------------------------------------------
-export type Revision = number
+export const ZeroIteration = new Iteration()

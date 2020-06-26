@@ -25,14 +25,14 @@ export class Immutable {
     }
 
 
-    createNext () : this {
+    createNext (owner? : Owner) : this {
         this.freeze()
 
         const self      = this.constructor as AnyConstructor<this, typeof Immutable>
         const next      = new self()
 
         next.previous   = this
-        next.owner      = this.owner
+        next.owner      = owner || this.owner
 
         return next
     }

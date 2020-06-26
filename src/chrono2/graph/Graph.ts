@@ -6,7 +6,7 @@ import { Atom, AtomState, Quark } from "../atom/Quark.js"
 import { Box, BoxImmutable } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
 import { Iteration } from "./Iteration.js"
-import { Transaction } from "./Transaction.js"
+import { Transaction, ZeroTransaction } from "./Transaction.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -24,7 +24,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     //region ChronoGraph as Owner
-    $immutable              : Transaction     = undefined
+    $immutable              : Transaction     = ZeroTransaction
 
     get immutable () : Transaction {
         if (this.$immutable !== undefined) return this.$immutable
@@ -86,12 +86,12 @@ export class ChronoGraph extends Base implements Owner {
 
 
     forEveryReachableTransaction (func : (transaction : Transaction) => any) {
-        let topTransaction      = this.nextTransaction.length > 0 ? this.nextTransaction[ 0 ] : this.$immutable
+        let transaction         = this.nextTransaction.length > 0 ? this.nextTransaction[ 0 ] : this.$immutable
 
-        for (let i = 0; topTransaction && i < this.historyLimit; i++) {
-            func(topTransaction)
+        for (let i = 0; transaction && i < this.historyLimit; i++) {
+            func(transaction)
 
-            topTransaction      = topTransaction.previous
+            transaction      = transaction.previous
         }
     }
 
@@ -145,6 +145,8 @@ export class ChronoGraph extends Base implements Owner {
     undo () {
         this.reject()
 
+        if (this.historyLimit === 0) return
+
         this.undoTo(this.immutable, this.immutable.previous)
 
         this.nextTransaction.push(this.immutable)
@@ -164,23 +166,30 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    branch () : this {
+    branch (config? : Partial<this>) : this {
         // we freeze current _iteration_, not the whole _transaction_
-        this.immutable.immutable.freeze()
+        this.currentIteration.freeze()
 
         const self      = this.constructor as AnyConstructor<this, typeof ChronoGraph>
-        const next      = new self()
+        const next      = self.new(config)
 
         next.previous               = this
-        next.immutable.immutable    = this.immutable.immutable
 
-        next.mark()
+        const partialTransaction    = this.currentTransaction.previous.createNext(next)
+
+        partialTransaction.immutable = this.currentIteration
+
+        partialTransaction.freeze()
+
+        next.immutable              = partialTransaction
 
         return next
     }
 
 
     checkout<T extends Atom> (atom : T) : T {
+        if (atom.graph === this) return atom
+
         if (!this.previous) throw new Error("Graph is not a branch - can not checkout")
 
         const existingAtom  = this.atomsById[ atom.id ]
@@ -191,8 +200,10 @@ export class ChronoGraph extends Base implements Owner {
 
         clone.graph     = this
 
-        const immutable = clone.immutable = this.getLatestQuarkOf(atom).createNext()
-        immutable.owner = clone
+        const immutable = this.getLatestQuarkOf(atom).createNext(clone)
+
+        clone.immutable = undefined
+        clone.setCurrent(immutable)
 
         if ((immutable as BoxImmutable).readRaw() !== undefined) clone.state = AtomState.UpToDate
 
@@ -265,7 +276,7 @@ export class ChronoGraph extends Base implements Owner {
             const atom          = atoms[ i ]
             const deepestQuark  = atom.identity.uniqableBox as Quark
 
-            atom.updateQuark(deepestQuark.previous)
+            this.checkout(atom).updateQuark(deepestQuark.previous)
         }
     }
 
@@ -288,7 +299,7 @@ export class ChronoGraph extends Base implements Owner {
             const atom          = atoms[ i ]
             const deepestQuark  = atom.identity.uniqableBox as Quark
 
-            atom.updateQuark(deepestQuark)
+            this.checkout(atom).updateQuark(deepestQuark)
         }
     }
 

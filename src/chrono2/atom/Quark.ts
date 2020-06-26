@@ -42,18 +42,16 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
     }
 
 
-    createNext () : this {
+    createNext (owner? : Atom) : this {
         this.freeze()
 
         const self      = this.constructor as AnyConstructor<this, typeof Immutable>
         const next      = new self()
 
         next.previous   = this
-        next.owner      = this.owner
+        next.owner      = owner || this.owner
 
         next.revision   = this.revision
-
-        if (this.owner.graph) this.owner.graph.registerQuark(next)
 
         return next
     }
@@ -63,7 +61,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
     $outgoing           : Quark[]
 
 
-    forEachOutgoing (func : (quark : Quark) => any) {
+    forEachOutgoing (func : (quark : Quark, resolvedAtom : Atom) => any) {
         let quark : this = this
 
         const uniqable  = getUniqable()
@@ -82,27 +80,31 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                     const outgoingQuark     = outgoing[ i ] as Quark
                     const outgoingHistory   = outgoingQuark.owner
 
-                    const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
+                    const identity          = outgoingHistory.identity
 
-                    const delta             = uniqable2 - outgoingOwner.uniqable
+                    const delta             = uniqable2 - identity.uniqable
 
                     if (delta > 1) {
-                        if (outgoingOwner.immutable.revision === outgoingRevision)
-                            outgoingOwner.uniqable      = uniqable2
-                        else
-                            outgoingOwner.uniqable      = uniqable
+                        const outgoingOwner     = !outgoingHistory.graph || outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
+
+                        if (outgoingOwner.immutable.revision === outgoingRevision) {
+                            identity.uniqable       = uniqable2
+                            identity.uniqableBox    = outgoingOwner
+                        } else
+                            identity.uniqable       = uniqable
                     }
                 }
 
                 for (let i = 0; i < outgoing.length; i++) {
                     const outgoingQuark     = outgoing[ i ] as Quark
                     const outgoingHistory   = outgoingQuark.owner
-                    const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
 
-                    if (outgoingOwner.uniqable === uniqable2) {
-                        outgoingOwner.uniqable = uniqable
+                    const identity          = outgoingHistory.identity
 
-                        func(outgoingQuark)
+                    if (identity.uniqable === uniqable2) {
+                        identity.uniqable = uniqable
+
+                        func(outgoingQuark, identity.uniqableBox)
                     }
                 }
             }
@@ -120,11 +122,11 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
     compactOutgoing (startFrom : number) {
         if (startFrom < 0) startFrom = 0
 
-        const uniqable   = getUniqable()
-        const uniqable2  = getUniqable()
+        const uniqable      = getUniqable()
+        const uniqable2     = getUniqable()
 
-        const outgoing = this.$outgoing
-        const outgoingRev = this.$outgoingRev
+        const outgoing      = this.$outgoing
+        const outgoingRev   = this.$outgoingRev
 
         if (outgoing) {
             const graph     = this.owner.graph
@@ -134,15 +136,18 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                 const outgoingQuark     = outgoing[ i ] as Quark
                 const outgoingHistory   = outgoingQuark.owner
 
-                const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
+                const identity          = outgoingHistory.identity
 
-                const delta             = uniqable2 - outgoingOwner.uniqable
+                const delta             = uniqable2 - identity.uniqable
 
                 if (delta > 1) {
-                    if (outgoingOwner.immutable.revision === outgoingRevision)
-                        outgoingOwner.uniqable      = uniqable2
-                    else
-                        outgoingOwner.uniqable      = uniqable
+                    const outgoingOwner     = !outgoingHistory.graph || outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
+
+                    if (outgoingOwner.immutable.revision === outgoingRevision) {
+                        identity.uniqable       = uniqable2
+                        identity.uniqableBox    = outgoingOwner
+                    } else
+                        identity.uniqable       = uniqable
                 }
             }
 
@@ -151,21 +156,22 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
             for (let i = uniquePos; i < outgoing.length; i++) {
                 const outgoingQuark     = outgoing[ i ] as Quark
                 const outgoingHistory   = outgoingQuark.owner
-                const outgoingOwner     = outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
 
-                if (outgoingOwner.uniqable === uniqable2) {
-                    outgoingOwner.uniqable = uniqable
+                const identity          = outgoingHistory.identity
 
-                    outgoing[ uniquePos ]       = outgoingOwner.immutable
-                    outgoingRev[ uniquePos ]    = outgoingOwner.immutable.revision
+                if (identity.uniqable === uniqable2) {
+                    identity.uniqable           = uniqable
+
+                    outgoing[ uniquePos ]       = identity.uniqableBox.immutable
+                    outgoingRev[ uniquePos ]    = identity.uniqableBox.immutable.revision
 
                     uniquePos++
                 }
             }
 
             if (outgoing.length !== uniquePos) {
-                outgoing.length = uniquePos
-                outgoingRev.length = uniquePos
+                outgoing.length         = uniquePos
+                outgoingRev.length      = uniquePos
             }
         }
     }
@@ -206,6 +212,15 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         if (this.graph && this.graph !== graph) throw new Error("Can only belong to a single graph for now")
 
         this.graph                  = graph
+    }
+
+
+    setCurrent (immutable : this[ 'immutable' ]) {
+        if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
+
+        this.immutable = immutable
+
+        if (this.graph) this.graph.registerQuark(immutable)
     }
 
 
@@ -284,16 +299,8 @@ export class Atom extends Owner implements Identifiable, Uniqable {
                 atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
             }
 
-            quark.forEachOutgoing(outgoing => {
-                const owner = outgoing.owner
-
-                if (owner.graph === graph) {
-                     if (owner.state === AtomState.UpToDate) toVisit.push(outgoing)
-                } else {
-                    const newAtom   = graph.checkout(owner)
-
-                    if (newAtom.state === AtomState.UpToDate) toVisit.push(outgoing)
-                }
+            quark.forEachOutgoing((outgoing, atom) => {
+                 if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
             })
         }
 
@@ -303,14 +310,8 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     propagateStale () {
         const graph : ChronoGraph   = this.graph
 
-        this.immutable.forEachOutgoing(quark => {
-            const owner = quark.owner
-
-            if (owner.graph === graph)
-                owner.state = AtomState.Stale
-            else {
-                graph.checkout(owner).state = AtomState.Stale
-            }
+        this.immutable.forEachOutgoing((quark, atom) => {
+            atom.state = AtomState.Stale
         })
 
         if (!this.immutable.frozen) this.immutable.clearOutgoing()

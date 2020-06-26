@@ -2,7 +2,7 @@ import { AnyConstructor } from "../../class/Mixin.js"
 import { Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "./Graph.js"
-import { Iteration } from "./Iteration.js"
+import { Iteration, ZeroIteration } from "./Iteration.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -31,9 +31,9 @@ export class Transaction extends Owner implements Immutable {
         if (this.frozen) {
             const next = this.createNext()
 
-            this.owner.setCurrent(next)
-
             next.immutable  = immutable
+
+            this.owner.setCurrent(next)
         } else {
             this.immutable  = immutable
         }
@@ -48,14 +48,14 @@ export class Transaction extends Owner implements Immutable {
     frozen      : boolean               = false
 
 
-    createNext () : this {
+    createNext (owner? : ChronoGraph) : this {
         this.freeze()
 
         const self      = this.constructor as AnyConstructor<this, typeof Transaction>
         const next      = self.new()
 
         next.previous   = this
-        next.owner      = this.owner
+        next.owner      = owner || this.owner
 
         next.immutable.previous = this.immutable
 
@@ -120,3 +120,10 @@ export class Transaction extends Owner implements Immutable {
         return instance as InstanceType<T>
     }
 }
+
+export const ZeroTransaction = new Transaction()
+
+ZeroTransaction.immutable   = ZeroIteration
+ZeroIteration.owner         = ZeroTransaction
+
+ZeroTransaction.freeze()
