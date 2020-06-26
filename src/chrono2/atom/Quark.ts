@@ -1,9 +1,9 @@
-import { AnyConstructor } from "../class/Mixin.js"
-import { getUniqable, Uniqable } from "../util/Uniqable.js"
-import { ChronoIteration } from "./ChronoIteration.js"
-import { Immutable, Owner } from "./data/Immutable.js"
-import { ChronoGraph } from "./Graph.js"
-import { chronoId, ChronoId, Identifiable } from "./Identifiable.js"
+import { AnyConstructor } from "../../class/Mixin.js"
+import { getUniqable, Uniqable } from "../../util/Uniqable.js"
+import { Iteration } from "../graph/Iteration.js"
+import { Immutable, Owner } from "../data/Immutable.js"
+import { ChronoGraph } from "../graph/Graph.js"
+import { chronoId, ChronoId, Identifiable } from "../Identifiable.js"
 import { Node } from "./Node.js"
 
 
@@ -29,7 +29,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
     // synthetic incoming edge, reading from the "proposed" value
     usedProposedOrPrevious : unknown = undefined
 
-    iteration       : ChronoIteration   = undefined
+    iteration       : Iteration   = undefined
 
 
     get level () {

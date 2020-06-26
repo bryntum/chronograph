@@ -1,27 +1,27 @@
-import { AnyConstructor } from "../class/Mixin.js"
-import { ChronoIteration } from "./ChronoIteration.js"
-import { Immutable, Owner } from "./data/Immutable.js"
+import { AnyConstructor } from "../../class/Mixin.js"
+import { Iteration } from "./Iteration.js"
+import { Immutable, Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "./Graph.js"
-import { Quark } from "./Quark.js"
+import { Quark } from "../atom/Quark.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------
-export class ChronoTransaction extends Owner implements Immutable {
+export class Transaction extends Owner implements Immutable {
     //region Transaction as Owner
-    $immutable      : ChronoIteration       = undefined
+    $immutable      : Iteration       = undefined
 
-    get immutable () : ChronoIteration {
+    get immutable () : Iteration {
         if (this.$immutable !== undefined) return this.$immutable
 
-        return this.$immutable = ChronoIteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
+        return this.$immutable = Iteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
     }
 
-    set immutable (value : ChronoIteration) {
+    set immutable (value : Iteration) {
         this.$immutable = value
     }
 
 
-    setCurrent (immutable : ChronoIteration) {
+    setCurrent (immutable : Iteration) {
         if (this.$immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
         if (this.frozen) {
@@ -47,7 +47,7 @@ export class ChronoTransaction extends Owner implements Immutable {
     createNext () : this {
         this.freeze()
 
-        const self      = this.constructor as AnyConstructor<this, typeof ChronoTransaction>
+        const self      = this.constructor as AnyConstructor<this, typeof Transaction>
         const next      = self.new()
 
         next.previous   = this
@@ -81,7 +81,7 @@ export class ChronoTransaction extends Owner implements Immutable {
     }
 
 
-    static new<T extends typeof ChronoTransaction> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
+    static new<T extends typeof Transaction> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance      = new this()
 
         Object.assign(instance, props)

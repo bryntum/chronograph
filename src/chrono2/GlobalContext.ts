@@ -1,6 +1,6 @@
 import { Base } from "../class/Base.js"
-import { ChronoGraph } from "./Graph.js"
-import { Quark } from "./Quark.js"
+import { ChronoGraph } from "./graph/Graph.js"
+import { Quark } from "./atom/Quark.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GlobalContext extends Base {

@@ -1,12 +1,12 @@
-import { Base } from "../class/Base.js"
-import { AnyConstructor } from "../class/Mixin.js"
-import { LeveledQueue } from "../util/LeveledQueue.js"
-import { getUniqable } from "../util/Uniqable.js"
-import { ChronoIteration } from "./ChronoIteration.js"
-import { ChronoTransaction } from "./ChronoTransaction.js"
-import { Box, BoxImmutable } from "./data/Box.js"
-import { Owner } from "./data/Immutable.js"
-import { Atom, AtomState, Quark } from "./Quark.js"
+import { Base } from "../../class/Base.js"
+import { AnyConstructor } from "../../class/Mixin.js"
+import { LeveledQueue } from "../../util/LeveledQueue.js"
+import { getUniqable } from "../../util/Uniqable.js"
+import { Iteration } from "./Iteration.js"
+import { Transaction } from "./Transaction.js"
+import { Box, BoxImmutable } from "../data/Box.js"
+import { Owner } from "../data/Immutable.js"
+import { Atom, AtomState, Quark } from "../atom/Quark.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -15,9 +15,9 @@ export class ChronoGraph extends Base implements Owner {
 
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
 
-    topTransaction          : ChronoTransaction     = undefined
+    topTransaction          : Transaction     = undefined
 
-    nextTransaction         : ChronoTransaction[]   = []
+    nextTransaction         : Transaction[]   = []
 
 
     previous                : this                  = undefined
@@ -26,15 +26,15 @@ export class ChronoGraph extends Base implements Owner {
 
 
     //region ChronoGraph as Owner
-    $immutable              : ChronoTransaction     = undefined
+    $immutable              : Transaction     = undefined
 
-    get immutable () : ChronoTransaction {
+    get immutable () : Transaction {
         if (this.$immutable !== undefined) return this.$immutable
 
-        return this.$immutable = ChronoTransaction.new({ owner : this })
+        return this.$immutable = Transaction.new({ owner : this })
     }
 
-    set immutable (value : ChronoTransaction) {
+    set immutable (value : Transaction) {
         this.$immutable = value
     }
 
@@ -60,12 +60,12 @@ export class ChronoGraph extends Base implements Owner {
     //endregion
 
 
-    get currentTransaction () : ChronoTransaction {
+    get currentTransaction () : Transaction {
         return this.immutable
     }
 
 
-    get currentIteration () : ChronoIteration {
+    get currentIteration () : Iteration {
         return this.immutable.immutable
     }
 
@@ -143,7 +143,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     getLatestQuarkOf<T extends Atom> (atom : T) : Quark {
-        let iteration : ChronoIteration     = this.immutable.immutable
+        let iteration : Iteration     = this.immutable.immutable
 
         const atomId    = atom.id
 
@@ -210,9 +210,9 @@ export class ChronoGraph extends Base implements Owner {
 
 
     // TODO remove the `sourceTransaction` argument
-    undoTo (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction) {
+    undoTo (sourceTransaction : Transaction, tillTransaction : Transaction) {
         let iteration           = sourceTransaction.immutable
-        const stopAt : ChronoIteration  = tillTransaction ? tillTransaction.immutable : undefined
+        const stopAt : Iteration  = tillTransaction ? tillTransaction.immutable : undefined
 
         const uniqable          = getUniqable()
 
@@ -253,9 +253,9 @@ export class ChronoGraph extends Base implements Owner {
 
 
     // TODO remove the `sourceTransaction` argument
-    redoTo (sourceTransaction : ChronoTransaction, tillTransaction : ChronoTransaction) {
+    redoTo (sourceTransaction : Transaction, tillTransaction : Transaction) {
         let iteration           = tillTransaction.immutable
-        const stopAt : ChronoIteration  = sourceTransaction.immutable
+        const stopAt : Iteration  = sourceTransaction.immutable
 
         const uniqable          = getUniqable()
 

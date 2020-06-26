@@ -1,5 +1,5 @@
 import { AnyConstructor } from "../../class/Mixin.js"
-import { Atom, Quark } from "../Quark.js"
+import { Atom, Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "./Immutable.js"
 
 //---------------------------------------------------------------------------------------------------------------------

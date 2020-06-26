@@ -1,12 +1,12 @@
-import { ChronoTransaction } from "./ChronoTransaction.js"
-import { Immutable } from "./data/Immutable.js"
-import { Quark } from "./Quark.js"
+import { Transaction } from "./Transaction.js"
+import { Immutable } from "../data/Immutable.js"
+import { Quark } from "../atom/Quark.js"
 
 let revisionIdSource = Number.MIN_SAFE_INTEGER
 
 //----------------------------------------------------------------------------------------------------------------------
-export class ChronoIteration extends Immutable {
-    owner           : ChronoTransaction
+export class Iteration extends Immutable {
+    owner           : Transaction
 
     quarks          : Quark[] = []
 
@@ -53,7 +53,7 @@ export class ChronoIteration extends Immutable {
     }
 
 
-    static new<T extends typeof ChronoIteration> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
+    static new<T extends typeof Iteration> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance = new this()
 
         Object.assign(instance, props)

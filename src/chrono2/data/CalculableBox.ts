@@ -1,9 +1,9 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { globalContext } from "../GlobalContext.js"
-import { DefaultMetaSync, Meta } from "../Meta.js"
-import { getRevision } from "../Node.js"
-import { AtomState, Quark } from "../Quark.js"
+import { DefaultMetaSync, Meta } from "../atom/Meta.js"
+import { getRevision } from "../atom/Node.js"
+import { AtomState, Quark } from "../atom/Quark.js"
 import { Box } from "./Box.js"
 
 
