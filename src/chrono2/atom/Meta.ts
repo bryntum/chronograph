@@ -1,10 +1,7 @@
-import { Identifier } from "../../chrono/Identifier.js"
 import { Base } from "../../class/Base.js"
-import { Context } from "../../primitives/Calculation.js"
 import { Equality, strictEquality } from "../../util/Helpers.js"
-import { CalculationFunction, CalculationMode, CalculationModeSync, CalculationReturnValue } from "../CalculationMode.js"
-import { EffectHandler, ProposedOrPrevious } from "../Effect.js"
-import { globalContext } from "../GlobalContext.js"
+import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
+import { EffectHandler } from "../Effect.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 /**

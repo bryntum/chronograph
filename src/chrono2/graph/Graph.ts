@@ -2,11 +2,11 @@ import { Base } from "../../class/Base.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { LeveledQueue } from "../../util/LeveledQueue.js"
 import { getUniqable } from "../../util/Uniqable.js"
-import { Iteration } from "./Iteration.js"
-import { Transaction } from "./Transaction.js"
+import { Atom, AtomState, Quark } from "../atom/Quark.js"
 import { Box, BoxImmutable } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
-import { Atom, AtomState, Quark } from "../atom/Quark.js"
+import { Iteration } from "./Iteration.js"
+import { Transaction } from "./Transaction.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------

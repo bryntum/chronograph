@@ -1,8 +1,8 @@
 import { AnyConstructor } from "../../class/Mixin.js"
-import { Iteration } from "./Iteration.js"
+import { Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "./Graph.js"
-import { Quark } from "../atom/Quark.js"
+import { Iteration } from "./Iteration.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------

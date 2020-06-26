@@ -1,6 +1,6 @@
-import { Transaction } from "./Transaction.js"
-import { Immutable } from "../data/Immutable.js"
 import { Quark } from "../atom/Quark.js"
+import { Immutable } from "../data/Immutable.js"
+import { Transaction } from "./Transaction.js"
 
 let revisionIdSource = Number.MIN_SAFE_INTEGER
 

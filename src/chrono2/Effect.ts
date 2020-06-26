@@ -1,6 +1,6 @@
 import { Base } from "../class/Base.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { CalculationModeGen, CalculationModeSync, CalculationMode, CalculationModeAsync } from "./CalculationMode.js"
+import { CalculationMode, CalculationModeAsync, CalculationModeGen, CalculationModeSync } from "./CalculationMode.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 // export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')

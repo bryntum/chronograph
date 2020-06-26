@@ -1,6 +1,6 @@
-import { globalContext } from "../GlobalContext.js"
 import { getRevision } from "../atom/Node.js"
 import { Atom, AtomState, Quark } from "../atom/Quark.js"
+import { globalContext } from "../GlobalContext.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------

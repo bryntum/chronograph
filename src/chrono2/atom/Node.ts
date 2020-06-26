@@ -1,5 +1,4 @@
-import { MIN_SMI } from "../../util/Helpers.js"
-import { compact, Uniqable } from "../../util/Uniqable.js"
+import { Uniqable } from "../../util/Uniqable.js"
 
 let revisionId = Number.MIN_SAFE_INTEGER
 

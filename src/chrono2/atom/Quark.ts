@@ -1,8 +1,8 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable, Uniqable } from "../../util/Uniqable.js"
-import { Iteration } from "../graph/Iteration.js"
 import { Immutable, Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "../graph/Graph.js"
+import { Iteration } from "../graph/Iteration.js"
 import { chronoId, ChronoId, Identifiable } from "../Identifiable.js"
 import { Node } from "./Node.js"
 
