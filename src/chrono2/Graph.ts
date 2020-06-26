@@ -201,6 +201,10 @@ export class ChronoGraph extends Base implements Owner {
 
         this.immutable          = immutable
 
+        // TODO should somehow not clear the `nextTransaction` for the resolution of lazy atoms?
+        // the use case is - user "undo", then read some lazy values - that creates "new history" and clears the
+        // `nextTransaction` axis making "redo" impossible,
+        // however, from the user perspective s/he only reads the data, which should be pure
         this.nextTransaction    = []
     }
     //endregion
