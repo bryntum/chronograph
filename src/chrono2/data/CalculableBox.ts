@@ -19,7 +19,8 @@ export class CalculableBox<V> extends Box<V> {
 
             this.calculation    = config.calculation
             this.equality       = config.equality
-            this.lazy           = config.lazy
+            this.lazy           = config.lazy !== undefined ? config.lazy : true
+            // TODO not needed explicitly (can defined based on the type of the `calculation` function?
             this.sync           = config.sync
         }
     }

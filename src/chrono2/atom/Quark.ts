@@ -193,6 +193,9 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     level               : number        = 0
     lazy                : boolean       = false
 
+    // same value for all branches
+    identity            : this          = this
+
 
     buildDefaultImmutable () : Quark {
         throw new Error("Abstract method called")
@@ -212,6 +215,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         const clone     = new cls()
 
         clone.id        = this.id
+        clone.identity  = this.identity
 
         return clone
     }

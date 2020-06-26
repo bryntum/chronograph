@@ -1,4 +1,5 @@
-import { Quark } from "../atom/Quark.js"
+import { getUniqable } from "../../util/Uniqable.js"
+import { Atom, Quark } from "../atom/Quark.js"
 import { Immutable } from "../data/Immutable.js"
 import { Transaction } from "./Transaction.js"
 
@@ -8,9 +9,11 @@ let revisionIdSource = Number.MIN_SAFE_INTEGER
 export class Iteration extends Immutable {
     owner           : Transaction
 
-    quarks          : Quark[] = []
+    quarks          : Quark[]           = []
 
-    revision        : Revision = revisionIdSource++
+    revision        : Revision          = revisionIdSource++
+
+    refCount        : number            = 0
 
     // quarks      : Map<ChronoId, Quark> = new Map()
     //
@@ -28,6 +31,45 @@ export class Iteration extends Immutable {
     //
     //     return null
     // }
+
+
+    mark () {
+        this.refCount++
+    }
+
+
+    unmark () {
+        this.refCount--
+    }
+
+
+    forEveryQuarkTill (stopAt : Iteration, onAtomOccurrence : (quark : Quark, first : boolean) => any) {
+        let iteration           = this
+
+        const uniqable          = getUniqable()
+
+        while (true) {
+            const quarks        = iteration.quarks
+
+            for (let i = 0; i < quarks.length; i++) {
+                const quark     = quarks[ i ]
+                const atom      = quark.owner
+
+                if (atom.identity.uniqable !== uniqable) {
+                    atom.identity.uniqable      = uniqable
+
+                    onAtomOccurrence(quark, true)
+                } else {
+                    onAtomOccurrence(quark, false)
+                }
+            }
+
+            iteration           = iteration.previous
+
+            if (iteration === stopAt) break
+        }
+    }
+
 
 
     addQuark (quark : Quark) {

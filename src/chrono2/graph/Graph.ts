@@ -15,8 +15,6 @@ export class ChronoGraph extends Base implements Owner {
 
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
 
-    topTransaction          : Transaction     = undefined
-
     nextTransaction         : Transaction[]   = []
 
 
@@ -34,8 +32,13 @@ export class ChronoGraph extends Base implements Owner {
         return this.$immutable = Transaction.new({ owner : this })
     }
 
+    // this is assignment "within" the undo/redo history, keeps the redo information
     set immutable (value : Transaction) {
+        this.unmark()
+
         this.$immutable = value
+
+        this.mark()
     }
 
 
@@ -46,18 +49,51 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    // this is assignment of the new transaction, clears the redo information
     setCurrent (immutable : this[ 'immutable' ]) {
         if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
 
-        this.immutable          = immutable
+        this.unmark()
+
+        this.$immutable         = immutable
 
         // TODO should somehow not clear the `nextTransaction` for the resolution of lazy atoms?
         // the use case is - user "undo", then read some lazy values - that creates "new history" and clears the
         // `nextTransaction` axis making "redo" impossible,
         // however, from the user perspective s/he only reads the data, which should be pure
         this.nextTransaction    = []
+
+        this.mark()
     }
     //endregion
+
+
+    sweep () {
+        let lastReachableTransaction
+
+        this.forEveryReachableTransaction(transaction => lastReachableTransaction = transaction)
+    }
+
+
+    mark () {
+        this.forEveryReachableTransaction(transaction => transaction.mark())
+    }
+
+
+    unmark () {
+        this.forEveryReachableTransaction(transaction => transaction.unmark())
+    }
+
+
+    forEveryReachableTransaction (func : (transaction : Transaction) => any) {
+        let topTransaction      = this.nextTransaction.length > 0 ? this.nextTransaction[ 0 ] : this.$immutable
+
+        for (let i = 0; topTransaction && i < this.historyLimit; i++) {
+            func(topTransaction)
+
+            topTransaction      = topTransaction.previous
+        }
+    }
 
 
     get currentTransaction () : Transaction {
@@ -70,10 +106,29 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    calculateTransitionsSync () {
+        const queue                             = this.stack
+
+        while (queue.length) {
+            this.calculateTransitionsStackSync(queue.takeLowestLevel())
+        }
+    }
+
+
+    calculateTransitionsStackSync (stack : Quark[]) {
+        for (let i = 0; i < stack.length; i++) {
+            const atom = stack[ i ].owner as Box<any>
+
+            if (atom.state !== AtomState.UpToDate) atom.read()
+        }
+    }
+
+
     commit () {
         this.calculateTransitionsSync()
 
-        this.immutable.freeze()
+        // for `historyLimit === 0` there's no freezing - no history maintained
+        if (this.historyLimit > 0) this.immutable.freeze()
     }
 
 
@@ -110,13 +165,16 @@ export class ChronoGraph extends Base implements Owner {
 
 
     branch () : this {
-        this.immutable.freeze()
+        // we freeze current _iteration_, not the whole _transaction_
+        this.immutable.immutable.freeze()
 
         const self      = this.constructor as AnyConstructor<this, typeof ChronoGraph>
         const next      = new self()
 
-        next.previous   = this
-        next.immutable  = this.immutable
+        next.previous               = this
+        next.immutable.immutable    = this.immutable.immutable
+
+        next.mark()
 
         return next
     }
@@ -161,24 +219,6 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    calculateTransitionsSync () {
-        const queue                             = this.stack
-
-        while (queue.length) {
-            this.calculateTransitionsStackSync(queue.takeLowestLevel())
-        }
-    }
-
-
-    calculateTransitionsStackSync (stack : Quark[]) {
-        for (let i = 0; i < stack.length; i++) {
-            const atom = stack[ i ].owner as Box<any>
-
-            if (atom.state !== AtomState.UpToDate) atom.read()
-        }
-    }
-
-
     addAtom (atom : Atom) {
         atom.enterGraph(this)
 
@@ -211,86 +251,44 @@ export class ChronoGraph extends Base implements Owner {
 
     // TODO remove the `sourceTransaction` argument
     undoTo (sourceTransaction : Transaction, tillTransaction : Transaction) {
-        let iteration           = sourceTransaction.immutable
-        const stopAt : Iteration  = tillTransaction ? tillTransaction.immutable : undefined
-
-        const uniqable          = getUniqable()
-
         const atoms : Atom[]    = []
 
-        while (true) {
-            const quarks        = iteration.quarks
+        sourceTransaction.immutable.forEveryQuarkTill(tillTransaction ? tillTransaction.immutable : undefined, (quark, first) => {
+            if (first) atoms.push(quark.owner)
 
-            for (let i = 0; i < quarks.length; i++) {
-                const quark     = quarks[ i ]
-                const atom      = quark.owner
+            quark.owner.identity.uniqableBox    = quark
+        })
 
-                if (atom.uniqable !== uniqable) {
-                    atom.uniqable       = uniqable
-
-                    atom.uniqableBox    = quark
-
-                    atoms.push(atom)
-                } else {
-                    atom.uniqableBox    = quark
-                }
-            }
-
-            iteration           = iteration.previous
-
-            if (iteration === stopAt) break
-        }
-
+        // TODO becnhmark if one more pass through the `forEveryQuarkTill` is faster
+        // than memoizing atoms in array
         for (let i = 0; i < atoms.length; i++) {
             const atom          = atoms[ i ]
-            const deepestQuark  = atom.uniqableBox as Quark
+            const deepestQuark  = atom.identity.uniqableBox as Quark
 
             atom.updateQuark(deepestQuark.previous)
-
-            atom.uniqableBox    = undefined
         }
     }
 
 
     // TODO remove the `sourceTransaction` argument
     redoTo (sourceTransaction : Transaction, tillTransaction : Transaction) {
-        let iteration           = tillTransaction.immutable
-        const stopAt : Iteration  = sourceTransaction.immutable
-
-        const uniqable          = getUniqable()
-
         const atoms : Atom[]    = []
 
-        while (true) {
-            const quarks        = iteration.quarks
+        tillTransaction.immutable.forEveryQuarkTill(sourceTransaction.immutable, (quark, first) => {
+            if (first) {
+                atoms.push(quark.owner)
 
-            for (let i = 0; i < quarks.length; i++) {
-                const quark     = quarks[ i ]
-                const atom      = quark.owner
-
-                if (atom.uniqable !== uniqable) {
-                    atom.uniqable       = uniqable
-
-                    atom.uniqableBox    = quark
-
-                    atoms.push(atom)
-                } else {
-                    // atom.uniqableBox    = quark
-                }
+                quark.owner.identity.uniqableBox    = quark
             }
+        })
 
-            iteration           = iteration.previous
-
-            if (iteration === stopAt) break
-        }
-
+        // TODO becnhmark if one more pass through the `forEveryQuarkTill` is faster
+        // than memoizing atoms in array
         for (let i = 0; i < atoms.length; i++) {
             const atom          = atoms[ i ]
-            const deepestQuark  = atom.uniqableBox as Quark
+            const deepestQuark  = atom.identity.uniqableBox as Quark
 
             atom.updateQuark(deepestQuark)
-
-            atom.uniqableBox    = undefined
         }
     }
 

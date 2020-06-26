@@ -7,6 +7,10 @@ import { Iteration } from "./Iteration.js"
 
 //----------------------------------------------------------------------------------------------------------------------
 export class Transaction extends Owner implements Immutable {
+
+    refCount        : number            = 0
+
+
     //region Transaction as Owner
     $immutable      : Iteration       = undefined
 
@@ -67,6 +71,33 @@ export class Transaction extends Owner implements Immutable {
         this.frozen = true
     }
     //endregion
+
+
+    forEveryIteration (func : (iteration : Iteration) => any) {
+        let iteration       = this.immutable
+
+        const stopAt        = this.previous ? this.previous.immutable : undefined
+
+        while (iteration && iteration !== stopAt) {
+            func(iteration)
+
+            iteration      = iteration.previous
+        }
+    }
+
+
+    mark () {
+        this.refCount++
+
+        this.forEveryIteration(iteration => iteration.mark())
+    }
+
+
+    unmark () {
+        this.refCount--
+
+        this.forEveryIteration(iteration => iteration.unmark())
+    }
 
 
     immutableForWrite () : this[ 'immutable' ] {
