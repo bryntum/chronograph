@@ -1,5 +1,5 @@
-import { Box } from "../../src/chrono2/data/Box.js"
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
+import { Box } from "../../src/chrono2/data/Box.js"
 
 declare const StartTest : any
 
