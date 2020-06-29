@@ -1,4 +1,5 @@
-import { Atom, Quark } from "../atom/Quark.js"
+import { Atom } from "../atom/Atom.js"
+import { Quark } from "../atom/Quark.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type RecordDefinition = object

@@ -1,9 +1,8 @@
 import { AnyConstructor } from "../../class/Mixin.js"
-import { getUniqable, Uniqable } from "../../util/Uniqable.js"
-import { Immutable, Owner } from "../data/Immutable.js"
-import { ChronoGraph } from "../graph/Graph.js"
+import { getUniqable } from "../../util/Uniqable.js"
+import { Immutable } from "../data/Immutable.js"
 import { Iteration } from "../graph/Iteration.js"
-import { chronoId, ChronoId, Identifiable } from "../Identifiable.js"
+import { Atom } from "./Atom.js"
 import { Node } from "./Node.js"
 
 
@@ -89,7 +88,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
                         if (outgoingOwner.immutable.revision === outgoingRevision) {
                             identity.uniqable       = uniqable2
-                            identity.uniqableBox    = outgoingOwner
+                            identity.uniqableBox2   = outgoingOwner
                         } else
                             identity.uniqable       = uniqable
                     }
@@ -104,7 +103,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                     if (identity.uniqable === uniqable2) {
                         identity.uniqable = uniqable
 
-                        func(outgoingQuark, identity.uniqableBox)
+                        func(outgoingQuark, identity.uniqableBox2)
                     }
                 }
             }
@@ -174,146 +173,5 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                 outgoingRev.length      = uniquePos
             }
         }
-    }
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class Atom extends Owner implements Identifiable, Uniqable {
-    id                  : ChronoId      = chronoId()
-    name                : string        = undefined
-
-    uniqable            : number        = Number.MIN_SAFE_INTEGER
-    uniqable2           : number        = Number.MIN_SAFE_INTEGER
-    // uniqable3           : number        = Number.MIN_SAFE_INTEGER
-
-    uniqableBox         : any           = undefined
-
-    immutable           : Quark         = undefined
-
-    state               : AtomState     = AtomState.Empty
-
-    graph               : ChronoGraph   = undefined
-
-
-    level               : number        = 0
-    lazy                : boolean       = false
-
-    // same value for all branches
-    identity            : this          = this
-
-
-    buildDefaultImmutable () : Quark {
-        throw new Error("Abstract method called")
-    }
-
-
-    enterGraph (graph : ChronoGraph) {
-        if (this.graph && this.graph !== graph) throw new Error("Can only belong to a single graph for now")
-
-        this.graph                  = graph
-    }
-
-
-    setCurrent (immutable : this[ 'immutable' ]) {
-        if (this.immutable && immutable && immutable.previous !== this.immutable) throw new Error("Invalid state thread")
-
-        this.immutable = immutable
-
-        if (this.graph) this.graph.registerQuark(immutable)
-    }
-
-
-    clone () : this {
-        const cls       = this.constructor as AnyConstructor<this, typeof Atom>
-
-        const clone     = new cls()
-
-        clone.id        = this.id
-        clone.identity  = this.identity
-
-        return clone
-    }
-
-
-    leaveGraph (graph : ChronoGraph) {
-        if (this.graph !== graph) throw new Error("Atom not in graph")
-
-        this.graph      = undefined
-    }
-
-
-    freeze () {
-        this.immutable.freeze()
-    }
-
-
-    // fromUpToDateToPossiblyStale () {
-    //
-    // }
-
-    updateQuark (quark : Quark) {
-        // TODO
-        // @ts-ignore
-        const newValue      = quark.readRaw()
-        // TODO
-        // @ts-ignore
-        const oldValue      = this.immutable.readRaw()
-
-        // TODO
-        // @ts-ignore
-        if (this.equality && this.equality(newValue, oldValue)) {
-            this.immutable  = quark
-            this.state      = newValue !== undefined ? AtomState.UpToDate : AtomState.Stale
-
-            return
-        }
-
-        // TODO here it should only propagate outside of the graph - atoms in the graph
-        // should be reset to the previous state, directly to the UpToDate state
-        this.propagatePossiblyStale()
-        this.propagateStale()
-
-        this.immutable  = quark
-        this.state      = newValue !== undefined ? AtomState.UpToDate : AtomState.Stale
-    }
-
-
-    propagatePossiblyStale () {
-        // TODO: also benchmark the following on big graphs
-        //         const toVisit : Quark[]         = new Array(1000)
-        //
-        //         toVisit[ 0 ] = this.immutable
-
-        const toVisit : Quark[]         = [ this.immutable ]
-        const graph : ChronoGraph       = this.graph
-
-        while (toVisit.length) {
-            const quark     = toVisit.pop()
-
-            const atom      = quark.owner
-
-            atom.state      = AtomState.PossiblyStale
-
-            if (atom.graph && !atom.lazy) {
-                atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
-            }
-
-            quark.forEachOutgoing((outgoing, atom) => {
-                 if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
-            })
-        }
-
-    }
-
-
-    propagateStale () {
-        const graph : ChronoGraph   = this.graph
-
-        this.immutable.forEachOutgoing((quark, atom) => {
-            atom.state = AtomState.Stale
-        })
-
-        if (!this.immutable.frozen) this.immutable.clearOutgoing()
     }
 }

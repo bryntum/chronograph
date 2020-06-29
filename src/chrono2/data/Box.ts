@@ -1,5 +1,6 @@
+import { Atom } from "../atom/Atom.js"
 import { getRevision } from "../atom/Node.js"
-import { Atom, AtomState, Quark } from "../atom/Quark.js"
+import { AtomState, Quark } from "../atom/Quark.js"
 import { globalContext } from "../GlobalContext.js"
 
 
@@ -78,7 +79,7 @@ export class Box<V> extends Atom {
 
 
     // this property should be a "real" property, not an accessor, to be optimizable by v8
-    immutable              : BoxImmutable     = this.buildDefaultImmutable()
+    immutable              : BoxImmutable
 
 
     buildDefaultImmutable () : BoxImmutable {

@@ -2,7 +2,8 @@ import { Base } from "../../class/Base.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { LeveledQueue } from "../../util/LeveledQueue.js"
 import { getUniqable } from "../../util/Uniqable.js"
-import { Atom, AtomState, Quark } from "../atom/Quark.js"
+import { Atom } from "../atom/Atom.js"
+import { AtomState, Quark } from "../atom/Quark.js"
 import { Box, BoxImmutable } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
 import { Iteration } from "./Iteration.js"
@@ -128,7 +129,8 @@ export class ChronoGraph extends Base implements Owner {
         this.calculateTransitionsSync()
 
         // for `historyLimit === 0` there's no freezing - no history maintained
-        if (this.historyLimit > 0) this.immutable.freeze()
+        // if (this.historyLimit > 0)
+        this.immutable.freeze()
     }
 
 
@@ -277,6 +279,8 @@ export class ChronoGraph extends Base implements Owner {
             const deepestQuark  = atom.identity.uniqableBox as Quark
 
             this.checkout(atom).updateQuark(deepestQuark.previous)
+
+            atom.identity.uniqableBox = undefined
         }
     }
 
@@ -300,6 +304,8 @@ export class ChronoGraph extends Base implements Owner {
             const deepestQuark  = atom.identity.uniqableBox as Quark
 
             this.checkout(atom).updateQuark(deepestQuark)
+
+            atom.identity.uniqableBox   = undefined
         }
     }
 
