@@ -66,7 +66,7 @@ Ask questions in the [forum](https://bryntum.com/forum/viewforum.php?f=53)
 
 Chat live at [Discord](https://discord.gg/jErxFxY)
 
-Follow the [development blog](https://medium.com/chronograph)
+Follow the [development blog](https://dev.to/chronograph/)
 
 
 COPYRIGHT AND LICENSE
