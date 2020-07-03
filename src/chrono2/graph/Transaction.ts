@@ -8,20 +8,21 @@ import { Iteration, ZeroIteration } from "./Iteration.js"
 //----------------------------------------------------------------------------------------------------------------------
 export class Transaction extends Owner implements Immutable {
 
-    refCount        : number            = 0
-
-
     //region Transaction as Owner
     $immutable      : Iteration       = undefined
 
     get immutable () : Iteration {
         if (this.$immutable !== undefined) return this.$immutable
 
-        return this.$immutable = Iteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
+        // assigns to `immutable` w/o `$` to go through the setter
+        return this.immutable = Iteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
     }
 
-    set immutable (value : Iteration) {
-        this.$immutable = value
+    set immutable (immutable : Iteration) {
+        this.$immutable = immutable
+
+        // immutable is `undefined` for initial assignment in constructor
+        immutable && immutable.refCount++
     }
 
 
@@ -86,17 +87,13 @@ export class Transaction extends Owner implements Immutable {
     }
 
 
-    mark () {
-        this.refCount++
-
-        this.forEveryIteration(iteration => iteration.mark())
+    mark (reachable : boolean) {
+        this.forEveryIteration(iteration => iteration.mark(reachable))
     }
 
 
-    unmark () {
-        this.refCount--
-
-        this.forEveryIteration(iteration => iteration.unmark())
+    unmark (reachable : boolean) {
+        this.forEveryIteration(iteration => iteration.unmark(reachable))
     }
 
 

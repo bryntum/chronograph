@@ -1,3 +1,4 @@
+import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { Quark } from "../atom/Quark.js"
 import { Immutable } from "../data/Immutable.js"
@@ -10,7 +11,11 @@ export class Iteration extends Immutable {
 
     quarks          : Quark[]           = []
 
+    // incremented by any owning graph, at any depth
     refCount        : number            = 0
+    // incremented by any owning graph, at the depth of its `historyLimit`
+    reachCount      : number            = 0
+
 
     // quarks      : Map<ChronoId, Quark> = new Map()
     //
@@ -30,13 +35,17 @@ export class Iteration extends Immutable {
     // }
 
 
-    mark () {
+    mark (reachable : boolean) {
         this.refCount++
+
+        if (reachable) this.reachCount++
     }
 
 
-    unmark () {
+    unmark (reachable : boolean) {
         this.refCount--
+
+        if (reachable) this.reachCount--
     }
 
 
@@ -68,6 +77,17 @@ export class Iteration extends Immutable {
     }
 
 
+    clone () : this {
+        const cls       = this.constructor as AnyConstructor<this, typeof Iteration>
+
+        const clone     = new cls()
+
+        clone.quarks    = this.quarks.slice()
+        clone.previous  = this.previous
+
+        return clone
+    }
+
 
     addQuark (quark : Quark) {
         // TODO setup dev/prod builds
@@ -92,6 +112,36 @@ export class Iteration extends Immutable {
     }
 
 
+    consume (another : Iteration) : Iteration {
+        if (this.previous) throw new Error("Should be only called on last iteration")
+
+        const target    = this.reachCount === 0 ? this : this.clone()
+
+        another.forEveryQuarkTill(this, (quark, first) => {
+            if (first) {
+                target.addQuark(quark)
+            }
+        })
+
+        let iteration       = another
+
+        const stopAt        = this
+
+        while (iteration && iteration !== stopAt) {
+            if (iteration.reachCount === 0) iteration.destroy()
+
+            iteration      = iteration.previous
+        }
+
+        return target
+    }
+
+
+    destroy () {
+        this.quarks     = undefined
+    }
+
+
     static new<T extends typeof Iteration> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
         const instance = new this()
 
@@ -101,4 +151,34 @@ export class Iteration extends Immutable {
     }
 }
 
-export const ZeroIteration = new Iteration()
+
+//----------------------------------------------------------------------------------------------------------------------
+export class IterationShreding extends Iteration {
+    quarksShreding          : Map<number, Quark> = new Map()
+
+
+    clone () : this {
+        const clone             = super.clone()
+
+        clone.quarksShreding    = new Map(this.quarksShreding)
+
+        return clone
+    }
+
+
+    destroy () {
+        super.destroy()
+
+        this.quarksShreding     = undefined
+    }
+
+
+    addQuark (quark : Quark) {
+        this.quarksShreding.set(quark.owner.id, quark)
+    }
+}
+
+export const ZeroIteration = new IterationShreding()
+
+// global reference
+ZeroIteration.refCount++

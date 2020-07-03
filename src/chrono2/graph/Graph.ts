@@ -5,12 +5,13 @@ import { Atom } from "../atom/Atom.js"
 import { AtomState, Quark } from "../atom/Quark.js"
 import { Box, BoxImmutable } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
-import { Iteration } from "./Iteration.js"
+import { Iteration, ZeroIteration } from "./Iteration.js"
 import { Transaction, ZeroTransaction } from "./Transaction.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner {
+    // how many frozen transactions to keep in memory
     historyLimit            : number                = 0
 
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
@@ -20,11 +21,29 @@ export class ChronoGraph extends Base implements Owner {
 
     previous                : this                  = undefined
 
-    atomsById               : { [key : number] : Atom }   = Object.create(null)
+    nextCache               : Map<Transaction, Transaction>     = new Map()
+    historySource           : Iteration             = ZeroIteration
+
+    atomsById               : Map<number, Atom>     = new Map()
 
 
     //region ChronoGraph as Owner
     $immutable              : Transaction     = ZeroTransaction
+
+    garbageCollection       : 'eager' | 'batched' | 'onidle'    = 'batched'
+
+
+    initialize<T extends ChronoGraph> (props? : Partial<T>) {
+        super.initialize(props)
+
+        this.mark()
+    }
+
+
+    destroy () {
+        this.unmark()
+    }
+
 
     get immutable () : Transaction {
         if (this.$immutable !== undefined) return this.$immutable
@@ -64,32 +83,57 @@ export class ChronoGraph extends Base implements Owner {
         this.nextTransaction    = []
 
         this.mark()
+        this.sweep()
     }
     //endregion
 
 
-    sweep () {
-        let lastReachableTransaction
+    getLastIteration () : Iteration {
+        let iteration : Iteration     = this.immutable.immutable
 
-        this.forEveryReachableTransaction(transaction => lastReachableTransaction = transaction)
+        while (iteration) {
+            const previous  = iteration.previous
+
+            if (!previous) return iteration
+
+            iteration   = previous
+        }
+
+        return undefined
+    }
+
+
+    sweep () {
+        let firstUnreachableTransaction : Transaction
+
+        this.forEveryTransactionInHistory((transaction, reachable) => {
+            if (!reachable && !firstUnreachableTransaction) firstUnreachableTransaction = transaction
+        })
+
+        const shredingIteration = this.getLastIteration()
+
+        if (firstUnreachableTransaction && firstUnreachableTransaction.$immutable !== shredingIteration) {
+            firstUnreachableTransaction.$immutable  = shredingIteration.consume(firstUnreachableTransaction.immutable)
+            firstUnreachableTransaction.previous    = undefined
+        }
     }
 
 
     mark () {
-        this.forEveryReachableTransaction(transaction => transaction.mark())
+        this.forEveryTransactionInHistory((transaction, reachable) => transaction.mark(reachable))
     }
 
 
     unmark () {
-        this.forEveryReachableTransaction(transaction => transaction.unmark())
+        this.forEveryTransactionInHistory((transaction, reachable) => transaction.unmark(reachable))
     }
 
 
-    forEveryReachableTransaction (func : (transaction : Transaction) => any) {
+    forEveryTransactionInHistory (func : (transaction : Transaction, reachable : boolean) => any) {
         let transaction         = this.nextTransaction.length > 0 ? this.nextTransaction[ 0 ] : this.$immutable
 
-        for (let i = 0; transaction && i < this.historyLimit; i++) {
-            func(transaction)
+        for (let i = 0; transaction; i++) {
+            func(transaction, i <= this.historyLimit)
 
             transaction      = transaction.previous
         }
@@ -127,9 +171,7 @@ export class ChronoGraph extends Base implements Owner {
     commit () {
         this.calculateTransitionsSync()
 
-        // for `historyLimit === 0` there's no freezing - no history maintained
-        // if (this.historyLimit > 0)
-        this.immutable.freeze()
+        if (this.historyLimit > 0) this.immutable.freeze()
     }
 
 
@@ -171,20 +213,18 @@ export class ChronoGraph extends Base implements Owner {
         // we freeze current _iteration_, not the whole _transaction_
         this.currentIteration.freeze()
 
-        const self      = this.constructor as AnyConstructor<this, typeof ChronoGraph>
-        const next      = self.new(config)
+        const self          = this.constructor as AnyConstructor<this, typeof ChronoGraph>
+        const branch        = self.new(config)
 
-        next.previous               = this
+        branch.previous     = this
 
-        const partialTransaction    = this.currentTransaction.previous.createNext(next)
+        const partialTransaction        = this.currentTransaction.previous.createNext(branch)
 
-        partialTransaction.immutable = this.currentIteration
+        partialTransaction.immutable    = this.currentIteration.createNext(partialTransaction)
 
-        partialTransaction.freeze()
+        branch.immutable                = partialTransaction
 
-        next.immutable              = partialTransaction
-
-        return next
+        return branch
     }
 
 
@@ -193,7 +233,7 @@ export class ChronoGraph extends Base implements Owner {
 
         if (!this.previous) throw new Error("Graph is not a branch - can not checkout")
 
-        const existingAtom  = this.atomsById[ atom.id ]
+        const existingAtom  = this.atomsById.get(atom.id)
 
         if (existingAtom !== undefined) return existingAtom as T
 
@@ -208,7 +248,9 @@ export class ChronoGraph extends Base implements Owner {
 
         if ((immutable as BoxImmutable).readRaw() !== undefined) clone.state = AtomState.UpToDate
 
-        return this.atomsById[ clone.id ]  = clone
+        this.atomsById.set(clone.id, clone)
+
+        return clone
     }
 
 
@@ -265,11 +307,15 @@ export class ChronoGraph extends Base implements Owner {
     undoTo (sourceTransaction : Transaction, tillTransaction : Transaction) {
         const atoms : Atom[]    = []
 
-        sourceTransaction.immutable.forEveryQuarkTill(tillTransaction ? tillTransaction.immutable : undefined, (quark, first) => {
-            if (first) atoms.push(quark.owner)
+        sourceTransaction.immutable.forEveryQuarkTill(
+            tillTransaction ? tillTransaction.immutable : undefined,
 
-            quark.owner.identity.uniqableBox    = quark
-        })
+            (quark, first) => {
+                if (first) atoms.push(quark.owner)
+
+                quark.owner.identity.uniqableBox    = quark
+            }
+        )
 
         // TODO becnhmark if one more pass through the `forEveryQuarkTill` is faster
         // than memoizing atoms in array
@@ -288,13 +334,17 @@ export class ChronoGraph extends Base implements Owner {
     redoTo (sourceTransaction : Transaction, tillTransaction : Transaction) {
         const atoms : Atom[]    = []
 
-        tillTransaction.immutable.forEveryQuarkTill(sourceTransaction.immutable, (quark, first) => {
-            if (first) {
-                atoms.push(quark.owner)
+        tillTransaction.immutable.forEveryQuarkTill(
+            sourceTransaction.immutable,
 
-                quark.owner.identity.uniqableBox    = quark
+            (quark, first) => {
+                if (first) {
+                    atoms.push(quark.owner)
+
+                    quark.owner.identity.uniqableBox    = quark
+                }
             }
-        })
+        )
 
         // TODO becnhmark if one more pass through the `forEveryQuarkTill` is faster
         // than memoizing atoms in array

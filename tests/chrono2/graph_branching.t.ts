@@ -450,7 +450,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Undo/redo should work in the branch', async t => {
+    t.it('Undo/redo should work in the branch', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new()
 
         const i1            = new Box(0, 'i1')
