@@ -7,7 +7,7 @@ declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Should garbage collect unneeded revisions', async t => {
+    t.it('Should not create transaction history for `historyLimit === 0`', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
         const box1      = new Box(0)
@@ -57,6 +57,13 @@ StartTest(t => {
 
         // ----------------
         box1.write(2)
+
+        graph.commit()
+
+        t.is(graph.currentTransaction.previous.previous.previous, undefined, "No extra revisions")
+
+        // ----------------
+        box1.write(3)
 
         graph.commit()
 

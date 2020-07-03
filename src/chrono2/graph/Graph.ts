@@ -8,6 +8,9 @@ import { Owner } from "../data/Immutable.js"
 import { Iteration, ZeroIteration } from "./Iteration.js"
 import { Transaction, ZeroTransaction } from "./Transaction.js"
 
+//----------------------------------------------------------------------------------------------------------------------
+export type GarbageCollectionStrategy = 'eager' | 'batched' | 'on_idle'
+
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner {
@@ -30,7 +33,7 @@ export class ChronoGraph extends Base implements Owner {
     //region ChronoGraph as Owner
     $immutable              : Transaction     = ZeroTransaction
 
-    garbageCollection       : 'eager' | 'batched' | 'onidle'    = 'batched'
+    garbageCollection       : GarbageCollectionStrategy     = 'batched'
 
 
     initialize<T extends ChronoGraph> (props? : Partial<T>) {
@@ -96,7 +99,7 @@ export class ChronoGraph extends Base implements Owner {
 
             if (!previous) return iteration
 
-            iteration   = previous
+            iteration       = previous
         }
 
         return undefined
@@ -105,16 +108,24 @@ export class ChronoGraph extends Base implements Owner {
 
     sweep () {
         let firstUnreachableTransaction : Transaction
+        let lastReachableTransaction : Transaction
 
         this.forEveryTransactionInHistory((transaction, reachable) => {
-            if (!reachable && !firstUnreachableTransaction) firstUnreachableTransaction = transaction
+            if (reachable)
+                lastReachableTransaction = transaction
+            else
+                if (!firstUnreachableTransaction) firstUnreachableTransaction = transaction
         })
 
-        const shredingIteration = this.getLastIteration()
+        const lastReachableIteration    = lastReachableTransaction.getLastIteration()
+
+        const shredingIteration         = this.getLastIteration()
 
         if (firstUnreachableTransaction && firstUnreachableTransaction.$immutable !== shredingIteration) {
             firstUnreachableTransaction.$immutable  = shredingIteration.consume(firstUnreachableTransaction.immutable)
             firstUnreachableTransaction.previous    = undefined
+
+            lastReachableIteration.previous         = firstUnreachableTransaction.$immutable
         }
     }
 

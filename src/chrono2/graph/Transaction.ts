@@ -14,15 +14,11 @@ export class Transaction extends Owner implements Immutable {
     get immutable () : Iteration {
         if (this.$immutable !== undefined) return this.$immutable
 
-        // assigns to `immutable` w/o `$` to go through the setter
-        return this.immutable = Iteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
+        return this.$immutable = Iteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
     }
 
     set immutable (immutable : Iteration) {
         this.$immutable = immutable
-
-        // immutable is `undefined` for initial assignment in constructor
-        immutable && immutable.refCount++
     }
 
 
@@ -72,6 +68,23 @@ export class Transaction extends Owner implements Immutable {
         this.frozen = true
     }
     //endregion
+
+
+    getLastIteration () : Iteration {
+        let iteration       = this.immutable
+
+        const stopAt        = this.previous ? this.previous.immutable : undefined
+
+        while (iteration) {
+            const previous  = iteration.previous
+
+            if (previous === stopAt) break
+
+            iteration      = previous
+        }
+
+        return iteration
+    }
 
 
     forEveryIteration (func : (iteration : Iteration) => any) {

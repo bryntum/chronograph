@@ -139,6 +139,7 @@ export class Iteration extends Immutable {
 
     destroy () {
         this.quarks     = undefined
+        this.previous   = undefined
     }
 
 
