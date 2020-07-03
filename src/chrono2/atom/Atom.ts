@@ -59,6 +59,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
         clone.id        = this.id
         clone.identity  = this.identity
+        clone.name      = this.name
 
         return clone
     }

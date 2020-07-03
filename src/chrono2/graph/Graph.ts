@@ -24,7 +24,7 @@ export class ChronoGraph extends Base implements Owner {
 
     previous                : this                  = undefined
 
-    nextCache               : Map<Transaction, Transaction>     = new Map()
+    // nextCache               : Map<Transaction, Transaction>     = new Map()
     // historySource           : Iteration             = ZeroIteration
 
     atomsById               : Map<number, Atom>     = new Map()

@@ -476,7 +476,7 @@ StartTest(t => {
         t.is(counter, 1)
 
         // ----------------
-        const graph2        = graph1.branch({ historyLimit : 1 })
+        const graph2        = graph1.branch({ historyLimit : 2 })
         const $             = node => graph2.checkout(node)
 
         // ----------------
@@ -487,6 +487,8 @@ StartTest(t => {
         t.is(counter, 2)
 
         // ----------------
+        graph2.commit()
+
         counter = 0
 
         $(i1).write(10)
