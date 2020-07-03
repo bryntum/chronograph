@@ -25,7 +25,7 @@ export class ChronoGraph extends Base implements Owner {
     previous                : this                  = undefined
 
     nextCache               : Map<Transaction, Transaction>     = new Map()
-    historySource           : Iteration             = ZeroIteration
+    // historySource           : Iteration             = ZeroIteration
 
     atomsById               : Map<number, Atom>     = new Map()
 
@@ -34,6 +34,12 @@ export class ChronoGraph extends Base implements Owner {
     $immutable              : Transaction     = ZeroTransaction
 
     garbageCollection       : GarbageCollectionStrategy     = 'eager'
+
+    // special flag only used for `historyLimit === 0` case
+    // indicates the current transaction is "frozen"
+    // we use it to avoid unnecessary freezing / thawing of the transaction
+    // it is handling the "reject immediately after commit should do nothing" condition
+    frozen                  : boolean               = false
 
 
     initialize<T extends ChronoGraph> (props? : Partial<T>) {
@@ -182,13 +188,17 @@ export class ChronoGraph extends Base implements Owner {
     commit () {
         this.calculateTransitionsSync()
 
-        if (this.historyLimit > 0) this.immutable.freeze()
+        if (this.historyLimit > 0) {
+            this.immutable.freeze()
+        } else {
+            this.frozen = true
+        }
     }
 
 
     reject () {
         // nothing to reject
-        if (this.immutable.frozen) return
+        if (this.frozen || this.immutable.frozen) return
 
         this.undoTo(this.immutable, this.immutable.previous)
 

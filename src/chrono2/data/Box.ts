@@ -114,6 +114,8 @@ export class Box<V> extends Atom {
 
         if (value === this.immutable.read()) return
 
+        if (this.graph) this.graph.frozen   = false
+
         this.propagatePossiblyStale()
         this.propagateStale()
 

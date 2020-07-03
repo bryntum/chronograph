@@ -12,7 +12,7 @@ StartTest(t => {
     t.it('Reject before the 1st commit should nullify the values', t => {
         const box1      = new Box(10)
 
-        const box2     = new CalculableBox({
+        const box2      = new CalculableBox({
             calculation : () => {
                 const value1 = box1.read()
 
@@ -83,10 +83,16 @@ StartTest(t => {
         const box1      = new Box(10)
 
         const box2     = new CalculableBox({
-            calculation : () => box1.read() + 1
+            calculation : () => {
+                const value1 = box1.read()
+
+                if (value1 === null) return null
+
+                return value1 + 1
+            }
         })
 
-        const graph     = new ChronoGraph()
+        const graph     = ChronoGraph.new({ historyLimit : 1 })
 
         graph.addAtoms([ box1, box2 ])
 
@@ -128,7 +134,7 @@ StartTest(t => {
             calculation : () => box2.read() + 1
         })
 
-        const graph     = new ChronoGraph()
+        const graph     = ChronoGraph.new({ historyLimit : 1 })
 
         graph.addAtoms([ box1, box2 ])
 
@@ -164,44 +170,56 @@ StartTest(t => {
     })
 
 
-    // t.it('Should be able to reject transaction using graph api', async t => {
-    //     const graph : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 10)
-    //     const i3        = graph.variableNamed('i3', 0)
-    //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         return (yield i1) + (yield i2)
-    //     })
-    //
-    //     const c2        = graph.identifierNamed('c2', function* () {
-    //         return (yield c1) + 1
-    //     })
-    //
-    //     const c3        = graph.identifierNamed('c3', function* () {
-    //         return (yield c2) + (yield i3)
-    //     })
-    //
-    //     graph.commit()
-    //
-    //     // ----------------
-    //     const nodes             = [ i1, i2, i3, c1, c2, c3 ]
-    //
-    //     t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 0, 10, 11, 11 ], "Correct result calculated #1")
-    //
-    //     // ----------------
-    //     graph.write(i1, 1)
-    //     graph.write(i2, 1)
-    //     graph.write(i3, 1)
-    //
-    //     t.isDeeply(nodes.map(node => graph.read(node)), [ 1, 1, 1, 2, 3, 4 ], "Correct result calculated #1")
-    //
-    //     graph.reject()
-    //
-    //     t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 0, 10, 11, 11 ], "Graph state rolled back to previous commit")
-    // })
-    //
+    t.it('Should be able to reject transaction using graph api', async t => {
+        const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 1 })
+
+        const i1        = new Box(0, 'i1')
+        const i2        = new Box(10, 'i2')
+        const i3        = new Box(0, 'i3')
+
+        const c1        = new CalculableBox({
+            name    : 'c1',
+            calculation () {
+                return i1.read() + i2.read()
+            }
+        })
+
+        const c2        = new CalculableBox({
+            name    : 'c2',
+            calculation () {
+                return c1.read() + 1
+            }
+        })
+
+        const c3        = new CalculableBox({
+            name    : 'c3',
+            calculation () {
+                return c2.read() + i3.read()
+            }
+        })
+
+        const nodes             = [ i1, i2, i3, c1, c2, c3 ]
+
+        graph.addAtoms(nodes)
+
+        // ----------------
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 0, 10, 11, 11 ], "Correct result calculated #1")
+
+        graph.commit()
+
+        // ----------------
+        i1.write(1)
+        i2.write(1)
+        i3.write(1)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 1, 1, 1, 2, 3, 4 ], "Correct result calculated #1")
+
+        graph.reject()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 0, 10, 11, 11 ], "Graph state rolled back to previous commit")
+    })
+
+
     // t.it('Should be able to reject transaction using effect', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //

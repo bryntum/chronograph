@@ -234,6 +234,7 @@ export class CalculableBox<V> extends Box<V> {
             // this.proposedValueState = AtomState.Stale
         }
 
+        if (this.graph) this.graph.frozen   = false
 
         this.proposedValue  = value
 
