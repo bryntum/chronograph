@@ -86,6 +86,8 @@ StartTest(t => {
             calculation : () => var1.read() + 1
         })
 
+        graph.addAtoms([ var0, var1, var2 ])
+
         //------------------
         graph.commit()
 
