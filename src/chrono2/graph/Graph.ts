@@ -9,7 +9,7 @@ import { Iteration, ZeroIteration } from "./Iteration.js"
 import { Transaction, ZeroTransaction } from "./Transaction.js"
 
 //----------------------------------------------------------------------------------------------------------------------
-export type GarbageCollectionStrategy = 'eager' | 'batched' | 'on_idle'
+export type GarbageCollectionStrategy = 'eager' //| 'batched' | 'on_idle'
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ export class ChronoGraph extends Base implements Owner {
     //region ChronoGraph as Owner
     $immutable              : Transaction     = ZeroTransaction
 
-    garbageCollection       : GarbageCollectionStrategy     = 'batched'
+    garbageCollection       : GarbageCollectionStrategy     = 'eager'
 
 
     initialize<T extends ChronoGraph> (props? : Partial<T>) {

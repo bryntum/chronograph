@@ -69,8 +69,8 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         const graph     = this.owner.graph
 
         do {
-            const outgoing = quark.$outgoing
-            const outgoingRev = quark.$outgoingRev
+            const outgoing      = quark.$outgoing
+            const outgoingRev   = quark.$outgoingRev
 
             if (outgoing) {
 
@@ -173,5 +173,81 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                 outgoingRev.length      = uniquePos
             }
         }
+    }
+
+
+    consumePreviousHistory () {
+        const uniqable              = getUniqable()
+        const collapsedOutgoing     = []
+        const collapsedOutgoingRev  = []
+
+        let quark : this            = this
+
+        let valueConsumed : boolean = false
+
+        do {
+            if (!valueConsumed) {
+                const outgoing          = quark.$outgoing
+                const outgoingRev       = quark.$outgoingRev
+
+                if (outgoing) {
+
+                    for (let i = outgoing.length - 1; i >= 0; i--) {
+                        const outgoingRevision  = outgoingRev[ i ]
+                        const outgoingQuark     = outgoing[ i ] as Quark
+
+                        const identity          = outgoingQuark.owner.identity
+
+                        if (identity.uniqable !== uniqable) {
+                            identity.uniqable   = uniqable
+
+                            // XXX wrong condition
+                            if (outgoingQuark.iteration.reachCount > 0) {
+                                collapsedOutgoing.push(outgoingQuark)
+                                collapsedOutgoingRev.push(outgoingRevision)
+                            }
+                        }
+                    }
+                }
+
+                // TODO
+                // @ts-ignore
+                if (quark.value !== undefined) {
+                    valueConsumed       = true
+
+                    this.copyFrom(quark)
+
+                    this.$outgoing      = collapsedOutgoing
+                    this.$outgoingRev   = collapsedOutgoingRev
+                }
+            }
+
+            const previous  = quark.previous
+
+            quark.destroy()
+
+            quark           = previous
+
+        } while (quark)
+    }
+
+
+    destroy () {
+        this.previous   = undefined
+        // @ts-ignore
+        this.value      = undefined
+
+        this.clearOutgoing()
+        this.$incoming  = undefined
+    }
+
+
+    copyFrom (quark : this) {
+        if (quark === this) return
+
+        // TODO
+        // @ts-ignore
+        this.value      = quark.value
+        this.$incoming  = quark.$incoming
     }
 }

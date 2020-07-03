@@ -120,6 +120,8 @@ export class Iteration extends Immutable {
         another.forEveryQuarkTill(this, (quark, first) => {
             if (first) {
                 target.addQuark(quark)
+
+                quark.consumePreviousHistory()
             }
         })
 
