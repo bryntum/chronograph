@@ -169,7 +169,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Garbage collecting should work with branches', async t => {
+    t.it('Garbage collecting should work with branches', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 
         const var0      = new Box(1, 'var0')
@@ -259,7 +259,7 @@ StartTest(t => {
         //------------------
         graph1.commit()
 
-        t.is(var1.immutable.previous.previous, undefined)
+        t.is(var1.immutable.previous.previous.previous, ZeroBoxImmutable)
     })
 
 

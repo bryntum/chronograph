@@ -132,7 +132,7 @@ export class Iteration extends Immutable {
 
 
     canBeCollapsedWithNext () : boolean {
-        return this.nextCount === 1 && this.reachCount === 0
+        return this.refCount === 1 && this.reachCount === 0
     }
 
 

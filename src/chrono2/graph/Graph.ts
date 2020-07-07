@@ -143,7 +143,8 @@ export class ChronoGraph extends Base implements Owner {
             if (currentIteration.canBeCollapsedWithNext()) {
                 collapsible             = currentIteration
                 nextAfterCollapsible    = iterations[ i - 1 ]
-            }
+            } else
+                break
         }
 
         if (!collapsible) return
@@ -278,7 +279,9 @@ export class ChronoGraph extends Base implements Owner {
         const self          = this.constructor as AnyConstructor<this, typeof ChronoGraph>
         const branch        = self.new(config)
 
-        branch.previous     = this
+        branch.previous         = this
+        // TODO should use copy-on-write?
+        branch.historySource    = new Map(this.historySource)
 
         const partialTransaction        = this.currentTransaction.previous
             ?
