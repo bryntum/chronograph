@@ -17,17 +17,14 @@ export enum AtomState {
     Stale           = 'Stale'
 }
 
-export class Quark extends Node implements Immutable/*, Identifiable*/ {
-    // id          : ChronoId      = chronoId()
-
+export class Quark extends Node implements Immutable {
     owner       : Atom          = undefined
 
     previous    : this          = undefined
 
     frozen      : boolean       = false
 
-    // synthetic incoming edge, reading from the "proposed" value
-    usedProposedOrPrevious : unknown = undefined
+    usedProposedOrPrevious : boolean = false
 
     iteration       : Iteration   = undefined
 
@@ -250,5 +247,26 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         // @ts-ignore
         this.value      = quark.value
         this.$incoming  = quark.$incoming
+    }
+
+
+    clone (quark : this) {
+        const cls       = this.constructor as AnyConstructor<this, typeof Quark>
+
+        const clone     = new cls()
+
+        clone.$outgoing = this.$outgoing ? this.$outgoing.slice() : undefined
+        clone.$incoming = this.$incoming ? this.$incoming.slice() : undefined
+        clone.owner     = this.owner
+        clone.previous  = this.previous
+        clone.frozen    = this.frozen
+        clone.usedProposedOrPrevious    = this.usedProposedOrPrevious
+        clone.iteration = this.iteration
+
+        // TODO
+        // @ts-ignore
+        clone.value     = this.value
+
+        return clone
     }
 }

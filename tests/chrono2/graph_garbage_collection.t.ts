@@ -169,22 +169,21 @@ StartTest(t => {
     })
 
 
-    t.it('Garbage collecting should work with branches', async t => {
+    t.it('Garbage collecting should not throw when working with branches', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
-
-        const var0      = new Box(1, 'var0')
 
         const var1      = new Box(100, 'var1')
 
         const var2      = new CalculableBox({
+            name        : 'var2',
             calculation : () => var1.read() + 1
         })
 
-        const nodes         = [ var0, var1, var2 ]
+        const nodes         = [ var1, var2 ]
 
         graph1.addAtoms(nodes)
 
-        t.isDeeply(nodes.map(node => node.read()), [ 1, 100, 101 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => node.read()), [ 100, 101 ], "Correct result calculated")
 
         //------------------
         graph1.commit()
@@ -192,7 +191,7 @@ StartTest(t => {
         const graph2        = graph1.branch({ historyLimit : 1 })
         const $             = node => graph2.checkout(node)
 
-        t.isDeeply(nodes.map(node => $(node).read()), [ 1, 100, 101 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => $(node).read()), [ 100, 101 ], "Correct result calculated")
 
         //------------------
         var1.write(20)
@@ -207,8 +206,8 @@ StartTest(t => {
         var1.write(300)
         graph1.commit()
 
-        t.isDeeply(nodes.map(node => node.read()), [ 1, 300, 301 ], "Correct result calculated")
-        t.isDeeply(nodes.map(node => $(node).read()), [ 1, 100, 101 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => node.read()), [ 300, 301 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => $(node).read()), [ 100, 101 ], "Correct result calculated")
 
         //------------------
         $(var1).write(2)
@@ -223,8 +222,8 @@ StartTest(t => {
         $(var1).write(30)
         graph2.commit()
 
-        t.isDeeply(nodes.map(node => node.read()), [ 1, 300, 301 ], "Correct result calculated")
-        t.isDeeply(nodes.map(node => $(node).read()), [ 1, 30, 31 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => node.read()), [ 300, 301 ], "Correct result calculated")
+        t.isDeeply(nodes.map(node => $(node).read()), [ 30, 31 ], "Correct result calculated")
     })
 
 
