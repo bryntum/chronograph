@@ -2,7 +2,7 @@ import { AnyConstructor } from "../../class/Mixin.js"
 import { Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "./Graph.js"
-import { Iteration, ZeroIteration } from "./Iteration.js"
+import { Iteration } from "./Iteration.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -14,11 +14,21 @@ export class Transaction extends Owner implements Immutable {
     get immutable () : Iteration {
         if (this.$immutable !== undefined) return this.$immutable
 
-        return this.$immutable = Iteration.new({ owner : this, previous : this.previous ? this.previous.immutable : undefined })
+        return this.$immutable = this.buildImmutable()
     }
 
     set immutable (immutable : Iteration) {
         this.$immutable = immutable
+    }
+
+
+    buildImmutable () : Iteration {
+        return this.$immutable = this.previous
+            ?
+                this.previous.immutable.createNext(this)
+            :
+                Iteration.new({ owner : this, previous : undefined })
+
     }
 
 
@@ -131,9 +141,9 @@ export class Transaction extends Owner implements Immutable {
     }
 }
 
-export const ZeroTransaction = new Transaction()
-
-ZeroTransaction.immutable   = ZeroIteration
-ZeroIteration.owner         = ZeroTransaction
-
-ZeroTransaction.freeze()
+// export const ZeroTransaction = new Transaction()
+//
+// ZeroTransaction.immutable   = ZeroIteration
+// ZeroIteration.owner         = ZeroTransaction
+//
+// ZeroTransaction.freeze()

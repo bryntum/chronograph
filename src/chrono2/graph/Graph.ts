@@ -2,11 +2,12 @@ import { Base } from "../../class/Base.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { LeveledQueue } from "../../util/LeveledQueue.js"
 import { Atom } from "../atom/Atom.js"
+import { ChronoReference } from "../atom/Identifiable.js"
 import { AtomState, Quark } from "../atom/Quark.js"
 import { Box, BoxImmutable } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
-import { Iteration, ZeroIteration } from "./Iteration.js"
-import { Transaction, ZeroTransaction } from "./Transaction.js"
+import { Iteration } from "./Iteration.js"
+import { Transaction } from "./Transaction.js"
 
 //----------------------------------------------------------------------------------------------------------------------
 export type GarbageCollectionStrategy = 'eager' //| 'batched' | 'on_idle'
@@ -19,19 +20,18 @@ export class ChronoGraph extends Base implements Owner {
 
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
 
-    nextTransaction         : Transaction[]   = []
+    nextTransaction         : Transaction[]         = []
 
 
     previous                : this                  = undefined
 
-    // nextCache               : Map<Transaction, Transaction>     = new Map()
-    // historySource           : Iteration             = ZeroIteration
+    historySource           : Map<ChronoReference, Quark>   = new Map()
 
     atomsById               : Map<number, Atom>     = new Map()
 
 
     //region ChronoGraph as Owner
-    $immutable              : Transaction     = ZeroTransaction
+    $immutable              : Transaction           = undefined
 
     garbageCollection       : GarbageCollectionStrategy     = 'eager'
 
@@ -57,7 +57,8 @@ export class ChronoGraph extends Base implements Owner {
     get immutable () : Transaction {
         if (this.$immutable !== undefined) return this.$immutable
 
-        return this.$immutable = Transaction.new({ owner : this })
+        // pass through the setter for the mark/unmark side effect
+        return this.immutable = Transaction.new({ owner : this })
     }
 
     // this is assignment "within" the undo/redo history, keeps the redo information
@@ -113,25 +114,65 @@ export class ChronoGraph extends Base implements Owner {
 
 
     sweep () {
-        let firstUnreachableTransaction : Transaction
+        // TODO review & improve
         let lastReachableTransaction : Transaction
 
         this.forEveryTransactionInHistory((transaction, reachable) => {
-            if (reachable)
-                lastReachableTransaction = transaction
-            else
-                if (!firstUnreachableTransaction) firstUnreachableTransaction = transaction
+            if (reachable) lastReachableTransaction = transaction
         })
 
         const lastReachableIteration    = lastReachableTransaction.getLastIteration()
 
-        const shredingIteration         = this.getLastIteration()
+        let iteration : Iteration       = lastReachableIteration
+        // TODO eof review & improve
 
-        if (firstUnreachableTransaction && firstUnreachableTransaction.$immutable !== shredingIteration) {
-            firstUnreachableTransaction.$immutable  = shredingIteration.consume(firstUnreachableTransaction.immutable)
-            firstUnreachableTransaction.previous    = undefined
+        const iterations : Iteration[]  = []
 
-            lastReachableIteration.previous         = firstUnreachableTransaction.$immutable
+        while (iteration) {
+            iterations.push(iteration)
+
+            iteration   = iteration.previous
+        }
+
+        let collapsible : Iteration
+        let nextAfterCollapsible : Iteration
+
+        for (let i = iterations.length - 1; i > 0; i--) {
+            const currentIteration  = iterations[ i ]
+
+            if (currentIteration.canBeCollapsedWithNext()) {
+                collapsible             = currentIteration
+                nextAfterCollapsible    = iterations[ i - 1 ]
+            }
+        }
+
+        if (!collapsible) return
+
+        collapsible.forEveryFirstQuarkTill(undefined, quark => {
+            const owner = quark.owner
+
+            this.historySource.set(owner.id, quark)
+
+            quark.iteration = undefined
+
+            owner.identity.uniqableBox    = quark
+        })
+
+        collapsible.forEveryFirstQuarkTill(undefined, quark => {
+            quark.collectGarbage()
+        })
+
+        iteration                           = collapsible
+
+        nextAfterCollapsible.previous       = undefined
+        nextAfterCollapsible.owner.previous = undefined
+
+        while (iteration) {
+            const previous  = iteration.previous
+
+            iteration.destroy()
+
+            iteration   = previous
         }
     }
 
@@ -239,7 +280,11 @@ export class ChronoGraph extends Base implements Owner {
 
         branch.previous     = this
 
-        const partialTransaction        = this.currentTransaction.previous.createNext(branch)
+        const partialTransaction        = this.currentTransaction.previous
+            ?
+                this.currentTransaction.previous.createNext(branch)
+            :
+                Transaction.new({ owner : branch })
 
         partialTransaction.immutable    = this.currentIteration.createNext(partialTransaction)
 

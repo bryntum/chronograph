@@ -1,7 +1,7 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { Quark } from "../atom/Quark.js"
-import { Immutable } from "../data/Immutable.js"
+import { Immutable, Owner } from "../data/Immutable.js"
 import { Transaction } from "./Transaction.js"
 
 
@@ -15,24 +15,17 @@ export class Iteration extends Immutable {
     refCount        : number            = 0
     // incremented by any owning graph, at the depth of its `historyLimit`
     reachCount      : number            = 0
+    // incremented by any following iteration
+    nextCount       : number            = 0
 
 
-    // quarks      : Map<ChronoId, Quark> = new Map()
-    //
-    //
-    // getQuarkById (id : ChronoId) : Quark | null {
-    //     let iteration : this = this
-    //
-    //     while (iteration) {
-    //         const quark = iteration.quarks.get(id)
-    //
-    //         if (quark !== undefined) return quark
-    //
-    //         iteration   = iteration.previous
-    //     }
-    //
-    //     return null
-    // }
+    createNext (owner? : Owner) : this {
+        const next      = super.createNext(owner)
+
+        this.nextCount++
+
+        return next
+    }
 
 
     mark (reachable : boolean) {
@@ -67,6 +60,32 @@ export class Iteration extends Immutable {
                     onAtomOccurrence(quark, true)
                 } else {
                     onAtomOccurrence(quark, false)
+                }
+            }
+
+            iteration           = iteration.previous
+
+            if (iteration === stopAt) break
+        }
+    }
+
+
+    forEveryFirstQuarkTill (stopAt : Iteration, onFirstAtomOccurrence : (quark : Quark) => any) {
+        let iteration           = this
+
+        const uniqable          = getUniqable()
+
+        while (true) {
+            const quarks        = iteration.quarks
+
+            for (let i = 0; i < quarks.length; i++) {
+                const quark     = quarks[ i ]
+                const atom      = quark.owner
+
+                if (atom.identity.uniqable !== uniqable) {
+                    atom.identity.uniqable      = uniqable
+
+                    onFirstAtomOccurrence(quark)
                 }
             }
 
@@ -112,30 +131,8 @@ export class Iteration extends Immutable {
     }
 
 
-    consume (another : Iteration) : Iteration {
-        if (this.previous) throw new Error("Should be only called on last iteration")
-
-        const target    = this.reachCount === 0 ? this : this.clone()
-
-        another.forEveryQuarkTill(this, (quark, first) => {
-            if (first) {
-                target.addQuark(quark)
-
-                quark.consumePreviousHistory()
-            }
-        })
-
-        let iteration       = another
-
-        const stopAt        = this
-
-        while (iteration && iteration !== stopAt) {
-            if (iteration.reachCount === 0) iteration.destroy()
-
-            iteration      = iteration.previous
-        }
-
-        return target
+    canBeCollapsedWithNext () : boolean {
+        return this.nextCount === 1 && this.reachCount === 0
     }
 
 
@@ -153,35 +150,3 @@ export class Iteration extends Immutable {
         return instance as InstanceType<T>
     }
 }
-
-
-//----------------------------------------------------------------------------------------------------------------------
-export class IterationShreding extends Iteration {
-    quarksShreding          : Map<number, Quark> = new Map()
-
-
-    clone () : this {
-        const clone             = super.clone()
-
-        clone.quarksShreding    = new Map(this.quarksShreding)
-
-        return clone
-    }
-
-
-    destroy () {
-        super.destroy()
-
-        this.quarksShreding     = undefined
-    }
-
-
-    addQuark (quark : Quark) {
-        this.quarksShreding.set(quark.owner.id, quark)
-    }
-}
-
-export const ZeroIteration = new IterationShreding()
-
-// global reference
-ZeroIteration.refCount++

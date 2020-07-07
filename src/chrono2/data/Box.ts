@@ -61,7 +61,7 @@ export class BoxImmutable extends Quark {
 }
 
 
-const ZeroBoxImmutable = new BoxImmutable(undefined)
+export const ZeroBoxImmutable = new BoxImmutable(undefined)
 ZeroBoxImmutable.freeze()
 
 

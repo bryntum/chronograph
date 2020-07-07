@@ -1,5 +1,6 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
+import { ZeroBoxImmutable } from "../data/Box.js"
 import { Immutable } from "../data/Immutable.js"
 import { Iteration } from "../graph/Iteration.js"
 import { Atom } from "./Atom.js"
@@ -176,7 +177,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
     }
 
 
-    consumePreviousHistory () {
+    collectGarbage () {
         const uniqable              = getUniqable()
         const collapsedOutgoing     = []
         const collapsedOutgoingRev  = []
@@ -186,6 +187,9 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
         let valueConsumed : boolean = false
 
         do {
+            // capture early, since we reset the `previous` on value consumption
+            const previous  = quark.previous
+
             if (!valueConsumed) {
                 const outgoing          = quark.$outgoing
                 const outgoingRev       = quark.$outgoingRev
@@ -201,8 +205,7 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                         if (identity.uniqable !== uniqable) {
                             identity.uniqable   = uniqable
 
-                            // XXX wrong condition
-                            if (outgoingQuark.iteration.reachCount > 0) {
+                            if (outgoingRevision === (identity.uniqableBox as Quark).revision) {
                                 collapsedOutgoing.push(outgoingQuark)
                                 collapsedOutgoingRev.push(outgoingRevision)
                             }
@@ -215,16 +218,16 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
                 if (quark.value !== undefined) {
                     valueConsumed       = true
 
-                    this.copyFrom(quark)
+                    if (quark !== this) this.copyFrom(quark)
+
+                    this.previous       = ZeroBoxImmutable as any
 
                     this.$outgoing      = collapsedOutgoing
                     this.$outgoingRev   = collapsedOutgoingRev
                 }
             }
 
-            const previous  = quark.previous
-
-            quark.destroy()
+            if (quark !== this) quark.destroy()
 
             quark           = previous
 
@@ -243,8 +246,6 @@ export class Quark extends Node implements Immutable/*, Identifiable*/ {
 
 
     copyFrom (quark : this) {
-        if (quark === this) return
-
         // TODO
         // @ts-ignore
         this.value      = quark.value
