@@ -51,6 +51,19 @@ export class ChronoGraph extends Base implements Owner {
 
     destroy () {
         this.unmark()
+
+        this.atomsById      = undefined
+        this.historySource  = undefined
+
+        let iteration : Iteration = this.currentIteration
+
+        while (iteration && iteration.refCount === 0) {
+            const previous  = iteration.previous
+
+            iteration.destroy()
+
+            iteration       = previous
+        }
     }
 
 
@@ -292,6 +305,9 @@ export class ChronoGraph extends Base implements Owner {
         partialTransaction.immutable    = this.currentIteration.createNext(partialTransaction)
 
         branch.immutable                = partialTransaction
+
+        // increase the `nextCounter`
+        // this.currentTransaction.immutable = this.currentIteration.createNext()
 
         return branch
     }
