@@ -8,7 +8,7 @@ export const getRevision = () : number => ++revisionId
 export type Edge = Node | number
 
 let compactCounter  = 500
-let compactAmount   = 500
+let compactAmount   = 500 // 1000
 
 export const setCompactCounter = (value : number) => compactCounter = value
 export const setCompactAmount = (value : number) => compactAmount = value
@@ -97,8 +97,12 @@ export class Node implements Uniqable {
 
         if (this.addCounter === 0) {
             // idea is - we compact what've added (500),
-            // plus some more?? (250)
+            // plus some more?? (500)
             // TODO perform a full compact once every X compacts?
+            // TODO need to distinct the outgoings of the different "virtual" iterations
+            // (the iterations that are immediately compacted - they correspond to the `revision`
+            // and perform full compact every X iterations
+            // this.compactOutgoing(0)
             this.compactOutgoing(this.$outgoing.length - compactAmount)
         }
 
