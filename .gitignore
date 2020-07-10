@@ -18,6 +18,8 @@
 /src/**/*.js.map
 /tests/**/*.js
 /tests/**/*.js.map
+/benchmarks/**/*.js
+/benchmarks/**/*.js.map
 /main.js
 /tsconfig.tsbuildinfo
 

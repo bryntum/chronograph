@@ -1,6 +1,6 @@
-import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { computed, observable } from "mobx/lib/mobx.module.js"
+import { Box } from "../src/chrono2/data/Box.js"
+import { CalculableBox } from "../src/chrono2/data/CalculableBox.js"
 import { Chrono2GenerationResult, MobxGraphGenerationResult } from "./data.js"
 
 

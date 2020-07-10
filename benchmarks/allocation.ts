@@ -1,4 +1,4 @@
-import { Benchmark } from "../../src/benchmark/Benchmark.js"
+import { Benchmark } from "../src/benchmark/Benchmark.js"
 import { chrono2Graph, deepGraphGen, deepGraphSync, mobxGraph, replicaGen } from "./data.js"
 
 

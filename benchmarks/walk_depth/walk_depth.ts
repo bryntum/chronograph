@@ -1,8 +1,8 @@
-import { Benchmark } from "../../../src/benchmark/Benchmark.js"
+import { Benchmark } from "../../src/benchmark/Benchmark.js"
 import {
     WalkDepthNoCyclesNoVisitStateExternalStack,
     WalkDepthNoCyclesNoVisitStateRecursive
-} from "../../../src/collection/walk_depth/WalkDepthopedia.js"
+} from "../../src/collection/walk_depth/WalkDepthopedia.js"
 import { deepGraphGen, GraphGenerationResult, Node } from "./data.js"
 
 

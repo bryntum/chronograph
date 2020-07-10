@@ -1,6 +1,6 @@
-import { BenchmarkC } from "../../../src/benchmark/Benchmark.js"
-import { Base } from "../../../src/class/Base.js"
-import { Event } from "../../../src/event/Event.js"
+import { BenchmarkC } from "../../src/benchmark/Benchmark.js"
+import { Base } from "../../src/class/Base.js"
+import { Event } from "../../src/event/Event.js"
 
 // import Events from '../../../../Core/lib/Core/mixin/Events.js'
 // import BaseCore from '../../../../Core/lib/Core/Base.js'

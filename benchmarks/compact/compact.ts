@@ -1,5 +1,5 @@
-import { BenchmarkC } from "../../../src/benchmark/Benchmark.js"
-import { compact, Uniqable } from "../../../src/util/Uniqable.js"
+import { BenchmarkC } from "../../src/benchmark/Benchmark.js"
+import { compact, Uniqable } from "../../src/util/Uniqable.js"
 
 
 const toCompact : number    = 10000

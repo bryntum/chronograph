@@ -18,6 +18,7 @@
         "main.ts",
         "src/**/*.ts",
         "tests/**/*.ts",
+        "benchmarks/**/*.ts",
         "examples/**/*.ts"
     ],
 

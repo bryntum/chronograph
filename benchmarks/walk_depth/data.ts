@@ -1,4 +1,4 @@
-import { Base } from "../../../src/class/Base.js"
+import { Base } from "../../src/class/Base.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Node extends Base {

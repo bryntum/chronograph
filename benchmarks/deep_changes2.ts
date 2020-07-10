@@ -1,4 +1,4 @@
-import { Benchmark } from "../../src/benchmark/Benchmark.js"
+import { Benchmark } from "../src/benchmark/Benchmark.js"
 import { Chrono2GenerationResult, MobxGraphGenerationResult } from "./data.js"
 import {
     chrono2MutatingGraph,
