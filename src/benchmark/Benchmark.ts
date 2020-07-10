@@ -240,11 +240,11 @@ export class Benchmark<StateT, InfoT = any> extends Base {
     async clearGarbage () {
         if (globalThis.gc) {
             globalThis.gc()
+            await new Promise(resolve => setTimeout(resolve, 10))
+            globalThis.gc()
             await new Promise(resolve => setTimeout(resolve, 50))
             globalThis.gc()
             await new Promise(resolve => setTimeout(resolve, 100))
-            globalThis.gc()
-            await new Promise(resolve => setTimeout(resolve, 50))
         }
     }
 
@@ -284,3 +284,9 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
 export const BenchmarkC = <StateT, InfoT = any>(config : Partial<Benchmark<StateT, InfoT>>) : Benchmark<StateT, InfoT> =>
     Benchmark.new(config) as Benchmark<StateT, InfoT>
+
+if (globalThis.gc) {
+    console.log("Garbage collection available.")
+} else {
+    console.log("Garbage collection NOT available.")
+}
