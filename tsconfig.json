@@ -3,14 +3,14 @@
 //        "importHelpers"             : true,
         "experimentalDecorators"    : true,
 
-        "target"                : "ES2017",
+        "target"                : "es2017",
 //        "strictNullChecks"      : true,
 
         "sourceMap"             : false,
         "lib"                   : [
             "esnext"
         ],
-        "module"                : "ESNext",
+        "module"                : "esnext",
         "moduleResolution"      : "Node"
     },
 

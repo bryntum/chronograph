@@ -71,7 +71,7 @@ export class Benchmark<StateT, InfoT = any> extends Base {
     plannedMaxTime          : number    = 7000
     plannedCalibrationTime  : number    = 500
 
-    coolDownTimeout         : number    = 10
+    coolDownTimeout         : number    = 100
 
 
     async setup () : Promise<StateT> {
@@ -156,7 +156,11 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
         const { cyclesCount } = await this.calibrate(this.plannedCalibrationTime, state)
 
-        return this.runWhile(true, state, cyclesCount, (samples, i, elapsed) => i < 2 || elapsed < maxTime)
+        return this.runWhile(
+            true, state, cyclesCount,
+            (samples, i, elapsed) =>
+                i < 2 || elapsed < maxTime
+        )
     }
 
 
@@ -167,7 +171,8 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
         return this.runWhile(
             true, state, cyclesCount,
-            (samples, i, elapsed) => this.getRelativeMoe(samples, cyclesCount) > relMoe || elapsed < this.plannedMinTime
+            (samples, i, elapsed) =>
+                this.getRelativeMoe(samples, cyclesCount) > relMoe || elapsed < this.plannedMinTime
         )
     }
 
@@ -175,7 +180,11 @@ export class Benchmark<StateT, InfoT = any> extends Base {
     async runFixed (cyclesCount : number, iterationsCount : number) : Promise<RunInfo<InfoT>> {
         const state : StateT  = await this.setup()
 
-        return this.runWhile(false, state, cyclesCount, (samples, i, elapsed) => i < iterationsCount)
+        return this.runWhile(
+            false, state, cyclesCount,
+            (samples, i, elapsed) =>
+                i <= iterationsCount
+        )
     }
 
 

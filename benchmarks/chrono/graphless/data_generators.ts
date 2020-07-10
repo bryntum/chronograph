@@ -2,7 +2,6 @@ import { computed, observable } from "mobx/lib/mobx.module.js"
 import { Benchmark } from "../../../src/benchmark/Benchmark.js"
 import { Box } from "../../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../../src/chrono2/data/CalculableBox.js"
-import { Base } from "../../../src/class/Base.js"
 import { AnyFunction } from "../../../src/class/Mixin.js"
 
 
@@ -17,12 +16,10 @@ export interface BoxMobxRaw<V> {
     set (value : V)
 }
 
-export class BoxMobx<V> extends Base implements BoxAbstract<V> {
+export class BoxMobx<V> implements BoxAbstract<V> {
     box     : any
 
     constructor (box) {
-        super()
-
         this.box = box
     }
 
@@ -43,12 +40,10 @@ export class BoxMobx<V> extends Base implements BoxAbstract<V> {
     }
 }
 
-export class BoxChronoGraph2<V> extends Base implements BoxAbstract<V> {
+export class BoxChronoGraph2<V> implements BoxAbstract<V> {
     box     : Box<V>
 
     constructor (box) {
-        super()
-
         this.box = box
     }
 
@@ -82,10 +77,10 @@ export interface GraphGenerator<RawBox> {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GraphGeneratorMobx implements GraphGenerator<BoxMobxRaw<unknown>> {
+
     rawBox<V> (initialValue : V, name? : string) : BoxMobx<unknown> {
         return observable.box(initialValue)
     }
-
 
     box<V> (initialValue : V, name? : string) : BoxAbstract<V> {
         return new BoxMobx(observable.box(initialValue))
@@ -100,6 +95,8 @@ export class GraphGeneratorMobx implements GraphGenerator<BoxMobxRaw<unknown>> {
         return new BoxMobx(computed(func, { keepAlive : true, context : context, name : name }))
     }
 }
+
+export const graphGeneratorMobx = new GraphGeneratorMobx()
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -123,6 +120,8 @@ export class GraphGeneratorChronoGraph2 implements GraphGenerator<Box<unknown>> 
     }
 }
 
+export const graphGeneratorChronoGraph2 = new GraphGeneratorChronoGraph2()
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export type GraphGenerationResult  = { boxes : BoxAbstract<unknown>[], counter : number }
@@ -133,6 +132,7 @@ export type PostBenchInfo = {
     totalCount      : number
     result          : number
 }
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export class GraphlessBenchmark<
@@ -153,4 +153,16 @@ export class GraphlessBenchmark<
     stringifyInfo (info : InfoT) : string {
         return `Total calculation: ${info.totalCount}\nResult in last box: ${info.result}`
     }
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+declare const window : any
+declare const location : any
+
+export const launchIfStandaloneProcess = (run : Function) => {
+    if (
+        typeof process !== undefined && /massive_outgoing/.test(process.argv[ 1 ])
+        || typeof window !== "undefined" && /massive_outgoing/.test(location.href)
+    ) run()
 }

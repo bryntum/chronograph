@@ -1,4 +1,11 @@
-import { BoxAbstract, GraphGenerationResult, GraphGenerator, GraphlessBenchmark } from "./data_generators.js"
+import {
+    BoxAbstract,
+    GraphGenerationResult,
+    GraphGenerator,
+    graphGeneratorChronoGraph2,
+    graphGeneratorMobx,
+    GraphlessBenchmark, launchIfStandaloneProcess
+} from "./data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -35,3 +42,30 @@ export class MassiveOutgoingBenchmark extends GraphlessBenchmark {
     }
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+const massiveOutgoingChronoGraph2 : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+    name        : 'Massive outgoing - ChronoGraph2',
+    atomNum     : 10000,
+    graphGen    : graphGeneratorChronoGraph2
+})
+
+const massiveOutgoingMobx : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+    name        : 'Massive outgoing - Mobx',
+    atomNum     : 10000,
+    graphGen    : graphGeneratorMobx
+})
+
+export const run = async () => {
+    // Mobx first
+    const runInfo   = await massiveOutgoingMobx.measureTillMaxTime()
+
+    await massiveOutgoingChronoGraph2.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+
+    // ChronoGraph2 first
+    // const runInfo   = await massiveOutgoingChronoGraph2.measureTillMaxTime()
+    //
+    // await massiveOutgoingMobx.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+}
+
+launchIfStandaloneProcess(run)
