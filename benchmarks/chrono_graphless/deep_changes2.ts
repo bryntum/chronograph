@@ -1,5 +1,5 @@
-import { Benchmark } from "../src/benchmark/Benchmark.js"
-import { Chrono2GenerationResult, MobxGraphGenerationResult } from "./data.js"
+import { Benchmark } from "../../src/benchmark/Benchmark.js"
+import { Chrono2GenerationResult, MobxGraphGenerationResult } from "../data.js"
 import {
     chrono2MutatingGraph,
     chrono2MassiveIncoming,
@@ -7,8 +7,8 @@ import {
     mobxMassiveIncoming,
     mobxMassiveOutgoing,
     mobxMutatingGraph, chrono2MassiveIncomingAndOutgoing, mobxMassiveIncomingAndOutgoing
-} from "./data2.js"
-import { DeepChangesChrono2, DeepChangesMobx } from "./deep_changes.js"
+} from "./data_generation.js"
+import { DeepChangesChrono2, DeepChangesMobx } from "../deep_changes.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export const mobxMassiveOutgoingBench = DeepChangesMobx.new({
