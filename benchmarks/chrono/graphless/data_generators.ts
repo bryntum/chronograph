@@ -78,20 +78,21 @@ export interface GraphGenerator<RawBox> {
 //---------------------------------------------------------------------------------------------------------------------
 export class GraphGeneratorMobx implements GraphGenerator<BoxMobxRaw<unknown>> {
 
+    // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : BoxMobx<unknown> {
         return observable.box(initialValue)
     }
 
-    box<V> (initialValue : V, name? : string) : BoxAbstract<V> {
+    box<V> (initialValue : V, name? : string) : BoxMobx<V> {
         return new BoxMobx(observable.box(initialValue))
     }
 
-
+    // used to measure the allocation performance
     rawComputed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxMobxRaw<unknown> {
         return computed(func, { keepAlive : true, context : context, name : name })
     }
 
-    computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxAbstract<V> {
+    computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxMobx<V> {
         return new BoxMobx(computed(func, { keepAlive : true, context : context, name : name }))
     }
 }
@@ -102,20 +103,22 @@ export const graphGeneratorMobx = new GraphGeneratorMobx()
 //---------------------------------------------------------------------------------------------------------------------
 export class GraphGeneratorChronoGraph2 implements GraphGenerator<Box<unknown>> {
 
+    // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : Box<unknown> {
         return new Box(initialValue, name)
     }
 
-    box<V> (initialValue : V, name? : string) : BoxAbstract<V> {
+    box<V> (initialValue : V, name? : string) : BoxChronoGraph2<V> {
         return new BoxChronoGraph2(new Box(initialValue, name))
     }
 
 
+    // used to measure the allocation performance
     rawComputed<V> (func : AnyFunction<V>, context? : any, name? : string) : Box<unknown> {
         return new CalculableBox({ calculation : func, context : context, name : name })
     }
 
-    computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxAbstract<V> {
+    computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
         return new BoxChronoGraph2(new CalculableBox({ calculation : func, context : context, name : name }))
     }
 }

@@ -28,22 +28,17 @@ export class StableGraphBenchmark extends GraphlessBenchmark {
         }
 
         for (let i = this.depCount; i < this.atomNum; i++) {
-            const box = this.graphGen.computed(
-                function () {
-                    res.counter++
+            boxes.push(this.graphGen.computed(function () {
+                res.counter++
 
-                    let sum = 0
+                let sum = 0
 
-                    for (let i = 1; i <= me.depCount; i++) {
-                        sum     += boxes[ this - i ].READ() % 10000
-                    }
+                for (let i = 1; i <= me.depCount; i++) {
+                    sum     += boxes[ this - i ].READ() % 10000
+                }
 
-                    return sum
-                },
-                i
-            )
-
-            boxes.push(box)
+                return sum
+            }, i))
         }
 
         return res

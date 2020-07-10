@@ -28,37 +28,31 @@ export class ShallowChangesBenchmark extends GraphlessBenchmark {
         }
 
         for (let i = this.depCount; i < 2 * this.depCount; i++) {
-            boxes.push(this.graphGen.computed(
-                function () {
-                    res.counter++
+            boxes.push(this.graphGen.computed(function () {
+                res.counter++
 
-                    let sum = 0
+                let sum = 0
 
-                    for (let i = 0; i < me.depCount; i++) {
-                        sum     += boxes[ i ].READ() % 10000
-                    }
+                for (let i = 0; i < me.depCount; i++) {
+                    sum     += boxes[ i ].READ() % 10000
+                }
 
-                    return sum
-                },
-                i
-            ))
+                return sum
+            }, i))
         }
 
         for (let i = 2 * this.depCount; i < this.atomNum; i++) {
-            boxes.push(this.graphGen.computed(
-                function () {
-                    res.counter++
+            boxes.push(this.graphGen.computed(function () {
+                res.counter++
 
-                    let sum = 0
+                let sum = 0
 
-                    for (let i = 1; i <= me.depCount; i++) {
-                        sum     += boxes[ this - i ].READ() % 10000
-                    }
+                for (let i = 1; i <= me.depCount; i++) {
+                    sum     += boxes[ this - i ].READ() % 10000
+                }
 
-                    return sum
-                },
-                i
-            ))
+                return sum
+            }, i))
         }
 
         return res

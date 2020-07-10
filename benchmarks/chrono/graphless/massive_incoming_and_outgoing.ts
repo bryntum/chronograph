@@ -4,9 +4,9 @@ import {
     GraphGenerator,
     graphGeneratorChronoGraph2,
     graphGeneratorMobx,
-    GraphlessBenchmark, launchIfStandaloneProcess
+    GraphlessBenchmark,
+    launchIfStandaloneProcess
 } from "./data_generators.js"
-import { MassiveIncomingBenchmark } from "./massive_incoming.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
