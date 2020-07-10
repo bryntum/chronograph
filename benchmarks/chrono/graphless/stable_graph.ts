@@ -24,7 +24,7 @@ export class StableGraphBenchmark extends GraphlessBenchmark {
         const res                               = { boxes, counter : 0 }
 
         for (let i = 0; i < this.depCount; i++) {
-            boxes.push(this.graphGen.box(0))
+            boxes.push(this.graphGen.box(1))
         }
 
         for (let i = this.depCount; i < this.atomNum; i++) {

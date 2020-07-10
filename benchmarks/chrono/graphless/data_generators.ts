@@ -151,7 +151,7 @@ export class GraphlessBenchmark<
 
 
     stringifyInfo (info : InfoT) : string {
-        return `Total calculation: ${info.totalCount}\nResult in last box: ${info.result}`
+        return `Total calculations: ${info.totalCount}\nResult in last box: ${info.result}`
     }
 }
 
