@@ -36,14 +36,14 @@ export class AllocationBenchmark extends Benchmark<void, void> {
 //---------------------------------------------------------------------------------------------------------------------
 const runFor = async (atomNum : number = 100000, depCount : number = 1) => {
     const stableGraphChronoGraph2 = AllocationBenchmark.new({
-        name        : `Allocation, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
+        name        : `Graphless allocation, total atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorChronoGraph2
     })
 
     const stableGraphMobx = AllocationBenchmark.new({
-        name        : `Allocation, atoms: ${atomNum}, deps depth: ${depCount} - Mobx`,
+        name        : `Graphless allocation, total atoms: ${atomNum}, boxes: ${depCount} - Mobx`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorMobx
