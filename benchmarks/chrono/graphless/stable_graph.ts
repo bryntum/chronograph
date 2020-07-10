@@ -50,8 +50,8 @@ export class StableGraphBenchmark extends GraphlessBenchmark {
     }
 
 
-    cycle (iteration : number, cycle : number, setup : GraphGenerationResult) {
-        const { boxes } = setup
+    cycle (iteration : number, cycle : number, state : GraphGenerationResult) {
+        const { boxes } = state
 
         for (let i = 0; i < this.depCount; i++)
             boxes[ i ].WRITE((iteration + cycle + i) % 10)
@@ -64,15 +64,15 @@ export class StableGraphBenchmark extends GraphlessBenchmark {
 //---------------------------------------------------------------------------------------------------------------------
 const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
     const stableGraphChronoGraph2 = StableGraphBenchmark.new({
-        name        : `Stable graph, atoms: ${atomNum}, deps: ${depCount} - ChronoGraph2`,
+        name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorChronoGraph2
     })
 
     const stableGraphMobx = StableGraphBenchmark.new({
-        name        : `Stable graph, atoms: ${atomNum}, deps: ${depCount} - Mobx`,
-        atomNum     : 1000,
+        name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - Mobx`,
+        atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorMobx
     })

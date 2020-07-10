@@ -48,8 +48,8 @@ export class MassiveIncomingAndOutgoingBenchmark extends GraphlessBenchmark {
     }
 
 
-    cycle (iteration : number, cycle : number, setup : GraphGenerationResult) {
-        const { boxes } = setup
+    cycle (iteration : number, cycle : number, state : GraphGenerationResult) {
+        const { boxes } = state
 
         boxes[ 0 ].WRITE(iteration + cycle)
 
