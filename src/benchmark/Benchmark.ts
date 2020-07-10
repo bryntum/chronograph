@@ -73,8 +73,6 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
     coolDownTimeout         : number    = 10
 
-    // filterExceptionValues   : boolean   = false
-
 
     async setup () : Promise<StateT> {
         return
@@ -243,7 +241,7 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
 
     async measureTillRelativeMoe () : Promise<RunInfo<InfoT>> {
-        this.clearGarbage()
+        await this.clearGarbage()
 
         const runInfo       = await this.runTillRelativeMoe()
 
@@ -254,7 +252,7 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
 
     async measureFixed (cyclesCount : number, iterationsCount : number) : Promise<RunInfo<InfoT>> {
-        this.clearGarbage()
+        await this.clearGarbage()
 
         const runInfo       = await this.runFixed(cyclesCount, iterationsCount)
 
@@ -265,7 +263,7 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
 
     async measureTillMaxTime () : Promise<RunInfo<InfoT>> {
-        this.clearGarbage()
+        await this.clearGarbage()
 
         const runInfo       = await this.runTillMaxTime()
 
