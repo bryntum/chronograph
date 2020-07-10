@@ -1,4 +1,4 @@
-import { computed, observable } from "mobx/lib/mobx.module.js"
+import { computed, observable } from "../../../node_modules/mobx/lib/mobx.module.js"
 import { Benchmark } from "../../../src/benchmark/Benchmark.js"
 import { Box } from "../../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../../src/chrono2/data/CalculableBox.js"
@@ -160,9 +160,9 @@ export class GraphlessBenchmark<
 declare const window : any
 declare const location : any
 
-export const launchIfStandaloneProcess = (run : Function) => {
+export const launchIfStandaloneProcess = (run : Function, moduleName : string) => {
     if (
-        typeof process !== undefined && /massive_outgoing/.test(process.argv[ 1 ])
-        || typeof window !== "undefined" && /massive_outgoing/.test(location.href)
+        typeof process !== undefined && process.version && String(process.argv[ 1 ]).includes(moduleName)
+        || typeof window !== "undefined" && String(location.href).includes(moduleName)
     ) run()
 }

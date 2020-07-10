@@ -57,15 +57,11 @@ const massiveOutgoingMobx : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.
 })
 
 export const run = async () => {
-    // Mobx first
-    const runInfo   = await massiveOutgoingMobx.measureTillMaxTime()
+    const runInfoChronoGraph2   = await massiveOutgoingChronoGraph2.measureTillMaxTime()
+    const runInfoMobx           = await massiveOutgoingMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
-    await massiveOutgoingChronoGraph2.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
-
-    // ChronoGraph2 first
-    // const runInfo   = await massiveOutgoingChronoGraph2.measureTillMaxTime()
-    //
-    // await massiveOutgoingMobx.measureFixed(runInfo.cyclesCount, runInfo.samples.length)
+    if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
+    if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")
 }
 
-launchIfStandaloneProcess(run)
+launchIfStandaloneProcess(run, 'massive_outgoing')

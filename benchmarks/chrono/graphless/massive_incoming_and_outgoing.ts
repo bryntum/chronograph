@@ -1,4 +1,12 @@
-import { BoxAbstract, GraphGenerationResult, GraphGenerator, GraphlessBenchmark } from "./data_generators.js"
+import {
+    BoxAbstract,
+    GraphGenerationResult,
+    GraphGenerator,
+    graphGeneratorChronoGraph2,
+    graphGeneratorMobx,
+    GraphlessBenchmark, launchIfStandaloneProcess
+} from "./data_generators.js"
+import { MassiveIncomingBenchmark } from "./massive_incoming.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -49,3 +57,26 @@ export class MassiveIncomingAndOutgoingBenchmark extends GraphlessBenchmark {
     }
 }
 
+
+//---------------------------------------------------------------------------------------------------------------------
+const massiveIncomingAndOutgoingChronoGraph2 = MassiveIncomingAndOutgoingBenchmark.new({
+    name        : 'Massive incoming&outgoing - ChronoGraph2',
+    atomNum     : 10000,
+    graphGen    : graphGeneratorChronoGraph2
+})
+
+const massiveIncomingAndOutgoingMobx = MassiveIncomingAndOutgoingBenchmark.new({
+    name        : 'Massive incoming&outgoing - Mobx',
+    atomNum     : 10000,
+    graphGen    : graphGeneratorMobx
+})
+
+export const run = async () => {
+    const runInfoChronoGraph2   = await massiveIncomingAndOutgoingChronoGraph2.measureTillMaxTime()
+    const runInfoMobx           = await massiveIncomingAndOutgoingMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+
+    if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
+    if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")
+}
+
+launchIfStandaloneProcess(run, 'massive_incoming_and_outgoing')

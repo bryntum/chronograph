@@ -1,4 +1,12 @@
-import { BoxAbstract, GraphGenerationResult, GraphGenerator, GraphlessBenchmark } from "./data_generators.js"
+import {
+    BoxAbstract,
+    GraphGenerationResult,
+    GraphGenerator,
+    graphGeneratorChronoGraph2,
+    graphGeneratorMobx,
+    GraphlessBenchmark,
+    launchIfStandaloneProcess
+} from "./data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -9,6 +17,7 @@ export class MutatingGraphBenchmark extends GraphlessBenchmark {
     graphGen        : GraphGenerator<unknown>       = undefined
 
     async setup () {
+        const me                                = this
         const dispatcher : BoxAbstract<number>  = this.graphGen.box(0)
 
         let boxes : BoxAbstract<number>[]       = [ dispatcher ]
@@ -26,7 +35,7 @@ export class MutatingGraphBenchmark extends GraphlessBenchmark {
 
                     let sum = 0
 
-                    for (let i = 1 + dispatcher.READ(); i <= this.depCount; i += 2) {
+                    for (let i = 1 + dispatcher.READ(); i <= me.depCount; i += 2) {
                         sum     += boxes[ this - i ].READ() % 10000
                     }
 
@@ -53,3 +62,29 @@ export class MutatingGraphBenchmark extends GraphlessBenchmark {
         for (let k = 0; k < boxes.length; k++) boxes[ k ].READ()
     }
 }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+const mutatingGraphChronoGraph2 = MutatingGraphBenchmark.new({
+    name        : 'Mutating graph - ChronoGraph2',
+    atomNum     : 1000,
+    depCount    : 50,
+    graphGen    : graphGeneratorChronoGraph2
+})
+
+const mutatingGraphMobx = MutatingGraphBenchmark.new({
+    name        : 'Mutating graph - Mobx',
+    atomNum     : 1000,
+    depCount    : 50,
+    graphGen    : graphGeneratorMobx
+})
+
+export const run = async () => {
+    const runInfoChronoGraph2   = await mutatingGraphChronoGraph2.measureTillMaxTime()
+    const runInfoMobx           = await mutatingGraphMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+
+    if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
+    if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")
+}
+
+launchIfStandaloneProcess(run, 'mutating_graph')
