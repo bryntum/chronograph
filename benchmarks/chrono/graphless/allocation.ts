@@ -18,14 +18,7 @@ export class AllocationBenchmark extends Benchmark<void, void> {
         }
 
         for (let i = this.depCount; i < this.atomNum; i++) {
-            const box = this.graphGen.rawComputed(
-                function () {
-                    return 1
-                },
-                i
-            )
-
-            boxes.push(box)
+            boxes.push(this.graphGen.rawComputed(function () { return 1 }, i))
         }
 
         return boxes
