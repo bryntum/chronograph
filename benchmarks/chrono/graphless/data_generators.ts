@@ -1,8 +1,9 @@
 import { computed, observable } from "mobx/lib/mobx.module.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
-import { Base } from "../../src/class/Base.js"
-import { AnyFunction } from "../../src/class/Mixin.js"
+import { Benchmark } from "../../../src/benchmark/Benchmark.js"
+import { Box } from "../../../src/chrono2/data/Box.js"
+import { CalculableBox } from "../../../src/chrono2/data/CalculableBox.js"
+import { Base } from "../../../src/class/Base.js"
+import { AnyFunction } from "../../../src/class/Mixin.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -123,6 +124,33 @@ export class GraphGeneratorChronoGraph2 implements GraphGenerator<Box<unknown>> 
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
 export type GraphGenerationResult  = { boxes : BoxAbstract<unknown>[], counter : number }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export type PostBenchInfo = {
+    totalCount      : number
+    result          : number
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+export class GraphlessBenchmark<
+    StateT extends GraphGenerationResult = GraphGenerationResult,
+    InfoT extends PostBenchInfo = PostBenchInfo
+> extends Benchmark<StateT, InfoT> {
+
+    gatherInfo (state : StateT) : InfoT {
+        const { boxes } = state
+
+        return {
+            totalCount      : state.counter,
+            result          : boxes[ boxes.length - 1 ].READ() as number
+        } as InfoT
+    }
+
+
+    stringifyInfo (info : InfoT) : string {
+        return `Total calculation: ${info.totalCount}\nResult in last box: ${info.result}`
+    }
+}
