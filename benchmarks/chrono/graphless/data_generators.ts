@@ -160,9 +160,11 @@ export class GraphlessBenchmark<
 declare const window : any
 declare const location : any
 
-export const launchIfStandaloneProcess = (run : Function, moduleName : string) => {
+export const launchIfStandaloneProcess = <Res>(run : AnyFunction<Res>, moduleName : string) : Res => {
     if (
         typeof process !== undefined && process.version && String(process.argv[ 1 ]).includes(moduleName)
         || typeof window !== "undefined" && String(location.href).includes(moduleName)
-    ) run()
+    ) {
+        return run()
+    }
 }
