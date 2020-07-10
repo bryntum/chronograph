@@ -1,6 +1,6 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
-import { ZeroBoxImmutable } from "../data/Box.js"
+// import { ZeroBoxImmutable } from "../data/Box.js"
 import { Immutable } from "../data/Immutable.js"
 import { Iteration } from "../graph/Iteration.js"
 import { Atom } from "./Atom.js"
@@ -217,7 +217,7 @@ export class Quark extends Node implements Immutable {
 
                     if (quark !== this) this.copyFrom(quark)
 
-                    this.previous       = ZeroBoxImmutable as any
+                    // this.previous       = ZeroBoxImmutable as any
 
                     this.$outgoing      = collapsedOutgoing
                     this.$outgoingRev   = collapsedOutgoingRev
