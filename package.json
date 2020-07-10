@@ -5,7 +5,9 @@
   "main": "index.js",
   "module": "main.js",
   "scripts": {
-    "test": "npx siesta ./tests",
+    "chrome_bench" : "google-chrome-stable --js-flags=\"--expose-gc\"",
+    "bench": "node --expose-gc -r esm ./benchmarks/suite.js",
+    "test": "node ./tests/index.js",
     "docs": "scripts/build_docs.sh"
   },
   "homepage": "https://github.com/bryntum/chronograph",
