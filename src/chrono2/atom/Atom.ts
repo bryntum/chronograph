@@ -2,14 +2,17 @@ import { AnyConstructor } from "../../class/Mixin.js"
 import { Uniqable } from "../../util/Uniqable.js"
 import { Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "../graph/Graph.js"
-import { chronoId, ChronoReference, Identifiable } from "./Identifiable.js"
+import { chronoReference, ChronoReference, Identifiable } from "./Identifiable.js"
 import { AtomState, Quark } from "./Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Atom extends Owner implements Identifiable, Uniqable {
-    id                  : ChronoReference      = chronoId()
+    id                  : ChronoReference      = chronoReference()
     name                : string        = undefined
+
+    // same value for all branches
+    identity            : this          = this
 
     uniqable            : number        = Number.MIN_SAFE_INTEGER
     uniqable2           : number        = Number.MIN_SAFE_INTEGER
@@ -25,10 +28,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
 
     level               : number        = 0
-    lazy                : boolean       = false
-
-    // same value for all branches
-    identity            : this          = this
+    lazy                : boolean       = true
 
 
     buildDefaultImmutable () : Quark {
@@ -82,11 +82,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     // }
 
     updateQuark (quark : Quark) {
-        // TODO
-        // @ts-ignore
         const newValue      = quark.readRaw()
-        // TODO
-        // @ts-ignore
         const oldValue      = this.immutable.readRaw()
 
         // TODO
@@ -115,7 +111,6 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         //         toVisit[ 0 ] = this.immutable
 
         const toVisit : Quark[]         = [ this.immutable ]
-        const graph : ChronoGraph       = this.graph
 
         while (toVisit.length) {
             const quark     = toVisit.pop()
@@ -137,8 +132,6 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
 
     propagateStale () {
-        const graph : ChronoGraph   = this.graph
-
         this.immutable.forEachOutgoing((quark, atom) => {
             atom.state = AtomState.Stale
         })

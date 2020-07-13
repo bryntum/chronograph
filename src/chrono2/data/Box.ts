@@ -16,43 +16,6 @@ export class BoxImmutable extends Quark {
     }
 
 
-    hasValue () : boolean {
-        return this.read() !== undefined
-    }
-
-
-    hasOwnValue () : boolean {
-        return this.value !== undefined
-    }
-
-
-    read () : any {
-        let box : this = this
-
-        while (box) {
-            if (box.value !== undefined) return box.value
-
-            box     = box.previous
-        }
-
-        return null
-    }
-
-
-    // TODO
-    readRaw () : any {
-        let box : this = this
-
-        while (box) {
-            if (box.value !== undefined) return box.value
-
-            box     = box.previous
-        }
-
-        return undefined
-    }
-
-
     write (value : unknown) {
         if (this.frozen) throw new Error("Can't write to frozen box")
 

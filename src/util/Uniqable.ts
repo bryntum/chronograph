@@ -24,8 +24,10 @@ Considering that this benchmarks exercise only integers exhausting and in real-w
 on every integer used, there will be at least 10x (in reality 1000x) of other instructions,
 the real time for exhausting the interval is ~780 years
 
+UPDATE: starting from 0 halves the exhausting time, but improves performance
+(less bits to compare I guess)
  */
-let UNIQABLE : number = Number.MIN_SAFE_INTEGER
+let UNIQABLE : number = 0 // Number.MIN_SAFE_INTEGER
 
 export const getUniqable = () => ++UNIQABLE
 

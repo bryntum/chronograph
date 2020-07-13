@@ -5,6 +5,7 @@ import { CI } from "../collection/Iterator.js"
 export const MIN_SMI = -Math.pow(2, 30)
 export const MAX_SMI = Math.pow(2, 30) - 1
 
+
 //---------------------------------------------------------------------------------------------------------------------
 export const identity = <V>(value : V) : V => value
 

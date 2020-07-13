@@ -27,7 +27,7 @@ export class ChronoGraph extends Base implements Owner {
 
     historySource           : Map<ChronoReference, Quark>   = new Map()
 
-    atomsById               : Map<number, Atom>     = new Map()
+    atomsById               : Map<ChronoReference, Atom>     = new Map()
 
 
     //region ChronoGraph as Owner

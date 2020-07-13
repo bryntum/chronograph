@@ -3,14 +3,6 @@ import { DefaultMetaSync, Meta } from "../atom/Meta.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export interface GarbageCollectable {
-//     refCount    : number
-//
-//     destroy ()
-// }
-
-
 //---------------------------------------------------------------------------------------------------------------------
 export class Immutable {
     owner       : Owner         = undefined

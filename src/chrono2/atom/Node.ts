@@ -1,12 +1,12 @@
 import { Uniqable } from "../../util/Uniqable.js"
 
+//---------------------------------------------------------------------------------------------------------------------
 let revisionId = Number.MIN_SAFE_INTEGER
 
 export const getRevision = () : number => ++revisionId
 
 
-export type Edge = Node | number
-
+//---------------------------------------------------------------------------------------------------------------------
 let compactCounter  = 500
 let compactAmount   = 500 // 1000
 
@@ -64,18 +64,11 @@ export class Node implements Uniqable {
     }
 
 
-    addIncoming (from : Node, calledFromPartner : boolean = false) {
-        this.getIncoming().push(from)
-        if (!calledFromPartner) from.addOutgoing(this, true)
-    }
-
-
     compactOutgoing (startFrom : number) {
-
     }
 
 
-    addOutgoing (to : Node, calledFromPartner : boolean = false) {
+    addOutgoing (to : Node) {
         const toRevision            = to.revision
 
         if (this.lastOutgoingTo === to) {
@@ -83,6 +76,8 @@ export class Node implements Uniqable {
 
             return
         }
+
+        this.lastOutgoingTo         = to
 
         if (this.$outgoing === undefined) {
             this.$outgoing      = []
@@ -106,13 +101,12 @@ export class Node implements Uniqable {
             this.compactOutgoing(this.$outgoing.length - compactAmount)
         }
 
-        this.lastOutgoingTo         = to
-
         // this.outgoingCompacted  = false
 
         this.$outgoing.push(to)
         this.$outgoingRev.push(toRevision)
-        if (!calledFromPartner) to.addIncoming(this, true)
+
+        to.getIncoming().push(this)
     }
 }
 

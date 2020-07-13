@@ -24,9 +24,48 @@ export class Quark extends Node implements Immutable {
 
     frozen      : boolean       = false
 
+    value       : unknown       = undefined
+
     usedProposedOrPrevious : boolean = false
 
-    iteration       : Iteration   = undefined
+    iteration       : Iteration = undefined
+
+
+    hasValue () : boolean {
+        return this.readRaw() !== undefined
+    }
+
+
+    hasOwnValue () : boolean {
+        return this.value !== undefined
+    }
+
+
+    read () : any {
+        let box : this = this
+
+        while (box) {
+            if (box.value !== undefined) return box.value
+
+            box     = box.previous
+        }
+
+        return null
+    }
+
+
+    // TODO
+    readRaw () : any {
+        let box : this = this
+
+        while (box) {
+            if (box.value !== undefined) return box.value
+
+            box     = box.previous
+        }
+
+        return undefined
+    }
 
 
     get level () {
@@ -106,8 +145,6 @@ export class Quark extends Node implements Immutable {
                 }
             }
 
-            // TODO
-            // @ts-ignore
             if (quark.value !== undefined) break
 
             quark       = quark.previous
@@ -210,8 +247,6 @@ export class Quark extends Node implements Immutable {
                     }
                 }
 
-                // TODO
-                // @ts-ignore
                 if (quark.value !== undefined) {
                     valueConsumed       = true
 
@@ -234,7 +269,6 @@ export class Quark extends Node implements Immutable {
 
     destroy () {
         this.previous   = undefined
-        // @ts-ignore
         this.value      = undefined
 
         this.clearOutgoing()
@@ -243,29 +277,28 @@ export class Quark extends Node implements Immutable {
 
 
     copyFrom (quark : this) {
-        // TODO
-        // @ts-ignore
         this.value      = quark.value
         this.$incoming  = quark.$incoming
     }
 
 
     clone () {
-        const cls       = this.constructor as AnyConstructor<this, typeof Quark>
+        const cls                       = this.constructor as AnyConstructor<this, typeof Quark>
 
-        const clone     = new cls()
+        const clone                     = new cls()
 
-        clone.$outgoing = this.$outgoing ? this.$outgoing.slice() : undefined
-        clone.$incoming = this.$incoming ? this.$incoming.slice() : undefined
-        clone.owner     = this.owner
-        clone.previous  = this.previous
-        clone.frozen    = this.frozen
+        clone.$outgoing                 = this.$outgoing ? this.$outgoing.slice() : undefined
+        clone.$outgoingRev              = this.$outgoingRev ? this.$outgoingRev.slice() : undefined
+        clone.$incoming                 = this.$incoming ? this.$incoming.slice() : undefined
+
+        clone.owner                     = this.owner
+        clone.previous                  = this.previous
+        clone.frozen                    = this.frozen
+
         clone.usedProposedOrPrevious    = this.usedProposedOrPrevious
-        clone.iteration = this.iteration
+        clone.iteration                 = this.iteration
 
-        // TODO
-        // @ts-ignore
-        clone.value     = this.value
+        clone.value                     = this.value
 
         return clone
     }

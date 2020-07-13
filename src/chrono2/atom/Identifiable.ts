@@ -1,9 +1,9 @@
 //---------------------------------------------------------------------------------------------------------------------
-export type ChronoReference = number
+export type ChronoReference = string | number
 
-let CHRONO_ID : number = 0
+let CHRONO_REFERENCE : number = 0
 
-export const chronoId = () => CHRONO_ID++
+export const chronoReference = () => CHRONO_REFERENCE++
 
 
 //---------------------------------------------------------------------------------------------------------------------
