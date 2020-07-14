@@ -6,9 +6,16 @@ import { AnyFunction } from "../../../src/class/Mixin.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export interface BoxAbstract<V> {
-    READ () : V
-    WRITE (value : V)
+// might look silly to have such "abstract" class, but idea is that hopefully v8
+// will figure out that all its subclasses has the same "shape" and `.READ(), .WRITE()`
+// calls won't become "megamorphic"
+export class BoxAbstract<V> {
+    READ () : V {
+        throw new Error("Abstract method called")
+    }
+    WRITE (value : V) {
+        throw new Error("Abstract method called")
+    }
 }
 
 export interface BoxMobxRaw<V> {
@@ -16,10 +23,11 @@ export interface BoxMobxRaw<V> {
     set (value : V)
 }
 
-export class BoxMobx<V> implements BoxAbstract<V> {
+export class BoxMobx<V> extends BoxAbstract<V> {
     box     : any
 
     constructor (box) {
+        super()
         this.box = box
     }
 
@@ -40,10 +48,11 @@ export class BoxMobx<V> implements BoxAbstract<V> {
     }
 }
 
-export class BoxChronoGraph2<V> implements BoxAbstract<V> {
+export class BoxChronoGraph2<V> extends BoxAbstract<V> {
     box     : Box<V>
 
     constructor (box) {
+        super()
         this.box = box
     }
 

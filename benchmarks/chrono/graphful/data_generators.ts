@@ -7,11 +7,13 @@ import { BoxAbstract, BoxChronoGraph2, GraphGenerator, GraphGeneratorChronoGraph
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class BoxChronoGraph1<V> implements BoxAbstract<V> {
-    identifier      : Identifier<V>
-    graph           : ChronoGraph1
+export class BoxChronoGraph1<V> extends BoxAbstract<V> {
+    identifier      : Identifier<V>     = undefined
+    graph           : ChronoGraph1      = undefined
 
     constructor (identifier, graph) {
+        super()
+
         this.identifier = identifier
         this.graph      = graph
     }

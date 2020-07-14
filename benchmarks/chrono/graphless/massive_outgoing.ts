@@ -1,3 +1,4 @@
+import { GraphfulGeneratorChronoGraph1, GraphfulGeneratorChronoGraph2 } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
     GraphGenerationResult,
@@ -56,9 +57,23 @@ const massiveOutgoingMobx : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.
     graphGen    : graphGeneratorMobx
 })
 
+const massiveOutgoingChronoGraph2Graphful : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+    name        : 'Massive outgoing - ChronoGraph2 with graph',
+    atomNum     : 10000,
+    graphGen    : new GraphfulGeneratorChronoGraph2()
+})
+
+const massiveOutgoingChronoGraph1 : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+    name        : 'Massive outgoing - ChronoGraph1',
+    atomNum     : 10000,
+    graphGen    : new GraphfulGeneratorChronoGraph1()
+})
+
 export const run = async () => {
     const runInfoChronoGraph2   = await massiveOutgoingChronoGraph2.measureTillMaxTime()
     const runInfoMobx           = await massiveOutgoingMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2Graphful = await massiveOutgoingChronoGraph2Graphful.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph1   = await massiveOutgoingChronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
     if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
     if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")

@@ -1,4 +1,5 @@
 import { Benchmark } from "../../../src/benchmark/Benchmark.js"
+import { GraphfulGeneratorChronoGraph1, GraphfulGeneratorChronoGraph2 } from "../graphful/data_generators.js"
 import { GraphGenerator, graphGeneratorChronoGraph2, graphGeneratorMobx, launchIfStandaloneProcess } from "./data_generators.js"
 
 
@@ -28,22 +29,38 @@ export class AllocationBenchmark extends Benchmark<void, void> {
 
 //---------------------------------------------------------------------------------------------------------------------
 const runFor = async (atomNum : number = 100000, depCount : number = 1) => {
-    const stableGraphChronoGraph2 = AllocationBenchmark.new({
+    const chronoGraph2 = AllocationBenchmark.new({
         name        : `Graphless allocation, total atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorChronoGraph2
     })
 
-    const stableGraphMobx = AllocationBenchmark.new({
+    const mobx = AllocationBenchmark.new({
         name        : `Graphless allocation, total atoms: ${atomNum}, boxes: ${depCount} - Mobx`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorMobx
     })
 
-    await stableGraphChronoGraph2.measureTillMaxTime()
-    await stableGraphMobx.measureTillMaxTime()
+    const chronoGraph2WithGraph = AllocationBenchmark.new({
+        name        : `Graphless allocation, total atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph2 with graph`,
+        atomNum     : atomNum,
+        depCount    : depCount,
+        graphGen    : new GraphfulGeneratorChronoGraph2()
+    })
+
+    const chronoGraph1 = AllocationBenchmark.new({
+        name        : `Graphless allocation, total atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph1`,
+        atomNum     : atomNum,
+        depCount    : depCount,
+        graphGen    : new GraphfulGeneratorChronoGraph1()
+    })
+
+    await chronoGraph2.measureTillMaxTime()
+    await mobx.measureTillMaxTime()
+    await chronoGraph2WithGraph.measureTillMaxTime()
+    await chronoGraph1.measureTillMaxTime()
 }
 
 

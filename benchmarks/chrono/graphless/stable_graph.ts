@@ -1,3 +1,4 @@
+import { GraphfulGeneratorChronoGraph1, GraphfulGeneratorChronoGraph2 } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
     GraphGenerationResult,
@@ -58,22 +59,38 @@ export class StableGraphBenchmark extends GraphlessBenchmark {
 
 //---------------------------------------------------------------------------------------------------------------------
 const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
-    const stableGraphChronoGraph2 = StableGraphBenchmark.new({
+    const chronoGraph2 = StableGraphBenchmark.new({
         name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorChronoGraph2
     })
 
-    const stableGraphMobx = StableGraphBenchmark.new({
+    const mobx = StableGraphBenchmark.new({
         name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - Mobx`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : graphGeneratorMobx
     })
 
-    const runInfoChronoGraph2   = await stableGraphChronoGraph2.measureTillMaxTime()
-    const runInfoMobx           = await stableGraphMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const chronoGraph2WithGraph = StableGraphBenchmark.new({
+        name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2 with graph`,
+        atomNum     : atomNum,
+        depCount    : depCount,
+        graphGen    : new GraphfulGeneratorChronoGraph2()
+    })
+
+    const chronoGraph1 = StableGraphBenchmark.new({
+        name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
+        atomNum     : atomNum,
+        depCount    : depCount,
+        graphGen    : new GraphfulGeneratorChronoGraph1()
+    })
+
+    const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()
+    const runInfoMobx           = await mobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2WithGraph = await chronoGraph2WithGraph.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph1 = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
     if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
     if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")

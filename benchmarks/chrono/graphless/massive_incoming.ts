@@ -69,7 +69,7 @@ const massiveIncomingMobx = MassiveIncomingBenchmark.new({
 })
 
 const massiveIncomingChronoGraph2Graphful = MassiveIncomingBenchmark.new({
-    name        : 'Massive incoming - ChronoGraph2 graphful',
+    name        : 'Massive incoming - ChronoGraph2 with graph',
     atomNum     : 10000,
     graphGen    : new GraphfulGeneratorChronoGraph2()
 })
