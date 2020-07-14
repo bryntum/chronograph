@@ -364,6 +364,8 @@ export class ChronoGraph extends Base implements Owner {
         atom.enterGraph(this)
 
         this.immutableForWrite().addQuark(atom.immutable)
+
+        if (!atom.lazy) this.addPossiblyStaleStrictAtomToTransaction(atom)
     }
 
     addAtoms (atoms : Atom[]) {
