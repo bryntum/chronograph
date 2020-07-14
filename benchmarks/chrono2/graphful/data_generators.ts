@@ -6,6 +6,17 @@ import { AnyFunction } from "../../../src/class/Mixin.js"
 import { BoxAbstract, BoxChronoGraph2, ReactiveDataGenerator, ReactiveDataGeneratorChronoGraph2 } from "../graphless/data_generators.js"
 
 
+export interface AbstractGraph {
+    commit ()
+
+    reject ()
+
+    undo ()
+
+    redo ()
+}
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export class BoxChronoGraph1<V> extends BoxAbstract<V> {
     identifier      : Identifier<V>     = undefined
@@ -64,6 +75,16 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
 
         return box
     }
+
+
+    computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
+        const box = super.computedStrict(func, context, name)
+
+        this.graph.addAtom(box.box)
+
+        return box
+    }
+
 }
 
 
@@ -105,4 +126,20 @@ export class ReactiveDataGeneratorChronoGraph1 implements ReactiveDataGenerator<
 
         return new BoxChronoGraph1(box, this.graph)
     }
+
+    computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph1<V> {
+        const box   = CalculatedValueSync.new({ calculation : func, context : context, name : name })
+
+        this.graph.addIdentifier(box)
+
+        return new BoxChronoGraph1(box, this.graph)
+    }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+export type ReactiveDataGenerationResultWithGraph = { boxes : BoxAbstract<unknown>[], counter : number, graph : AbstractGraph }
+
+
+export interface ReactiveDataGeneratorWithGraph<RawBox> extends ReactiveDataGenerator<RawBox> {
+    graph       : AbstractGraph
 }

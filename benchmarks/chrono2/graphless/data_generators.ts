@@ -81,6 +81,8 @@ export interface ReactiveDataGenerator<RawBox> {
 
     rawComputed<V> (func : AnyFunction<V>, context? : any, name? : string) : RawBox
     computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxAbstract<V>
+
+    computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxAbstract<V>
 }
 
 
@@ -102,6 +104,10 @@ export class ReactiveDataGeneratorMobx implements ReactiveDataGenerator<BoxMobxR
     }
 
     computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxMobx<V> {
+        return new BoxMobx(computed(func, { keepAlive : true, context : context, name : name }))
+    }
+
+    computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxMobx<V> {
         return new BoxMobx(computed(func, { keepAlive : true, context : context, name : name }))
     }
 }
@@ -129,6 +135,10 @@ export class ReactiveDataGeneratorChronoGraph2 implements ReactiveDataGenerator<
 
     computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
         return new BoxChronoGraph2(new CalculableBox({ calculation : func, context : context, name : name }))
+    }
+
+    computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
+        return new BoxChronoGraph2(new CalculableBox({ calculation : func, context : context, name : name, lazy : false }))
     }
 }
 
