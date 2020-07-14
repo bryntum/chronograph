@@ -117,7 +117,7 @@ const runFor = async (atomNum : number = 1000, depCount : number = 2) => {
 
 
 export const run = async () => {
-    await runFor(1000, 2)
+    await runFor(1000, 20)
 }
 
 launchIfStandaloneProcess(run, 'shallow_changes')
