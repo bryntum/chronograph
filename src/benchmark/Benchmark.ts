@@ -212,7 +212,10 @@ export class Benchmark<StateT, InfoT = any> extends Base {
                 }
             }
 
-            samples.push(performance.now() - start)
+            const end       = performance.now() - start
+
+            // ignore calibration iteration
+            if (i !== 0) samples.push(end)
 
             i++
         }

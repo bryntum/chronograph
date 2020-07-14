@@ -71,7 +71,7 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
         graphGen    : new ReactiveDataGeneratorChronoGraph1()
     })
 
-    const runInfoChronoGraph2WithGraph  = await chronoGraph2WithGraph.measureFixed(1, 1)
+    const runInfoChronoGraph2WithGraph  = await chronoGraph2WithGraph.measureTillMaxTime()
     const runInfoChronoGraph1           = await chronoGraph1.measureFixed(
         runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
     )
@@ -81,9 +81,9 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
 
 
 export const run = async () => {
-    await runFor(2, 1)
-    // await runFor(1000, 10)
-    // await runFor(1000, 100)
+    await runFor(1000, 1)
+    await runFor(1000, 10)
+    await runFor(1000, 100)
 }
 
 launchIfStandaloneProcess(run, 'commit')
