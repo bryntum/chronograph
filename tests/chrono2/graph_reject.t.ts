@@ -170,6 +170,53 @@ StartTest(t => {
     })
 
 
+    t.iit('Reject should reset transaction stack', t => {
+        const box0      = new Box(0)
+        const box1      = new Box(10)
+
+        let counter2    = 0
+        const box2      = new CalculableBox({
+            calculation : () => {
+                counter2++
+                return box1.read() + 1
+            }
+        })
+
+        let counter3    = 0
+        const box3     = new CalculableBox({
+            lazy        : false,
+            calculation : () => {
+                counter3++
+                return box2.read() + 1
+            }
+        })
+
+        const graph     = ChronoGraph.new({ historyLimit : 1 })
+
+        graph.addAtoms([ box0, box1, box2, box3 ])
+
+        graph.commit()
+
+        t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
+
+        //------------------
+        box1.write(20)
+
+        graph.reject()
+
+        //------------------
+        counter2 = counter3 = 0
+
+        box0.write(10)
+
+        t.is(box1.read(), 10)
+        t.is(box2.read(), 11)
+        t.is(box3.read(), 12)
+
+        t.isDeeply([ counter2, counter3 ], [ 0, 0 ])
+    })
+
+
     t.it('Should be able to reject transaction using graph api', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 1 })
 
