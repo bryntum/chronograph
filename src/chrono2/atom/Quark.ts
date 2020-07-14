@@ -97,6 +97,8 @@ export class Quark extends Node implements Immutable {
     $outgoing           : Quark[]
 
 
+    // IMPORTANT LIMITATION : can not nest calls to `forEachOutgoing` (call `forEachOutgoing` in the `func` argument)
+    // this messes up internal "uniqables" state
     forEachOutgoing (func : (quark : Quark, resolvedAtom : Atom) => any) {
         let quark : this = this
 
