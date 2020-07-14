@@ -1,4 +1,4 @@
-import { Benchmark } from "../src/benchmark/Benchmark.js"
+import { Benchmark } from "../../src/benchmark/Benchmark.js"
 import {
     Chrono2GenerationResult,
     chrono2Graph,

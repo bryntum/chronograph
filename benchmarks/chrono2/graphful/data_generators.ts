@@ -3,7 +3,7 @@ import { CalculatedValueSync, Identifier, VariableC } from "../../../src/chrono/
 import { Box } from "../../../src/chrono2/data/Box.js"
 import { ChronoGraph as ChronoGraph2 } from "../../../src/chrono2/graph/Graph.js"
 import { AnyFunction } from "../../../src/class/Mixin.js"
-import { BoxAbstract, BoxChronoGraph2, GraphGenerator, GraphGeneratorChronoGraph2 } from "../graphless/data_generators.js"
+import { BoxAbstract, BoxChronoGraph2, ReactiveDataGenerator, ReactiveDataGeneratorChronoGraph2 } from "../graphless/data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ export class BoxChronoGraph1<V> extends BoxAbstract<V> {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphfulGeneratorChronoGraph2 extends GraphGeneratorChronoGraph2 {
+export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGeneratorChronoGraph2 {
     graph           : ChronoGraph2  = ChronoGraph2.new({ historyLimit : 1 })
 
     // used to measure the allocation performance
@@ -68,7 +68,7 @@ export class GraphfulGeneratorChronoGraph2 extends GraphGeneratorChronoGraph2 {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphfulGeneratorChronoGraph1 implements GraphGenerator<Identifier> {
+export class ReactiveDataGeneratorChronoGraph1 implements ReactiveDataGenerator<Identifier> {
     graph           : ChronoGraph1  = ChronoGraph1.new()
 
     // used to measure the allocation performance

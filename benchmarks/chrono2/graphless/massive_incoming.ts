@@ -1,20 +1,20 @@
-import { GraphfulGeneratorChronoGraph1, GraphfulGeneratorChronoGraph2 } from "../graphful/data_generators.js"
+import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
-    GraphGenerationResult,
-    GraphGenerator,
-    graphGeneratorChronoGraph2,
-    graphGeneratorMobx,
-    GraphlessBenchmark,
+    ReactiveDataGenerationResult,
+    ReactiveDataGenerator,
+    reactiveDataGeneratorChronoGraph2,
+    reactiveDataGeneratorMobx,
+    ReactiveDataBenchmark,
     launchIfStandaloneProcess
 } from "./data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class MassiveIncomingBenchmark extends GraphlessBenchmark {
+export class MassiveIncomingBenchmark extends ReactiveDataBenchmark {
     atomNum         : number                        = 1000
 
-    graphGen        : GraphGenerator<unknown>       = undefined
+    graphGen        : ReactiveDataGenerator<unknown>       = undefined
 
     async setup () {
         const me        = this
@@ -43,7 +43,7 @@ export class MassiveIncomingBenchmark extends GraphlessBenchmark {
     }
 
 
-    cycle (iteration : number, cycle : number, state : GraphGenerationResult) {
+    cycle (iteration : number, cycle : number, state : ReactiveDataGenerationResult) {
         const { boxes } = state
 
         for (let i = 0; i < this.atomNum; i++) {
@@ -56,36 +56,36 @@ export class MassiveIncomingBenchmark extends GraphlessBenchmark {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-const massiveIncomingChronoGraph2 = MassiveIncomingBenchmark.new({
+const chronoGraph2 = MassiveIncomingBenchmark.new({
     name        : 'Massive incoming - ChronoGraph2',
     atomNum     : 10000,
-    graphGen    : graphGeneratorChronoGraph2
+    graphGen    : reactiveDataGeneratorChronoGraph2
 })
 
-const massiveIncomingMobx = MassiveIncomingBenchmark.new({
+const mobx = MassiveIncomingBenchmark.new({
     name        : 'Massive incoming - Mobx',
     atomNum     : 10000,
-    graphGen    : graphGeneratorMobx
+    graphGen    : reactiveDataGeneratorMobx
 })
 
-const massiveIncomingChronoGraph2Graphful = MassiveIncomingBenchmark.new({
+const chronoGraph2WithGraph = MassiveIncomingBenchmark.new({
     name        : 'Massive incoming - ChronoGraph2 with graph',
     atomNum     : 10000,
-    graphGen    : new GraphfulGeneratorChronoGraph2()
+    graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
 })
 
-const massiveIncomingChronoGraph1 = MassiveIncomingBenchmark.new({
+const chronoGraph1 = MassiveIncomingBenchmark.new({
     name        : 'Massive incoming - ChronoGraph1',
     atomNum     : 10000,
-    graphGen    : new GraphfulGeneratorChronoGraph1()
+    graphGen    : new ReactiveDataGeneratorChronoGraph1()
 })
 
 
 export const run = async () => {
-    const runInfoChronoGraph2   = await massiveIncomingChronoGraph2.measureTillMaxTime()
-    const runInfoMobx           = await massiveIncomingMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph2Graphful = await massiveIncomingChronoGraph2Graphful.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph1   = await massiveIncomingChronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()
+    const runInfoMobx           = await mobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2Graphful = await chronoGraph2WithGraph.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph1   = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
     if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result || runInfoChronoGraph1.info.result !== runInfoChronoGraph2.info.result)
         throw new Error("Results in last box differ")

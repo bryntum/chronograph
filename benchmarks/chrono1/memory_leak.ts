@@ -1,6 +1,6 @@
-import { Benchmark } from "../src/benchmark/Benchmark.js"
-import { ChronoGraph } from "../src/chrono/Graph.js"
-import { CalculatedValueGen, Variable } from "../src/chrono/Identifier.js"
+import { Benchmark } from "../../src/benchmark/Benchmark.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
+import { CalculatedValueGen, Variable } from "../../src/chrono/Identifier.js"
 import { GraphGenerationResult, mostlyShadowingGraph } from "./data.js"
 
 

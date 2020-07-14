@@ -1,21 +1,21 @@
-import { GraphfulGeneratorChronoGraph1, GraphfulGeneratorChronoGraph2 } from "../graphful/data_generators.js"
+import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
-    GraphGenerationResult,
-    GraphGenerator,
-    graphGeneratorChronoGraph2,
-    graphGeneratorMobx,
-    GraphlessBenchmark,
+    ReactiveDataGenerationResult,
+    ReactiveDataGenerator,
+    reactiveDataGeneratorChronoGraph2,
+    reactiveDataGeneratorMobx,
+    ReactiveDataBenchmark,
     launchIfStandaloneProcess
 } from "./data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class MutatingGraphBenchmark extends GraphlessBenchmark {
+export class MutatingGraphBenchmark extends ReactiveDataBenchmark {
     atomNum         : number                        = 1000
     depCount        : number                        = 1
 
-    graphGen        : GraphGenerator<unknown>       = undefined
+    graphGen        : ReactiveDataGenerator<unknown>       = undefined
 
     async setup () {
         const me                                = this
@@ -52,7 +52,7 @@ export class MutatingGraphBenchmark extends GraphlessBenchmark {
     }
 
 
-    cycle (iteration : number, cycle : number, state : GraphGenerationResult) {
+    cycle (iteration : number, cycle : number, state : ReactiveDataGenerationResult) {
         const { boxes } = state
 
         boxes[ 0 ].WRITE((iteration + cycle) % 2)
@@ -66,39 +66,39 @@ export class MutatingGraphBenchmark extends GraphlessBenchmark {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-const mutatingGraphChronoGraph2 = MutatingGraphBenchmark.new({
+const chronoGraph2 = MutatingGraphBenchmark.new({
     name        : 'Mutating graph - ChronoGraph2',
     atomNum     : 1000,
     depCount    : 50,
-    graphGen    : graphGeneratorChronoGraph2
+    graphGen    : reactiveDataGeneratorChronoGraph2
 })
 
-const mutatingGraphMobx = MutatingGraphBenchmark.new({
+const mobx = MutatingGraphBenchmark.new({
     name        : 'Mutating graph - Mobx',
     atomNum     : 1000,
     depCount    : 50,
-    graphGen    : graphGeneratorMobx
+    graphGen    : reactiveDataGeneratorMobx
 })
 
-const mutatingGraphChronoGraph2Graphful = MutatingGraphBenchmark.new({
+const chronoGraph2WithGraph = MutatingGraphBenchmark.new({
     name        : 'Mutating graph - ChronoGraph2 with graph',
     atomNum     : 1000,
     depCount    : 50,
-    graphGen    : new GraphfulGeneratorChronoGraph2()
+    graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
 })
 
-const mutatingGraphChronoGraph1 = MutatingGraphBenchmark.new({
+const chronoGraph1 = MutatingGraphBenchmark.new({
     name        : 'Mutating graph - ChronoGraph1',
     atomNum     : 1000,
     depCount    : 50,
-    graphGen    : new GraphfulGeneratorChronoGraph1()
+    graphGen    : new ReactiveDataGeneratorChronoGraph1()
 })
 
 export const run = async () => {
-    const runInfoChronoGraph2   = await mutatingGraphChronoGraph2.measureTillMaxTime()
-    const runInfoMobx           = await mutatingGraphMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph2Graphful = await mutatingGraphChronoGraph2Graphful.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph1   = await mutatingGraphChronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()
+    const runInfoMobx           = await mobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2Graphful = await chronoGraph2WithGraph.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph1   = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
     if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
     if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")

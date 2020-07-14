@@ -75,7 +75,7 @@ export class BoxChronoGraph2<V> extends BoxAbstract<V> {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export interface GraphGenerator<RawBox> {
+export interface ReactiveDataGenerator<RawBox> {
     rawBox<V> (initialValue : V, name? : string) : RawBox
     box<V> (initialValue : V, name? : string) : BoxAbstract<V>
 
@@ -85,7 +85,7 @@ export interface GraphGenerator<RawBox> {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphGeneratorMobx implements GraphGenerator<BoxMobxRaw<unknown>> {
+export class ReactiveDataGeneratorMobx implements ReactiveDataGenerator<BoxMobxRaw<unknown>> {
 
     // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : BoxMobx<unknown> {
@@ -106,11 +106,11 @@ export class GraphGeneratorMobx implements GraphGenerator<BoxMobxRaw<unknown>> {
     }
 }
 
-export const graphGeneratorMobx = new GraphGeneratorMobx()
+export const reactiveDataGeneratorMobx = new ReactiveDataGeneratorMobx()
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphGeneratorChronoGraph2 implements GraphGenerator<Box<unknown>> {
+export class ReactiveDataGeneratorChronoGraph2 implements ReactiveDataGenerator<Box<unknown>> {
 
     // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : Box<unknown> {
@@ -132,11 +132,11 @@ export class GraphGeneratorChronoGraph2 implements GraphGenerator<Box<unknown>> 
     }
 }
 
-export const graphGeneratorChronoGraph2 = new GraphGeneratorChronoGraph2()
+export const reactiveDataGeneratorChronoGraph2 = new ReactiveDataGeneratorChronoGraph2()
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export type GraphGenerationResult  = { boxes : BoxAbstract<unknown>[], counter : number }
+export type ReactiveDataGenerationResult  = { boxes : BoxAbstract<unknown>[], counter : number }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -147,8 +147,8 @@ export type PostBenchInfo = {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class GraphlessBenchmark<
-    StateT extends GraphGenerationResult = GraphGenerationResult,
+export class ReactiveDataBenchmark<
+    StateT extends ReactiveDataGenerationResult = ReactiveDataGenerationResult,
     InfoT extends PostBenchInfo = PostBenchInfo
 > extends Benchmark<StateT, InfoT> {
 

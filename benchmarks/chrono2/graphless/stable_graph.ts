@@ -1,21 +1,21 @@
-import { GraphfulGeneratorChronoGraph1, GraphfulGeneratorChronoGraph2 } from "../graphful/data_generators.js"
+import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
-    GraphGenerationResult,
-    GraphGenerator,
-    graphGeneratorChronoGraph2,
-    graphGeneratorMobx,
-    GraphlessBenchmark,
+    ReactiveDataGenerationResult,
+    ReactiveDataGenerator,
+    reactiveDataGeneratorChronoGraph2,
+    reactiveDataGeneratorMobx,
+    ReactiveDataBenchmark,
     launchIfStandaloneProcess
 } from "./data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class StableGraphBenchmark extends GraphlessBenchmark {
+export class StableGraphBenchmark extends ReactiveDataBenchmark {
     atomNum         : number                        = 1000
     depCount        : number                        = 1
 
-    graphGen        : GraphGenerator<unknown>       = undefined
+    graphGen        : ReactiveDataGenerator<unknown>       = undefined
 
     async setup () {
         const me                                = this
@@ -46,7 +46,7 @@ export class StableGraphBenchmark extends GraphlessBenchmark {
     }
 
 
-    cycle (iteration : number, cycle : number, state : GraphGenerationResult) {
+    cycle (iteration : number, cycle : number, state : ReactiveDataGenerationResult) {
         const { boxes } = state
 
         for (let i = 0; i < this.depCount; i++)
@@ -63,28 +63,28 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
         name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
-        graphGen    : graphGeneratorChronoGraph2
+        graphGen    : reactiveDataGeneratorChronoGraph2
     })
 
     const mobx = StableGraphBenchmark.new({
         name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - Mobx`,
         atomNum     : atomNum,
         depCount    : depCount,
-        graphGen    : graphGeneratorMobx
+        graphGen    : reactiveDataGeneratorMobx
     })
 
     const chronoGraph2WithGraph = StableGraphBenchmark.new({
         name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2 with graph`,
         atomNum     : atomNum,
         depCount    : depCount,
-        graphGen    : new GraphfulGeneratorChronoGraph2()
+        graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
     const chronoGraph1 = StableGraphBenchmark.new({
         name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
         atomNum     : atomNum,
         depCount    : depCount,
-        graphGen    : new GraphfulGeneratorChronoGraph1()
+        graphGen    : new ReactiveDataGeneratorChronoGraph1()
     })
 
     const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()

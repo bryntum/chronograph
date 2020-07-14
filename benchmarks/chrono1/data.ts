@@ -1,12 +1,12 @@
 import { computed, observable } from "mobx/lib/mobx.module.js"
-import { ChronoGraph } from "../src/chrono/Graph.js"
-import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../src/chrono/Identifier.js"
-import { Box } from "../src/chrono2/data/Box.js"
-import { CalculableBox } from "../src/chrono2/data/CalculableBox.js"
-import { Base } from "../src/class/Base.js"
-import { AnyConstructor, ClassUnion, Mixin, MixinAny } from "../src/class/Mixin.js"
-import { Entity, field } from "../src/replica/Entity.js"
-import { Replica } from "../src/replica/Replica.js"
+import { ChronoGraph } from "../../src/chrono/Graph.js"
+import { CalculatedValueGen, CalculatedValueSync, Identifier } from "../../src/chrono/Identifier.js"
+import { Box } from "../../src/chrono2/data/Box.js"
+import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { Base } from "../../src/class/Base.js"
+import { AnyConstructor, ClassUnion, Mixin, MixinAny } from "../../src/class/Mixin.js"
+import { Entity, field } from "../../src/replica/Entity.js"
+import { Replica } from "../../src/replica/Replica.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export type GraphGenerationResult  = { graph : ChronoGraph, boxes : Identifier[], counter : number }

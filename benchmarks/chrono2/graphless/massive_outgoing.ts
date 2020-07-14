@@ -1,19 +1,19 @@
-import { GraphfulGeneratorChronoGraph1, GraphfulGeneratorChronoGraph2 } from "../graphful/data_generators.js"
+import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
-    GraphGenerationResult,
-    GraphGenerator,
-    graphGeneratorChronoGraph2,
-    graphGeneratorMobx,
-    GraphlessBenchmark, launchIfStandaloneProcess
+    ReactiveDataGenerationResult,
+    ReactiveDataGenerator,
+    reactiveDataGeneratorChronoGraph2,
+    reactiveDataGeneratorMobx,
+    ReactiveDataBenchmark, launchIfStandaloneProcess
 } from "./data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class MassiveOutgoingBenchmark extends GraphlessBenchmark {
+export class MassiveOutgoingBenchmark extends ReactiveDataBenchmark {
     atomNum         : number                        = 1000
 
-    graphGen        : GraphGenerator<unknown>       = undefined
+    graphGen        : ReactiveDataGenerator<unknown>       = undefined
 
     async setup () {
         const source    = this.graphGen.box(0)
@@ -34,7 +34,7 @@ export class MassiveOutgoingBenchmark extends GraphlessBenchmark {
     }
 
 
-    cycle (iteration : number, cycle : number, state : GraphGenerationResult) {
+    cycle (iteration : number, cycle : number, state : ReactiveDataGenerationResult) {
         const { boxes } = state
 
         boxes[ 0 ].WRITE(iteration + cycle)
@@ -45,35 +45,35 @@ export class MassiveOutgoingBenchmark extends GraphlessBenchmark {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-const massiveOutgoingChronoGraph2 : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+const chronoGraph2 : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
     name        : 'Massive outgoing - ChronoGraph2',
     atomNum     : 10000,
-    graphGen    : graphGeneratorChronoGraph2
+    graphGen    : reactiveDataGeneratorChronoGraph2
 })
 
-const massiveOutgoingMobx : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+const mobx : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
     name        : 'Massive outgoing - Mobx',
     atomNum     : 10000,
-    graphGen    : graphGeneratorMobx
+    graphGen    : reactiveDataGeneratorMobx
 })
 
-const massiveOutgoingChronoGraph2Graphful : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+const chronoGraph2WithGraph : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
     name        : 'Massive outgoing - ChronoGraph2 with graph',
     atomNum     : 10000,
-    graphGen    : new GraphfulGeneratorChronoGraph2()
+    graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
 })
 
-const massiveOutgoingChronoGraph1 : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
+const chronoGraph1 : MassiveOutgoingBenchmark = MassiveOutgoingBenchmark.new({
     name        : 'Massive outgoing - ChronoGraph1',
     atomNum     : 10000,
-    graphGen    : new GraphfulGeneratorChronoGraph1()
+    graphGen    : new ReactiveDataGeneratorChronoGraph1()
 })
 
 export const run = async () => {
-    const runInfoChronoGraph2   = await massiveOutgoingChronoGraph2.measureTillMaxTime()
-    const runInfoMobx           = await massiveOutgoingMobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph2Graphful = await massiveOutgoingChronoGraph2Graphful.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph1   = await massiveOutgoingChronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()
+    const runInfoMobx           = await mobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph2Graphful = await chronoGraph2WithGraph.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    const runInfoChronoGraph1   = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
     if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
     if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")
