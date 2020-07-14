@@ -18,16 +18,18 @@ export class ChronoGraph extends Base implements Owner {
     // how many frozen transactions to keep in memory
     historyLimit            : number                = 0
 
+    // move to Transaction? by definition, transaction ends when the stack is exhausted
+    // (all strict effects observed)
     stack                   : LeveledQueue<Quark>   = new LeveledQueue()
 
     nextTransaction         : Transaction[]         = []
 
-
+    // filled in branches
     previous                : this                  = undefined
 
     historySource           : Map<ChronoReference, Quark>   = new Map()
 
-    atomsById               : Map<ChronoReference, Atom>     = new Map()
+    atomsById               : Map<ChronoReference, Atom>    = new Map()
 
 
     //region ChronoGraph as Owner
