@@ -14,6 +14,8 @@ export class CalculableBox<V> extends Box<V> {
         super()
 
         if (config) {
+            if (config.meta !== undefined) this.meta = config.meta
+
             this.name           = config.name
             this.context        = config.context !== undefined ? config.context : this
 
@@ -25,21 +27,21 @@ export class CalculableBox<V> extends Box<V> {
         }
     }
 
-    $meta   : Meta      = undefined
-
-    get meta () : Meta {
-        if (this.$meta !== undefined) return this.$meta
-
-        const cls = this.constructor as AnyConstructor<this, typeof CalculableBox>
-
-        return this.$meta = cls.meta
-    }
-
-    set meta (value : Meta) {
-        this.$meta  = value
-    }
-
-    static meta : Meta     = DefaultMetaSync
+    // $meta   : Meta      = undefined
+    //
+    // get meta () : Meta {
+    //     if (this.$meta !== undefined) return this.$meta
+    //
+    //     const cls = this.constructor as AnyConstructor<this, typeof CalculableBox>
+    //
+    //     return this.$meta = cls.meta
+    // }
+    //
+    // set meta (value : Meta) {
+    //     this.$meta  = value
+    // }
+    //
+    // static meta : Meta     = DefaultMetaSync
 
 
     context     : unknown           = undefined
@@ -56,28 +58,28 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    $equality       : (v1 : unknown, v2 : unknown) => boolean   = undefined
+    // $equality       : (v1 : unknown, v2 : unknown) => boolean   = undefined
+    //
+    // get equality () : (v1 : unknown, v2 : unknown) => boolean {
+    //     if (this.$equality !== undefined) return this.$equality
+    //
+    //     return this.meta.equality
+    // }
+    // set equality (value : (v1 : unknown, v2 : unknown) => boolean) {
+    //     this.$equality = value
+    // }
 
-    get equality () : (v1 : unknown, v2 : unknown) => boolean {
-        if (this.$equality !== undefined) return this.$equality
 
-        return this.meta.equality
-    }
-    set equality (value : (v1 : unknown, v2 : unknown) => boolean) {
-        this.$equality = value
-    }
-
-
-    $lazy : boolean      = undefined
-
-    get lazy () : boolean {
-        if (this.$lazy !== undefined) return this.$lazy
-
-        return this.meta.lazy
-    }
-    set lazy (value : boolean) {
-        this.$lazy = value
-    }
+    // $lazy : boolean      = undefined
+    //
+    // get lazy () : boolean {
+    //     if (this.$lazy !== undefined) return this.$lazy
+    //
+    //     return this.meta.lazy
+    // }
+    // set lazy (value : boolean) {
+    //     this.$lazy = value
+    // }
 
 
     $sync : boolean      = undefined
@@ -138,7 +140,7 @@ export class CalculableBox<V> extends Box<V> {
     updateValue (newValue : unknown) {
         if (newValue === undefined) newValue = null
 
-        if (this.state !== AtomState.Empty && !this.equality(this.immutable.read(), newValue)) this.propagateStale()
+        if (this.state !== AtomState.Empty && !this.equality(this.immutable.read(), newValue)) this.propagateStaleShallow()
 
         this.immutableForWrite().write(newValue)
 
@@ -247,7 +249,7 @@ export class CalculableBox<V> extends Box<V> {
 
 
     clone () : this {
-        const clone     = super.clone()
+        const clone         = super.clone()
 
         clone.context       = this.context
         clone.name          = this.name

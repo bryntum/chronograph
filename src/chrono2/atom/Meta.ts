@@ -33,6 +33,8 @@ export class Meta extends Base {
      */
     lazy                : boolean   = true
 
+    level               : number    = 0
+
     /**
      * Whether this identifier is sync (`true`) or generator-based (`false`). Default value is `true`.
      */

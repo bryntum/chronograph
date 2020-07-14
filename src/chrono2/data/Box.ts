@@ -79,8 +79,9 @@ export class Box<V> extends Atom {
 
         if (this.graph) this.graph.frozen   = false
 
-        this.propagatePossiblyStale()
-        this.propagateStale()
+        this.propagateStaleDeep()
+        // this.propagatePossiblyStale()
+        // this.propagateStaleShallow()
 
         this.immutableForWrite().write(value)
         this.immutable.revision = getRevision()
