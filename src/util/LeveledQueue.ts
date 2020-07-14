@@ -98,4 +98,11 @@ export class LeveledQueue<T extends { level : number }> {
             if (level) yield* level
         }
     }
+
+
+    clear () {
+        this.length         = 0
+        this.levels         = []
+        this.lowestLevel    = MAX_SMI
+    }
 }
