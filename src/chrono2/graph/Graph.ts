@@ -260,6 +260,8 @@ export class ChronoGraph extends Base implements Owner {
         this.undoTo(this.immutable, this.immutable.previous)
 
         this.immutable  = this.immutable.previous
+
+        this.stack.clear()
     }
 
 
