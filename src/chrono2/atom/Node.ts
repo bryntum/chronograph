@@ -1,7 +1,7 @@
 import { Uniqable } from "../../util/Uniqable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-let revisionId = Number.MIN_SAFE_INTEGER
+let revisionId : number = 0
 
 export const getRevision = () : number => ++revisionId
 
