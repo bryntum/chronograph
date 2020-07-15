@@ -75,7 +75,7 @@ export class Box<V> extends Atom {
     write (value : V) {
         if (value === undefined) value = null
 
-        if (value === this.immutable.read()) return
+        if (this.equality(value, this.immutable.read())) return
 
         if (this.graph) this.graph.frozen   = false
 
