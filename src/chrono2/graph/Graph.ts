@@ -257,6 +257,8 @@ export class ChronoGraph extends Base implements Owner {
         // nothing to reject
         if (this.frozen || this.immutable.frozen) return
 
+        this.immutable.reject()
+
         this.undoTo(this.immutable, this.immutable.previous)
 
         this.immutable  = this.immutable.previous
@@ -414,7 +416,7 @@ export class ChronoGraph extends Base implements Owner {
             const atom          = atoms[ i ]
             const deepestQuark  = atom.identity.uniqableBox as Quark
 
-            this.checkout(atom).updateQuark(deepestQuark.previous)
+            this.checkout(atom).resetQuark(deepestQuark.previous)
 
             atom.identity.uniqableBox = undefined
         }
@@ -443,7 +445,7 @@ export class ChronoGraph extends Base implements Owner {
             const atom          = atoms[ i ]
             const deepestQuark  = atom.identity.uniqableBox as Quark
 
-            this.checkout(atom).updateQuark(deepestQuark)
+            this.checkout(atom).resetQuark(deepestQuark)
 
             atom.identity.uniqableBox   = undefined
         }

@@ -1,6 +1,6 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { DefaultMetaSync, Meta } from "../atom/Meta.js"
-import { getRevision } from "../atom/Node.js"
+import { getNextRevision } from "../atom/Node.js"
 import { AtomState } from "../atom/Quark.js"
 import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
 import { globalContext } from "../GlobalContext.js"
@@ -142,6 +142,7 @@ export class CalculableBox<V> extends Box<V> {
 
         if (this.state !== AtomState.Empty && !this.equality(this.immutable.read(), newValue)) this.propagateStaleShallow()
 
+        // only write the value, revision has been already updated
         this.immutableForWrite().write(newValue)
 
         if (this.immutable.usedProposedOrPrevious) {
@@ -197,7 +198,7 @@ export class CalculableBox<V> extends Box<V> {
         this.immutableForWrite().$incoming      = undefined
         this.immutable.usedProposedOrPrevious   = false
 
-        this.immutable.revision     = getRevision()
+        this.immutable.revision     = getNextRevision()
 
         const prevActive            = globalContext.activeQuark
         const prevGraph             = globalContext.activeGraph

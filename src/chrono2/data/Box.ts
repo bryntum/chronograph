@@ -1,5 +1,5 @@
 import { Atom } from "../atom/Atom.js"
-import { getRevision } from "../atom/Node.js"
+import { getNextRevision } from "../atom/Node.js"
 import { AtomState, Quark } from "../atom/Quark.js"
 import { globalContext } from "../GlobalContext.js"
 
@@ -77,15 +77,19 @@ export class Box<V> extends Atom {
 
         if (this.equality(value, this.immutable.read())) return
 
-        if (this.graph) this.graph.frozen   = false
+        if (this.graph) {
+            this.graph.frozen = false
+            // start new iteration right away
+            this.graph.currentTransaction.immutableForWrite()
+        }
 
         this.propagateStaleDeep()
-        // this.propagatePossiblyStale()
-        // this.propagateStaleShallow()
 
         this.immutableForWrite().write(value)
-        this.immutable.revision = getRevision()
-        this.state  = AtomState.UpToDate
+
+        this.immutable.revision = getNextRevision()
+
+        this.state              = AtomState.UpToDate
     }
 }
 

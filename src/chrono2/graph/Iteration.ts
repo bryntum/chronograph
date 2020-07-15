@@ -22,6 +22,8 @@ export class Iteration extends Immutable {
     // incremented by any following iteration
     nextCount       : number            = 0
 
+    isRejected      : boolean           = false
+
 
     createNext (owner? : Owner) : this {
         const next      = super.createNext(owner)

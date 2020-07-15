@@ -170,12 +170,13 @@ StartTest(t => {
     })
 
 
-    t.iit('Reject should reset transaction stack', t => {
+    t.it('Reject should reset transaction stack', t => {
         const box0      = new Box(0)
         const box1      = new Box(10)
 
         let counter2    = 0
         const box2      = new CalculableBox({
+            lazy        : false,
             calculation : () => {
                 counter2++
                 return box1.read() + 1
@@ -209,9 +210,101 @@ StartTest(t => {
 
         box0.write(10)
 
-        t.is(box1.read(), 10)
-        t.is(box2.read(), 11)
-        t.is(box3.read(), 12)
+        t.isDeeply([ box1.read(), box2.read(), box3.read() ], [ 10, 11, 12 ])
+
+        t.isDeeply([ counter2, counter3 ], [ 0, 0 ])
+    })
+
+
+    t.it('Reject should reset transaction stack for lazy atoms', t => {
+        const box0      = new Box(0)
+        const box1      = new Box(10)
+
+        let counter2    = 0
+        const box2      = new CalculableBox({
+            lazy        : true,
+            calculation : () => {
+                counter2++
+                return box1.read() + 1
+            }
+        })
+
+        let counter3    = 0
+        const box3     = new CalculableBox({
+            lazy        : true,
+            calculation : () => {
+                counter3++
+                return box2.read() + 1
+            }
+        })
+
+        const graph     = ChronoGraph.new({ historyLimit : 1 })
+
+        graph.addAtoms([ box0, box1, box2, box3 ])
+
+        graph.commit()
+
+        t.isDeeply([ counter2, counter3 ], [ 0, 0 ])
+
+        //------------------
+        box1.write(20)
+
+        graph.reject()
+
+        //------------------
+        counter2 = counter3 = 0
+
+        box0.write(10)
+
+        t.isDeeply([ box1.read(), box2.read(), box3.read() ], [ 10, 11, 12 ])
+
+        t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
+    })
+
+
+    t.it('Reject should reset transaction stack for lazy atoms #2', t => {
+        const box0      = new Box(0)
+        const box1      = new Box(10)
+
+        let counter2    = 0
+        const box2      = new CalculableBox({
+            lazy        : true,
+            calculation : () => {
+                counter2++
+                return box1.read() + 1
+            }
+        })
+
+        let counter3    = 0
+        const box3     = new CalculableBox({
+            lazy        : true,
+            calculation : () => {
+                counter3++
+                return box2.read() + 1
+            }
+        })
+
+        const graph     = ChronoGraph.new({ historyLimit : 1 })
+
+        graph.addAtoms([ box0, box1, box2, box3 ])
+
+        t.isDeeply([ box1.read(), box2.read(), box3.read() ], [ 10, 11, 12 ])
+
+        t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
+
+        graph.commit()
+
+        //------------------
+        box1.write(20)
+
+        graph.reject()
+
+        //------------------
+        counter2 = counter3 = 0
+
+        box0.write(10)
+
+        t.isDeeply([ box1.read(), box2.read(), box3.read() ], [ 10, 11, 12 ])
 
         t.isDeeply([ counter2, counter3 ], [ 0, 0 ])
     })

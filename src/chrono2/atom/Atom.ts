@@ -2,6 +2,7 @@ import { AnyConstructor } from "../../class/Mixin.js"
 import { Uniqable } from "../../util/Uniqable.js"
 import { Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "../graph/Graph.js"
+import { Iteration } from "../graph/Iteration.js"
 import { chronoReference, ChronoReference, Identifiable } from "./Identifiable.js"
 import { DefaultMetaSync, Meta } from "./Meta.js"
 import { AtomState, Quark } from "./Quark.js"
@@ -25,7 +26,11 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     // seems we'll  need to have a "preliminary" state on Atom too
     // the use case is that "PossiblyStale" state should not be
     // creating a new quark - thus having it on atom makes sense
-    state               : AtomState     = AtomState.Empty
+    $state              : AtomState     = AtomState.Empty
+
+    // state               : AtomState     = AtomState.Empty
+    stateIteration      : Iteration     = undefined
+    stateQuark          : Quark         = undefined
 
     graph               : ChronoGraph   = undefined
 
@@ -114,7 +119,36 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     }
 
 
-    updateQuark (quark : Quark) {
+    get state () {
+        if (this.graph) {
+            if (
+                this.stateIteration && !this.stateIteration.isRejected
+                && (this.stateQuark === this.immutable || this.immutable.previous === this.stateQuark)
+            ) {
+                return this.$state
+            }
+
+            this.stateIteration     = this.immutable.iteration
+            this.stateQuark         = this.immutable
+
+            return this.$state = this.immutable.readRaw() !== undefined ? AtomState.UpToDate : AtomState.Empty
+        } else {
+            return this.$state
+        }
+    }
+
+
+    set state (state : AtomState) {
+        this.$state             = state
+
+        if (this.graph) {
+            this.stateIteration     = this.graph.currentIteration
+            this.stateQuark         = this.immutable
+        }
+    }
+
+
+    resetQuark (quark : Quark) {
         const newValue      = quark.readRaw()
         const oldValue      = this.immutable.readRaw()
 
@@ -125,11 +159,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             return
         }
 
-        // TODO (!!!) here it should only propagate outside of the graph - atoms in the graph
-        // should be reset to the previous state, directly to the UpToDate state
-        this.propagateStaleDeep()
-        // this.propagatePossiblyStale()
-        // this.propagateStale()
+        this.propagateDeepStaleOutsideOfGraph()
 
         this.immutable  = quark
         this.state      = newValue !== undefined ? AtomState.UpToDate : AtomState.Stale
@@ -159,6 +189,54 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
             quark.forEachOutgoing((outgoing, atom) => {
                 if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
+            })
+        }
+    }
+
+
+    propagateDeepStaleOutsideOfGraph () {
+        const toVisit : Quark[]         = []
+
+        if (this.state === AtomState.UpToDate) {
+            this.state      = AtomState.PossiblyStale
+        }
+
+        if (this.graph && !this.lazy) {
+            this.graph.addPossiblyStaleStrictAtomToTransaction(this)
+        }
+
+        const graph         = this.graph
+
+        this.immutable.forEachOutgoing((outgoing, atom) => {
+            if (atom.graph !== graph) {
+                // only go deeper if state was UpToDate
+                if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
+
+                // but reset to stale anyway
+                atom.state  = AtomState.Stale
+            }
+        })
+
+        // TODO remove the condition should be just `this.immutable.clearOutgoing()` ??
+        if (!this.immutable.frozen) this.immutable.clearOutgoing()
+
+        while (toVisit.length) {
+            const quark     = toVisit.pop()
+
+            const atom      = quark.owner
+
+            if (atom.state === AtomState.UpToDate) {
+                atom.state      = AtomState.PossiblyStale
+            }
+
+            if (atom.graph && !atom.lazy) {
+                atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+            }
+
+            quark.forEachOutgoing((outgoing, atom) => {
+                if (atom.graph !== graph) {
+                    if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
+                }
             })
         }
     }

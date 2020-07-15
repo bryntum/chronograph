@@ -3,15 +3,16 @@ import { Uniqable } from "../../util/Uniqable.js"
 //---------------------------------------------------------------------------------------------------------------------
 let revisionId : number = 0
 
-export const getRevision = () : number => ++revisionId
+export const getNextRevision    = () : number => ++revisionId
+export const getCurrentRevision = () : number => revisionId
 
 
 //---------------------------------------------------------------------------------------------------------------------
 let compactCounter  = 500
 let compactAmount   = 500 // 1000
 
-export const setCompactCounter = (value : number) => compactCounter = value
-export const setCompactAmount = (value : number) => compactAmount = value
+export const setCompactCounter  = (value : number) => compactCounter = value
+export const setCompactAmount   = (value : number) => compactAmount = value
 
 
 //---------------------------------------------------------------------------------------------------------------------

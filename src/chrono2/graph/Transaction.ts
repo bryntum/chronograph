@@ -110,6 +110,11 @@ export class Transaction extends Owner implements Immutable {
     }
 
 
+    reject () {
+        this.forEveryIteration(iteration => iteration.isRejected = true)
+    }
+
+
     mark (reachable : boolean) {
         this.forEveryIteration(iteration => iteration.mark(reachable))
     }
