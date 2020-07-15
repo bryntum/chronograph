@@ -76,7 +76,13 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
         runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
     )
 
-    if (runInfoChronoGraph2WithGraph.info.result !== runInfoChronoGraph1.info.result) throw new Error("Results in last box differ")
+    const chrono2Boxes      = runInfoChronoGraph2WithGraph.finalState.boxes
+    const chrono1Boxes      = runInfoChronoGraph1.finalState.boxes
+
+    for (let i = 0; i < depCount; i++) {
+        if (chrono2Boxes[ i ].READ() !== 1) throw new Error("Invalid value in graph, ChronoGraph2")
+        if (chrono1Boxes[ i ].READ() !== 1) throw new Error("Invalid value in graph, ChronoGraph1")
+    }
 }
 
 
