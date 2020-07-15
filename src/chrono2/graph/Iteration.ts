@@ -5,8 +5,12 @@ import { Immutable, Owner } from "../data/Immutable.js"
 import { Transaction } from "./Transaction.js"
 
 
+let iterationIdSequence : number = 0
+
 //----------------------------------------------------------------------------------------------------------------------
 export class Iteration extends Immutable {
+    name            : string            = `iteration#${iterationIdSequence++}`
+
     owner           : Transaction
 
     quarks          : Quark[]           = []
