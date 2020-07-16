@@ -131,7 +131,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             this.stateIteration     = this.immutable.iteration
             this.stateQuark         = this.immutable
 
-            return this.$state = this.immutable.readRaw() !== undefined ? AtomState.UpToDate : AtomState.Empty
+            return this.$state      = this.immutable.readRaw() !== undefined ? AtomState.UpToDate : AtomState.Empty
         } else {
             return this.$state
         }
@@ -181,10 +181,10 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
             if (atom.state === AtomState.UpToDate) {
                 atom.state      = AtomState.PossiblyStale
-            }
 
-            if (atom.graph && !atom.lazy) {
-                atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                if (atom.graph && !atom.lazy) {
+                    atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                }
             }
 
             quark.forEachOutgoing((outgoing, atom) => {
@@ -199,10 +199,10 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
         if (this.state === AtomState.UpToDate) {
             this.state      = AtomState.PossiblyStale
-        }
 
-        if (this.graph && !this.lazy) {
-            this.graph.addPossiblyStaleStrictAtomToTransaction(this)
+            if (this.graph && !this.lazy) {
+                this.graph.addPossiblyStaleStrictAtomToTransaction(this)
+            }
         }
 
         const graph         = this.graph
@@ -227,10 +227,10 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
             if (atom.state === AtomState.UpToDate) {
                 atom.state      = AtomState.PossiblyStale
-            }
 
-            if (atom.graph && !atom.lazy) {
-                atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                if (atom.graph && !atom.lazy) {
+                    atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                }
             }
 
             quark.forEachOutgoing((outgoing, atom) => {
@@ -248,15 +248,21 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
         if (this.state === AtomState.UpToDate) {
             this.state      = AtomState.PossiblyStale
-        }
 
-        if (this.graph && !this.lazy) {
-            this.graph.addPossiblyStaleStrictAtomToTransaction(this)
+            if (this.graph && !this.lazy) {
+                this.graph.addPossiblyStaleStrictAtomToTransaction(this)
+            }
         }
 
         this.immutable.forEachOutgoing((outgoing, atom) => {
             // only go deeper if state was UpToDate
-            if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
+            if (atom.state === AtomState.UpToDate) {
+                toVisit.push(atom.immutable)
+
+                if (atom.graph && !atom.lazy) {
+                    atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                }
+            }
 
             // but reset to stale anyway
             atom.state  = AtomState.Stale
@@ -272,10 +278,10 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
             if (atom.state === AtomState.UpToDate) {
                 atom.state      = AtomState.PossiblyStale
-            }
 
-            if (atom.graph && !atom.lazy) {
-                atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                if (atom.graph && !atom.lazy) {
+                    atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+                }
             }
 
             quark.forEachOutgoing((outgoing, atom) => {
@@ -287,11 +293,11 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
     propagateStaleShallow () {
         this.immutable.forEachOutgoing((quark, atom) => {
-            atom.state = AtomState.Stale
+            if (atom.graph && !atom.lazy && atom.state === AtomState.UpToDate) {
+                atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
+            }
 
-            // if (atom.graph && !atom.lazy) {
-            //     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
-            // }
+            atom.state = AtomState.Stale
         })
 
         // TODO remove the condition should be just `this.immutable.clearOutgoing()` ??
