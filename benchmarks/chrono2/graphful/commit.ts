@@ -1,3 +1,5 @@
+import { ChronoGraph as ChronoGraph1 } from "../../../src/chrono/Graph.js"
+import { ChronoGraph as ChronoGraph2 } from "../../../src/chrono2/graph/Graph.js"
 import { BoxAbstract, launchIfStandaloneProcess, ReactiveDataBenchmark } from "../graphless/data_generators.js"
 import {
     ReactiveDataGenerationResultWithGraph,
@@ -58,19 +60,19 @@ export class CommitBenchmark extends ReactiveDataBenchmark<ReactiveDataGeneratio
 const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
 
     const chronoGraph2WithGraph = CommitBenchmark.new({
-        // profile     : true,
-        name        : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
-        atomNum     : atomNum,
-        depCount    : depCount,
-        graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
+        // profile         : true,
+        name            : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
+        atomNum         : atomNum,
+        depCount        : depCount,
+        graphGen        : ReactiveDataGeneratorChronoGraph2WithGraph.new({ graph : ChronoGraph2.new({ historyLimit : 1 }) })
     })
 
     const chronoGraph1 = CommitBenchmark.new({
-        // profile     : true,
-        name        : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
-        atomNum     : atomNum,
-        depCount    : depCount,
-        graphGen    : new ReactiveDataGeneratorChronoGraph1()
+        // profile         : true,
+        name            : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
+        atomNum         : atomNum,
+        depCount        : depCount,
+        graphGen        : ReactiveDataGeneratorChronoGraph1.new({ graph : ChronoGraph1.new({ historyLimit : 1 }) })
     })
 
     const runInfoChronoGraph2WithGraph  = await chronoGraph2WithGraph.measureTillMaxTime()
