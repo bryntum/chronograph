@@ -2,6 +2,7 @@ import { computed, observable } from "../../../node_modules/mobx/lib/mobx.module
 import { Benchmark } from "../../../src/benchmark/Benchmark.js"
 import { Box } from "../../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../../src/chrono2/data/CalculableBox.js"
+import { Base } from "../../../src/class/Base.js"
 import { AnyFunction } from "../../../src/class/Mixin.js"
 
 
@@ -116,7 +117,7 @@ export const reactiveDataGeneratorMobx = new ReactiveDataGeneratorMobx()
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReactiveDataGeneratorChronoGraph2 implements ReactiveDataGenerator<Box<unknown>> {
+export class ReactiveDataGeneratorChronoGraph2 extends Base implements ReactiveDataGenerator<Box<unknown>> {
 
     // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : Box<unknown> {

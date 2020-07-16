@@ -2,6 +2,7 @@ import { ChronoGraph as ChronoGraph1 } from "../../../src/chrono/Graph.js"
 import { CalculatedValueSync, Identifier, VariableC } from "../../../src/chrono/Identifier.js"
 import { Box } from "../../../src/chrono2/data/Box.js"
 import { ChronoGraph as ChronoGraph2 } from "../../../src/chrono2/graph/Graph.js"
+import { Base } from "../../../src/class/Base.js"
 import { AnyFunction } from "../../../src/class/Mixin.js"
 import { BoxAbstract, BoxChronoGraph2, ReactiveDataGenerator, ReactiveDataGeneratorChronoGraph2 } from "../graphless/data_generators.js"
 
@@ -89,7 +90,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReactiveDataGeneratorChronoGraph1 implements ReactiveDataGenerator<Identifier> {
+export class ReactiveDataGeneratorChronoGraph1 extends Base implements ReactiveDataGenerator<Identifier> {
     graph           : ChronoGraph1  = ChronoGraph1.new()
 
     // used to measure the allocation performance
