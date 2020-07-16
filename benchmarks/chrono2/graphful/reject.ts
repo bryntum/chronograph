@@ -39,6 +39,8 @@ export class RejectBenchmark extends ReactiveDataBenchmark<ReactiveDataGeneratio
             }, i))
         }
 
+        this.graphGen.graph.commit()
+
         return res
     }
 
