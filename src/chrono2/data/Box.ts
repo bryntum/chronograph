@@ -21,11 +21,12 @@ export class BoxImmutable extends Quark {
 
         this.value = value
     }
+
+    static zero : BoxImmutable
 }
 
-
-export const ZeroBoxImmutable = new BoxImmutable(undefined)
-ZeroBoxImmutable.freeze()
+BoxImmutable.zero = new BoxImmutable(undefined)
+BoxImmutable.zero.freeze()
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -48,7 +49,7 @@ export class Box<V> extends Atom {
     buildDefaultImmutable () : BoxImmutable {
         const defaultBoxImmutable = new BoxImmutable(this)
 
-        defaultBoxImmutable.previous    = ZeroBoxImmutable
+        defaultBoxImmutable.previous    = BoxImmutable.zero
 
         return defaultBoxImmutable
     }
@@ -96,6 +97,6 @@ export class Box<V> extends Atom {
 export const ZeroBox = new Box()
 
 ZeroBox.name            = 'ZeroBox'
-ZeroBox.immutable       = ZeroBoxImmutable
-ZeroBoxImmutable.owner  = ZeroBox
+ZeroBox.immutable       = BoxImmutable.zero
+BoxImmutable.zero.owner = ZeroBox
 

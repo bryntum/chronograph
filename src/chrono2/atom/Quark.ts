@@ -1,6 +1,5 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
-// import { ZeroBoxImmutable } from "../data/Box.js"
 import { Immutable } from "../data/Immutable.js"
 import { Iteration } from "../graph/Iteration.js"
 import { Atom } from "./Atom.js"
@@ -222,6 +221,8 @@ export class Quark extends Node implements Immutable {
 
         let valueConsumed : boolean = false
 
+        const zero                  = (this.constructor as AnyConstructor<this, typeof Quark>).getZero()
+
         do {
             // capture early, since we reset the `previous` on value consumption
             const previous  = quark.previous
@@ -254,7 +255,7 @@ export class Quark extends Node implements Immutable {
 
                     if (quark !== this) this.copyFrom(quark)
 
-                    // this.previous       = ZeroBoxImmutable as any
+                    this.previous       = zero
 
                     this.$outgoing      = collapsedOutgoing
                     this.$outgoingRev   = collapsedOutgoingRev
@@ -304,4 +305,14 @@ export class Quark extends Node implements Immutable {
 
         return clone
     }
+
+
+    static zero : Quark
+
+    static getZero <T extends typeof Quark> (this : T) : InstanceType<T> {
+        return this.zero as InstanceType<T>
+    }
 }
+
+Quark.zero = new Quark()
+Quark.zero.freeze()

@@ -4,9 +4,11 @@ import { Immutable, Owner } from "../data/Immutable.js"
 import { ChronoGraph } from "./Graph.js"
 import { Iteration } from "./Iteration.js"
 
+let transactionIdSequence : number = 0
 
 //----------------------------------------------------------------------------------------------------------------------
 export class Transaction extends Owner implements Immutable {
+    name            : string            = `transaction#${transactionIdSequence++}`
 
     //region Transaction as Owner
     $immutable      : Iteration       = undefined
@@ -126,6 +128,14 @@ export class Transaction extends Owner implements Immutable {
 
 
     immutableForWrite () : this[ 'immutable' ] {
+        if (this.frozen) {
+            const next      = this.createNext()
+
+            this.owner.setCurrent(next)
+
+            return next.immutable
+        }
+
         if (this.immutable.frozen) this.setCurrent(this.immutable.createNext())
 
         return this.immutable

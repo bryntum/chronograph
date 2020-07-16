@@ -1,4 +1,4 @@
-import { Box, ZeroBoxImmutable } from "../../src/chrono2/data/Box.js"
+import { Box, BoxImmutable } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 
@@ -46,54 +46,61 @@ StartTest(t => {
         // ----------------
         graph.commit()
 
+        t.is(graph.currentIteration.owner, graph.currentTransaction)
+
         //             box1 = 0
         t.is(graph.currentTransaction.previous, undefined, "No extra revisions")
         //        box1 = 0
-        t.is(box1.immutable.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is(box1.immutable.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(1)
+        t.is(graph.currentIteration.owner, graph.currentTransaction)
 
         graph.commit()
 
         //             box1 = 1       box1 = 0
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
         //        box1 = 1  box1 = 0
-        t.is(box1.immutable.previous.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is(box1.immutable.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(2)
+        t.is(graph.currentIteration.owner, graph.currentTransaction)
 
         graph.commit()
 
         //             box1 = 2       box1 = 1
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
         //        box1 = 2  box1 = 1 box1 = 0 <- in the `historySource`
-        t.is(box1.immutable.previous.previous.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(3)
+        t.is(graph.currentIteration.owner, graph.currentTransaction)
 
         graph.commit()
 
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is(box1.immutable.previous.previous.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(4)
+        t.is(graph.currentIteration.owner, graph.currentTransaction)
 
         graph.commit()
 
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is(box1.immutable.previous.previous.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(5)
+        t.is(graph.currentIteration.owner, graph.currentTransaction)
 
         graph.commit()
 
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is(box1.immutable.previous.previous.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
     })
 
 
@@ -227,7 +234,7 @@ StartTest(t => {
     })
 
 
-    t.todo('Garbage collection should work with branches', async t => {
+    t.xit('Garbage collection should work with branches', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 
         const var1      = new Box(100, 'var1')
@@ -268,7 +275,7 @@ StartTest(t => {
         t.isDeeply(nodes.map(node => $(node).read()), [ 100, 101 ], "Correct result calculated")
 
         t.is(graph1.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is(var1.immutable.previous.previous.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is(var1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         //------------------
         $(var1).write(2)
@@ -287,6 +294,6 @@ StartTest(t => {
         t.isDeeply(nodes.map(node => $(node).read()), [ 30, 31 ], "Correct result calculated")
 
         t.is(graph2.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is($(var1).immutable.previous.previous.previous, ZeroBoxImmutable, "No extra revisions")
+        t.is($(var1).immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
     })
 })
