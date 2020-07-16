@@ -139,10 +139,14 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
 
     set state (state : AtomState) {
-        this.$state             = state
+        this.$state                 = state
 
-        if (this.graph) {
-            this.stateIteration     = this.graph.currentIteration
+        const graph                 = this.graph
+
+        if (graph) {
+            const transaction       = graph.$immutable || graph.immutable
+
+            this.stateIteration     = transaction.$immutable || transaction.immutable
             this.stateQuark         = this.immutable
         }
     }
