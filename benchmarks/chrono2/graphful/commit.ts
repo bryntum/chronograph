@@ -58,13 +58,15 @@ export class CommitBenchmark extends ReactiveDataBenchmark<ReactiveDataGeneratio
 const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
 
     const chronoGraph2WithGraph = CommitBenchmark.new({
-        name        : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2 with graph`,
+        // profile     : true,
+        name        : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
     const chronoGraph1 = CommitBenchmark.new({
+        // profile     : true,
         name        : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
         atomNum     : atomNum,
         depCount    : depCount,
