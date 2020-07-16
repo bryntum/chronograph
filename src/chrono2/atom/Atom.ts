@@ -148,6 +148,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     }
 
 
+    // should only be used in undo/redo context
     resetQuark (quark : Quark) {
         const newValue      = quark.readRaw()
         const oldValue      = this.immutable.readRaw()
@@ -217,8 +218,10 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             }
         })
 
-        // TODO remove the condition should be just `this.immutable.clearOutgoing()` ??
-        if (!this.immutable.frozen) this.immutable.clearOutgoing()
+        // seems we should not clear outgoing in `propagateDeepStaleOutsideOfGraph`
+        // but it only used in undo/redo, which means the quark will be frozen anyway,
+        // so this condition is always false
+        // if (!this.immutable.frozen) this.immutable.clearOutgoing()
 
         while (toVisit.length) {
             const quark     = toVisit.pop()
@@ -268,7 +271,6 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             atom.state  = AtomState.Stale
         })
 
-        // TODO remove the condition should be just `this.immutable.clearOutgoing()` ??
         if (!this.immutable.frozen) this.immutable.clearOutgoing()
 
         while (toVisit.length) {
@@ -300,7 +302,6 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             atom.state = AtomState.Stale
         })
 
-        // TODO remove the condition should be just `this.immutable.clearOutgoing()` ??
         if (!this.immutable.frozen) this.immutable.clearOutgoing()
     }
 }
