@@ -4,7 +4,7 @@ import { LeveledQueue } from "../../util/LeveledQueue.js"
 import { Atom } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
 import { AtomState, Quark } from "../atom/Quark.js"
-import { Box, BoxImmutable } from "../data/Box.js"
+import { Box, BoxImmutable, ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
 import { Iteration } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
@@ -321,6 +321,10 @@ export class ChronoGraph extends Base implements Owner {
 
     checkout<T extends Atom> (atom : T) : T {
         if (atom.graph === this) return atom
+
+        // TODO
+        // @ts-ignore
+        if (atom === ZeroBox) return ZeroBox
 
         if (!this.previous) throw new Error("Graph is not a branch - can not checkout")
 

@@ -46,6 +46,13 @@ StartTest(t => {
         t.is(box1.read(), null)
         t.is(box2.read(), null)
         t.is(externalBox3.read(), null)
+
+        // repeated reject after reject - should do nothing
+        graph.reject()
+
+        t.is(box1.read(), null)
+        t.is(box2.read(), null)
+        t.is(externalBox3.read(), null)
     })
 
 

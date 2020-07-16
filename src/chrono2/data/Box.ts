@@ -93,8 +93,9 @@ export class Box<V> extends Atom {
     }
 }
 
-const ZeroBox = new Box()
+export const ZeroBox = new Box()
 
+ZeroBox.name            = 'ZeroBox'
 ZeroBox.immutable       = ZeroBoxImmutable
 ZeroBoxImmutable.owner  = ZeroBox
 
