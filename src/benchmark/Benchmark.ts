@@ -75,6 +75,8 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
     coolDownTimeout         : number    = 100
 
+    profile                 : boolean   = false
+
 
     async setup () : Promise<StateT> {
         return
@@ -192,7 +194,7 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
 
     async runWhile (calibrationDone : boolean, state : StateT, cyclesCount : number, condition : (samples : number[], iteration : number, elapsed : number) => boolean) : Promise<RunInfo<StateT, InfoT>> {
-        // console.profile(this.name)
+        if (this.profile) console.profile(this.name)
 
         const samples               = []
 
@@ -223,7 +225,8 @@ export class Benchmark<StateT, InfoT = any> extends Base {
             i++
         }
 
-        // console.profileEnd(this.name)
+        if (this.profile) console.profileEnd(this.name)
+
         //globalThis.BENCH_STATE = state
 
         const result    = this.getRunInfo(samples, cyclesCount, state)
