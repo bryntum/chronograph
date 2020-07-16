@@ -30,28 +30,28 @@ export class AllocationBenchmark extends Benchmark<void, void> {
 //---------------------------------------------------------------------------------------------------------------------
 const runFor = async (atomNum : number = 100000, depCount : number = 1) => {
     const chronoGraph2 = AllocationBenchmark.new({
-        name        : `Data allocation, boxes: ${depCount} - ChronoGraph2, computeds: ${atomNum - depCount}`,
+        name        : `Data allocation, boxes: ${depCount}, computeds: ${atomNum - depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : reactiveDataGeneratorChronoGraph2
     })
 
     const mobx = AllocationBenchmark.new({
-        name        : `Data allocation, boxes: ${depCount} - Mobx, computeds: ${atomNum - depCount}`,
+        name        : `Data allocation, boxes: ${depCount}, computeds: ${atomNum - depCount} - Mobx`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : reactiveDataGeneratorMobx
     })
 
     const chronoGraph2WithGraph = AllocationBenchmark.new({
-        name        : `Data allocation, boxes: ${depCount} - ChronoGraph2 with graph, computeds: ${atomNum - depCount}`,
+        name        : `Data allocation, boxes: ${depCount}, computeds: ${atomNum - depCount} - ChronoGraph2 with graph`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
     const chronoGraph1 = AllocationBenchmark.new({
-        name        : `Data allocation, boxes: ${depCount} - ChronoGraph1, computeds: ${atomNum - depCount}`,
+        name        : `Data allocation, boxes: ${depCount}, computeds: ${atomNum - depCount} - ChronoGraph1`,
         atomNum     : atomNum,
         depCount    : depCount,
         graphGen    : new ReactiveDataGeneratorChronoGraph1()
