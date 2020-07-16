@@ -108,7 +108,7 @@ export class ChronoGraph extends Base implements Owner {
         this.nextTransaction    = []
 
         this.mark()
-        this.sweep()
+        // this.sweep()
     }
     //endregion
 
@@ -250,6 +250,8 @@ export class ChronoGraph extends Base implements Owner {
         } else {
             this.frozen = true
         }
+
+        this.sweep()
     }
 
 
