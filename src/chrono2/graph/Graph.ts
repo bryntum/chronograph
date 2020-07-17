@@ -290,7 +290,9 @@ export class ChronoGraph extends Base implements Owner {
 
         const nextTransaction   = this.nextTransaction.pop()
 
-        this.redoTo(this.immutable, nextTransaction)
+        // using property instead of lazy accessor to avoid creation
+        // of transaction
+        this.redoTo(this.$immutable, nextTransaction)
 
         this.immutable          = nextTransaction
     }
@@ -437,7 +439,7 @@ export class ChronoGraph extends Base implements Owner {
         const atoms : Atom[]    = []
 
         tillTransaction.immutable.forEveryQuarkTill(
-            sourceTransaction.immutable,
+            sourceTransaction ? sourceTransaction.immutable : undefined,
 
             (quark, first) => {
                 if (first) {
