@@ -247,4 +247,57 @@ StartTest(t => {
             t.is(iteration.reachCount, reachable ? 1 : 0)
         }))
     })
+
+
+    t.it('Should not recalculate atoms after undo/redo ', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
+
+        const box1      = new Box(0)
+
+        let counter2    = 0
+
+        const box2      = new CalculableBox({
+            lazy    : false,
+            calculation : () => {
+                counter2++
+                return box1.read()  + 1
+            }
+        })
+
+        graph.addAtoms([ box1, box2 ])
+
+        graph.commit()
+
+        t.is(counter2, 1, 'Box2 calculated once')
+
+        //--------------
+        counter2    = 0
+
+        box1.write(10)
+
+        graph.commit()
+
+        t.is(counter2, 1, 'Box2 calculated once')
+
+        //--------------
+        counter2    = 0
+
+        graph.undo()
+
+        t.is(box1.read(), 0, 'Correct value #3')
+        t.is(box2.read(), 1, 'Correct value #3')
+
+        t.is(counter2, 0, 'Calculation of Box2 not triggered')
+
+        //--------------
+        counter2    = 0
+
+        graph.redo()
+
+        t.is(box1.read(), 10, 'Correct value #4')
+        t.is(box2.read(), 11, 'Correct value #4')
+
+        t.is(counter2, 0, 'Calculation of Box2 not triggered')
+    })
+
 })
