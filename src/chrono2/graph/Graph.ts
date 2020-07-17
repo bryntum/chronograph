@@ -347,12 +347,14 @@ export class ChronoGraph extends Base implements Owner {
 
         clone.graph     = this
 
+        // might be more performant to checkout everything at once, since
+        // most of our revisions going to be array-based?
         const immutable = this.getLatestQuarkOf(atom).createNext(clone)
 
         clone.immutable = undefined
         clone.setCurrent(immutable)
 
-        if ((immutable as BoxImmutable).readRaw() !== undefined) clone.state = AtomState.UpToDate
+        // if ((immutable as BoxImmutable).readRaw() !== undefined) clone.state = AtomState.UpToDate
 
         this.atomsById.set(clone.id, clone)
 
@@ -361,21 +363,10 @@ export class ChronoGraph extends Base implements Owner {
 
 
     getLatestQuarkOf<T extends Atom> (atom : T) : Quark {
-        let iteration : Iteration     = this.immutable.immutable
+        const transaction       = this.$immutable || this.immutable
+        const iteration         = transaction.$immutable || transaction.immutable
 
-        const atomId    = atom.id
-
-        while (iteration) {
-            const quarks    = iteration.quarks
-
-            for (let i = 0; i < quarks.length; i++) {
-                if (quarks[ i ].owner.id === atomId) return quarks[ i ]
-            }
-
-            iteration   = iteration.previous
-        }
-
-        return undefined
+        return iteration.getLatestQuarkOf(atom)
     }
 
 

@@ -113,6 +113,12 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         clone.identity  = this.identity
         clone.name      = this.name
 
+        // TODO the `$state` cache management for branches
+        // might need additional tweaks or at least tests
+        clone.$state            = this.$state
+        clone.stateQuark        = this.stateQuark
+        clone.stateIteration    = this.stateIteration
+
         return clone
     }
 

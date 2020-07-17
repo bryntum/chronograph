@@ -1,5 +1,7 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
+import { Atom } from "../atom/Atom.js"
+import { ChronoReference } from "../atom/Identifiable.js"
 import { Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "../data/Immutable.js"
 import { Transaction } from "./Transaction.js"
@@ -20,18 +22,18 @@ export class Iteration extends Immutable {
     // incremented by any owning graph, at the depth of its `historyLimit`
     reachCount      : number            = 0
     // incremented by any following iteration
-    nextCount       : number            = 0
+    // nextCount       : number            = 0
 
     isRejected      : boolean           = false
 
 
-    createNext (owner? : Owner) : this {
-        const next      = super.createNext(owner)
-
-        this.nextCount++
-
-        return next
-    }
+    // createNext (owner? : Owner) : this {
+    //     const next      = super.createNext(owner)
+    //
+    //     this.nextCount++
+    //
+    //     return next
+    // }
 
 
     mark (reachable : boolean) {
@@ -48,26 +50,75 @@ export class Iteration extends Immutable {
     }
 
 
-    forEveryQuarkTill (stopAt : Iteration, onAtomOccurrence : (quark : Quark, first : boolean) => any) {
-        let iteration           = this
+    getLatestQuarkOfLocal<T extends Atom> (atomId : ChronoReference) : Quark | undefined {
+        const quarks    = this.quarks
 
+        for (let i = 0; i < quarks.length; i++) {
+            if (quarks[ i ].owner.id === atomId) return quarks[ i ]
+        }
+
+        return undefined
+    }
+
+
+    getLatestQuarkOf<T extends Atom> (atom : T) : Quark {
+        let iteration : Iteration     = this
+
+        const atomId    = atom.id
+
+        while (iteration) {
+            const quark     = iteration.getLatestQuarkOfLocal(atomId)
+
+            if (quark !== undefined) return quark
+
+            iteration   = iteration.previous
+        }
+
+        return undefined
+    }
+
+
+    forEveryFirstQuarkTillLocal (uniqable : number, onFirstAtomOccurrence : (quark : Quark) => any) {
+        const quarks        = this.quarks
+
+        for (let i = 0; i < quarks.length; i++) {
+            const quark     = quarks[ i ]
+            const atom      = quark.owner
+
+            if (atom.identity.uniqable !== uniqable) {
+                atom.identity.uniqable      = uniqable
+
+                onFirstAtomOccurrence(quark)
+            }
+        }
+    }
+
+
+    forEveryQuarkTillLocal (uniqable : number, onAtomOccurrence : (quark : Quark, first : boolean) => any) {
+        const quarks        = this.quarks
+
+        for (let i = 0; i < quarks.length; i++) {
+            const quark     = quarks[ i ]
+            const atom      = quark.owner
+
+            if (atom.identity.uniqable !== uniqable) {
+                atom.identity.uniqable      = uniqable
+
+                onAtomOccurrence(quark, true)
+            } else {
+                onAtomOccurrence(quark, false)
+            }
+        }
+    }
+
+
+    forEveryQuarkTill (stopAt : Iteration, onAtomOccurrence : (quark : Quark, first : boolean) => any) {
         const uniqable          = getUniqable()
 
+        let iteration           = this
+
         while (true) {
-            const quarks        = iteration.quarks
-
-            for (let i = 0; i < quarks.length; i++) {
-                const quark     = quarks[ i ]
-                const atom      = quark.owner
-
-                if (atom.identity.uniqable !== uniqable) {
-                    atom.identity.uniqable      = uniqable
-
-                    onAtomOccurrence(quark, true)
-                } else {
-                    onAtomOccurrence(quark, false)
-                }
-            }
+            iteration.forEveryQuarkTillLocal(uniqable, onAtomOccurrence)
 
             iteration           = iteration.previous
 
@@ -77,23 +128,12 @@ export class Iteration extends Immutable {
 
 
     forEveryFirstQuarkTill (stopAt : Iteration, onFirstAtomOccurrence : (quark : Quark) => any) {
-        let iteration           = this
-
         const uniqable          = getUniqable()
 
+        let iteration           = this
+
         while (true) {
-            const quarks        = iteration.quarks
-
-            for (let i = 0; i < quarks.length; i++) {
-                const quark     = quarks[ i ]
-                const atom      = quark.owner
-
-                if (atom.identity.uniqable !== uniqable) {
-                    atom.identity.uniqable      = uniqable
-
-                    onFirstAtomOccurrence(quark)
-                }
-            }
+            iteration.forEveryFirstQuarkTillLocal(uniqable, onFirstAtomOccurrence)
 
             iteration           = iteration.previous
 
@@ -130,6 +170,7 @@ export class Iteration extends Immutable {
     }
 
 
+    // this is a bit controversial, but still need to figure out a test case that would exercise it
     forceAddQuark (quark : Quark) {
         if (quark.iteration === this) return
 
