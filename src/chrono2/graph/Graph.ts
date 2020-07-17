@@ -288,13 +288,17 @@ export class ChronoGraph extends Base implements Owner {
     redo () {
         if (!this.nextTransaction.length) return
 
-        const nextTransaction   = this.nextTransaction.pop()
+        const nextTransaction   = this.nextTransaction[ this.nextTransaction.length - 1 ]
 
         // using property instead of lazy accessor to avoid creation
         // of transaction
         this.redoTo(this.$immutable, nextTransaction)
 
         this.immutable          = nextTransaction
+
+        // need to mutate the `nextTransaction` at the end, after all
+        // mark/unmark operations has completed
+        this.nextTransaction.pop()
     }
 
 

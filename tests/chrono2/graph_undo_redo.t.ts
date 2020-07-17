@@ -241,5 +241,10 @@ StartTest(t => {
 
         t.is(box1.read(), 20, 'Correct value #4')
         t.is(box2.read(), 21, 'Correct value #4')
+
+        graph.forEveryTransactionInHistory((transaction, reachable) => transaction.forEveryIteration(iteration => {
+            t.is(iteration.refCount, 1)
+            t.is(iteration.reachCount, reachable ? 1 : 0)
+        }))
     })
 })
