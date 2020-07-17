@@ -122,7 +122,7 @@ StartTest(t => {
         const box1     = new Box(0)
 
         const box2     = new CalculableBox({
-            lazy        : false,
+            lazy        : true,
             calculation : () => box1.read()  + 1
         })
 
@@ -160,5 +160,86 @@ StartTest(t => {
     })
 
 
+    t.it('Undo all transactions, then redo everything back', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
+        const box1     = new Box(0)
+
+        const box2     = new CalculableBox({
+            lazy        : false,
+            calculation : () => box1.read()  + 1
+        })
+
+        graph.addAtoms([ box1, box2 ])
+
+        t.is(box1.read(), 0, 'Correct value #1')
+        t.is(box2.read(), 1, 'Correct value #1')
+
+        graph.commit()
+
+        //--------------
+        box1.write(10)
+
+        t.is(box1.read(), 10, 'Correct value #1')
+
+        graph.commit()
+
+        //--------------
+        graph.undo()
+        graph.undo()
+
+        //--------------
+        graph.redo()
+        graph.redo()
+
+        t.is(box1.read(), 10, 'Correct value #4')
+        t.is(box2.read(), 11, 'Correct value #4')
+    })
+
+
+    t.it('Undo/redo of the box value - stale lazy atoms', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
+
+        const box1     = new Box(0, 'box1')
+
+        const box2     = new CalculableBox({
+            name        : 'box2',
+            lazy        : true,
+            calculation : () => box1.read()  + 1
+        })
+
+        graph.addAtoms([ box1, box2 ])
+
+        t.is(box1.read(), 0, 'Correct value #1')
+        t.is(box2.read(), 1, 'Correct value #1')
+
+        graph.commit()
+
+        //--------------
+        box1.write(10)
+
+        t.is(box1.read(), 10, 'Correct value #1')
+        t.is(box2.read(), 11, 'Correct value #1')
+
+        graph.commit()
+
+        //--------------
+        box1.write(20)
+
+        graph.commit()
+
+        // during the following undo/redo the information about staleness of the `box2`
+        // might be lost
+
+        //--------------
+        graph.undo()
+        graph.undo()
+
+        //--------------
+        graph.redo()
+        graph.redo()
+
+        t.is(box1.read(), 20, 'Correct value #4')
+        t.is(box2.read(), 21, 'Correct value #4')
+    })
 })

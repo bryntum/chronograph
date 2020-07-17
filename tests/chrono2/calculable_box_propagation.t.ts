@@ -602,6 +602,7 @@ StartTest(t => {
         let count : number = 0
 
         const iden1     = new CalculableBox({
+            lazy    : false,
             calculation () : number {
                 count++
 
@@ -610,6 +611,7 @@ StartTest(t => {
         })
 
         const iden2     = new CalculableBox({
+            lazy    : false,
             calculation () : number {
                 count++
 
@@ -618,12 +620,15 @@ StartTest(t => {
         })
 
         const iden3     = new CalculableBox({
+            lazy    : false,
             calculation () : number {
                 count++
 
                 return iden2.read() + 1
             }
         })
+
+        graph.addAtoms([ var1, iden1, iden2, iden3 ])
 
         graph.commit()
 
