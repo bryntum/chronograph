@@ -136,6 +136,9 @@ export class ChronoGraph extends Base implements Owner {
             if (reachable) lastReachableTransaction = transaction
         })
 
+        // empty graph
+        if (!lastReachableTransaction) return
+
         const lastReachableIteration    = lastReachableTransaction.getLastIteration()
 
         let iteration : Iteration       = lastReachableIteration

@@ -9,6 +9,15 @@ setCompactCounter(1)
 
 StartTest(t => {
 
+    t.it('Commit in empty graph should do nothing', t => {
+        const graph     = ChronoGraph.new()
+
+        graph.commit()
+
+        t.pass('Passed')
+    })
+
+
     t.it('Commit should calculate strict atoms', t => {
         const box1      = new Box(10)
 
