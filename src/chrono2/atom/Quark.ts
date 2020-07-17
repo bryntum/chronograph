@@ -29,6 +29,8 @@ export class Quark extends Node implements Immutable {
 
     iteration       : Iteration = undefined
 
+    state           : AtomState = AtomState.Empty
+
 
     hasValue () : boolean {
         return this.readRaw() !== undefined
@@ -87,6 +89,9 @@ export class Quark extends Node implements Immutable {
         next.owner      = owner || this.owner
 
         next.revision   = this.revision
+        next.state      = this.state
+
+        // TODO should possibly empty the cached atom's `$state` here
 
         return next
     }

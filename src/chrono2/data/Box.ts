@@ -91,6 +91,11 @@ export class Box<V> extends Atom {
         this.immutable.revision = getNextRevision()
 
         this.state              = AtomState.UpToDate
+
+        if (this.graph && !this.lazy) {
+            this.graph.addPossiblyStaleStrictAtomToTransaction(this)
+        }
+
     }
 }
 

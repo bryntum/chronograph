@@ -130,6 +130,15 @@ export class Iteration extends Immutable {
     }
 
 
+    forceAddQuark (quark : Quark) {
+        if (quark.iteration === this) return
+
+        this.quarks.push(quark)
+
+        quark.iteration = this
+    }
+
+
     freeze () {
         for (let i = 0; i < this.quarks.length; i++) this.quarks[i].freeze()
 

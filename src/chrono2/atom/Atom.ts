@@ -22,13 +22,16 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
     immutable           : Quark         = this.buildDefaultImmutable()
 
-    // move to quark? to capture the state more precisely?
-    // seems we'll  need to have a "preliminary" state on Atom too
-    // the use case is that "PossiblyStale" state should not be
-    // creating a new quark - thus having it on atom makes sense
-    $state              : AtomState     = AtomState.Empty
-
-    // state               : AtomState     = AtomState.Empty
+    // this is a cache for a state of the new, "virtual" quark
+    // such quark appears when we write new state to the frozen quark, like "possibly stale"
+    // but, we don't want to create a new empty quark for "possibly stale" state -
+    // because "possibly stale" might resolve to "up to date" and that would be a waste
+    // of instantiation
+    // instead we write a new state to this property and save some other additional information
+    // (see properties below)
+    // then reads/writes to `state` property tracks from where to get the state - either from cache
+    // or from quark
+    $state              : AtomState     = undefined
     stateIteration      : Iteration     = undefined
     stateQuark          : Quark         = undefined
 
@@ -119,36 +122,74 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     }
 
 
+    materializeCachedStateIntoQuark () {
+        const nextQuark     = this.stateQuark.createNext()
+
+        nextQuark.state     = this.$state
+
+        nextQuark.freeze()
+
+        this.stateIteration.forceAddQuark(nextQuark)
+    }
+
+
     get state () {
-        if (this.graph) {
-            if (
-                this.stateIteration && !this.stateIteration.isRejected
-                && (this.stateQuark === this.immutable || this.immutable.previous === this.stateQuark)
-            ) {
+        if (this.$state === undefined) {
+            return this.immutable.state
+        } else {
+            if (this.isNextOf(this.immutable)) {
                 return this.$state
             }
 
-            this.stateIteration     = this.immutable.iteration
-            this.stateQuark         = this.immutable
+            // TODO do we need this line?
+            if (this.stateIteration.frozen) this.materializeCachedStateIntoQuark()
 
-            return this.$state      = this.immutable.readRaw() !== undefined ? AtomState.UpToDate : AtomState.Empty
-        } else {
-            return this.$state
+            this.$state             = undefined
+            this.stateIteration     = undefined
+            this.stateQuark         = undefined
+
+            return this.immutable.state
         }
     }
 
 
     set state (state : AtomState) {
-        this.$state                 = state
+        const immutable             = this.immutable
 
-        const graph                 = this.graph
+        // TODO should be: immutable.frozen && "not a zero quark"
+        // OR, remove the concept of zero quark, then: `immutable && immutable.frozen`
+        if (immutable.frozen && immutable.previous) {
+            if (this.$state !== undefined) {
+                if (this.isNextOf(immutable)) {
+                    this.$state             = state
 
-        if (graph) {
-            const transaction       = graph.$immutable || graph.immutable
+                    return
+                } else {
+                    this.materializeCachedStateIntoQuark()
+                }
+            }
+
+            this.$state             = state
+
+            const transaction       = this.graph.$immutable || this.graph.immutable
 
             this.stateIteration     = transaction.$immutable || transaction.immutable
-            this.stateQuark         = this.immutable
+            this.stateQuark         = immutable
+        } else {
+            immutable.state         = state
+
+            if (this.$state) {
+                this.$state             = undefined
+                this.stateIteration     = undefined
+                this.stateQuark         = undefined
+            }
         }
+    }
+
+
+    isNextOf (quark : Quark) : boolean {
+        return !this.stateIteration.isRejected
+            && (this.stateQuark === this.immutable || this.stateQuark === this.immutable.previous)
     }
 
 
@@ -157,17 +198,9 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         const newValue      = quark.readRaw()
         const oldValue      = this.immutable.readRaw()
 
-        if (this.equality(newValue, oldValue)) {
-            this.immutable  = quark
-            this.state      = newValue !== undefined ? AtomState.UpToDate : AtomState.Stale
-
-            return
-        }
-
-        this.propagateDeepStaleOutsideOfGraph()
+        if (!this.equality(newValue, oldValue)) this.propagateDeepStaleOutsideOfGraph()
 
         this.immutable  = quark
-        this.state      = newValue !== undefined ? AtomState.UpToDate : AtomState.Stale
     }
 
 
@@ -202,14 +235,6 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     propagateDeepStaleOutsideOfGraph () {
         const toVisit : Quark[]         = []
 
-        if (this.state === AtomState.UpToDate) {
-            this.state      = AtomState.PossiblyStale
-
-            if (this.graph && !this.lazy) {
-                this.graph.addPossiblyStaleStrictAtomToTransaction(this)
-            }
-        }
-
         const graph         = this.graph
 
         this.immutable.forEachOutgoing((outgoing, atom) => {
@@ -223,7 +248,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         })
 
         // seems we should not clear outgoing in `propagateDeepStaleOutsideOfGraph`
-        // but it only used in undo/redo, which means the quark will be frozen anyway,
+        // it is only used in undo/redo, which means the quark will be always frozen,
         // so this condition is always false
         // if (!this.immutable.frozen) this.immutable.clearOutgoing()
 
@@ -252,14 +277,6 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     // immediate outgoings should become stale, further outgoings - possibly stale
     propagateStaleDeep () {
         const toVisit : Quark[]         = []
-
-        if (this.state === AtomState.UpToDate) {
-            this.state      = AtomState.PossiblyStale
-
-            if (this.graph && !this.lazy) {
-                this.graph.addPossiblyStaleStrictAtomToTransaction(this)
-            }
-        }
 
         this.immutable.forEachOutgoing((outgoing, atom) => {
             // only go deeper if state was UpToDate
