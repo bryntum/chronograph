@@ -61,18 +61,20 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
 
     const chronoGraph2WithGraph = CommitBenchmark.new({
         // profile         : true,
+        // keepLastResult  : true,
         name            : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
         atomNum         : atomNum,
         depCount        : depCount,
-        graphGen        : ReactiveDataGeneratorChronoGraph2WithGraph.new({ graph : ChronoGraph2.new({ historyLimit : 1 }) })
+        graphGen        : ReactiveDataGeneratorChronoGraph2WithGraph.new({ graph : ChronoGraph2.new({ historyLimit : 0 }) })
     })
 
     const chronoGraph1 = CommitBenchmark.new({
         // profile         : true,
+        // keepLastResult  : true,
         name            : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
         atomNum         : atomNum,
         depCount        : depCount,
-        graphGen        : ReactiveDataGeneratorChronoGraph1.new({ graph : ChronoGraph1.new({ historyLimit : 1 }) })
+        graphGen        : ReactiveDataGeneratorChronoGraph1.new({ graph : ChronoGraph1.new({ historyLimit : 0 }) })
     })
 
     const runInfoChronoGraph2WithGraph  = await chronoGraph2WithGraph.measureTillMaxTime()
