@@ -6,7 +6,7 @@ import { ChronoReference } from "../atom/Identifiable.js"
 import { AtomState, Quark } from "../atom/Quark.js"
 import { Box, ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
-import { Iteration } from "./Iteration.js"
+import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ export class ChronoGraph extends Base implements Owner {
     // filled in branches
     previous                : this                  = undefined
 
-    historySource           : Map<ChronoReference, Quark>   = new Map()
+    // historySource           : Map<ChronoReference, Quark>   = new Map()
     // historySource           : Iteration   = undefined
 
     atomsById               : Map<ChronoReference, Atom>    = new Map()
@@ -56,7 +56,7 @@ export class ChronoGraph extends Base implements Owner {
         this.unmark()
 
         this.atomsById      = undefined
-        this.historySource  = undefined
+        // this.historySource  = undefined
 
         let iteration : Iteration = this.currentIteration
 
@@ -73,8 +73,12 @@ export class ChronoGraph extends Base implements Owner {
     get immutable () : Transaction {
         if (this.$immutable !== undefined) return this.$immutable
 
+        const zeroIteration     = Iteration.new({
+            storage : this.historyLimit >= 0 ? new IterationStorageShredding() : new IterationStorage()
+        })
+
         // pass through the setter for the mark/unmark side effect
-        return this.immutable = Transaction.new({ owner : this })
+        return this.immutable   = Transaction.new({ immutable : zeroIteration })
     }
 
     // this is assignment "within" the undo/redo history, keeps the redo information
@@ -173,7 +177,8 @@ export class ChronoGraph extends Base implements Owner {
         nextAfterCollapsible.forEveryFirstQuarkTill(lastIteration, quark => {
             const owner                     = quark.owner
 
-            this.historySource.set(owner.id, quark)
+            // this.historySource.set(owner.id, quark)
+            lastIteration.storage.addQuark(quark)
 
             quark.iteration = undefined
 
@@ -188,9 +193,7 @@ export class ChronoGraph extends Base implements Owner {
 
         iteration                           = collapseStartingFrom
 
-        // nextAfterCollapsible.storage        = this.historySource.storage
-        // nextAfterCollapsible.quarks         = []
-        // nextAfterCollapsible.mode           = 'map'
+        nextAfterCollapsible.storage        = lastIteration.storage
 
         // this.historySource                  = nextAfterCollapsible
 
