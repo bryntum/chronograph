@@ -55,13 +55,6 @@ export class Box<V> extends Atom {
     }
 
 
-    immutableForWrite () : this[ 'immutable' ] {
-        if (this.immutable.frozen) this.setCurrent(this.immutable.createNext())
-
-        return this.immutable
-    }
-
-
     read () : V {
         if (this.graph && globalContext.activeGraph && globalContext.activeGraph !== this.graph) {
             return globalContext.activeGraph.checkout(this).read()

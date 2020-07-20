@@ -76,6 +76,13 @@ export class Atom extends Owner implements Identifiable, Uniqable {
     //endregion
 
 
+    immutableForWrite () : this[ 'immutable' ] {
+        if (this.immutable.frozen) this.setCurrent(this.immutable.createNext())
+
+        return this.immutable
+    }
+
+
     buildDefaultImmutable () : Quark {
         return undefined
     }
