@@ -76,6 +76,10 @@ export class Benchmark<StateT, InfoT = any> extends Base {
     coolDownTimeout         : number    = 100
 
     profile                 : boolean   = false
+    // useful to examine memory after the benchmark
+    keepLastResult          : boolean   = false
+
+    lastResult              : RunInfo<StateT, InfoT>    = undefined
 
 
     async setup () : Promise<StateT> {
@@ -231,6 +235,8 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
         const result    = this.getRunInfo(samples, cyclesCount, state)
 
+        if (this.keepLastResult) this.lastResult = result
+
         await this.tearDown(state)
 
         return result
@@ -238,7 +244,7 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
 
     report (runInfo : RunInfo<StateT, InfoT>) {
-        console.log(`${this.name}: ${format(runInfo.averageCycleTime)}ms ±${format(runInfo.marginOfError)}`)
+        console.log(`${this.name}: ${format(runInfo.averageCycleTime)}ms ±${format(runInfo.marginOfError)}, i:${runInfo.samples.length} c:${runInfo.cyclesCount}`)
 
         if (runInfo.info) console.log(this.stringifyInfo(runInfo.info).replace(/^/mg, "    "))
     }
