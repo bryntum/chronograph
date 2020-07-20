@@ -192,6 +192,9 @@ export class Atom extends Owner implements Identifiable, Uniqable {
             immutable.state         = state
 
             if (this.$state) {
+                // probably should be here
+                // if (this.stateIteration.frozen) this.materializeCachedStateIntoQuark()
+
                 this.$state             = undefined
                 this.stateIteration     = undefined
                 this.stateQuark         = undefined
