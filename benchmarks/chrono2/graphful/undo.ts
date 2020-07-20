@@ -63,13 +63,13 @@ export class UndoBenchmark extends ReactiveDataBenchmark<ReactiveDataGenerationR
         for (let h = 0; h < this.historyLimit; h++) {
             graph.undo()
 
-            for (let k = 0; k < boxes.length; k++) boxes[ k ].READ()
+            // for (let k = 0; k < boxes.length; k++) boxes[ k ].READ()
         }
 
         for (let h = 0; h < this.historyLimit; h++) {
             graph.redo()
 
-            for (let k = 0; k < boxes.length; k++) boxes[ k ].READ()
+            // for (let k = 0; k < boxes.length; k++) boxes[ k ].READ()
         }
     }
 }
@@ -87,6 +87,10 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1, historyLim
         graphGen        : ReactiveDataGeneratorChronoGraph2WithGraph.new({ graph : ChronoGraph2.new({ historyLimit : 1 }) })
     })
 
+    // actually undo/redo implementation in ChronoGraph1 is not comparable to ChronoGraph2
+    // because it does not propagate the changes outside of the graph (which requires
+    // iterating over all changed quarks and their outgoing edges)
+    // so comparison is rather useless, except controlling the result in last box
     const chronoGraph1 = UndoBenchmark.new({
         // profile         : true,
         name            : `Undo in graph, history: ${historyLimit}, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
