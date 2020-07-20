@@ -15,8 +15,8 @@ export type GarbageCollectionStrategy = 'eager' //| 'batched' | 'on_idle'
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner {
-    // how many frozen transactions to keep in memory
-    historyLimit            : number                = 0
+    // how many "extra" transactions to keep in memory (except the one currently running)
+    historyLimit            : number                = -1
 
     // move to Transaction? by definition, transaction ends when the stack is exhausted
     // (all strict effects observed)
@@ -131,7 +131,6 @@ export class ChronoGraph extends Base implements Owner {
 
 
     sweep () {
-        // TODO review & improve
         let lastReachableTransaction : Transaction
 
         this.forEveryTransactionInHistory((transaction, reachable) => {
@@ -141,10 +140,9 @@ export class ChronoGraph extends Base implements Owner {
         // empty graph
         if (!lastReachableTransaction) return
 
-        const lastReachableIteration    = lastReachableTransaction.getLastIteration()
+        const lastReachableIteration    = lastReachableTransaction.immutable
 
         let iteration : Iteration       = lastReachableIteration
-        // TODO eof review & improve
 
         const iterations : Iteration[]  = []
 
@@ -154,23 +152,25 @@ export class ChronoGraph extends Base implements Owner {
             iteration   = iteration.previous
         }
 
-        let collapsible : Iteration
+        const lastIteration             = iterations[ iterations.length - 1 ]
+
+        let collapseStartingFrom : Iteration
         let nextAfterCollapsible : Iteration
 
         for (let i = iterations.length - 1; i > 0; i--) {
             const currentIteration  = iterations[ i ]
 
             if (currentIteration.canBeCollapsedWithNext()) {
-                collapsible             = currentIteration
+                collapseStartingFrom    = currentIteration
                 nextAfterCollapsible    = iterations[ i - 1 ]
             } else
                 break
         }
 
-        if (!collapsible) return
+        if (!nextAfterCollapsible || nextAfterCollapsible === lastIteration) return
 
-        collapsible.forEveryFirstQuarkTill(undefined, quark => {
-            const owner = quark.owner
+        nextAfterCollapsible.forEveryFirstQuarkTill(lastIteration, quark => {
+            const owner                     = quark.owner
 
             this.historySource.set(owner.id, quark)
 
@@ -179,11 +179,18 @@ export class ChronoGraph extends Base implements Owner {
             owner.identity.uniqableBox    = quark
         })
 
-        collapsible.forEveryFirstQuarkTill(undefined, quark => {
+        nextAfterCollapsible.forEveryFirstQuarkTill(lastIteration, quark => {
+            // magic dependency on `this.owner.identity.uniqableBox`
             quark.collectGarbage()
         })
 
-        iteration                           = collapsible
+        iteration                           = collapseStartingFrom
+
+        // nextAfterCollapsible.storage        = this.historySource.storage
+        // nextAfterCollapsible.quarks         = []
+        // nextAfterCollapsible.mode           = 'map'
+
+        // this.historySource                  = nextAfterCollapsible
 
         nextAfterCollapsible.previous       = undefined
         nextAfterCollapsible.owner.previous = undefined
@@ -214,7 +221,7 @@ export class ChronoGraph extends Base implements Owner {
         for (let i = 0; transaction; i++) {
             func(transaction, i <= this.historyLimit)
 
-            transaction      = transaction.previous
+            transaction         = transaction.previous
         }
     }
 
@@ -250,7 +257,7 @@ export class ChronoGraph extends Base implements Owner {
     commit () {
         this.calculateTransitionsSync()
 
-        if (this.historyLimit > 0) {
+        if (this.historyLimit >= 0) {
             this.immutable.freeze()
         } else {
             this.frozen = true
@@ -277,7 +284,7 @@ export class ChronoGraph extends Base implements Owner {
     undo () {
         this.reject()
 
-        if (this.historyLimit === 0) return
+        if (!this.immutable.previous) return
 
         this.undoTo(this.immutable, this.immutable.previous)
 
@@ -313,7 +320,7 @@ export class ChronoGraph extends Base implements Owner {
 
         branch.previous         = this
         // TODO should use copy-on-write?
-        branch.historySource    = new Map(this.historySource)
+        // branch.historySource    = this.historySource.clone()
 
         const partialTransaction        = this.currentTransaction.previous
             ?

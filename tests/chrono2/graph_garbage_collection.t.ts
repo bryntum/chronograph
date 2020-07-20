@@ -72,8 +72,8 @@ StartTest(t => {
 
         //             box1 = 2       box1 = 1
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
-        //        box1 = 2  box1 = 1 box1 = 0 <- in the `historySource`
-        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
+        //        box1 = 2  box1 = 1
+        t.is(box1.immutable.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(3)
@@ -82,7 +82,7 @@ StartTest(t => {
         graph.commit()
 
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
+        t.is(box1.immutable.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(4)
@@ -91,7 +91,7 @@ StartTest(t => {
         graph.commit()
 
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
+        t.is(box1.immutable.previous.previous, BoxImmutable.zero, "No extra revisions")
 
         // ----------------
         box1.write(5)
@@ -100,7 +100,7 @@ StartTest(t => {
         graph.commit()
 
         t.is(graph.currentTransaction.previous.previous, undefined, "No extra revisions")
-        t.is(box1.immutable.previous.previous.previous, BoxImmutable.zero, "No extra revisions")
+        t.is(box1.immutable.previous.previous, BoxImmutable.zero, "No extra revisions")
     })
 
 

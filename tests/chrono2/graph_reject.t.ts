@@ -99,7 +99,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = ChronoGraph.new({ historyLimit : 1 })
+        const graph     = ChronoGraph.new({ historyLimit : 0 })
 
         graph.addAtoms([ box1, box2 ])
 
@@ -141,7 +141,7 @@ StartTest(t => {
             calculation : () => box2.read() + 1
         })
 
-        const graph     = ChronoGraph.new({ historyLimit : 1 })
+        const graph     = ChronoGraph.new({ historyLimit : 0 })
 
         graph.addAtoms([ box1, box2 ])
 
@@ -199,7 +199,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = ChronoGraph.new({ historyLimit : 1 })
+        const graph     = ChronoGraph.new({ historyLimit : 0 })
 
         graph.addAtoms([ box0, box1, box2, box3 ])
 
@@ -245,7 +245,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = ChronoGraph.new({ historyLimit : 1 })
+        const graph     = ChronoGraph.new({ historyLimit : 0 })
 
         graph.addAtoms([ box0, box1, box2, box3 ])
 
@@ -291,7 +291,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = ChronoGraph.new({ historyLimit : 1 })
+        const graph     = ChronoGraph.new({ historyLimit : 0 })
 
         graph.addAtoms([ box0, box1, box2, box3 ])
 
@@ -318,7 +318,7 @@ StartTest(t => {
 
 
     t.it('Should be able to reject transaction using graph api', async t => {
-        const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 1 })
+        const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
         const i1        = new Box(0, 'i1')
         const i2        = new Box(10, 'i2')
