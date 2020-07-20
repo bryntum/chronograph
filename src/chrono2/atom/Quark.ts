@@ -263,6 +263,11 @@ export class Quark extends Node implements Immutable {
 
                     this.previous       = zero
 
+                    // need to keep the order of edges addition, otherwise
+                    // performance degrades
+                    collapsedOutgoing.reverse()
+                    collapsedOutgoingRev.reverse()
+
                     this.$outgoing      = collapsedOutgoing
                     this.$outgoingRev   = collapsedOutgoingRev
                 }
