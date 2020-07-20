@@ -235,7 +235,10 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
         const result    = this.getRunInfo(samples, cyclesCount, state)
 
-        if (this.keepLastResult) this.lastResult = result
+        if (this.keepLastResult) {
+            globalThis.BENCH                = globalThis.BENCH || {}
+            globalThis.BENCH[ this.name ]   = result
+        }
 
         await this.tearDown(state)
 
