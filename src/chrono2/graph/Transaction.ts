@@ -11,7 +11,7 @@ export class Transaction extends Owner implements Immutable {
     name            : string            = `transaction#${transactionIdSequence++}`
 
     //region Transaction as Owner
-    $immutable      : Iteration       = undefined
+    $immutable      : Iteration         = undefined
 
     get immutable () : Iteration {
         if (this.$immutable !== undefined) return this.$immutable
@@ -21,16 +21,13 @@ export class Transaction extends Owner implements Immutable {
 
     set immutable (immutable : Iteration) {
         this.$immutable = immutable
+
+        if (immutable) immutable.owner = this
     }
 
 
     buildImmutable () : Iteration {
-        return this.$immutable = this.previous
-            ?
-                this.previous.immutable.createNext(this)
-            :
-                Iteration.new({ owner : this, previous : undefined })
-
+        return this.previous ? this.previous.immutable.createNext(this) : Iteration.new()
     }
 
 

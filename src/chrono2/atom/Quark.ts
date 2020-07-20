@@ -217,6 +217,7 @@ export class Quark extends Node implements Immutable {
     }
 
 
+    // magic dependency on `this.owner.identity.uniqableBox`
     collectGarbage () {
         const uniqable              = getUniqable()
         const collapsedOutgoing     = []

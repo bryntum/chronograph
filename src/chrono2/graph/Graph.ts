@@ -77,10 +77,11 @@ export class ChronoGraph extends Base implements Owner {
     }
 
     // this is assignment "within" the undo/redo history, keeps the redo information
-    set immutable (value : Transaction) {
+    set immutable (immutable : Transaction) {
         this.unmark()
 
-        this.$immutable = value
+        this.$immutable = immutable
+        if (immutable) immutable.owner = this
 
         this.mark()
     }
@@ -100,6 +101,7 @@ export class ChronoGraph extends Base implements Owner {
         this.unmark()
 
         this.$immutable         = immutable
+        immutable.owner         = this
 
         // TODO should somehow not clear the `nextTransaction` for the resolution of lazy atoms?
         // the use case is - user "undo", then read some lazy values - that creates "new history" and clears the
