@@ -41,7 +41,7 @@ export class BoxChronoGraph1<V> extends BoxAbstract<V> {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGeneratorChronoGraph2 {
-    graph           : ChronoGraph2  = ChronoGraph2.new({ historyLimit : 1 })
+    graph           : ChronoGraph2  = ChronoGraph2.new({ historyLimit : 0 })
 
     // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : Box<unknown> {
