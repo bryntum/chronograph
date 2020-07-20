@@ -4,7 +4,7 @@ import { LeveledQueue } from "../../util/LeveledQueue.js"
 import { Atom } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
 import { AtomState, Quark } from "../atom/Quark.js"
-import { Box, BoxImmutable, ZeroBox } from "../data/Box.js"
+import { Box, ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
 import { Iteration } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
@@ -28,6 +28,7 @@ export class ChronoGraph extends Base implements Owner {
     previous                : this                  = undefined
 
     historySource           : Map<ChronoReference, Quark>   = new Map()
+    // historySource           : Iteration   = undefined
 
     atomsById               : Map<ChronoReference, Atom>    = new Map()
 
@@ -176,7 +177,8 @@ export class ChronoGraph extends Base implements Owner {
 
             quark.iteration = undefined
 
-            owner.identity.uniqableBox    = quark
+            // set the magic data
+            owner.identity.uniqableBox      = quark
         })
 
         nextAfterCollapsible.forEveryFirstQuarkTill(lastIteration, quark => {
