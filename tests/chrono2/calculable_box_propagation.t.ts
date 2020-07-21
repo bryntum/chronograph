@@ -137,6 +137,77 @@ StartTest(t => {
     })
 
 
+    t.it('Should eliminate unchanged subtrees #2', t => {
+        const i1        = new Box(0, 'i1')
+        const i2        = new Box(10, 'i2')
+
+        const c1        = new CalculableBox({
+            name : 'c1',
+            calculation : function () {
+                return i1.read() + i2.read()
+            }
+        })
+
+        const c2        = new CalculableBox({
+            name : 'c2',
+            calculation : function () {
+                return c1.read() + 1
+            }
+        })
+
+        const c3        = new CalculableBox({
+            name : 'c3',
+            calculation : function () {
+                return c2.read() + 1
+            }
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2, c3 ]
+
+        const graph             = ChronoGraph.new({ historyLimit : 3 })
+
+        graph.addAtoms(nodes)
+
+        const spies             = [ c1, c2, c3 ].map(identifier => t.spyOn(identifier, 'calculation'))
+
+        // ----------------
+        t.is(c1.read(), 10)
+
+        graph.commit()
+
+        t.is(c2.read(), 11)
+
+        graph.commit()
+
+        // this read creates a new quark for `c2` which won't have the `$incoming` property
+        // which needs to be read from the previous quarks
+        t.is(c3.read(), 12)
+
+        graph.commit()
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        i1.write(5)
+        i2.write(5)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 5, 5, 10, 11, 12 ], "Correct result calculated")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 1, 0, 0 ][ index ]))
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        i1.write(3)
+        i2.write(3)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 3, 3, 6, 7, 8 ], "Correct result calculated")
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 1, 1, 1 ][ index ]))
+    })
+
+
     t.it('Should determine all potentially changed nodes', t => {
         const atom0     = new Box(0, 'atom0')
 
