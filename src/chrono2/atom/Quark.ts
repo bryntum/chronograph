@@ -104,12 +104,10 @@ export class Quark extends Node implements Immutable {
     // IMPORTANT LIMITATION : can not nest calls to `forEachOutgoing` (call `forEachOutgoing` in the `func` argument)
     // this messes up internal "uniqables" state
     forEachOutgoing (func : (quark : Quark, resolvedAtom : Atom) => any) {
-        let quark : this = this
+        const uniqable      = getUniqable()
+        const graph         = this.owner.graph
 
-        const uniqable  = getUniqable()
-        const uniqable2 = getUniqable()
-
-        const graph     = this.owner.graph
+        let quark : this    = this
 
         do {
             const outgoing      = quark.$outgoing
@@ -118,35 +116,16 @@ export class Quark extends Node implements Immutable {
             if (outgoing) {
 
                 for (let i = outgoing.length - 1; i >= 0; i--) {
-                    const outgoingRevision  = outgoingRev[ i ]
-                    const outgoingQuark     = outgoing[ i ] as Quark
-                    const outgoingHistory   = outgoingQuark.owner
+                    const outgoingQuark     = outgoing[ i ]
+                    const outgoingOwner     = outgoingQuark.owner
+                    const identity          = outgoingOwner.identity
 
-                    const identity          = outgoingHistory.identity
+                    if (identity.uniqable !== uniqable) {
+                        identity.uniqable       = uniqable
 
-                    const delta             = uniqable2 - identity.uniqable
+                        const outgoingAtom      = !outgoingOwner.graph || outgoingOwner.graph === graph ? outgoingOwner : graph.checkout(outgoingOwner)
 
-                    if (delta > 1) {
-                        const outgoingOwner     = !outgoingHistory.graph || outgoingHistory.graph === graph ? outgoingHistory : graph.checkout(outgoingHistory)
-
-                        if (outgoingOwner.immutable.revision === outgoingRevision) {
-                            identity.uniqable       = uniqable2
-                            identity.uniqableBox2   = outgoingOwner
-                        } else
-                            identity.uniqable       = uniqable
-                    }
-                }
-
-                for (let i = 0; i < outgoing.length; i++) {
-                    const outgoingQuark     = outgoing[ i ] as Quark
-                    const outgoingHistory   = outgoingQuark.owner
-
-                    const identity          = outgoingHistory.identity
-
-                    if (identity.uniqable === uniqable2) {
-                        identity.uniqable = uniqable
-
-                        func(outgoingQuark, identity.uniqableBox2)
+                        if (outgoingAtom.immutable.revision === outgoingRev[ i ]) func(outgoingQuark, outgoingAtom)
                     }
                 }
             }
@@ -262,11 +241,6 @@ export class Quark extends Node implements Immutable {
                     if (quark !== this) this.copyFrom(quark)
 
                     this.previous       = zero
-
-                    // need to keep the order of edges addition, otherwise
-                    // performance degrades
-                    collapsedOutgoing.reverse()
-                    collapsedOutgoingRev.reverse()
 
                     this.$outgoing      = collapsedOutgoing
                     this.$outgoingRev   = collapsedOutgoingRev

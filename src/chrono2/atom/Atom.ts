@@ -216,7 +216,7 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
         if (!this.equality(newValue, oldValue)) this.propagateDeepStaleOutsideOfGraph()
 
-        this.immutable  = quark
+        this.immutable      = quark
     }
 
 
@@ -239,24 +239,24 @@ export class Atom extends Owner implements Identifiable, Uniqable {
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
                 }
-            }
 
-            quark.forEachOutgoing((outgoing, atom) => {
-                if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
-            })
+                quark.forEachOutgoing((outgoing, atom) => {
+                    if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
+                })
+            }
         }
     }
 
 
     propagateDeepStaleOutsideOfGraph () {
-        const toVisit : Quark[]         = []
+        const toVisit1 : Quark[]    = []
 
-        const graph         = this.graph
+        const graph                 = this.graph
 
         this.immutable.forEachOutgoing((outgoing, atom) => {
             if (atom.graph !== graph) {
                 // only go deeper if state was UpToDate
-                if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
+                if (atom.state === AtomState.UpToDate) toVisit1.push(atom.immutable)
 
                 // but reset to stale anyway
                 atom.state  = AtomState.Stale
@@ -268,8 +268,18 @@ export class Atom extends Owner implements Identifiable, Uniqable {
         // so this condition is always false
         // if (!this.immutable.frozen) this.immutable.clearOutgoing()
 
-        while (toVisit.length) {
-            const quark     = toVisit.pop()
+        const toVisit2 : Quark[]         = []
+
+        for (let i = 0; i < toVisit1.length; i++) {
+            const quark     = toVisit1[ i ]
+
+            quark.forEachOutgoing((outgoing, atom) => {
+                if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+            })
+        }
+
+        while (toVisit2.length) {
+            const quark     = toVisit2.pop()
 
             const atom      = quark.owner
 
@@ -279,25 +289,25 @@ export class Atom extends Owner implements Identifiable, Uniqable {
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
                 }
-            }
 
-            quark.forEachOutgoing((outgoing, atom) => {
-                if (atom.graph !== graph) {
-                    if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
-                }
-            })
+                quark.forEachOutgoing((outgoing, atom) => {
+                    if (atom.graph !== graph) {
+                        if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+                    }
+                })
+            }
         }
     }
 
 
     // immediate outgoings should become stale, further outgoings - possibly stale
     propagateStaleDeep () {
-        const toVisit : Quark[]         = []
+        const toVisit1 : Quark[]         = []
 
         this.immutable.forEachOutgoing((outgoing, atom) => {
             // only go deeper if state was UpToDate
             if (atom.state === AtomState.UpToDate) {
-                toVisit.push(atom.immutable)
+                toVisit1.push(atom.immutable)
 
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
@@ -310,8 +320,18 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
         if (!this.immutable.frozen) this.immutable.clearOutgoing()
 
-        while (toVisit.length) {
-            const quark     = toVisit.pop()
+        const toVisit2 : Quark[]         = []
+
+        for (let i = 0; i < toVisit1.length; i++) {
+            const quark     = toVisit1[ i ]
+
+            quark.forEachOutgoing((outgoing, atom) => {
+                if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+            })
+        }
+
+        while (toVisit2.length) {
+            const quark     = toVisit2.pop()
 
             const atom      = quark.owner
 
@@ -321,11 +341,11 @@ export class Atom extends Owner implements Identifiable, Uniqable {
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
                 }
-            }
 
-            quark.forEachOutgoing((outgoing, atom) => {
-                if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
-            })
+                quark.forEachOutgoing((outgoing, atom) => {
+                    if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+                })
+            }
         }
     }
 

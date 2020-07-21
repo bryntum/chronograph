@@ -241,11 +241,7 @@ export class CalculableBox<V> extends Box<V> {
 
         this.proposedValue  = value
 
-        if (this.state === AtomState.UpToDate) {
-            this.state  = AtomState.PossiblyStale
-
-            this.propagatePossiblyStale()
-        }
+        this.propagatePossiblyStale()
     }
 
 
