@@ -363,6 +363,8 @@ export class ChronoGraph extends Base implements Owner {
 
         // might be more performant to checkout everything at once, since
         // most of our revisions going to be array-based?
+        // yes, probably should gather the latest quarks in the map right away
+        // can keep `latestQuarks` in the branch + use storage of the last iteration
         const immutable = this.getLatestQuarkOf(atom).createNext(clone)
 
         clone.immutable = undefined
