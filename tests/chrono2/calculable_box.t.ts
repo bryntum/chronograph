@@ -59,7 +59,7 @@ StartTest(t => {
     })
 
 
-    t.it('`undefined` as a result of calculation should be converted to `null`', async t => {
+    t.it('`undefined` as a result of calculation should be converted to `null`', t => {
         let called = false
 
         const box1     = new CalculableBox({
@@ -75,6 +75,25 @@ StartTest(t => {
         t.ok(called)
     })
 
+
+    t.it('Should support the synchronous "reactive" stack depth of 2500', t => {
+        const stackSize = 2500
+
+        const boxes : Box<number>[]      = [ new Box(0) ]
+
+        for (let i = 0; i < stackSize; i++) {
+            boxes.push(new CalculableBox({
+                context     : boxes.length,
+                calculation () : number {
+                    return boxes[ this - 1 ].read() + 1
+                }
+            }))
+        }
+
+        const lastBox       = boxes[ boxes.length - 1 ]
+
+        t.is(lastBox.read(), stackSize)
+    })
 
 
     //
