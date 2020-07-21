@@ -140,10 +140,14 @@ export class CalculableBox<V> extends Box<V> {
     updateValue (newValue : unknown) {
         if (newValue === undefined) newValue = null
 
-        if (this.state !== AtomState.Empty && !this.equality(this.immutable.read(), newValue)) this.propagateStaleShallow()
+        const isSameValue   = this.equality(this.immutable.read(), newValue)
+
+        if (this.state !== AtomState.Empty && !isSameValue) this.propagateStaleShallow()
 
         // only write the value, revision has been already updated
         this.immutableForWrite().write(newValue)
+
+        if (isSameValue) this.immutable.sameValue = true
 
         if (this.immutable.usedProposedOrPrevious) {
             this.state              = this.equality(newValue, this.proposedValue) ? AtomState.UpToDate : AtomState.Stale
@@ -168,7 +172,7 @@ export class CalculableBox<V> extends Box<V> {
 
         if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return true
 
-        const incoming  = this.immutable.$incoming
+        const incoming  = this.immutable.getIncomingDeep()
 
         if (incoming) {
             for (let i = 0; i < incoming.length; i++) {

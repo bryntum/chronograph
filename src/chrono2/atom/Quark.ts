@@ -25,7 +25,11 @@ export class Quark extends Node implements Immutable {
 
     value       : unknown       = undefined
 
-    usedProposedOrPrevious : boolean = false
+    usedProposedOrPrevious  : boolean   = false
+    // indicates that atom's value has been calculated into the same value
+    // in such case, the outgoings won't be triggered and
+    // one need to dive deeper for full history
+    sameValue               : boolean   = false
 
     iteration       : Iteration = undefined
 
@@ -101,6 +105,22 @@ export class Quark extends Node implements Immutable {
     $outgoing           : Quark[]
 
 
+    getIncomingDeep () : this[ '$incoming' ] {
+        let box : this = this
+
+        while (box) {
+            // as an edge case, atom may compute its value w/o external dependencies all of the sudden
+            // in such case `$incoming` will be empty
+            if (box.$incoming !== undefined || box.value !== undefined) return box.$incoming
+
+            box     = box.previous
+        }
+
+        return undefined
+    }
+
+
+
     // IMPORTANT LIMITATION : can not nest calls to `forEachOutgoing` (call `forEachOutgoing` in the `func` argument)
     // this messes up internal "uniqables" state
     forEachOutgoing (func : (quark : Quark, resolvedAtom : Atom) => any) {
@@ -121,16 +141,16 @@ export class Quark extends Node implements Immutable {
                     const identity          = outgoingOwner.identity
 
                     if (identity.uniqable !== uniqable) {
-                        identity.uniqable       = uniqable
+                        identity.uniqable   = uniqable
 
-                        const outgoingAtom      = !outgoingOwner.graph || outgoingOwner.graph === graph ? outgoingOwner : graph.checkout(outgoingOwner)
+                        const outgoingAtom  = !outgoingOwner.graph || outgoingOwner.graph === graph ? outgoingOwner : graph.checkout(outgoingOwner)
 
                         if (outgoingAtom.immutable.revision === outgoingRev[ i ]) func(outgoingQuark, outgoingAtom)
                     }
                 }
             }
 
-            if (quark.value !== undefined) break
+            if (quark.value !== undefined && !quark.sameValue) break
 
             quark       = quark.previous
 
@@ -198,26 +218,34 @@ export class Quark extends Node implements Immutable {
 
     // magic dependency on `this.owner.identity.uniqableBox`
     collectGarbage () {
+        const zero                  = (this.constructor as AnyConstructor<this, typeof Quark>).getZero()
         const uniqable              = getUniqable()
+
         const collapsedOutgoing     = []
         const collapsedOutgoingRev  = []
 
+
+        let valueConsumed : boolean         = false
+        let incomingsConsumed : boolean     = false
+        let outgoingsConsumed : boolean     = false
+
         let quark : this            = this
-
-        let valueConsumed : boolean = false
-
-        const zero                  = (this.constructor as AnyConstructor<this, typeof Quark>).getZero()
 
         do {
             // capture early, since we reset the `previous` on value consumption
-            const previous  = quark.previous
+            const previous          = quark.previous
 
-            if (!valueConsumed) {
+            if (!incomingsConsumed && quark.$incoming !== undefined) {
+                incomingsConsumed   = true
+
+                this.$incoming      = quark.$incoming
+            }
+
+            if (!outgoingsConsumed) {
                 const outgoing          = quark.$outgoing
                 const outgoingRev       = quark.$outgoingRev
 
                 if (outgoing) {
-
                     for (let i = outgoing.length - 1; i >= 0; i--) {
                         const outgoingRevision  = outgoingRev[ i ]
                         const outgoingQuark     = outgoing[ i ] as Quark
@@ -235,16 +263,24 @@ export class Quark extends Node implements Immutable {
                     }
                 }
 
-                if (quark.value !== undefined) {
-                    valueConsumed       = true
-
-                    if (quark !== this) this.copyFrom(quark)
-
-                    this.previous       = zero
+                if (quark.value !== undefined && !quark.sameValue) {
+                    outgoingsConsumed   = true
 
                     this.$outgoing      = collapsedOutgoing
                     this.$outgoingRev   = collapsedOutgoingRev
                 }
+            }
+
+            // consume the top-most value, even if its the `sameValue`
+            // reasoning is that even that `equality` check has passed
+            // user may have some side effects that expects the value
+            // to always be the result of latest `calculation` call
+            if (!valueConsumed && quark.value !== undefined) {
+                valueConsumed       = true
+
+                if (quark !== this) this.copyValueFrom(quark)
+
+                this.previous       = zero
             }
 
             if (quark !== this) quark.destroy()
@@ -264,9 +300,8 @@ export class Quark extends Node implements Immutable {
     }
 
 
-    copyFrom (quark : this) {
+    copyValueFrom (quark : this) {
         this.value      = quark.value
-        this.$incoming  = quark.$incoming
     }
 
 
