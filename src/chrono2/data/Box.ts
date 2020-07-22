@@ -5,9 +5,8 @@ import { globalContext } from "../GlobalContext.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-// TODO add <V> generic arg
-export class BoxImmutable extends Quark {
-    value               : unknown               = undefined
+export class BoxImmutable<V> extends Quark {
+    value               : V                 = undefined
 
     constructor (owner : Atom) {
         super()
@@ -16,13 +15,13 @@ export class BoxImmutable extends Quark {
     }
 
 
-    write (value : unknown) {
+    write (value : V) {
         if (this.frozen) throw new Error("Can't write to frozen box")
 
         this.value = value
     }
 
-    static zero : BoxImmutable
+    static zero : BoxImmutable<unknown>
 }
 
 BoxImmutable.zero = new BoxImmutable(undefined)
@@ -43,13 +42,13 @@ export class Box<V> extends Atom {
 
 
     // this property should be a "real" property, not an accessor, to be optimizable by v8
-    immutable              : BoxImmutable
+    immutable              : BoxImmutable<V>
 
 
-    buildDefaultImmutable () : BoxImmutable {
-        const defaultBoxImmutable = new BoxImmutable(this)
+    buildDefaultImmutable () : BoxImmutable<V> {
+        const defaultBoxImmutable = new BoxImmutable<V>(this)
 
-        defaultBoxImmutable.previous    = BoxImmutable.zero
+        defaultBoxImmutable.previous    = BoxImmutable.zero as any
 
         return defaultBoxImmutable
     }
