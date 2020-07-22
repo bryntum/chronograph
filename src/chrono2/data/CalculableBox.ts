@@ -137,7 +137,7 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    updateValue (newValue : unknown) {
+    updateValue (newValue : V) {
         if (newValue === undefined) newValue = null
 
         const isSameValue   = this.equality(this.immutable.read(), newValue)
