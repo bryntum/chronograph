@@ -276,6 +276,8 @@ type AnyConstructorRaw<Instance extends object = object, Static extends object =
  */
 export type AnyConstructor<Instance extends object = object, Static extends object = object>  = (new (...input : any[]) => Instance) & SuppressNew<Static>
 
+export type Mixin<T extends AnyFunction> = InstanceType<ReturnType<T>>
+
 //---------------------------------------------------------------------------------------------------------------------
 type ZeroBaseClassConstructor = typeof ZeroBaseClass
 
