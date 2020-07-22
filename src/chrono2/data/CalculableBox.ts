@@ -1,13 +1,18 @@
-import { AnyConstructor } from "../../class/Mixin.js"
-import { DefaultMetaSync, Meta } from "../atom/Meta.js"
 import { getNextRevision } from "../atom/Node.js"
 import { AtomState } from "../atom/Quark.js"
-import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
+import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
+import { EffectHandler } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
 import { Box } from "./Box.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStarted')
+
+const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> = { done : false, value : SynchronousCalculationStarted }
+
+const eff = (eff) => undefined
+
 export class CalculableBox<V> extends Box<V> {
 
     constructor (config? : Partial<CalculableBox<V>>) {
@@ -94,13 +99,57 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
+    iterationResult     : IteratorResult<any>       = undefined
+
+
+    isCalculationStarted () : boolean {
+        return Boolean(this.iterationResult)
+    }
+
+
+    isCalculationCompleted () : boolean {
+        return Boolean(this.iterationResult && this.iterationResult.done)
+    }
+
+
+    // get result () : V {
+    //     return this.iterationResult && this.iterationResult.done ? this.iterationResult.value : undefined
+    // }
+
+
+    startCalculation (onEffect : EffectHandler<CalculationModeSync>) : IteratorResult<any> {
+        this.immutableForWrite().$incoming      = undefined
+        this.immutable.usedProposedOrPrevious   = false
+
+        this.immutable.revision                 = getNextRevision()
+
+        // this assignment allows other code to observe, that calculation has started
+        this.iterationResult        = calculationStartedConstant
+
+        return this.iterationResult = {
+            done    : true,
+            value   : this.calculation.call(this.context, onEffect)
+        }
+    }
+
+
+    continueCalculation (value : unknown) : IteratorResult<any> {
+        throw new Error("Can not continue synchronous calculation")
+    }
+
+
+    resetCalculation () {
+        this.iterationResult        = undefined
+    }
+
+
     proposedValue           : V     = undefined
 
 
     readProposedOrPrevious () : V {
         // if (globalContext.activeQuark) this.immutableForWrite().getIncoming().push(invalidatingBoxImmutable)
 
-        if (globalContext.activeQuark === this.immutable) {
+        if (globalContext.activeAtom === this) {
             // this.usedProposedOrPrevious = true
             // this.immutableForWrite().getIncoming().push(invalidatingBoxImmutable)
 
@@ -123,21 +172,29 @@ export class CalculableBox<V> extends Box<V> {
 
 
     read () : V {
-        if (this.graph && globalContext.activeGraph && globalContext.activeGraph !== this.graph) {
-            return globalContext.activeGraph.checkout(this).read()
+        const activeAtom    = globalContext.activeAtom
+        const activeGraph   = activeAtom ? activeAtom.graph : undefined
+
+        if (this.graph && activeGraph && activeGraph !== this.graph) {
+            return activeGraph.checkout(this).read()
         }
 
-        if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
+        if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable)
 
         if (this.state === AtomState.UpToDate) return this.immutable.read()
 
-        this.calculate()
+        if (this.shouldCalculate())
+            this.doCalculate()
+        else
+            this.state = AtomState.UpToDate
 
         return this.immutable.read()
     }
 
 
     updateValue (newValue : V) {
+        this.resetCalculation()
+
         if (newValue === undefined) newValue = null
 
         const isSameValue   = this.equality(this.immutable.read(), newValue)
@@ -147,7 +204,7 @@ export class CalculableBox<V> extends Box<V> {
         // only write the value, revision has been already updated
         this.immutableForWrite().write(newValue)
 
-        if (isSameValue) this.immutable.sameValue = true
+        this.immutable.sameValue = isSameValue
 
         if (this.immutable.usedProposedOrPrevious) {
             this.state              = this.equality(newValue, this.proposedValue) ? AtomState.UpToDate : AtomState.Stale
@@ -159,16 +216,10 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    calculate () {
-        if (this.shouldCalculate())
-            this.doCalculate()
-        else
-            this.state = AtomState.UpToDate
-    }
-
-
     shouldCalculate () {
-        if (this.state === AtomState.Stale || this.state === AtomState.Empty) return true
+        const state     = this.state
+
+        if (state === AtomState.Stale || state === AtomState.Empty) return true
 
         if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return true
 
@@ -177,15 +228,15 @@ export class CalculableBox<V> extends Box<V> {
         if (incoming) {
             for (let i = 0; i < incoming.length; i++) {
                 const dependency            = incoming[ i ]
-                const dependencyAtom        = dependency.owner as Box<V>
+                const dependencyAtom        = dependency.owner as Box<unknown>
 
                 if (dependencyAtom.state !== AtomState.UpToDate) {
-                    const prevActive            = globalContext.activeQuark
-                    globalContext.activeQuark   = null
+                    const prevActive            = globalContext.activeAtom
+                    globalContext.activeAtom    = null
 
                     dependencyAtom.read()
 
-                    globalContext.activeQuark   = prevActive
+                    globalContext.activeAtom    = prevActive
                 }
 
                 // TODO check in 3.9, 4.0, looks like a bug in TS
@@ -199,23 +250,18 @@ export class CalculableBox<V> extends Box<V> {
 
 
     doCalculate () {
-        this.immutableForWrite().$incoming      = undefined
-        this.immutable.usedProposedOrPrevious   = false
+        const prevActiveAtom        = globalContext.activeAtom
 
-        this.immutable.revision     = getNextRevision()
+        globalContext.activeAtom    = this
 
-        const prevActive            = globalContext.activeQuark
-        const prevGraph             = globalContext.activeGraph
+        // the only possible outcome for synchronous calculation
+        // is `{ done : true, value : ... }`
+        // otherwise its going to be a cycle exception
+        const iterationResult       = this.startCalculation(eff)
 
-        globalContext.activeQuark   = this.immutable
-        globalContext.activeGraph   = this.graph
+        globalContext.activeAtom    = prevActiveAtom
 
-        const newValue              = this.calculation.call(this.context)
-
-        globalContext.activeQuark   = prevActive
-        globalContext.activeGraph   = prevGraph
-
-        this.updateValue(newValue)
+        this.updateValue(iterationResult.value)
     }
 
 

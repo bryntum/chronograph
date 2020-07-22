@@ -55,15 +55,19 @@ export class Box<V> extends Atom {
 
 
     read () : V {
-        // TODO `activeGraph` seems to be redundant? it is always equal to `activeQuark.owner.graph`
-        // perhaps switching to that will be more performant
-        if (this.graph && globalContext.activeGraph && globalContext.activeGraph !== this.graph) {
-            return globalContext.activeGraph.checkout(this).read()
+        const activeAtom    = globalContext.activeAtom
+        const activeGraph   = activeAtom ? activeAtom.graph : undefined
+
+        // TODO what if active graph is some other graph?
+        // probably need `identity` for graphs and check that
+        // needs a test case
+        if (this.graph && activeGraph && activeGraph !== this.graph) {
+            return activeGraph.checkout(this).read()
         }
 
-        if (globalContext.activeQuark) this.immutableForWrite().addOutgoing(globalContext.activeQuark)
+        if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable)
 
-        return this.immutable.read() as any
+        return this.immutable.read()
     }
 
 
