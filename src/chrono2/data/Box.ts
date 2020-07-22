@@ -55,6 +55,8 @@ export class Box<V> extends Atom {
 
 
     read () : V {
+        // TODO `activeGraph` seems to be redundant? it is always equal to `activeQuark.owner.graph`
+        // perhaps switching to that will be more performant
         if (this.graph && globalContext.activeGraph && globalContext.activeGraph !== this.graph) {
             return globalContext.activeGraph.checkout(this).read()
         }
