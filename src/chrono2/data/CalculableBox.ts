@@ -112,16 +112,16 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    // get result () : V {
-    //     return this.iterationResult && this.iterationResult.done ? this.iterationResult.value : undefined
-    // }
-
-
-    startCalculation (onEffect : EffectHandler<CalculationModeSync>) : IteratorResult<any> {
+    beforeCalculation () {
         this.immutableForWrite().$incoming      = undefined
         this.immutable.usedProposedOrPrevious   = false
 
         this.immutable.revision                 = getNextRevision()
+    }
+
+
+    startCalculation (onEffect : EffectHandler<CalculationModeSync>) : IteratorResult<any> {
+        this.beforeCalculation()
 
         // this assignment allows other code to observe, that calculation has started
         this.iterationResult        = calculationStartedConstant
@@ -203,7 +203,7 @@ export class CalculableBox<V> extends Box<V> {
         // only write the value, revision has been already updated
         this.immutableForWrite().write(newValue)
 
-        this.immutable.sameValue = isSameValue
+        this.immutable.sameValue    = isSameValue
 
         if (this.immutable.usedProposedOrPrevious) {
             this.state              = this.equality(newValue, this.proposedValue) ? AtomState.UpToDate : AtomState.Stale
@@ -249,18 +249,17 @@ export class CalculableBox<V> extends Box<V> {
 
 
     doCalculate () {
+        this.beforeCalculation()
+
         const prevActiveAtom        = globalContext.activeAtom
 
         globalContext.activeAtom    = this
 
-        // the only possible outcome for synchronous calculation
-        // is `{ done : true, value : ... }`
-        // otherwise its going to be a cycle exception
-        const iterationResult       = this.startCalculation(eff)
+        const newValue              = this.calculation.call(this.context)
 
         globalContext.activeAtom    = prevActiveAtom
 
-        this.updateValue(iterationResult.value)
+        this.updateValue(newValue)
     }
 
 

@@ -25,10 +25,7 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
 
 
     startCalculation (onEffect : EffectHandler<CalculationModeGen>) : IteratorResult<any> {
-        this.immutableForWrite().$incoming      = undefined
-        this.immutable.usedProposedOrPrevious   = false
-
-        this.immutable.revision                 = getNextRevision()
+        this.beforeCalculation()
 
         const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.context, onEffect)
 
