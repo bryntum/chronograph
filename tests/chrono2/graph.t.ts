@@ -1,6 +1,7 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 
 declare const StartTest : any
@@ -65,5 +66,24 @@ StartTest(t => {
         t.is(box3.read(), 102)
 
         t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
+    })
+
+
+    t.it('Adding already added identifier should not overwrite the initial proposed value', async t => {
+        const graph : ChronoGraph = ChronoGraph.new()
+
+        const iden1     = new CalculableBoxGen({
+            *calculation () {
+                return iden1.readProposedOrPrevious()
+            }
+        })
+
+        iden1.write(10)
+
+        graph.addAtom(iden1)
+
+        graph.addAtom(iden1)
+
+        t.is(iden1.read(), 10, 'Initial proposed value was not overwritten')
     })
 })

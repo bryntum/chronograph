@@ -90,23 +90,7 @@ StartTest(t => {
     doTest(t, GraphGen.new({ sync : true }))
     doTest(t, GraphGen.new({ sync : false }))
 
-    // t.it('Adding already added identifier should not overwrite the initial proposed value', async t => {
-    //     const graph : ChronoGraph = ChronoGraph.new()
-    //
-    //     const iden1     = graph.addIdentifier(CalculatedValueSync.new({
-    //         calculation : function (YIELD) {
-    //             return YIELD(ProposedOrPrevious)
-    //         }
-    //     }), 10)
-    //
-    //     const iden11    = graph.addIdentifier(iden1)
-    //
-    //     t.isStrict(iden1, iden11, 'Do not overwrite the already added identifier')
-    //
-    //     t.is(graph.read(iden1), 10, 'Initial proposed value was not overwritten')
-    // })
-    //
-    //
+
     // t.it('Should throw error on cyclic computation', async t => {
     //     const graph : ChronoGraph = ChronoGraph.new()
     //
@@ -135,6 +119,4 @@ StartTest(t => {
     //
     //     t.throwsOk(() => graph.read(iden1), 'Computation cycle')
     // })
-
-
 })
