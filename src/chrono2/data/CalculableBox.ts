@@ -164,10 +164,9 @@ export class CalculableBox<V> extends Box<V> {
 
     readPrevious () : V {
         if (this.state === AtomState.UpToDate)
-            return this.immutable.previous ? this.immutable.previous.read() : undefined
+            return this.immutable.previous ? this.immutable.previous.readRaw() : undefined
         else
-            // TODO should return `undefined` for non-previous case - `read` always returns `null`
-            return this.immutable.read()
+            return this.immutable.readRaw()
     }
 
 

@@ -273,81 +273,36 @@ StartTest(t => {
         })
 
 
-        // t.it(prefix + 'Should calculate lazy identifiers in a batch', t => {
-        //     const graph1 : ChronoGraph       = ChronoGraph.new()
-        //
-        //     const i1            = graph1.variableNamed('i1', 0)
-        //     const i2            = graph1.variableNamed('i2', 1)
-        //
-        //     const c1            = graph1.addIdentifier(CalculatedValueGen.new({
-        //         name            : 'c1',
-        //         lazy            : true,
-        //         calculation     : function * () : CalculationIterator<number> {
-        //             return (yield i1) + (yield i2)
-        //         }
-        //     }))
-        //
-        //     const c2            = graph1.addIdentifier(CalculatedValueGen.new({
-        //         name            : 'c2',
-        //         lazy            : true,
-        //         calculation     : function * () : CalculationIterator<number> {
-        //             return (yield c1) + 1
-        //         }
-        //     }))
-        //
-        //     const c3            = graph1.addIdentifier(CalculatedValueGen.new({
-        //         name            : 'c3',
-        //         lazy            : true,
-        //         calculation     : function * () : CalculationIterator<number> {
-        //             return (yield c2) + 1
-        //         }
-        //     }))
-        //
-        //     graph1.commit()
-        //
-        //     t.isDeeply([ i1, i2, c1, c2, c3 ].map(node => graph1.read(node)), [ 0, 1, 1, 2, 3 ], "Correct result calculated")
-        //
-        //     // ----------------
-        //     const c1Spy         = t.spyOn(Transaction.prototype, 'calculateTransitionsStackSync')
-        //
-        //     graph1.write(i1, 1)
-        //
-        //     graph1.commit()
-        //
-        //     // reading `c3` should calculate `c2` and `c1` inside the `calculateTransitionsStack` once, not as
-        //     // separate calls for every lazy identifier
-        //     t.isDeeply([ c3 ].map(node => graph1.read(node)), [ 4 ], "Correct result calculated")
-        //
-        //     t.expect(c1Spy).toHaveBeenCalled(1)
-        // })
-        //
-        //
-        // t.it(prefix + 'Should calculate lazy identifiers in the current transaction', t => {
-        //     const graph1 : ChronoGraph       = ChronoGraph.new()
-        //
-        //     const i1            = graph1.addIdentifier(CalculatedValueGen.new({
-        //         name            : 'i1',
-        //         calculation     : function * () : CalculationIterator<number> {
-        //             return yield ProposedOrPrevious
-        //         }
-        //     }))
-        //
-        //     const c1            = graph1.addIdentifier(CalculatedValueGen.new({
-        //         name            : 'c1',
-        //         lazy            : true,
-        //         calculation     : function * () : CalculationIterator<number> {
-        //             return (yield ProposedValueOf(i1)) != null ? 1 : 0
-        //         }
-        //     }))
-        //
-        //     graph1.commit()
-        //
-        //     // ----------------
-        //     graph1.write(i1, 1)
-        //
-        //     t.is(graph1.read(c1), 1)
-        // })
+        t.it(prefix + 'Should calculate lazy identifiers in the current transaction', t => {
+            const graph1 : ChronoGraph       = ChronoGraph.new()
 
+            const i1            = graphGen.calculableBox({
+                name            : 'i1',
+                calculation : eval(graphGen.calc(function* () {
+                    return i1.readProposedOrPrevious()
+                }))
+            })
+
+            const c1            = graphGen.calculableBox({
+                name            : 'c1',
+                lazy            : true,
+                calculation : eval(graphGen.calc(function* () {
+                    return i1.readProposedOrPrevious() != null ? 1 : 0
+                }))
+            })
+
+            graph1.commit()
+
+            // ----------------
+            i1.write(1)
+
+            t.is(c1.read(), 1)
+
+            // TODO
+            // graph1.commit()
+            //
+            // t.is(c1.read(), 0)
+        })
     }
 
     doTest(t, GraphGen.new({ sync : true }))
