@@ -1000,7 +1000,12 @@ export class Transaction extends Base {
                     // // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
                     // // in such case we can not continue calculation and just exit the inner loop
                     // if (entry.iterationResult)
-                    iterationResult         = entry.continueCalculation(effectResult)
+                    if (entry.visitEpoch === startedAtEpoch) {
+                        iterationResult         = entry.continueCalculation(effectResult)
+                    } else {
+                        stack.pop()
+                        break
+                    }
                     // else
                     //     iterationResult         = null
                 }
@@ -1121,7 +1126,12 @@ export class Transaction extends Base {
                     // // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
                     // // in such case we can not continue calculation and just exit the inner loop
                     // if (entry.iterationResult)
-                    iterationResult         = entry.continueCalculation(effectResult)
+                    if (entry.visitEpoch === startedAtEpoch) {
+                        iterationResult         = entry.continueCalculation(effectResult)
+                    } else {
+                        stack.pop()
+                        break
+                    }
                     // else
                     //     iterationResult         = null
                 }
