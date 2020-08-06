@@ -49,6 +49,7 @@ project.start(
             'chrono2/calculable_box_common.t.js',
             'chrono2/calculable_box_gen.t.js',
             'chrono2/calculable_box_sync.t.js',
+            'chrono2/calculable_box_async.t.js',
             'chrono2/calculable_box_mixed.t.js',
             'chrono2/calculable_box_proposed_value.t.js',
             'chrono2/calculable_box_lazyness.t.js',
