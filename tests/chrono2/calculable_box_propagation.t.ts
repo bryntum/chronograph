@@ -677,7 +677,7 @@ StartTest(t => {
         })
 
 
-        t.it(prefix + 'Should not re-entry synchronous calculations', t => {
+        t.it(prefix + 'Should not re-entry calculations', t => {
             const graph : ChronoGraph   = ChronoGraph.new()
 
             const var1      = new Box(1, 'v1')
