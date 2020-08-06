@@ -178,8 +178,8 @@ export class GlobalContext extends Base {
                     // bypass the unrecognized effect to the outer context
                     const effectResult      = eff(value)
 
-                    if (effectResult instanceof Promise)
-                        throw new Error("Effect resolved to promise in the synchronous context")
+                    // if (effectResult instanceof Promise)
+                    //     throw new Error("Effect resolved to promise in the synchronous context")
 
                     // // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
                     // // in such case we can not continue calculation and just exit the inner loop
