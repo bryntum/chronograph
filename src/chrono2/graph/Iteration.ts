@@ -3,7 +3,7 @@ import { getUniqable } from "../../util/Uniqable.js"
 import { Atom } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
 import { Quark } from "../atom/Quark.js"
-import { Immutable, Owner } from "../data/Immutable.js"
+import { Immutable } from "../data/Immutable.js"
 import { Transaction } from "./Transaction.js"
 
 

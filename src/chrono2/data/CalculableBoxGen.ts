@@ -1,5 +1,4 @@
 import { CalculationIterator } from "../../primitives/Calculation.js"
-import { getNextRevision } from "../atom/Node.js"
 import { CalculationModeGen } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
