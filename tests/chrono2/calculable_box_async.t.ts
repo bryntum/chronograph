@@ -90,4 +90,46 @@ StartTest(t => {
 
         t.is(count, 3, 'Calculated every box only once')
     })
+
+
+    t.it('Should not re-entry async gen calculations that has been partially read already, random timings, stressed', async t => {
+        const boxes : CalculableBoxGen<number>[] = [ new Box(0, 'box0') as any ]
+
+        const size      = 20
+
+        let count : number = 0
+
+        for (let i = 1; i <= size; i++) {
+            boxes.push(new CalculableBoxGen({
+                name        : 'box' + i,
+                sync        : false,
+
+                *calculation () : CalculationIterator<number> {
+                    count++
+
+                    yield randomDelay()
+
+                    return (yield boxes[ this - 1 ]) + 1
+                },
+                context     : i
+            }))
+        }
+
+        const lastBox       = boxes[ boxes.length - 1 ]
+
+        const randomIndicies    = Array(size).fill(0).map((v, i) => {
+            return { i, random : Math.floor(Math.random() * size) }
+        })
+        randomIndicies.sort((a, b) => a.random - b.random)
+
+        // start reading from half of the boxes, randomly
+        for (let i = 1; i <= size / 2; i++) {
+            boxes[ randomIndicies[ i - 1 ].i + 1 ].readAsync()
+        }
+
+        t.is(await lastBox.readAsync(), size, 'Correct value')
+
+        t.is(count, size, 'Calculated every box only once')
+    })
+
 })
