@@ -73,7 +73,7 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
         const activeGraph   = activeAtom ? activeAtom.graph : undefined
 
         if (this.graph && activeGraph && activeGraph !== this.graph) {
-            return activeGraph.checkout(this).read()
+            return activeGraph.checkout(this).readAsync()
         }
 
         if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable)
