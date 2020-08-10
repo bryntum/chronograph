@@ -1,9 +1,12 @@
+import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
 import { delay } from "../../src/util/Helpers.js"
 
 declare const StartTest : any
+
+setCompactCounter(1)
 
 const randomDelay = () => delay(Math.random() * 100)
 
