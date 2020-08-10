@@ -174,7 +174,7 @@ export class Transaction extends Base {
         if (!(identifier instanceof Identifier)) return this.yieldAsync(identifier as Effect)
 
         //----------------------
-        while (this.stackGen.lowestLevel < identifier.level) {
+        while (this.stackGen.lowestLevelIndex < identifier.level) {
             await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, this.stackGen.takeLowestLevel() ], this)
         }
 
