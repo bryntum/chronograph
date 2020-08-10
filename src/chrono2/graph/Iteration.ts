@@ -13,6 +13,11 @@ export class IterationStorage {
     quarks          : Quark[]           = []
 
 
+    get size () : number {
+        return this.quarks.length
+    }
+
+
     clone () : this {
         const cls       = this.constructor as AnyConstructor<this, typeof IterationStorage>
 
@@ -98,6 +103,16 @@ export class Iteration extends Immutable {
     // nextCount       : number            = 0
 
     isRejected      : boolean           = false
+
+
+    get size () : number {
+        return this.storage.size
+    }
+
+
+    get dirty () : boolean {
+        return this.storage.size > 0
+    }
 
 
     // createNext (owner? : Owner) : this {
@@ -240,6 +255,11 @@ export class Iteration extends Immutable {
 export class IterationStorageShredding extends IterationStorage {
 
     quarksMap       : Map<ChronoReference, Quark>   = new Map()
+
+
+    get size () : number {
+        return this.quarksMap.size
+    }
 
 
     freeze () {
