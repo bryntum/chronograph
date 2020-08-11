@@ -16,14 +16,14 @@ export enum AtomState {
     Stale           = 'Stale'
 }
 
-export class Quark extends Node implements Immutable {
-    owner       : Atom          = undefined
+export class Quark<V = unknown> extends Node implements Immutable {
+    owner       : Atom<V>       = undefined
 
     previous    : this          = undefined
 
     frozen      : boolean       = false
 
-    value       : unknown       = undefined
+    value       : V             = undefined
 
     usedProposedOrPrevious  : boolean   = false
     // indicates that atom's value has been calculated into the same value
@@ -83,7 +83,7 @@ export class Quark extends Node implements Immutable {
     }
 
 
-    createNext (owner? : Atom) : this {
+    createNext (owner? : Atom<V>) : this {
         this.freeze()
 
         const self      = this.constructor as AnyConstructor<this, typeof Immutable>

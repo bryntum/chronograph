@@ -8,12 +8,12 @@ export const CalculationModeSync    = Symbol('ContextSync')
 
 export type CalculationModeSync     = typeof CalculationModeSync
 
-/**
- * Symbol to denote the asynchronous calculation mode
- */
-export const CalculationModeAsync   = Symbol('CalculationModeAsync')
-
-export type CalculationModeAsync    = typeof CalculationModeAsync
+// /**
+//  * Symbol to denote the asynchronous calculation mode
+//  */
+// export const CalculationModeAsync   = Symbol('CalculationModeAsync')
+//
+// export type CalculationModeAsync    = typeof CalculationModeAsync
 
 /**
  * Symbol to denote the generator calculation mode
@@ -25,7 +25,7 @@ export type CalculationModeGen      = typeof CalculationModeGen
 /**
  * Type, denoting the unknown calculation mode
  */
-export type CalculationMode         = CalculationModeSync | CalculationModeAsync | CalculationModeGen
+export type CalculationMode         = CalculationModeSync /*| CalculationModeAsync*/ | CalculationModeGen
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -46,9 +46,9 @@ export type CalculationReturnValue<Result, Mode extends CalculationMode> =
         Mode extends CalculationModeGen ?
             CalculationIterator<Result>
             :
-            Mode extends CalculationModeAsync ?
-                Promise<Result>
-                :
+            // Mode extends CalculationModeAsync ?
+            //     Promise<Result>
+            //     :
                 never
 
 

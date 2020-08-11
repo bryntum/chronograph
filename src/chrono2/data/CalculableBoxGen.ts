@@ -1,7 +1,7 @@
 import { CalculationIterator } from "../../primitives/Calculation.js"
 import { AtomState } from "../atom/Quark.js"
 import { CalculationModeGen } from "../CalculationMode.js"
-import { EffectHandler } from "../Effect.js"
+import { EffectHandler, runGeneratorAsyncWithEffect } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
 import { CalculableBox } from "./CalculableBox.js"
 
@@ -15,6 +15,7 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
 
     iterationResult     : IteratorResult<any>       = undefined
 
+    // possibly this needs to be a global (per atom) revision number
     iterationNumber     : number                    = -1
 
     calculationPromise  : Promise<V>                = undefined
@@ -97,6 +98,13 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
         // }
 
         await globalContext.calculateAtomsAsync(eff, [ this ])
+
+        // await runGeneratorAsyncWithEffect(
+        //     eff,
+        //     globalContext.calculateAtomsQueueGen,
+        //     [ eff, globalContext.stack, [ this ], this.level ],
+        //     globalContext
+        // )
 
         return this.immutable.read()
     }

@@ -229,7 +229,7 @@ export class Transaction extends Base {
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
         //----------------------
-        while (this.stackGen.getLowestLevel() < identifier.level) {
+        while (this.stackGen.getLowestLevelIndex() < identifier.level) {
             // here we force the computations for lower level identifiers should be sync
             this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
         }
@@ -328,7 +328,7 @@ export class Transaction extends Base {
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
         //----------------------
-        while (this.stackGen.getLowestLevel() < identifier.level) {
+        while (this.stackGen.getLowestLevelIndex() < identifier.level) {
             this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
         }
 

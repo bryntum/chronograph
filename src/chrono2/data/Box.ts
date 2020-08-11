@@ -8,7 +8,7 @@ import { globalContext } from "../GlobalContext.js"
 export class BoxImmutable<V> extends Quark {
     value               : V                 = undefined
 
-    constructor (owner : Atom) {
+    constructor (owner : Atom<V>) {
         super()
 
         this.owner      = owner
@@ -30,7 +30,7 @@ BoxImmutable.zero.freeze()
 
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
-export class Box<V> extends Atom {
+export class Box<V> extends Atom<V> {
 
     constructor (value? : V, name? : string) {
         super()
@@ -58,7 +58,7 @@ export class Box<V> extends Atom {
         const activeAtom    = globalContext.activeAtom
         const activeGraph   = activeAtom ? activeAtom.graph : undefined
 
-        // TODO what if active graph is some other graph?
+        // TODO what if active graph is some other graph - not a branch of the current one?
         // probably need `identity` for graphs and check that
         // needs a test case
         if (this.graph && activeGraph && activeGraph !== this.graph) {

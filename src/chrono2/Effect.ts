@@ -1,6 +1,6 @@
 import { Base } from "../class/Base.js"
 import { prototypeValue } from "../util/Helpers.js"
-import { CalculationMode, CalculationModeAsync, CalculationModeGen, CalculationModeSync } from "./CalculationMode.js"
+import { CalculationMode, CalculationModeGen, CalculationModeSync } from "./CalculationMode.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 // export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
@@ -20,9 +20,9 @@ export type EffectHandler<Mode extends CalculationMode> =
         Mode extends CalculationModeGen ?
             (effect : unknown) => any
             :
-            Mode extends CalculationModeAsync ?
-                (effect : unknown) => Promise<any>
-                :
+            // Mode extends CalculationModeAsync ?
+            //     (effect : unknown) => Promise<any>
+            //     :
                 never
 
 
@@ -44,31 +44,31 @@ export type EffectHandler<Mode extends CalculationMode> =
 // //
 // //     return iteration.value
 // // }
-// //
-// //
-// // //---------------------------------------------------------------------------------------------------------------------
-// // export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends any[]> (
-// //     effect      : CalculationContext<YieldT>,
-// //     func        : (...args : ArgsT) => Generator<YieldT, ResultT, any>,
-// //     args        : ArgsT,
-// //     scope?      : any
-// // ) : Promise<ResultT>
-// // {
-// //     const gen       = func.apply(scope || null, args)
-// //
-// //     let iteration   = gen.next()
-// //
-// //     while (!iteration.done) {
-// //         const effectResolution  = effect(iteration.value)
-// //
-// //         if (effectResolution instanceof Promise)
-// //             iteration   = gen.next(await effectResolution)
-// //         else
-// //             iteration   = gen.next(effectResolution)
-// //     }
-// //
-// //     return iteration.value
-// // }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends any[]> (
+    onEffect    : EffectHandler<CalculationModeGen>,
+    func        : (...args : ArgsT) => Generator<YieldT, ResultT, any>,
+    args        : ArgsT,
+    scope?      : any
+) : Promise<ResultT>
+{
+    const gen       = func.apply(scope, args)
+
+    let iteration   = gen.next()
+
+    while (!iteration.done) {
+        const effect    = iteration.value
+
+        if (effect instanceof Promise)
+            iteration   = gen.next(await effect)
+        else
+            iteration   = gen.next(onEffect(effect))
+    }
+
+    return iteration.value
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------

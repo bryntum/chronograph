@@ -1,6 +1,8 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { Uniqable } from "../../util/Uniqable.js"
+import { CalculationModeSync } from "../CalculationMode.js"
 import { Owner } from "../data/Immutable.js"
+import { EffectHandler } from "../Effect.js"
 import { ChronoGraph } from "../graph/Graph.js"
 import { Iteration } from "../graph/Iteration.js"
 import { chronoReference, ChronoReference, Identifiable } from "./Identifiable.js"
@@ -9,7 +11,7 @@ import { AtomState, Quark } from "./Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Atom extends Owner implements Identifiable, Uniqable {
+export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     id                  : ChronoReference      = chronoReference()
     // same value for all branches
     identity            : this          = this
@@ -132,6 +134,47 @@ export class Atom extends Owner implements Identifiable, Uniqable {
 
     freeze () {
         this.immutable.freeze()
+    }
+
+
+    // dummy type-checking purposes only properties, real ones, with initializers
+    // are defined in `CalculableBox` and `CalculableBoxGen`
+    iterationNumber     : number
+    iterationResult     : IteratorResult<any>
+
+
+    isCalculationStarted () : boolean {
+        throw new Error("Abstract method")
+    }
+
+
+    isCalculationCompleted () : boolean {
+        throw new Error("Abstract method")
+    }
+
+
+    startCalculation (onEffect : EffectHandler<CalculationModeSync>) : IteratorResult<any> {
+        throw new Error("Abstract method")
+    }
+
+
+    continueCalculation (value : unknown) : IteratorResult<any> {
+        throw new Error("Abstract method")
+    }
+
+
+    updateValue (value : V) {
+        throw new Error("Abstract method")
+    }
+
+
+    read () : V {
+        throw new Error("Abstract method")
+    }
+
+
+    async readAsync () : Promise<V> {
+        return this.read()
     }
 
 
