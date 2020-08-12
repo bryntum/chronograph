@@ -12,7 +12,7 @@ import { Effect, EffectHandler } from "./Effect.js"
 //---------------------------------------------------------------------------------------------------------------------
 export class GlobalContext extends Base {
 
-    activeAtom          : Atom              = undefined
+    activeAtom          : Atom                  = undefined
 
     stack               : LeveledQueue<Atom>    = new LeveledQueue()
 

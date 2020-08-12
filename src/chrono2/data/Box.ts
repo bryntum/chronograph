@@ -90,10 +90,13 @@ export class Box<V> extends Atom<V> {
 
         this.state              = AtomState.UpToDate
 
-        if (this.graph && !this.lazy) {
-            this.graph.addPossiblyStaleStrictAtomToTransaction(this)
-        }
+        if (this.graph) {
+            this.graph.scheduleAutoCommit()
 
+            if (!this.lazy) {
+                this.graph.addPossiblyStaleStrictAtomToTransaction(this)
+            }
+        }
     }
 }
 

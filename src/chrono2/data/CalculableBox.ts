@@ -285,7 +285,11 @@ export class CalculableBox<V> extends Box<V> {
             // this.proposedValueState = AtomState.Stale
         }
 
-        if (this.graph) this.graph.frozen   = false
+        if (this.graph) {
+            this.graph.scheduleAutoCommit()
+
+            this.graph.frozen   = false
+        }
 
         this.proposedValue  = value
 
