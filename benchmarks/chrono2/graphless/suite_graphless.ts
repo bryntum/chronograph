@@ -1,3 +1,4 @@
+import { launchIfStandaloneProcess } from "./data_generators.js"
 import * as massive_incoming from './massive_incoming.js'
 import * as massive_outgoing from './massive_outgoing.js'
 import * as massive_incoming_and_outgoing from './massive_incoming_and_outgoing.js'
@@ -16,4 +17,4 @@ export const run = async () => {
     await allocation.run()
 }
 
-run()
+launchIfStandaloneProcess(run, 'suite_graphless')
