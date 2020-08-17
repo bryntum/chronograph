@@ -46,7 +46,7 @@ export const calculateAtomsQueueLevelSync = function (
 
         if (atom.state === AtomState.UpToDate) {
             level.pop()
-            stack.length--
+            modifyStack && stack.length--
             continue
         }
 
