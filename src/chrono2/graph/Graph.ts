@@ -1,14 +1,12 @@
 import { Effect } from "../../chrono/Effect.js"
-import { TransactionCommitResult } from "../../chrono/Transaction.js"
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
-import { CalculationContext } from "../../primitives/Calculation.js"
-import { LeveledQueue } from "../../util/LeveledQueue.js"
 import { Atom } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
-import { AtomState, Quark } from "../atom/Quark.js"
-import { Box, ZeroBox } from "../data/Box.js"
-import { CalculableBoxGen } from "../data/CalculableBoxGen.js"
+import { Quark } from "../atom/Quark.js"
+import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
+import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
+import { ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
 import { runGeneratorAsyncWithEffect } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
@@ -28,9 +26,10 @@ export class ChronoGraph extends Base implements Owner {
     // how many "extra" transactions to keep in memory (except the one currently running)
     historyLimit            : number                = -1
 
-    // move to Transaction? by definition, transaction ends when the stack is exhausted
-    // (all strict effects observed)
-    stack                   : LeveledQueue<Atom>    = new LeveledQueue()
+    // moved to `globalContext` instead
+    // // move to Transaction? by definition, transaction ends when the stack is exhausted
+    // // (all strict effects observed)
+    // stack                   : LeveledQueue<Atom>    = new LeveledQueue()
 
     nextTransaction         : Transaction[]         = []
 
@@ -296,55 +295,6 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    // * calculateTransitionsGen () {
-    //     const queue                             = this.stack
-    //
-    //     while (queue.length) {
-    //         yield* globalContext.calculateAtomsGen(eff, queue.lowestLevel())
-    //     }
-    // }
-    //
-    //
-    // async calculateTransitionsAsync () {
-    //     const queue                             = this.stack
-    //
-    //     while (queue.length) {
-    //         await this.calculateTransitionsStackSync(queue.takeLowestLevel())
-    //     }
-    // }
-    //
-    //
-    // calculateTransitionsSync () {
-    //     const queue                             = this.stack
-    //
-    //     while (queue.length) {
-    //         this.calculateTransitionsStackSync(queue.lowestLevel())
-    //     }
-    // }
-    //
-    //
-    // calculateTransitionsStackSync (stack : Atom[]) {
-    //     for (let i = 0; i < stack.length; i++) {
-    //         const atom = stack[ i ]
-    //
-    //         if (atom.state !== AtomState.UpToDate) atom.read()
-    //     }
-    // }
-
-
-    // async calculateTransitionsStackAsync (stack : Atom[]) {
-    //     const promises  = []
-    //
-    //     for (let i = 0; i < stack.length; i++) {
-    //         const atom = stack[ i ]
-    //
-    //         if (atom.state !== AtomState.UpToDate) promises.push(atom.readAsync())
-    //     }
-    //
-    //     return Promise.allSettled(promises)
-    // }
-
-
     yieldAsync (effect : Effect) : Promise<any> {
         if (effect instanceof Promise) return effect
 
@@ -365,12 +315,14 @@ export class ChronoGraph extends Base implements Owner {
     async commitAsync () {
         this.unScheduleAutoCommit()
 
-        while (this.stack.length) {
+        const stack     = globalContext.stack
+
+        while (stack.length) {
             await runGeneratorAsyncWithEffect(
                 eff,
-                globalContext.calculateAtomsQueueGen,
-                [ eff, this.stack, [], -1 ],
-                globalContext
+                calculateAtomsQueueGen,
+                [ eff, stack, null, -1 ],
+                null
             )
 
             this.finalizeCommit()
@@ -382,26 +334,13 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    async doCommitAsync () {
-        // this.unScheduleAutoCommit()
-        //
-        // await this.calculateTransitionsAsync()
-        //
-        // this.finalizeCommit()
-        //
-        // await this.finalizeCommitAsync()
-        //
-        // if (this.currentIteration.dirty) {
-        //     return this.doCommitAsync()
-        // }
-    }
-
-
     commit () {
         this.unScheduleAutoCommit()
 
-        while (this.stack.length) {
-            globalContext.calculateAtomsQueueSync(eff, this.stack, [], -1)
+        const stack     = globalContext.stack
+
+        while (stack.length) {
+            calculateAtomsQueueSync(eff, stack, null, -1)
 
             this.finalizeCommit()
         }
@@ -432,7 +371,7 @@ export class ChronoGraph extends Base implements Owner {
         this.immutable  = this.immutable.previous
 
         // TODO should also "reset" calculations
-        this.stack.clear()
+        globalContext.stack.clear()
     }
 
 
@@ -559,7 +498,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     addPossiblyStaleStrictAtomToTransaction (atom : Atom) {
-        this.stack.push(atom)
+        globalContext.stack.push(atom)
     }
 
 

@@ -72,6 +72,28 @@ export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends any[]> (
+    onEffect    : EffectHandler<CalculationModeGen>,
+    func        : (...args : ArgsT) => Generator<YieldT, ResultT, any>,
+    args        : ArgsT,
+    scope?      : any
+) : Promise<ResultT>
+{
+    const gen       = func.apply(scope, args)
+
+    let iteration   = gen.next()
+
+    while (!iteration.done) {
+        const effect    = iteration.value
+
+        iteration       = gen.next(onEffect(effect))
+    }
+
+    return iteration.value
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 /**
  * The base class for effect. Effect is some value, that can be send to the "outer" calculation context, using the
  * effect handler function. Effect handler then will process an effect and return some resulting value.
