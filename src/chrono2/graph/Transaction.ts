@@ -10,6 +10,8 @@ let transactionIdSequence : number = 0
 export class Transaction extends Owner implements Immutable {
     name            : string            = `transaction#${transactionIdSequence++}`
 
+    isRejected      : boolean           = false
+
     //region Transaction as Owner
     $immutable      : Iteration         = undefined
 
@@ -110,6 +112,8 @@ export class Transaction extends Owner implements Immutable {
 
 
     reject () {
+        this.isRejected     = true
+
         this.forEveryIteration(iteration => iteration.isRejected = true)
     }
 
