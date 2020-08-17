@@ -42,10 +42,9 @@ export class ChronoGraph extends Base implements Owner {
     atomsById               : Map<ChronoReference, Atom>    = new Map()
 
 
-    //-------------------------------------
-    // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
-    autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
+    isCommitting            : boolean           = false
 
+    //-------------------------------------
     /**
      * If this option is enabled with `true` value, all data modification calls ([[write]], [[addIdentifier]], [[removeIdentifier]]) will trigger
      * a delayed [[commit]] call (or [[commitAsync]], depending from the [[autoCommitMode]] option).
@@ -58,6 +57,9 @@ export class ChronoGraph extends Base implements Owner {
     autoCommitMode          : 'sync' | 'async'  = 'sync'
 
     autoCommitHandler       : AnyFunction       = null
+
+    // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
+    autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
 
 
 
@@ -313,11 +315,12 @@ export class ChronoGraph extends Base implements Owner {
 
 
     async commitAsync () {
-        this.unScheduleAutoCommit()
+        this.beforeCommit()
 
-        const stack     = globalContext.stack
+        const trasaction    = this.currentTransaction
+        const stack         = globalContext.stack
 
-        while (stack.length) {
+        while (stack.length && !trasaction.isRejected) {
             await runGeneratorAsyncWithEffect(
                 eff,
                 calculateAtomsQueueGen,
@@ -327,7 +330,13 @@ export class ChronoGraph extends Base implements Owner {
 
             this.finalizeCommit()
 
+            // the "finalizeCommit" & "finalizeCommitAsync" may schedule a new auto-commit
+            // so unscheduling again here
+            this.unScheduleAutoCommit()
+
             await this.finalizeCommitAsync()
+
+            this.unScheduleAutoCommit()
         }
 
         this.afterCommit()
@@ -335,11 +344,12 @@ export class ChronoGraph extends Base implements Owner {
 
 
     commit () {
-        this.unScheduleAutoCommit()
+        this.beforeCommit()
 
-        const stack     = globalContext.stack
+        const trasaction    = this.currentTransaction
+        const stack         = globalContext.stack
 
-        while (stack.length) {
+        while (stack.length && !trasaction.isRejected) {
             calculateAtomsQueueSync(eff, stack, null, -1)
 
             this.finalizeCommit()
@@ -349,7 +359,18 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    beforeCommit () {
+        this.isCommitting       = true
+
+        this.unScheduleAutoCommit()
+    }
+
+
     afterCommit () {
+        this.isCommitting       = false
+
+        this.unScheduleAutoCommit()
+
         if (this.historyLimit >= 0) {
             this.immutable.freeze()
         } else {
