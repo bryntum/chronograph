@@ -9,7 +9,8 @@ import { Box } from "./Box.js"
 //---------------------------------------------------------------------------------------------------------------------
 export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStarted')
 
-const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> = { done : false, value : SynchronousCalculationStarted }
+const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> =
+    { done : false, value : SynchronousCalculationStarted }
 
 const eff = (eff) => undefined
 
