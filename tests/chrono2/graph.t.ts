@@ -106,7 +106,7 @@ StartTest(t => {
 
         graph.addAtoms([ box1, box2, box3 ])
 
-        graph.commit()
+        await graph.commitAsync()
 
         t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
 
