@@ -84,6 +84,39 @@ StartTest(t => {
             t.ok(called)
         })
 
+
+        t.it(prefix + "Should track dependencies correctly", t => {
+            const box0      = new Box(0)
+            const box00     = new Box(0)
+
+            const box1 = graphGen.calculableBox({
+                calculation : eval(graphGen.calc(function* () {
+                    return (yield box0) + 1
+                }))
+            })
+
+            const box2 = graphGen.calculableBox({
+                calculation : eval(graphGen.calc(function* () {
+                    return (yield box0) + 1 + (yield box00)
+                }))
+            })
+
+            const box3 = graphGen.calculableBox({
+                calculation : eval(graphGen.calc(function* () {
+                    return (yield box1) + (yield box2) + 1
+                }))
+            })
+
+            t.is(box3.read(), 3)
+
+            box0.write(1)
+
+            t.is(box3.read(), 5)
+
+            box00.write(1)
+
+            t.is(box3.read(), 6)
+        })
     }
 
 
