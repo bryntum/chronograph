@@ -3,6 +3,7 @@ import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { globalContext } from "../../src/chrono2/GlobalContext.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { delay } from "../../src/util/Helpers.js"
 
@@ -171,6 +172,8 @@ StartTest(t => {
         box1.write(100)
 
         await graph.commitAsync()
+
+        t.is(globalContext.activeAtom, undefined, 'Should clear the `activeAtom` property once the commit is done')
 
         t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
 

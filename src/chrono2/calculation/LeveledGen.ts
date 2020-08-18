@@ -37,7 +37,7 @@ export const calculateAtomsQueueLevelGen = function* (
     levelIndex  : number,
     isOverride  : boolean
 ) {
-    const prevActiveAtom            = globalContext.activeAtom
+    let prevActiveAtom              = globalContext.activeAtom
     const startedAtLowestLevelIndex = stack.getLowestLevelIndex()
     const modifyStack               = !isOverride
 
@@ -104,8 +104,12 @@ export const calculateAtomsQueueLevelGen = function* (
             else {
                 const startedYieldAt        = atom.iterationNumber
 
+                globalContext.activeAtom    = prevActiveAtom
+
                 // bypass the unrecognized effect to the outer context
                 const res                   = yield value
+
+                prevActiveAtom              = globalContext.activeAtom
 
                 // TODO
                 // possibly `iterationNumber` should be a global revision tracking counter

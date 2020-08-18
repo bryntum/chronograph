@@ -79,10 +79,12 @@ StartTest(t => {
         t.is(await box3.readAsync(), 102)
 
         t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
+
+        t.is(globalContext.activeAtom, undefined, 'Should clear the `activeAtom` property once all commits are done')
     })
 
 
-    t.iit('Should calculate the graph using calculation cores correctly', t => {
+    t.it('Should calculate the graph using calculation cores correctly', t => {
         const size                      = 10
 
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
