@@ -13,7 +13,8 @@ export enum AtomState {
     Empty           = 'Empty',
     UpToDate        = 'UpToDate',
     PossiblyStale   = 'PossiblyStale',
-    Stale           = 'Stale'
+    Stale           = 'Stale',
+    CheckingDeps    = 'CheckingDeps'
 }
 
 export class Quark<V = unknown> extends Node implements Immutable {

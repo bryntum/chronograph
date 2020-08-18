@@ -231,12 +231,19 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    shouldCalculate () {
+    shouldCalculateDefinitely () {
         const state     = this.state
 
         if (state === AtomState.Stale || state === AtomState.Empty) return true
 
         if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return true
+
+        return false
+    }
+
+
+    shouldCalculate () {
+        if (this.shouldCalculateDefinitely()) return true
 
         const incoming  = this.immutable.getIncomingDeep()
 

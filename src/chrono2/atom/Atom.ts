@@ -164,6 +164,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    shouldCalculateDefinitely () : boolean {
+        throw new Error("Abstract method")
+    }
+
+
     actualize () {
         throw new Error("Abstract method")
     }

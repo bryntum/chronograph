@@ -43,11 +43,43 @@ export const calculateAtomsQueueLevelSync = function (
 
     while (level.length && stack.lowestLevelIndex === startedAtLowestLevelIndex) {
         const atom          = level[ level.length - 1 ]
+        const state         = atom.state
 
-        if (atom.state === AtomState.UpToDate) {
+        if (state === AtomState.CheckingDeps) {
+            atom.state      = AtomState.UpToDate
             level.pop()
             modifyStack && stack.length--
             continue
+        }
+
+        if (state === AtomState.UpToDate) {
+            level.pop()
+            modifyStack && stack.length--
+            continue
+        }
+
+        if (!atom.shouldCalculateDefinitely()) {
+            atom.state      = AtomState.CheckingDeps
+
+            const incoming  = atom.immutable.getIncomingDeep()
+
+            if (incoming) {
+                for (let i = 0; i < incoming.length; i++) {
+                    const dependencyAtom    = incoming[ i ].owner
+
+                    if (dependencyAtom.state !== AtomState.UpToDate) {
+                        // TODO should take level into account
+                        level.push(dependencyAtom)
+                        modifyStack && stack.length++
+                    }
+                }
+
+                // this looks a bit strange but it is exactly what we want:
+                // 1. If there were none non-up-to-date deps - means the atom should be considered
+                // up-to-date, and next cycle iteration will do that (switching from `CheckingDeps` to `UpToDate`)
+                // 2. If there were some non-up-to-date deps - we continue to next iteration to actualize them
+                continue
+            }
         }
 
         globalContext.activeAtom    = atom

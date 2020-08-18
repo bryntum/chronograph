@@ -117,4 +117,87 @@ StartTest(t => {
 
         t.is(globalContext.activeAtom, undefined)
     })
+
+
+    t.it('Should eliminate unchanged subtrees for generator boxes', t => {
+        const graph     = ChronoGraph.new()
+
+        const i1        = new Box(0, 'i1')
+        const i2        = new Box(10, 'i2')
+
+        const c1        = new CalculableBoxGen({
+            name        : 'c1',
+            lazy        : false,
+            calculation : function* () : CalculationIterator<number> {
+                return (yield i1) + (yield i2)
+            }
+        })
+
+        const c2        = new CalculableBoxGen({
+            name        : 'c2',
+            lazy        : false,
+            calculation : function* () : CalculationIterator<number> {
+                return (yield i1) + (yield c1)
+            }
+        })
+
+        const c3        = new CalculableBoxGen({
+            name        : 'c3',
+            lazy        : false,
+            calculation : function* () : CalculationIterator<number> {
+                return (yield c1)
+            }
+        })
+
+        const c4        = new CalculableBoxGen({
+            name        : 'c4',
+            lazy        : false,
+            calculation : function* () : CalculationIterator<number> {
+                return (yield c3)
+            }
+        })
+
+        const c5        = new CalculableBoxGen({
+            name        : 'c5',
+            lazy        : false,
+            calculation : function* () : CalculationIterator<number> {
+                return (yield c3)
+            }
+        })
+
+        const c6        = new CalculableBoxGen({
+            name        : 'c6',
+            lazy        : false,
+            calculation : function* () : CalculationIterator<number> {
+                return (yield c5) + (yield i2)
+            }
+        })
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2, c3, c4, c5, c6 ]
+
+        graph.addAtoms(nodes)
+
+        const spies             = [ c1, c2, c3, c4, c5, c6 ].map(identifier => t.spyOn(identifier, 'calculation'))
+
+        graph.commit()
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled([ 1, 1, 1, 1, 1, 1 ][ index ]))
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 10, 10, 10, 10, 10, 20 ], "Correct result calculated")
+
+        // ----------------
+        spies.forEach(spy => spy.reset())
+
+        i1.write(5)
+        i2.write(5)
+
+        graph.commit()
+
+        const expectedCalls     = [ 1, 1, 0, 0, 0, 1 ]
+
+        spies.forEach((spy, index) => t.expect(spy).toHaveBeenCalled(expectedCalls[ index ]))
+
+        t.isDeeply(nodes.map(node => node.read()), [ 5, 5, 10, 15, 10, 10, 10, 15 ], "Correct result calculated")
+    })
 })
