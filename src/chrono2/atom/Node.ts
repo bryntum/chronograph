@@ -32,6 +32,7 @@ export class Node implements Uniqable {
 
     // TODO we can also just check the last element in the `$outgoing`, need to benchmark
     lastOutgoingTo      : Node          = undefined
+    lastOutgoingToRev   : number        = Number.MIN_SAFE_INTEGER
 
 
     getIncoming () : this[ '$incoming' ] {
@@ -62,6 +63,7 @@ export class Node implements Uniqable {
         // this.outgoingCompacted  = false
         this.addCounter         = 0
         this.lastOutgoingTo     = undefined
+        this.lastOutgoingToRev  = Number.MIN_SAFE_INTEGER
     }
 
 
@@ -72,13 +74,14 @@ export class Node implements Uniqable {
     addOutgoing (to : Node) {
         const toRevision            = to.revision
 
-        if (this.lastOutgoingTo === to) {
+        if (this.lastOutgoingTo === to && this.lastOutgoingToRev === toRevision) {
             this.$outgoingRev[ this.$outgoingRev.length - 1 ] = toRevision
 
             return
         }
 
         this.lastOutgoingTo         = to
+        this.lastOutgoingToRev      = toRevision
 
         if (this.$outgoing === undefined) {
             this.$outgoing      = []

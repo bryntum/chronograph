@@ -3,6 +3,7 @@ import { Uniqable } from "../../util/Uniqable.js"
 import { CalculationModeSync } from "../CalculationMode.js"
 import { Owner } from "../data/Immutable.js"
 import { EffectHandler } from "../Effect.js"
+import { globalContext } from "../GlobalContext.js"
 import { ChronoGraph } from "../graph/Graph.js"
 import { Iteration } from "../graph/Iteration.js"
 import { chronoReference, ChronoReference, Identifiable } from "./Identifiable.js"
@@ -194,7 +195,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    get state () {
+    get state () : AtomState {
         if (this.$state === undefined) {
             return this.immutable.state
         } else {
@@ -407,6 +408,6 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             atom.state = AtomState.Stale
         })
 
-        if (!this.immutable.frozen) this.immutable.clearOutgoing()
+        if (!this.immutable.frozen && !globalContext.activeAtom) this.immutable.clearOutgoing()
     }
 }
