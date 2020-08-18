@@ -242,8 +242,6 @@ export class CalculableBox<V> extends Box<V> {
                     globalContext.activeAtom    = prevActive
                 }
 
-                // TODO check in 3.9, 4.0, looks like a bug in TS
-                //@ts-ignore
                 if (this.state === AtomState.Stale) return true
             }
         }
