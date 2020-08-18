@@ -252,8 +252,10 @@ export class Quark<V = unknown> extends Node implements Immutable {
 
                         const identity          = outgoingQuark.owner.identity
 
-                        if (identity.uniqable !== uniqable) {
-                            identity.uniqable   = uniqable
+                        // should use `uniqable2` here (or may be even `uniqable3`) because `uniqable`
+                        // at this point is already being used by `forEveryFirstQuarkTill` in the `graph.sweep()`
+                        if (identity.uniqable2 !== uniqable) {
+                            identity.uniqable2   = uniqable
 
                             if (outgoingRevision === (identity.uniqableBox as Quark).revision) {
                                 collapsedOutgoing.push(outgoingQuark)
