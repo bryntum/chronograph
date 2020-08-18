@@ -163,6 +163,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    actualize () {
+        throw new Error("Abstract method")
+    }
+
+
     updateValue (value : V) {
         throw new Error("Abstract method")
     }

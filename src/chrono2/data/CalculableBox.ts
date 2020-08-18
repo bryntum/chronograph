@@ -184,14 +184,26 @@ export class CalculableBox<V> extends Box<V> {
 
         if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable)
 
-        if (this.state === AtomState.UpToDate) return this.immutable.read()
-
-        if (this.shouldCalculate())
-            this.doCalculate()
-        else
-            this.state = AtomState.UpToDate
+        // inlined `actualize` to save 1 stack level
+        if (this.state !== AtomState.UpToDate) {
+            if (this.shouldCalculate())
+                this.doCalculate()
+            else
+                this.state = AtomState.UpToDate
+        }
+        // eof inlined `actualize`
 
         return this.immutable.read()
+    }
+
+
+    actualize () {
+        if (this.state !== AtomState.UpToDate) {
+            if (this.shouldCalculate())
+                this.doCalculate()
+            else
+                this.state = AtomState.UpToDate
+        }
     }
 
 
@@ -230,17 +242,9 @@ export class CalculableBox<V> extends Box<V> {
 
         if (incoming) {
             for (let i = 0; i < incoming.length; i++) {
-                const dependency            = incoming[ i ]
-                const dependencyAtom        = dependency.owner
+                const dependencyAtom        = incoming[ i ].owner
 
-                if (dependencyAtom.state !== AtomState.UpToDate) {
-                    const prevActive            = globalContext.activeAtom
-                    globalContext.activeAtom    = null
-
-                    dependencyAtom.read()
-
-                    globalContext.activeAtom    = prevActive
-                }
+                dependencyAtom.actualize()
 
                 if (this.state === AtomState.Stale) return true
             }
