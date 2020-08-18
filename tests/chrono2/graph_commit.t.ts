@@ -72,4 +72,37 @@ StartTest(t => {
 
         t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
     })
+
+
+    t.it('Should calculate the graph using calculation cores correctly', t => {
+        const size                      = 10
+
+        const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
+
+        const boxes : Box<number>[]     = [ new Box(0) ]
+
+        for (let i = 0; i < size; i++) {
+            const box   = new CalculableBox({
+                lazy        : false,
+                context     : boxes.length,
+                calculation () : number {
+                    return boxes[ this - 1 ].read() + 1
+                }
+            })
+
+            boxes.push(box)
+
+            graph.addAtom(box)
+        }
+
+        const lastBox       = boxes[ boxes.length - 1 ]
+
+        for (let i = 1; i < 10; i++) {
+            boxes[ 0 ].write(i)
+
+            graph.commit()
+
+            t.is(lastBox.read(), size + i)
+        }
+    })
 })
