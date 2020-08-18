@@ -143,7 +143,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
                     if (identity.uniqable !== uniqable) {
                         identity.uniqable   = uniqable
 
-                        const outgoingAtom  = !graph || outgoingOwner.graph === graph ? outgoingOwner : graph.checkout(outgoingOwner)
+                        const outgoingAtom  = !graph || !outgoingOwner.graph || outgoingOwner.graph === graph ? outgoingOwner : graph.checkout(outgoingOwner)
 
                         if (outgoingAtom.immutable.revision === outgoingRev[ i ]) func(outgoingQuark, outgoingAtom)
                     }
