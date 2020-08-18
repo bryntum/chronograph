@@ -200,6 +200,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    // TODO
+    // it seems the trick with temporary storing of state on atom is actually making
+    // the `shallow_changes` benchmark slower?? (the whole point of the trick was
+    // to speed up that particular use case)
+    // remove it then? removing makes some other benchmarks better
     get state () : AtomState {
         if (this.$state === undefined) {
             return this.immutable.state
