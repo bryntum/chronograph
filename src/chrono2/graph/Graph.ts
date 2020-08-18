@@ -24,6 +24,9 @@ const eff = (eff) => null
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner {
     // how many "extra" transactions to keep in memory (except the one currently running)
+    // `-1` means no transactioning at all (reject is not supported)
+    // `0` means `reject` is supported but no undo
+    // `1` means supports reject + 1 `undo` call, etc
     historyLimit            : number                = -1
 
     // moved to `globalContext` instead
