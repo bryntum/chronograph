@@ -175,6 +175,9 @@ export class CalculableBox<V> extends Box<V> {
         const activeAtom    = globalContext.activeAtom
         const activeGraph   = activeAtom ? activeAtom.graph : undefined
 
+        // TODO comparing graphs with !== is not enough, as these graphs might be unrelated
+        // should compare `graph.identitiy` additionally, so that we know these graphs
+        // have "branch" relation
         if (this.graph && activeGraph && activeGraph !== this.graph) {
             return activeGraph.checkout(this).read()
         }
@@ -228,7 +231,7 @@ export class CalculableBox<V> extends Box<V> {
         if (incoming) {
             for (let i = 0; i < incoming.length; i++) {
                 const dependency            = incoming[ i ]
-                const dependencyAtom        = dependency.owner as Box<unknown>
+                const dependencyAtom        = dependency.owner
 
                 if (dependencyAtom.state !== AtomState.UpToDate) {
                     const prevActive            = globalContext.activeAtom
