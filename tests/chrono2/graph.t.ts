@@ -24,6 +24,57 @@ StartTest(t => {
     })
 
 
+    t.it('Should support dependency from non-graph atoms', t => {
+        const box1      = new Box(10)
+
+        let counter2    = 0
+        const box2      = new CalculableBox({
+            lazy        : false,
+            calculation : () => {
+                counter2++
+                return box1.read() + 1
+            }
+        })
+
+        let counter3    = 0
+        const box3     = new CalculableBox({
+            lazy        : true,
+            calculation : () => {
+                counter3++
+                return box2.read() + 1
+            }
+        })
+
+        const graph     = new ChronoGraph()
+
+        // box1 not added to graph
+        graph.addAtoms([ box2, box3 ])
+
+        graph.commit()
+
+        t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
+
+        t.is(box1.read(), 10)
+        t.is(box2.read(), 11)
+        t.is(box3.read(), 12)
+
+        //----------------
+        counter2 = counter3 = 0
+
+        box1.write(100)
+
+        graph.commit()
+
+        t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
+
+        t.is(box1.read(), 100)
+        t.is(box2.read(), 101)
+        t.is(box3.read(), 102)
+
+        t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
+    })
+
+
     t.it('Commit should calculate strict atoms', t => {
         const box1      = new Box(10)
 
