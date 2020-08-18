@@ -3,6 +3,7 @@ import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { globalContext } from "../../src/chrono2/GlobalContext.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { delay } from "../../src/util/Helpers.js"
 
@@ -47,9 +48,16 @@ StartTest(t => {
 
         graph.addAtoms([ box1, box2, box3 ])
 
-        graph.commitAsync()
+        // start the commit 1
+        const promise   = graph.commitAsync()
 
+        // start the commit 2 and wait for its completion
         await graph.commitAsync()
+
+        // wait for completion of commit 1
+        await promise
+
+        t.is(globalContext.activeAtom, undefined, 'Should clear the `activeAtom` property once all commits are done')
 
         t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
 
@@ -74,7 +82,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should calculate the graph using calculation cores correctly', t => {
+    t.iit('Should calculate the graph using calculation cores correctly', t => {
         const size                      = 10
 
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
@@ -97,12 +105,14 @@ StartTest(t => {
 
         const lastBox       = boxes[ boxes.length - 1 ]
 
-        for (let i = 1; i < 10; i++) {
+        for (let i = 1; i < 5; i++) {
             boxes[ 0 ].write(i)
 
             graph.commit()
 
             t.is(lastBox.read(), size + i)
         }
+
+        t.is(globalContext.activeAtom, undefined)
     })
 })
