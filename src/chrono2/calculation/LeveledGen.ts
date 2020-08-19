@@ -89,6 +89,13 @@ export const calculateAtomsQueueLevelGen = function* (
             const value         = iterationResult.value
 
             if (iterationResult.done) {
+                // there have been write to atom or its dependency
+                if (atom.state !== AtomState.Calculating) {
+                    // start over w/o stack modification
+                    atom.resetCalculation()
+                    break
+                }
+
                 atom.updateValue(value)
 
                 level.pop()
