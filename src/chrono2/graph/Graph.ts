@@ -29,6 +29,9 @@ export class ChronoGraph extends Base implements Owner {
     // `1` means supports reject + 1 `undo` call, etc
     historyLimit            : number                = -1
 
+    // same value for all branches
+    identity                : this                  = this
+
     // moved to `globalContext` instead
     // // move to Transaction? by definition, transaction ends when the stack is exhausted
     // // (all strict effects observed)
@@ -436,6 +439,7 @@ export class ChronoGraph extends Base implements Owner {
         const self          = this.constructor as AnyConstructor<this, typeof ChronoGraph>
         const branch        = self.new(config)
 
+        branch.identity         = this.identity
         branch.previous         = this
         // TODO should use copy-on-write?
         // branch.historySource    = this.historySource.clone()

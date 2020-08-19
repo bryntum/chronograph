@@ -147,23 +147,38 @@ export class CalculableBox<V> extends Box<V> {
     proposedValue           : V     = undefined
 
 
-    readProposedOrPrevious () : V {
-        // if (globalContext.activeQuark) this.immutableForWrite().getIncoming().push(invalidatingBoxImmutable)
+    onReadingPast () : this {
+        const activeAtom    = globalContext.activeAtom
+        const self          = this.checkoutSelf()
 
-        if (globalContext.activeAtom === this) {
-            // this.usedProposedOrPrevious = true
-            // this.immutableForWrite().getIncoming().push(invalidatingBoxImmutable)
-
-            this.immutableForWrite().usedProposedOrPrevious = true
+        if (activeAtom) {
+            if (activeAtom === self)
+                self.immutableForWrite().usedProposedOrPrevious = true
+            else
+                self.immutableForWrite().addOutgoing(activeAtom.immutable)
         }
 
-        if (this.proposedValue !== undefined) return this.proposedValue
+        return self
+    }
 
-        return this.readPrevious()
+
+    readProposedOrPrevious () : V {
+        const self          = this.onReadingPast()
+
+        if (self.proposedValue !== undefined) return self.proposedValue
+
+        return self.readPreviousInternal()
     }
 
 
     readPrevious () : V {
+        const self          = this.onReadingPast()
+
+        return self.readPreviousInternal()
+    }
+
+
+    readPreviousInternal () : V {
         if (this.state === AtomState.UpToDate)
             return this.immutable.previous ? this.immutable.previous.readRaw() : undefined
         else
@@ -173,27 +188,20 @@ export class CalculableBox<V> extends Box<V> {
 
     read () : V {
         const activeAtom    = globalContext.activeAtom
-        const activeGraph   = activeAtom ? activeAtom.graph : undefined
+        const self          = this.checkoutSelf()
 
-        // TODO comparing graphs with !== is not enough, as these graphs might be unrelated
-        // should compare `graph.identitiy` additionally, so that we know these graphs
-        // have "branch" relation
-        if (this.graph && activeGraph && activeGraph !== this.graph) {
-            return activeGraph.checkout(this).read()
-        }
-
-        if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable)
+        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
 
         // inlined `actualize` to save 1 stack level
-        if (this.state !== AtomState.UpToDate) {
-            if (this.shouldCalculate())
-                this.doCalculate()
+        if (self.state !== AtomState.UpToDate) {
+            if (self.shouldCalculate())
+                self.doCalculate()
             else
-                this.state = AtomState.UpToDate
+                self.state = AtomState.UpToDate
         }
         // eof inlined `actualize`
 
-        return this.immutable.read()
+        return self.immutable.read()
     }
 
 
@@ -212,11 +220,11 @@ export class CalculableBox<V> extends Box<V> {
 
         if (newValue === undefined) newValue = null
 
-        const isSameValue   = this.equality(this.immutable.read(), newValue)
+        const isSameValue           = this.equality(this.immutable.read(), newValue)
 
         if (this.state !== AtomState.Empty && !isSameValue) this.propagateStaleShallow()
 
-        // only write the value, revision has been already updated
+        // only write the value, revision has been already updated in the `beforeCalculation`
         this.immutableForWrite().write(newValue)
 
         this.immutable.sameValue    = isSameValue

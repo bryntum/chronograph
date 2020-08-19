@@ -268,6 +268,17 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    checkoutSelf () : this {
+        const activeAtom    = globalContext.activeAtom
+        const activeGraph   = activeAtom ? activeAtom.graph : undefined
+
+        if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity)
+            return activeGraph.checkout(this)
+        else
+            return this
+    }
+
+
     // should only be used in undo/redo context
     resetQuark (quark : Quark) {
         const newValue      = quark.readRaw()
