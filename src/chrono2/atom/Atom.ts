@@ -308,6 +308,13 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    isValueVulnerableToChanges () : boolean {
+        const state         = this.state
+
+        return state === AtomState.UpToDate || state === AtomState.Calculating
+    }
+
+
     propagatePossiblyStale () {
         // TODO: also benchmark the following on big graphs
         //         const toVisit : Quark[]         = new Array(1000)
@@ -321,7 +328,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             const atom      = quark.owner
 
-            if (atom.state === AtomState.UpToDate) {
+            if (atom.isValueVulnerableToChanges()) {
                 atom.state      = AtomState.PossiblyStale
 
                 if (atom.graph && !atom.lazy) {
@@ -344,7 +351,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         this.immutable.forEachOutgoing((outgoing, atom) => {
             if (atom.graph !== graph) {
                 // only go deeper if state was UpToDate
-                if (atom.state === AtomState.UpToDate) toVisit1.push(atom.immutable)
+                if (atom.isValueVulnerableToChanges()) toVisit1.push(atom.immutable)
 
                 // but reset to stale anyway
                 atom.state  = AtomState.Stale
@@ -362,7 +369,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             const quark     = toVisit1[ i ]
 
             quark.forEachOutgoing((outgoing, atom) => {
-                if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+                if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
             })
         }
 
@@ -371,7 +378,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             const atom      = quark.owner
 
-            if (atom.state === AtomState.UpToDate) {
+            if (atom.isValueVulnerableToChanges()) {
                 atom.state      = AtomState.PossiblyStale
 
                 if (atom.graph && !atom.lazy) {
@@ -380,7 +387,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
                 quark.forEachOutgoing((outgoing, atom) => {
                     if (atom.graph !== graph) {
-                        if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+                        if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
                     }
                 })
             }
@@ -394,7 +401,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
         this.immutable.forEachOutgoing((outgoing, atom) => {
             // only go deeper if state was UpToDate
-            if (atom.state === AtomState.UpToDate) {
+            if (atom.isValueVulnerableToChanges()) {
                 toVisit1.push(atom.immutable)
 
                 if (atom.graph && !atom.lazy) {
@@ -414,7 +421,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             const quark     = toVisit1[ i ]
 
             quark.forEachOutgoing((outgoing, atom) => {
-                if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+                if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
             })
         }
 
@@ -423,7 +430,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             const atom      = quark.owner
 
-            if (atom.state === AtomState.UpToDate) {
+            if (atom.isValueVulnerableToChanges()) {
                 atom.state      = AtomState.PossiblyStale
 
                 if (atom.graph && !atom.lazy) {
@@ -431,7 +438,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
                 }
 
                 quark.forEachOutgoing((outgoing, atom) => {
-                    if (atom.state === AtomState.UpToDate) toVisit2.push(atom.immutable)
+                    if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
                 })
             }
         }

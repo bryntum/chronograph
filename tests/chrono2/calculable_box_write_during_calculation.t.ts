@@ -54,9 +54,55 @@ StartTest(t => {
         })
 
 
-        // t.it(prefix + "Should be possible to write to another box during calculation with distant depedencies", t => {
-        //
-        // })
+        t.iit(prefix + "Should be possible to write to another box during calculation with distant depedencies", t => {
+            const box0      = new Box(1, 'box0')
+            // const box00     = new Box(0, 'box00')
+
+            const box1   = graphGen.calculableBox({
+                name        : 'box1',
+                calculation : eval(graphGen.calc(function* () {
+                    return (yield box0) + 1
+                }))
+            })
+
+            const box2   = graphGen.calculableBox({
+                name        : 'box2',
+                calculation : eval(graphGen.calc(function* () {
+                    if (window.DEBUG) debugger
+
+                    const value1 = (yield box1) + 1
+
+                    if (value1 > 10) {
+                        debugger
+                        box0.write(0)
+                    }
+
+                    return value1
+                }))
+            })
+
+            const spy1      = t.spyOn(box1, 'calculation')
+            const spy2      = t.spyOn(box2, 'calculation')
+
+            t.is(box2.read(), 3)
+
+            t.expect(spy1).toHaveBeenCalled(1)
+            t.expect(spy2).toHaveBeenCalled(1)
+
+            //-------------------
+            spy1.reset()
+            spy2.reset()
+
+            window.DEBUG = true
+
+            box0.write(20)
+
+            t.is(box2.read(), 2)
+            t.is(box0.read(), 0)
+
+            t.expect(spy1).toHaveBeenCalled(2)
+            t.expect(spy2).toHaveBeenCalled(2)
+        })
 
 
         t.it(prefix + 'Dynamic write + subtree elimination', async t => {
@@ -138,5 +184,5 @@ StartTest(t => {
     }
 
     doTest(t, GraphGen.new({ sync : true }))
-    doTest(t, GraphGen.new({ sync : false }))
+    // doTest(t, GraphGen.new({ sync : false }))
 })
