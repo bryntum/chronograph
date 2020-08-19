@@ -1,5 +1,6 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { Box } from "../../src/chrono2/data/Box.js"
+import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { GraphGen } from "../util.js"
 
 declare const StartTest : any
@@ -53,63 +54,87 @@ StartTest(t => {
         })
 
 
-        // t.it('Subtree elimination - gen', async t => {
-        //     const graph : ChronoGraph   = ChronoGraph.new()
+        // t.it(prefix + "Should be possible to write to another box during calculation with distant depedencies", t => {
         //
-        //     const var0      = graph.variableNamed('var0', 0)
-        //     const var1      = graph.variableNamed('var1', 0)
-        //
-        //     const iden1     = graph.identifierNamed('iden1', function* () {
-        //         return (yield var0) + (yield var1)
-        //     })
-        //
-        //     const iden2     = graph.identifierNamed('iden2', function* () {
-        //         return (yield iden1) + 1
-        //     })
-        //
-        //     const iden3     = graph.identifierNamed('iden3', function* () {
-        //         const value0 : number  = yield var0
-        //         const value1 : number  = yield var1
-        //
-        //         if (value1 > 5) {
-        //             // swap the values for `var0` and `var1`
-        //             yield WriteSeveral([
-        //                 { identifier : var0, proposedArgs : [ value1 ] },
-        //                 { identifier : var1, proposedArgs : [ value0 ] }
-        //             ])
-        //         }
-        //
-        //         return yield ProposedOrPrevious
-        //     })
-        //
-        //
-        //     const spy1      = t.spyOn(iden1, 'calculation')
-        //     const spy2      = t.spyOn(iden2, 'calculation')
-        //
-        //     //-------------------
-        //     graph.commit()
-        //
-        //     t.expect(spy1).toHaveBeenCalled(1)
-        //     t.expect(spy2).toHaveBeenCalled(1)
-        //
-        //     t.is(graph.read(iden2), 1, 'Correct value')
-        //
-        //     //-------------------
-        //     spy2.reset()
-        //
-        //     graph.write(var0, 5)
-        //     graph.write(var1, 7)
-        //
-        //     graph.commit()
-        //
-        //     t.expect(spy1).toHaveBeenCalled(2)
-        //     t.expect(spy2).toHaveBeenCalled(1)
-        //
-        //     t.is(graph.read(var0), 7, 'Correct value')
-        //     t.is(graph.read(var1), 5, 'Correct value')
-        //     t.is(graph.read(iden2), 13, 'Correct value')
         // })
 
+
+        t.it(prefix + 'Dynamic write + subtree elimination', async t => {
+            const graph : ChronoGraph   = ChronoGraph.new()
+
+            const var0      = new Box(0, 'var0')
+            const var1      = new Box(0, 'var1')
+
+            const iden1     = graphGen.calculableBox({
+                name        : 'iden1',
+                lazy        : false,
+                calculation : eval(graphGen.calc(function* () {
+                    return (yield var0) + (yield var1)
+                }))
+            })
+
+            const iden2     = graphGen.calculableBox({
+                name        : 'iden2',
+                lazy        : false,
+                calculation : eval(graphGen.calc(function* () {
+                    return (yield iden1) + 1
+                }))
+            })
+
+            const iden3     = graphGen.calculableBox({
+                name        : 'iden3',
+                lazy        : false,
+                calculation : eval(graphGen.calc(function* () {
+                    const value0 : number  = (yield var0)
+                    const value1 : number  = (yield var1)
+
+                    if (value1 > 5) {
+                        // swap the values for `var0` and `var1`
+                        var0.write(value1)
+                        var1.write(value0)
+
+                        return 1
+                    }
+
+                    return 0
+                }))
+            })
+
+            graph.addAtoms([ var0, var1, iden1, iden2, iden3 ])
+
+            const spy1      = t.spyOn(iden1, 'calculation')
+            const spy2      = t.spyOn(iden2, 'calculation')
+            const spy3      = t.spyOn(iden3, 'calculation')
+
+            //-------------------
+            graph.commit()
+
+            t.expect(spy1).toHaveBeenCalled(1)
+            t.expect(spy2).toHaveBeenCalled(1)
+            t.expect(spy3).toHaveBeenCalled(1)
+
+            t.is(iden2.read(), 1, 'Correct value')
+            t.is(iden3.read(), 0, 'Correct value')
+
+            //-------------------
+            spy2.reset()
+            spy3.reset()
+
+            var0.write(5)
+            var1.write(7)
+
+            graph.commit()
+
+            // even that the `iden1` may be calculated twice (depending on the order)
+            // the `iden2` should be calculated once
+            t.expect(spy2).toHaveBeenCalled(1)
+            t.expect(spy3).toHaveBeenCalled(2)
+
+            t.is(var0.read(), 7, 'Correct value')
+            t.is(var1.read(), 5, 'Correct value')
+            t.is(iden2.read(), 13, 'Correct value')
+            t.is(iden3.read(), 0, 'Correct value')
+        })
     }
 
     doTest(t, GraphGen.new({ sync : true }))
