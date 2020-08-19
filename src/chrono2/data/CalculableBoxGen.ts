@@ -1,6 +1,6 @@
 import { CalculationIterator } from "../../primitives/Calculation.js"
 import { getUniqable } from "../../util/Uniqable.js"
-import { AtomState } from "../atom/Quark.js"
+import { AtomState } from "../atom/Atom.js"
 import { calculateAtomsQueueLevelGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueLevelSync } from "../calculation/LeveledSync.js"
 import { CalculationModeGen } from "../CalculationMode.js"

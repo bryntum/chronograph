@@ -1,5 +1,5 @@
+import { AtomState } from "../atom/Atom.js"
 import { getNextRevision } from "../atom/Node.js"
-import { AtomState } from "../atom/Quark.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"

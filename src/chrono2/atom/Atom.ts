@@ -8,7 +8,20 @@ import { ChronoGraph } from "../graph/Graph.js"
 import { Iteration } from "../graph/Iteration.js"
 import { chronoReference, ChronoReference, Identifiable } from "./Identifiable.js"
 import { DefaultMetaSync, Meta } from "./Meta.js"
-import { AtomState, Quark } from "./Quark.js"
+import { Quark } from "./Quark.js"
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// Benchmarking has shown that there's no difference when using numbers
+// v8 optimizes comparison of immutable strings to pointer comparison I guess
+export enum AtomState {
+    Empty           = 'Empty',
+    UpToDate        = 'UpToDate',
+    PossiblyStale   = 'PossiblyStale',
+    Stale           = 'Stale',
+    CheckingDeps    = 'CheckingDeps',
+    Calculating     = 'Calculating'
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------

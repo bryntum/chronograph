@@ -1,7 +1,6 @@
 import { LeveledQueue } from "../../util/LeveledQueue.js"
 import { getUniqable } from "../../util/Uniqable.js"
-import { Atom } from "../atom/Atom.js"
-import { AtomState } from "../atom/Quark.js"
+import { Atom, AtomState } from "../atom/Atom.js"
 import { CalculationModeGen } from "../CalculationMode.js"
 import { Effect, EffectHandler } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
