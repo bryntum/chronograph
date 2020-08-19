@@ -90,18 +90,21 @@ StartTest(t => {
             const box00     = new Box(0)
 
             const box1 = graphGen.calculableBox({
+                name        : 'box1',
                 calculation : eval(graphGen.calc(function* () {
                     return (yield box0) + 1
                 }))
             })
 
             const box2 = graphGen.calculableBox({
+                name        : 'box2',
                 calculation : eval(graphGen.calc(function* () {
                     return (yield box0) + 1 + (yield box00)
                 }))
             })
 
             const box3 = graphGen.calculableBox({
+                name        : 'box3',
                 calculation : eval(graphGen.calc(function* () {
                     return (yield box1) + (yield box2) + 1
                 }))

@@ -118,6 +118,8 @@ export class CalculableBox<V> extends Box<V> {
         this.immutable.usedProposedOrPrevious   = false
 
         this.immutable.revision                 = getNextRevision()
+
+        this.state                              = AtomState.Calculating
     }
 
 
@@ -220,9 +222,10 @@ export class CalculableBox<V> extends Box<V> {
 
         if (newValue === undefined) newValue = null
 
-        const isSameValue           = this.equality(this.immutable.read(), newValue)
+        const previous              = this.immutable.readRaw()
+        const isSameValue           = this.equality(previous === undefined ? null : previous, newValue)
 
-        if (this.state !== AtomState.Empty && !isSameValue) this.propagateStaleShallow()
+        if (previous !== undefined && !isSameValue) this.propagateStaleShallow()
 
         // only write the value, revision has been already updated in the `beforeCalculation`
         this.immutableForWrite().write(newValue)
@@ -239,19 +242,21 @@ export class CalculableBox<V> extends Box<V> {
     }
 
 
-    shouldCalculateDefinitely () {
+    shouldCheckDependencies () : boolean {
         const state     = this.state
 
-        if (state === AtomState.Stale || state === AtomState.Empty) return true
+        if (state === AtomState.Calculating) return false
 
-        if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return true
+        if (state === AtomState.Stale || state === AtomState.Empty) return false
 
-        return false
+        if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return false
+
+        return true
     }
 
 
-    shouldCalculate () {
-        if (this.shouldCalculateDefinitely()) return true
+    shouldCalculate () : boolean {
+        if (!this.shouldCheckDependencies()) return true
 
         const incoming  = this.immutable.getIncomingDeep()
 
@@ -270,13 +275,22 @@ export class CalculableBox<V> extends Box<V> {
 
 
     doCalculate () {
-        this.beforeCalculation()
-
         const prevActiveAtom        = globalContext.activeAtom
 
         globalContext.activeAtom    = this
 
-        const newValue              = this.calculation.call(this.context)
+        let newValue : V            = undefined
+
+        do {
+            this.beforeCalculation()
+
+            newValue                = this.calculation.call(this.context)
+
+            // the calculation should end up in the `Calculating` state, otherwise
+            // if for example it is "PossiblyStale" or "Stale" - that means
+            // there have been a write into the atom (or its dependency) during calculation
+            // in such case we repeat the calculation
+        } while (this.state !== AtomState.Calculating)
 
         globalContext.activeAtom    = prevActiveAtom
 

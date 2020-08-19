@@ -57,7 +57,7 @@ export const calculateAtomsQueueLevelSync = function (
             continue
         }
 
-        if (!atom.shouldCalculateDefinitely()) {
+        if (atom.shouldCheckDependencies()) {
             atom.state      = AtomState.CheckingDeps
 
             const incoming  = atom.immutable.getIncomingDeep()
@@ -88,7 +88,7 @@ export const calculateAtomsQueueLevelSync = function (
         while (iterationResult) {
             const value         = iterationResult.value
 
-            if (atom.isCalculationCompleted()) {
+            if (iterationResult.done) {
                 atom.updateValue(value)
 
                 level.pop()
