@@ -1,6 +1,3 @@
-import { computed, observable } from "../../node_modules/mobx/lib/mobx.module.js"
-import { ProposedOrPrevious, WriteSeveral } from "../../src/chrono/Effect.js"
-import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { GraphGen } from "../util.js"
@@ -13,46 +10,6 @@ StartTest(t => {
 
     const doTest = (t : any, graphGen : GraphGen) => {
         const prefix    = graphGen.sync ? 'SYNC: ' : 'GEN: '
-
-        // t.it(prefix + "Should be possible to write to another box during calculation", t => {
-        //     const var0      = observable.box(0)
-        //     const var1      = observable.box(0)
-        //
-        //     const varMax    = observable.box(10)
-        //
-        //     const idenSum   = computed(function () {
-        //         const sum : number  = var0.get() + var1.get()
-        //
-        //         const max : number  = varMax.get()
-        //
-        //         if (sum > max) {
-        //             var0.set(var0.get() - (sum - max))
-        //         }
-        //
-        //         return sum
-        //     })
-        //
-        //     // const spy1      = t.spyOn(idenSum, 'calculation')
-        //
-        //     //-------------------
-        //     t.is(idenSum.get(), 0, 'Correct value')
-        //
-        //     // t.expect(spy1).toHaveBeenCalled(1)
-        //
-        //     //-------------------
-        //     // spy1.reset()
-        //
-        //     var0.set(5)
-        //     var1.set(7)
-        //
-        //     t.is(idenSum.get(), 10, 'Correct value') // 12
-        //     t.is(idenSum.get(), 10, 'Correct value') // 10
-        //
-        //     // t.expect(spy1).toHaveBeenCalled(2)
-        //
-        //     t.is(var0.get(), 3, 'Correct value')
-        // })
-
 
         t.it(prefix + "Should be possible to write to another box during calculation", t => {
             const var0      = new Box(0, 'var0')
@@ -156,5 +113,5 @@ StartTest(t => {
     }
 
     doTest(t, GraphGen.new({ sync : true }))
-    // doTest(t, GraphGen.new({ sync : false }))
+    doTest(t, GraphGen.new({ sync : false }))
 })
