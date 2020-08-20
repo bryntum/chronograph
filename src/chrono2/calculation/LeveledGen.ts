@@ -156,6 +156,8 @@ export const calculateAtomsQueueLevelGen = function* (
                 // and the state of atom did not change during handler processing"
                 // currently this equality does not take into account the possibility
                 // that `startedYieldAt` is a value from previous calculation
+                // UPDATE: should just use `revision` I guess
+                // TODO: needs a test case
                 if (atom.iterationNumber === startedYieldAt) {
                     globalContext.activeAtom    = atom
 
