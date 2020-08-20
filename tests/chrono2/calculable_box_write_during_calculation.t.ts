@@ -191,7 +191,7 @@ StartTest(t => {
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
                     count1++
-                    return box0.read() + 1
+                    return (yield box0) + 1
                 }))
             })
 
@@ -199,7 +199,7 @@ StartTest(t => {
             const box11 : CalculableBox<number>    = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
                     count11++
-                    return box00.read() + 1
+                    return (yield box00) + 1
                 }))
             })
 
@@ -210,9 +210,9 @@ StartTest(t => {
                 calculation : eval(graphGen.calc(function* () {
                     count2++
 
-                    const box : CalculableBox<number>      = dispatcher.read()
+                    const box : CalculableBox<number>      = (yield dispatcher)
 
-                    return box.read() + 1
+                    return (yield box) + 1
                 }))
             })
 
@@ -227,11 +227,11 @@ StartTest(t => {
             count1 = count11 = count2 = 0
 
             box00.write(1)
-            // this switches the `box2` to different computation path
+            // this switches the `box2` to the different computation path
             // on that path `box2` triggers the computation of `box11` which is stale at that moment
-            // once `box11` recomputes it propagates the staleness to its derivations,
-            // which, should not affect the `Calculating` state of those, because that will trigger
-            // an extra computation
+            // once `box11` recomputes, it propagates the staleness to its derivations (`box2`),
+            // which should not affect the `Calculating` state of those, because calculation of `box11`
+            // has been triggered by the `box2`
             dispatcher.write(box11)
 
             t.is(box2.read(), 3)
