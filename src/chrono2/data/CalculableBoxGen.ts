@@ -69,24 +69,20 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
 
     async readAsync () : Promise<V> {
         const activeAtom    = globalContext.activeAtom
-        const activeGraph   = activeAtom ? activeAtom.graph : undefined
+        const self          = this.checkoutSelf()
 
-        if (this.graph && activeGraph && activeGraph !== this.graph) {
-            return activeGraph.checkout(this).readAsync()
-        }
+        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
 
-        if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable)
+        if (self.state === AtomState.UpToDate) return self.immutable.read()
 
-        if (this.state === AtomState.UpToDate) return this.immutable.read()
+        if (self.calculationPromise) return self.calculationPromise
 
-        if (this.calculationPromise) return this.calculationPromise
-
-        if (this.shouldCalculate()) {
-            return this.calculationPromise = this.doCalculateAsync()
+        if (self.shouldCalculate()) {
+            return self.calculationPromise = self.doCalculateAsync()
         } else {
-            this.state = AtomState.UpToDate
+            self.state = AtomState.UpToDate
 
-            return this.immutable.read()
+            return self.immutable.read()
         }
     }
 
