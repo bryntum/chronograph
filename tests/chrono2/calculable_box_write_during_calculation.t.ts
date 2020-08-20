@@ -184,11 +184,12 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should not perform extra computations on graph mutation', t => {
-            const box0      = new Box(0)
-            const box00     = new Box(0)
+            const box0      = new Box(0, 'box0')
+            const box00     = new Box(0, 'box00')
 
             let count1      = 0
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box1',
                 calculation : eval(graphGen.calc(function* () {
                     count1++
                     return (yield box0) + 1
@@ -197,16 +198,18 @@ StartTest(t => {
 
             let count11     = 0
             const box11 : CalculableBox<number>    = graphGen.calculableBox({
+                name        : 'box11',
                 calculation : eval(graphGen.calc(function* () {
                     count11++
                     return (yield box00) + 1
                 }))
             })
 
-            const dispatcher : Box<CalculableBox<number>> = new Box(box1)
+            const dispatcher : Box<CalculableBox<number>> = new Box(box1, 'dispatcher')
 
             let count2      = 0
             const box2      = graphGen.calculableBox({
+                name        : 'box2',
                 calculation : eval(graphGen.calc(function* () {
                     count2++
 
