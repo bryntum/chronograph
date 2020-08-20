@@ -286,7 +286,7 @@ export class CalculableBox<V> extends Box<V> {
 
             newValue                = this.calculation.call(this.context)
 
-            // the calculation should end up in the `Calculating` state, otherwise
+            // the calculation starts in the `Calculating` state and should end up in the same, otherwise
             // if for example it is "PossiblyStale" or "Stale" - that means
             // there have been a write into the atom (or its dependency) during calculation
             // in such case we repeat the calculation
