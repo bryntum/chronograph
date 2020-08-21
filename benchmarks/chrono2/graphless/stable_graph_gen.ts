@@ -60,6 +60,8 @@ export class StableGraphBenchmarkGen extends ReactiveDataBenchmark {
 //---------------------------------------------------------------------------------------------------------------------
 const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
     const chronoGraph2 = StableGraphBenchmarkGen.new({
+        // keepLastResult : true,
+        // profile     : true,
         name        : `Stable graph, generators, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2`,
         atomNum     : atomNum,
         depCount    : depCount,
@@ -67,6 +69,8 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
     })
 
     const chronoGraph2WithGraph = StableGraphBenchmarkGen.new({
+        // keepLastResult : true,
+        // profile     : true,
         name        : `Stable graph, generators, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph2 with graph`,
         atomNum     : atomNum,
         depCount    : depCount,
@@ -74,6 +78,8 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
     })
 
     const chronoGraph1 = StableGraphBenchmarkGen.new({
+        // keepLastResult : true,
+        // profile     : true,
         name        : `Stable graph, generators, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
         atomNum     : atomNum,
         depCount    : depCount,
