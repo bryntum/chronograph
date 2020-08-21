@@ -326,9 +326,14 @@ export class CalculableBox<V> extends Box<V> {
             this.graph.frozen   = false
         }
 
-        this.proposedValue  = value
+        this.proposedValue      = value
+
+        this.stalenessRevision  = getNextRevision()
 
         this.propagatePossiblyStale()
+
+        // see the comment in `write` method of the `Box`
+        if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision
     }
 
 

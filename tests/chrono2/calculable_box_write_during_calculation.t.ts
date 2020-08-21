@@ -247,7 +247,13 @@ StartTest(t => {
         })
 
 
-        t.it(prefix + 'Should not perform extra computations on graph mutation (magical deps change)', t => {
+        // It seems we won't be support this use case - it goes against the base assumption that if
+        // dependencies of an atom haven't change, it does not need to be recalculated
+        // in this example we use "magical" variable `dispatcher` (as opposed to atom `dispatcher` as in previous test)
+        // it is then changed during calculation, but chronograph still thinks `box2` depends on `box11` which didn't change
+        // so the change of dependencies structure should be reflect in dependency from some atom
+        // TODO document this somewhere, include this test as an example and remove it from here
+        t.xit(prefix + 'Should not perform extra computations on graph mutation (magical deps change)', t => {
             const box0      = new Box(0, 'box0')
             const box00     = new Box(0, 'box00')
 

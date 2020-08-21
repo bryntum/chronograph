@@ -36,6 +36,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     uniqableBox         : any           = undefined
     uniqableBox2        : any           = undefined
 
+    stalenessRevision   : number        = Number.MIN_SAFE_INTEGER
+
     immutable           : Quark         = this.buildDefaultImmutable()
 
     // this is a cache for a state of the new, "virtual" quark
@@ -304,7 +306,9 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
         if (!this.equality(newValue, oldValue)) this.propagateDeepStaleOutsideOfGraph()
 
-        this.immutable      = quark
+        this.immutable          = quark
+
+        this.stalenessRevision  = quark.revision
     }
 
 
@@ -329,7 +333,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             const atom      = quark.owner
 
             if (atom.isValueVulnerableToChanges()) {
-                atom.state      = AtomState.PossiblyStale
+                atom.state              = AtomState.PossiblyStale
+                atom.stalenessRevision  = this.stalenessRevision
 
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
@@ -354,7 +359,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
                 if (atom.isValueVulnerableToChanges()) toVisit1.push(atom.immutable)
 
                 // but reset to stale anyway
-                atom.state  = AtomState.Stale
+                atom.state              = AtomState.Stale
+                atom.stalenessRevision  = this.stalenessRevision
             }
         })
 
@@ -379,7 +385,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             const atom      = quark.owner
 
             if (atom.isValueVulnerableToChanges()) {
-                atom.state      = AtomState.PossiblyStale
+                atom.state              = AtomState.PossiblyStale
+                atom.stalenessRevision  = this.stalenessRevision
 
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
@@ -410,7 +417,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             }
 
             // but reset to stale anyway
-            atom.state  = AtomState.Stale
+            atom.state              = AtomState.Stale
+            atom.stalenessRevision  = this.stalenessRevision
         })
 
         if (!this.immutable.frozen) this.immutable.clearOutgoing()
@@ -431,7 +439,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             const atom      = quark.owner
 
             if (atom.isValueVulnerableToChanges()) {
-                atom.state      = AtomState.PossiblyStale
+                atom.state              = AtomState.PossiblyStale
+                atom.stalenessRevision  = this.stalenessRevision
 
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
@@ -446,12 +455,19 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     propagateStaleShallow () {
+        const stalenessRevision  = this.stalenessRevision
+
         this.immutable.forEachOutgoing((quark, atom) => {
-            if (atom.graph && !atom.lazy && atom.state === AtomState.UpToDate) {
+            const state     = atom.state
+
+            if (atom.graph && !atom.lazy && state === AtomState.UpToDate) {
                 atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
             }
 
-            atom.state = AtomState.Stale
+            if (state !== AtomState.Calculating || atom.stalenessRevision < stalenessRevision) {
+                atom.state              = AtomState.Stale
+                atom.stalenessRevision  = stalenessRevision
+            }
         })
 
         if (!this.immutable.frozen && !globalContext.activeAtom) this.immutable.clearOutgoing()
