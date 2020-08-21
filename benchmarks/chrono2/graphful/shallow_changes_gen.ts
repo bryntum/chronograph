@@ -4,7 +4,6 @@ import {
     launchIfStandaloneProcess,
     ReactiveDataBenchmark,
     ReactiveDataGenerationResult,
-    reactiveDataGeneratorChronoGraph2,
     ReactiveDataGeneratorWithGenerators
 } from "../graphless/data_generators.js"
 import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph, ReactiveDataGeneratorWithGraph } from "./data_generators.js"
@@ -61,9 +60,9 @@ export class ShallowChangesGenBenchmark extends ReactiveDataBenchmark {
     cycle (iteration : number, cycle : number, state : ReactiveDataGenerationResult) {
         const { boxes } = state
 
-        for (let i = 0; i < this.depCount; i++) {
-            const sum   = iteration + cycle
+        const sum   = iteration + cycle
 
+        for (let i = 0; i < this.depCount; i++) {
             // the sum of these boxes won't change
             boxes[ i ].WRITE(1 + (i % 2 === 0 ? sum : -sum))
         }
@@ -78,6 +77,8 @@ const runFor = async (atomNum : number = 1000, depCount : number = 2) => {
     if (depCount % 2 !== 0) throw new Error("depCount needs to be even number")
 
     const chronoGraph2WithGraph = ShallowChangesGenBenchmark.new({
+        // showSamples     : true,
+        // keepLastResult  : true,
         name        : `Shallow changes, generators, atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph2 with graph, commit`,
         atomNum     : atomNum,
         depCount    : depCount,
@@ -85,6 +86,8 @@ const runFor = async (atomNum : number = 1000, depCount : number = 2) => {
     })
 
     const chronoGraph1 = ShallowChangesGenBenchmark.new({
+        // showSamples     : true,
+        // keepLastResult  : true,
         name        : `Shallow changes, generators, atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph1`,
         atomNum     : atomNum,
         depCount    : depCount,
