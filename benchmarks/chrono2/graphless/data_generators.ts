@@ -152,7 +152,7 @@ export class ReactiveDataGeneratorChronoGraph2 extends Base implements ReactiveD
     }
 
     computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        return new BoxChronoGraph2(new CalculableBoxGen({ calculation : func, context : context, name : name }))
+        return new BoxChronoGraph2(new CalculableBoxGen({ calculation : func, context : context, name : name, lazy : false }))
     }
 }
 
