@@ -66,12 +66,17 @@ StartTest(t => {
                 }))
             })
 
+            const box11   = graphGen.calculableBox({
+                name        : 'box11',
+                calculation : eval(graphGen.calc(function* () {
+                    return (yield box1) + 1
+                }))
+            })
+
             const box2   = graphGen.calculableBox({
                 name        : 'box2',
                 calculation : eval(graphGen.calc(function* () {
-                    // if (window.DEBUG) debugger
-
-                    const value1 = (yield box1) + 1
+                    const value1 = (yield box11) + 1
 
                     if (value1 > 10) {
                         box0.write(0)
@@ -84,7 +89,7 @@ StartTest(t => {
             const spy1      = t.spyOn(box1, 'calculation')
             const spy2      = t.spyOn(box2, 'calculation')
 
-            t.is(box2.read(), 3)
+            t.is(box2.read(), 4)
 
             t.expect(spy1).toHaveBeenCalled(1)
             t.expect(spy2).toHaveBeenCalled(1)
@@ -97,7 +102,7 @@ StartTest(t => {
 
             box0.write(20)
 
-            t.is(box2.read(), 2)
+            t.is(box2.read(), 3)
             t.is(box0.read(), 0)
 
             t.expect(spy1).toHaveBeenCalled(2)
