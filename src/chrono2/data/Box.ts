@@ -88,7 +88,8 @@ export class Box<V> extends Atom<V> {
 
         this.immutableForWrite().write(value)
 
-        this.immutable.revision = this.stalenessRevision
+        this.immutable.revision         = this.stalenessRevision
+        this.immutable.valueRevision    = this.stalenessRevision
 
         this.state              = AtomState.UpToDate
 

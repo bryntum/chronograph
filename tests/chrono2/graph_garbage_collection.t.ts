@@ -234,6 +234,70 @@ StartTest(t => {
     })
 
 
+    t.it('Garbage collection should not preserve the edges from the "same value"`" quarks', async t => {
+        const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
+
+        const var0      = new Box(0, 'var0')
+        const var1      = new Box(10, 'var1')
+
+        const var2      = new CalculableBox({
+            name        : 'var2',
+            lazy        : false,
+            calculation : () => var0.read() + var1.read()
+        })
+
+        const var3      = new CalculableBox({
+            name        : 'var3',
+            lazy        : false,
+            calculation : () => var2.read() + 1
+        })
+
+        const nodes         = [ var0, var1, var2, var3 ]
+
+        graph1.addAtoms(nodes)
+
+        graph1.commit()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 10, 11 ], "Correct result calculated")
+
+        // in this test a several writes creates a series of "same value" quarks on `var2`
+        // the outgoing edges of `var2` should be picked up from the bottom-most quark during garbage collection
+
+        //------------------
+        var0.write(1)
+        var1.write(9)
+
+        graph1.commit()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 1, 9, 10, 11 ], "Correct result calculated")
+
+        //------------------
+        var0.write(2)
+        var1.write(8)
+
+        graph1.commit()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 2, 8, 10, 11 ], "Correct result calculated")
+
+        //------------------
+        var0.write(3)
+        var1.write(7)
+
+        graph1.commit()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 3, 7, 10, 11 ], "Correct result calculated")
+
+        //------------------
+        var0.write(1)
+        var1.write(1)
+
+        graph1.commit()
+
+        t.isDeeply(nodes.map(node => node.read()), [ 1, 1, 2, 3 ], "Correct result calculated")
+    })
+
+
+    // TODO
     t.xit('Garbage collection should work with branches', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 

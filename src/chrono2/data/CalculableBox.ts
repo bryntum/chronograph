@@ -227,10 +227,12 @@ export class CalculableBox<V> extends Box<V> {
 
         if (previous !== undefined && !isSameValue) this.propagateStaleShallow()
 
+        if (!isSameValue || previous === undefined) {
+            this.immutable.valueRevision = this.immutable.revision
+        }
+
         // only write the value, revision has been already updated in the `beforeCalculation`
         this.immutableForWrite().write(newValue)
-
-        this.immutable.sameValue    = isSameValue
 
         if (this.immutable.usedProposedOrPrevious) {
             this.state              = this.equality(newValue, this.proposedValue) ? AtomState.UpToDate : AtomState.Stale

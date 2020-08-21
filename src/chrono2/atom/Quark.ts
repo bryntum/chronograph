@@ -16,10 +16,11 @@ export class Quark<V = unknown> extends Node implements Immutable {
     value       : V             = undefined
 
     usedProposedOrPrevious  : boolean   = false
+    // TODO update the comment
     // indicates that atom's value has been calculated into the same value
     // in such case, the outgoings won't be triggered and
     // one need to dive deeper for full history
-    sameValue               : boolean   = false
+    valueRevision           : number        = Number.MIN_SAFE_INTEGER
 
     iteration       : Iteration = undefined
 
@@ -84,8 +85,9 @@ export class Quark<V = unknown> extends Node implements Immutable {
         next.previous   = this
         next.owner      = owner || this.owner
 
-        next.revision   = this.revision
-        next.state      = this.state
+        next.revision       = this.revision
+        next.valueRevision  = this.valueRevision
+        next.state          = this.state
 
         // TODO should possibly empty the cached atom's `$state` here
 
@@ -142,7 +144,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
                 }
             }
 
-            if (quark.value !== undefined && !quark.sameValue) break
+            if (quark.value !== undefined && quark.revision === quark.valueRevision) break
 
             quark       = quark.previous
 
@@ -257,7 +259,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
                     }
                 }
 
-                if (quark.value !== undefined && !quark.sameValue) {
+                if (quark.value !== undefined && quark.revision === quark.valueRevision) {
                     outgoingsConsumed   = true
 
                     this.$outgoing      = collapsedOutgoing
@@ -275,6 +277,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
                 if (quark !== this) this.copyValueFrom(quark)
 
                 this.previous       = zero
+                this.valueRevision  = this.revision
             }
 
             if (quark !== this) quark.destroy()
