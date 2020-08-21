@@ -5,7 +5,7 @@
   "main": "index.js",
   "module": "main.js",
   "scripts": {
-    "chrome_bench" : "google-chrome-stable --js-flags=\"--expose-gc\"",
+    "chrome_bench" : "google-chrome-stable --js-flags=\"--expose-gc\" $1",
     "bench": "node --expose-gc -r esm benchmarks/chrono2/suite_everything.js",
     "test": "node ./tests/index.js",
     "docs": "scripts/build_docs.sh"
