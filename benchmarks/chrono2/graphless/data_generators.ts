@@ -2,6 +2,7 @@ import { computed, observable } from "../../../node_modules/mobx/lib/mobx.module
 import { Benchmark } from "../../../src/benchmark/Benchmark.js"
 import { Box } from "../../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../../src/chrono2/data/CalculableBox.js"
+import { CalculableBoxGen } from "../../../src/chrono2/data/CalculableBoxGen.js"
 import { Base } from "../../../src/class/Base.js"
 import { AnyFunction } from "../../../src/class/Mixin.js"
 
@@ -11,6 +12,8 @@ import { AnyFunction } from "../../../src/class/Mixin.js"
 // will figure out that all its subclasses has the same "shape" and `.READ(), .WRITE()`
 // calls won't become "megamorphic"
 export class BoxAbstract<V> {
+    box     : unknown
+
     READ () : V {
         throw new Error("Abstract method called")
     }
@@ -88,6 +91,12 @@ export interface ReactiveDataGenerator<RawBox> {
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export interface ReactiveDataGeneratorWithGenerators<RawBox> extends ReactiveDataGenerator<RawBox> {
+    computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxAbstract<V>
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export class ReactiveDataGeneratorMobx implements ReactiveDataGenerator<BoxMobxRaw<unknown>> {
 
     // used to measure the allocation performance
@@ -117,7 +126,7 @@ export const reactiveDataGeneratorMobx = new ReactiveDataGeneratorMobx()
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReactiveDataGeneratorChronoGraph2 extends Base implements ReactiveDataGenerator<Box<unknown>> {
+export class ReactiveDataGeneratorChronoGraph2 extends Base implements ReactiveDataGeneratorWithGenerators<Box<unknown>> {
 
     // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : Box<unknown> {
@@ -140,6 +149,10 @@ export class ReactiveDataGeneratorChronoGraph2 extends Base implements ReactiveD
 
     computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
         return new BoxChronoGraph2(new CalculableBox({ calculation : func, context : context, name : name, lazy : false }))
+    }
+
+    computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxChronoGraph2<V> {
+        return new BoxChronoGraph2(new CalculableBoxGen({ calculation : func, context : context, name : name }))
     }
 }
 

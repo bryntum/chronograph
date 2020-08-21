@@ -1,10 +1,16 @@
 import { ChronoGraph as ChronoGraph1 } from "../../../src/chrono/Graph.js"
-import { CalculatedValueSync, Identifier, VariableC } from "../../../src/chrono/Identifier.js"
+import { CalculatedValueGen, CalculatedValueSync, Identifier, VariableC } from "../../../src/chrono/Identifier.js"
 import { Box } from "../../../src/chrono2/data/Box.js"
 import { ChronoGraph as ChronoGraph2 } from "../../../src/chrono2/graph/Graph.js"
 import { Base } from "../../../src/class/Base.js"
 import { AnyFunction } from "../../../src/class/Mixin.js"
-import { BoxAbstract, BoxChronoGraph2, ReactiveDataGenerator, ReactiveDataGeneratorChronoGraph2 } from "../graphless/data_generators.js"
+import {
+    BoxAbstract,
+    BoxChronoGraph2,
+    ReactiveDataGenerator,
+    ReactiveDataGeneratorChronoGraph2,
+    ReactiveDataGeneratorWithGenerators
+} from "../graphless/data_generators.js"
 
 
 export interface AbstractGraph {
@@ -20,21 +26,21 @@ export interface AbstractGraph {
 
 //---------------------------------------------------------------------------------------------------------------------
 export class BoxChronoGraph1<V> extends BoxAbstract<V> {
-    identifier      : Identifier<V>     = undefined
+    box             : Identifier<V>     = undefined
     graph           : ChronoGraph1      = undefined
 
     constructor (identifier, graph) {
         super()
 
-        this.identifier = identifier
+        this.box        = identifier
         this.graph      = graph
     }
 
     READ () : V {
-        return this.graph.read(this.identifier)
+        return this.graph.read(this.box)
     }
     WRITE (value : V) {
-        return this.graph.write(this.identifier, value)
+        return this.graph.write(this.box, value)
     }
 }
 
@@ -86,11 +92,19 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
         return box
     }
 
+
+    computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxChronoGraph2<V> {
+        const box = super.computedGen(func, context, name)
+
+        this.graph.addAtom(box.box)
+
+        return box
+    }
 }
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReactiveDataGeneratorChronoGraph1 extends Base implements ReactiveDataGenerator<Identifier> {
+export class ReactiveDataGeneratorChronoGraph1 extends Base implements ReactiveDataGeneratorWithGenerators<Identifier> {
     graph           : ChronoGraph1  = ChronoGraph1.new()
 
     // used to measure the allocation performance
@@ -130,6 +144,15 @@ export class ReactiveDataGeneratorChronoGraph1 extends Base implements ReactiveD
 
     computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph1<V> {
         const box   = CalculatedValueSync.new({ calculation : func, context : context, name : name })
+
+        this.graph.addIdentifier(box)
+
+        return new BoxChronoGraph1(box, this.graph)
+    }
+
+
+    computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxChronoGraph1<V> {
+        const box   = CalculatedValueGen.new({ calculation : func as any, context : context, name : name })
 
         this.graph.addIdentifier(box)
 
