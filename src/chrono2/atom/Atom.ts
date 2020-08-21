@@ -225,6 +225,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     // the `shallow_changes` benchmark slower?? (the whole point of the trick was
     // to speed up that particular use case)
     // remove it then? removing makes some other benchmarks better
+    // UPDATE: the `graphful/shallow_changes_gen` benchmark improves from 373ms to 247ms
+    // with this optimization
     get state () : AtomState {
         if (this.$state === undefined) {
             return this.immutable.state
