@@ -75,9 +75,12 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
     coolDownTimeout         : number    = 100
 
+    // enable console.profile
     profile                 : boolean   = false
     // useful to examine memory after the benchmark
     keepLastResult          : boolean   = false
+    // show time of each iteration
+    showSamples             : boolean   = false
 
     lastResult              : RunInfo<StateT, InfoT>    = undefined
 
@@ -139,7 +142,7 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
         return {
             samples,
-            finalState : state,
+            finalState              : state,
             cyclesCount,
             averageCycleTime,
             deviation,
@@ -247,7 +250,14 @@ export class Benchmark<StateT, InfoT = any> extends Base {
 
 
     report (runInfo : RunInfo<StateT, InfoT>) {
-        console.log(`${this.name}: ${format(runInfo.averageCycleTime)}ms ±${format(runInfo.marginOfError)}, i:${runInfo.samples.length} c:${runInfo.cyclesCount}`)
+        const args : any[] = [
+            `${this.name}: ${format(runInfo.averageCycleTime)}ms ±${format(runInfo.marginOfError)}`,
+            `i:${runInfo.samples.length} c:${runInfo.cyclesCount}`
+        ]
+
+        if (this.showSamples) args.push(runInfo.samples)
+
+        console.log(...args)
 
         if (runInfo.info) console.log(this.stringifyInfo(runInfo.info).replace(/^/mg, "    "))
     }
