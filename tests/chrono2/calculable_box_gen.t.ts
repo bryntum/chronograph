@@ -26,5 +26,9 @@ StartTest(t => {
         const lastBox       = boxes[ boxes.length - 1 ]
 
         t.is(lastBox.read(), stackSize)
+
+        boxes[ 0 ].write(1)
+
+        t.is(lastBox.read(), stackSize + 1)
     })
 })

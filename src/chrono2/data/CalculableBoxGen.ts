@@ -60,6 +60,11 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
     }
 
 
+    shouldCalculate () : boolean {
+        return true
+    }
+
+
     doCalculate () {
         const uniqable = getUniqable()
 
@@ -77,13 +82,7 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
 
         if (self.calculationPromise) return self.calculationPromise
 
-        if (self.shouldCalculate()) {
-            return self.calculationPromise = self.doCalculateAsync()
-        } else {
-            self.state = AtomState.UpToDate
-
-            return self.immutable.read()
-        }
+        return self.calculationPromise = self.doCalculateAsync()
     }
 
 
