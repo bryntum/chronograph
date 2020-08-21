@@ -246,6 +246,74 @@ StartTest(t => {
             t.is(count2, 1)
         })
 
+
+        t.it(prefix + 'Should not perform extra computations on graph mutation (magical deps change)', t => {
+            const box0      = new Box(0, 'box0')
+            const box00     = new Box(0, 'box00')
+
+            let count1      = 0
+            const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box1',
+                calculation : eval(graphGen.calc(function* () {
+                    count1++
+                    return (yield box0) + 1
+                }))
+            })
+
+            let count11     = 0
+            const box11 : CalculableBox<number>    = graphGen.calculableBox({
+                name        : 'box11',
+                calculation : eval(graphGen.calc(function* () {
+                    count11++
+                    return (yield box00) + 1
+                }))
+            })
+
+            // `dispatcher` is not an atom intentionally - to imitate sudden, "magical"
+            // dependency change
+            let dispatcher = box1
+
+            let count2      = 0
+            const box2 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box2',
+                calculation : eval(graphGen.calc(function* () {
+                    count2++
+
+                    const value     = (yield dispatcher)
+
+                    if (value > 5) {
+                        debugger
+                        box0.write(2)
+                        dispatcher = box1
+                    }
+
+                    return value + 1
+                }))
+            })
+
+            t.is(box2.read(), 2)
+            t.is(box11.read(), 1)
+
+            t.is(count1, 1)
+            t.is(count11, 1)
+            t.is(count2, 1)
+
+            //---------------
+            count1 = count11 = count2 = 0
+
+            box0.write(1)
+            box00.write(10)
+            // this should trigger re-computation of `box2`
+            dispatcher = box11
+
+            t.is(box2.read(), 4)
+
+            t.is(count1, 2)
+            t.is(count11, 1)
+
+            // the key assertion of the test
+            t.is(count2, 2)
+        })
     }
 
     doTest(t, GraphGen.new({ sync : true }))
