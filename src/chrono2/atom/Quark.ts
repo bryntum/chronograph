@@ -251,7 +251,13 @@ export class Quark<V = unknown> extends Node implements Immutable {
                         if (identity.uniqable2 !== uniqable) {
                             identity.uniqable2   = uniqable
 
-                            if (outgoingRevision === (identity.uniqableBox as Quark).revision) {
+                            // TODO requires extra attention
+                            // remove this if the "shallow state" optimization for Atom will be removed
+                            // `identity.uniqableBox === undefined` means that outgoing edge is actually going to the quark in the "shredding"
+                            // iteration - thats why it is not set up in the `graph.sweep()`
+                            // we do want to keep such edges, reproducible in `graph_garbage_collection.t.js`
+                            if (!identity.uniqableBox || outgoingRevision === (identity.uniqableBox as Quark).revision) {
+                                identity.uniqableBox    = undefined
                                 collapsedOutgoing.push(outgoingQuark)
                                 collapsedOutgoingRev.push(outgoingRevision)
                             }
