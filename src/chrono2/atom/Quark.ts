@@ -1,5 +1,5 @@
 import { AnyConstructor } from "../../class/Mixin.js"
-import { MIN_SMI } from "../../util/Helpers.js"
+import { copyArray, MIN_SMI } from "../../util/Helpers.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { Immutable } from "../data/Immutable.js"
 import { Iteration } from "../graph/Iteration.js"
@@ -233,7 +233,10 @@ export class Quark<V = unknown> extends Node implements Immutable {
             if (!incomingsConsumed && quark.$incoming !== undefined) {
                 incomingsConsumed   = true
 
+                // TODO make a config option? see a comment for `this.$outgoing` below
                 this.$incoming      = quark.$incoming
+                // this.$incoming      = quark.$incoming.slice()
+                // this.$incoming      = copyArray(quark.$incoming)
             }
 
             if (!outgoingsConsumed) {
@@ -269,8 +272,20 @@ export class Quark<V = unknown> extends Node implements Immutable {
                 if (quark.value !== undefined && quark.revision === quark.valueRevision) {
                     outgoingsConsumed   = true
 
+                    // TODO make a config option?
+                    // the trick with `[ ... ] / copyArray` creates a new array with the exact size for its elements
+                    // it seems, normally, arrays allocates a little more memory, avoid allocation on every "push"
+                    // the difference might be, like: for array of 20 elements, exact size is 80 bytes,
+                    // extra size - 180 bytes! for many small arrays (exactly the chrono case) total difference might be
+                    // significant: for 100k boxes with 4 backward deps each - from 69.7MB to 54.1MB
+                    // there is a small performance penalty: from 435ms to 455ms (`benchmarks/chrono2/graphful/commit_gen`)
+                    // it seems Array.from() is slower than manual `copyArray`... because of iterators protocol?
                     this.$outgoing      = collapsedOutgoing
                     this.$outgoingRev   = collapsedOutgoingRev
+                    // this.$outgoing      = collapsedOutgoing.slice()
+                    // this.$outgoingRev   = collapsedOutgoingRev.slice()
+                    // this.$outgoing      = copyArray(collapsedOutgoing)
+                    // this.$outgoingRev   = copyArray(collapsedOutgoingRev)
                 }
             }
 

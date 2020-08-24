@@ -63,6 +63,17 @@ export const copySetInto = <V>(sourceSet : Set<V>, targetSet : Set<V>) : Set<V> 
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const copyArray = <T>(array : T[]) : T[] => {
+    const len       = array.length
+    const res       = new Array(len)
+
+    for (let i = 0; i < len; i++) res[ i ] = array[ i ]
+
+    return res
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export const delay = (timeout : number) : Promise<any> => new Promise(resolve => setTimeout(resolve, timeout))
 
 
