@@ -55,6 +55,7 @@ project.start(
             'chrono2/calculable_box_lazyness.t.js',
             'chrono2/calculable_box_propagation.t.js',
             'chrono2/calculable_box_write_during_calculation.t.js',
+            'chrono2/calculable_box_cycle.t.js',
             'chrono2/graph.t.js',
             'chrono2/graph_commit.t.js',
             'chrono2/graph_reject.t.js',

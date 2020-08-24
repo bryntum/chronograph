@@ -1,6 +1,8 @@
 import { AnyConstructor } from "../../class/Mixin.js"
+import { cycleInfo, OnCycleAction, VisitInfo, WalkContext, WalkDepthC, WalkStep } from "../../graph/WalkDepth.js"
 import { MIN_SMI } from "../../util/Helpers.js"
 import { Uniqable } from "../../util/Uniqable.js"
+import { ComputationCycle, ComputationCycleError } from "../calculation/ComputationCycle.js"
 import { CalculationModeSync } from "../CalculationMode.js"
 import { Owner } from "../data/Immutable.js"
 import { EffectHandler } from "../Effect.js"
@@ -474,5 +476,50 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         })
 
         if (!this.immutable.frozen && !globalContext.activeAtom) this.immutable.clearOutgoing()
+    }
+
+
+    onCyclicReadDetected () {
+        // switch (this.graph.onComputationCycle) {
+        //     case 'throw' :
+                throw this.getCyclicReadException()
+            // case 'reject' :
+            //     this.graph.reject(exception)
+            //     break
+            // case 'warn' :
+            //     warn(exception)
+            //     break
+        // }
+    }
+
+
+    getWalkDepthContext (cycleRef : { cycle : ComputationCycle }) : WalkContext<Atom> {
+        return WalkDepthC({
+            collectNext (node : Atom, toVisit : WalkStep<Atom>[], visitInfo : VisitInfo) {
+                node.immutable.forEachOutgoing((quark, resolvedAtom) => toVisit.push({ node : resolvedAtom, from : node, label : null }))
+            },
+            onCycle (node : Atom, stack : WalkStep<Atom>[]) : OnCycleAction {
+                cycleRef.cycle = ComputationCycle.new({ cycle : cycleInfo(stack) })
+
+                return OnCycleAction.Cancel
+            }
+        })
+    }
+
+
+    getCyclicReadException () : ComputationCycleError | undefined {
+        let cycleRef : { cycle : ComputationCycle }  = { cycle : null }
+
+        this.getWalkDepthContext(cycleRef).startFrom([ this ])
+
+        if (cycleRef.cycle) {
+            const exception = new ComputationCycleError("Computation cycle:\n" + cycleRef.cycle)
+
+            exception.cycle = cycleRef.cycle
+
+            return exception
+        } else {
+            return undefined
+        }
     }
 }

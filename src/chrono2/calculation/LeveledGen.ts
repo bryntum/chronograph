@@ -111,7 +111,7 @@ export const calculateAtomsQueueLevelGen = function* (
                     iterationResult = atom.continueCalculation(value.read())
                 } else {
                     if (value.uniqable2 === uniqable) {
-                        throw new Error('cycle')
+                        atom.onCyclicReadDetected()
                     } else {
                         value.uniqable2 = uniqable
 

@@ -194,6 +194,8 @@ export class CalculableBox<V> extends Box<V> {
 
         if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
 
+        if (self.isCalculationStarted()) self.onCyclicReadDetected()
+
         // inlined `actualize` to save 1 stack level
         if (self.state !== AtomState.UpToDate) {
             if (self.shouldCalculate())
@@ -285,6 +287,7 @@ export class CalculableBox<V> extends Box<V> {
 
         do {
             this.beforeCalculation()
+            this.iterationResult    = calculationStartedConstant
 
             newValue                = this.calculation.call(this.context)
 

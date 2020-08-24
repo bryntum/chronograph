@@ -143,6 +143,10 @@ export class WalkContext<Walkable, Label = any> extends Base {
     }
 }
 
+export const WalkDepthC = <Walkable, Label>(config : Partial<WalkContext<Walkable, Label>>) : WalkContext<Walkable, Label> =>
+    WalkContext.new(config) as WalkContext<Walkable, Label>
+
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export function cycleInfo<Walkable, Label = any> (stack : WalkStep<Walkable, Label>[]) : Walkable[] {
