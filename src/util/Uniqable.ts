@@ -1,3 +1,5 @@
+import { MIN_SMI } from "./Helpers.js"
+
 export interface Uniqable {
     uniqable        : number
 }
@@ -27,7 +29,7 @@ the real time for exhausting the interval is ~780 years
 UPDATE: starting from 0 halves the exhausting time, but improves performance
 (less bits to compare I guess)
  */
-let UNIQABLE : number = 0 // Number.MIN_SAFE_INTEGER
+let UNIQABLE : number = MIN_SMI  // Number.MIN_SAFE_INTEGER
 
 export const getUniqable = () => ++UNIQABLE
 

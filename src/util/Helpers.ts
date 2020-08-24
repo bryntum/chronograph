@@ -2,8 +2,9 @@ import { CI } from "../collection/Iterator.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 // assume 32-bit platform (https://v8.dev/blog/react-cliff)
-export const MIN_SMI = -Math.pow(2, 30)
-export const MAX_SMI = Math.pow(2, 30) - 1
+// Note - can not use: expression like: -Math.pow(2, 30) - v8 does not recognize it as SMI
+export const MIN_SMI = -1073741824
+export const MAX_SMI = 1073741823
 
 
 //---------------------------------------------------------------------------------------------------------------------

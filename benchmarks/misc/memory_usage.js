@@ -1,3 +1,6 @@
+export const MIN_SMI = -1073741824
+export const MAX_SMI = 1073741823
+
 const count    = 1_000_000
 
 class Bench {
@@ -8,7 +11,7 @@ const bench1 = window.bench1 = new Bench()
 
 
 for (let i = 0; i < count; i++) {
-    bench1.nodes[ i ]   = { value : i }
+    bench1.nodes[ i ]   = MIN_SMI
 }
 
 console.log("Populated")

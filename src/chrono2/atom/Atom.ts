@@ -1,4 +1,5 @@
 import { AnyConstructor } from "../../class/Mixin.js"
+import { MIN_SMI } from "../../util/Helpers.js"
 import { Uniqable } from "../../util/Uniqable.js"
 import { CalculationModeSync } from "../CalculationMode.js"
 import { Owner } from "../data/Immutable.js"
@@ -30,13 +31,13 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     // same value for all branches
     identity            : this          = this
 
-    uniqable            : number        = Number.MIN_SAFE_INTEGER
-    uniqable2           : number        = Number.MIN_SAFE_INTEGER
+    uniqable            : number        = MIN_SMI
+    uniqable2           : number        = MIN_SMI
 
     uniqableBox         : any           = undefined
     uniqableBox2        : any           = undefined
 
-    stalenessRevision   : number        = Number.MIN_SAFE_INTEGER
+    stalenessRevision   : number        = MIN_SMI
 
     immutable           : Quark         = this.buildDefaultImmutable()
 

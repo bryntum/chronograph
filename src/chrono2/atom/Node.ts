@@ -1,7 +1,8 @@
+import { MIN_SMI } from "../../util/Helpers.js"
 import { Uniqable } from "../../util/Uniqable.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-let revisionId : number = 0
+let revisionId : number = MIN_SMI
 
 export const getNextRevision    = () : number => ++revisionId
 export const getCurrentRevision = () : number => revisionId
@@ -17,10 +18,10 @@ export const setCompactAmount   = (value : number) => compactAmount = value
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Node implements Uniqable {
-    uniqable            : number        = Number.MIN_SAFE_INTEGER
+    uniqable            : number        = MIN_SMI
 
     // initially no revision, revision is acquired with the value
-    revision            : number        = Number.MIN_SAFE_INTEGER
+    revision            : number        = MIN_SMI
 
     $incoming           : Node[]        = undefined
     $outgoing           : Node[]        = undefined
@@ -32,7 +33,7 @@ export class Node implements Uniqable {
 
     // TODO we can also just check the last element in the `$outgoing`, need to benchmark
     lastOutgoingTo      : Node          = undefined
-    lastOutgoingToRev   : number        = Number.MIN_SAFE_INTEGER
+    lastOutgoingToRev   : number        = MIN_SMI
 
 
     getIncoming () : this[ '$incoming' ] {
@@ -63,7 +64,7 @@ export class Node implements Uniqable {
         // this.outgoingCompacted  = false
         this.addCounter         = 0
         this.lastOutgoingTo     = undefined
-        this.lastOutgoingToRev  = Number.MIN_SAFE_INTEGER
+        this.lastOutgoingToRev  = MIN_SMI
     }
 
 

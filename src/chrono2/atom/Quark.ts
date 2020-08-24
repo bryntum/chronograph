@@ -1,4 +1,5 @@
 import { AnyConstructor } from "../../class/Mixin.js"
+import { MIN_SMI } from "../../util/Helpers.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { Immutable } from "../data/Immutable.js"
 import { Iteration } from "../graph/Iteration.js"
@@ -20,13 +21,13 @@ export class Quark<V = unknown> extends Node implements Immutable {
     // indicates that atom's value has been calculated into the same value
     // in such case, the outgoings won't be triggered and
     // one need to dive deeper for full history
-    valueRevision           : number        = Number.MIN_SAFE_INTEGER
+    valueRevision           : number            = MIN_SMI
 
     iteration       : Iteration = undefined
 
     state           : AtomState = AtomState.Empty
 
-    calculationRevision         : number        = Number.MIN_SAFE_INTEGER
+    calculationRevision         : number        = MIN_SMI
 
 
     hasValue () : boolean {
