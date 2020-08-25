@@ -212,6 +212,16 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    readProposedOrPrevious () : V {
+        throw new Error("Abstract method")
+    }
+
+
+    readPrevious () : V {
+        throw new Error("Abstract method")
+    }
+
+
     materializeCachedStateIntoQuark () {
         const nextQuark     = this.stateQuark.createNext()
 

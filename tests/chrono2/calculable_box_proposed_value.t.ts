@@ -1,11 +1,17 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
+import { CalculationModeGen, CalculationModeSync } from "../../src/chrono2/CalculationMode.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { EffectHandler, ProposedOrPrevious } from "../../src/chrono2/Effect.js"
+import { delay } from "../../src/util/Helpers.js"
 import { GraphGen } from "../util.js"
 
 declare const StartTest : any
 
 setCompactCounter(1)
+
+const randomDelay = () => delay(Math.random() * 100)
 
 StartTest(t => {
 
@@ -196,4 +202,97 @@ StartTest(t => {
 
     doTest(t, GraphGen.new({ sync : true }))
     doTest(t, GraphGen.new({ sync : false }))
+
+
+    t.it('SYNC: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', async t => {
+        const var1 : CalculableBox<number>     = new CalculableBox({
+            name    : 'var1',
+            lazy    : false,
+            calculation : function (Y : EffectHandler<CalculationModeSync>) {
+                const proposedValue : number    = Y(ProposedOrPrevious)
+
+                return proposedValue
+            }
+        })
+
+        const spy       = t.spyOn(var1, 'calculation')
+
+        var1.write(1)
+
+        t.is(var1.read(), 1, 'Correct value #1')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //------------------
+        spy.reset()
+
+        var1.write(10)
+
+        t.is(var1.read(), 10, 'Correct value #2')
+
+        t.expect(spy).toHaveBeenCalled(1)
+    })
+
+
+    t.it('GEN: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', t => {
+        const var1 : CalculableBox<number>     = new CalculableBoxGen({
+            name    : 'var1',
+            lazy    : false,
+            calculation : function* (Y : EffectHandler<CalculationModeGen>) {
+                const proposedValue : number    = yield ProposedOrPrevious
+
+                return proposedValue
+            }
+        })
+
+        const spy       = t.spyOn(var1, 'calculation')
+
+        var1.write(1)
+
+        t.is(var1.read(), 1, 'Correct value #1')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //------------------
+        spy.reset()
+
+        var1.write(10)
+
+        t.is(var1.read(), 10, 'Correct value #2')
+
+        t.expect(spy).toHaveBeenCalled(1)
+    })
+
+
+    t.it('GEN+ASYNC: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', async t => {
+        const var1 : CalculableBox<number>     = new CalculableBoxGen({
+            name    : 'var1',
+            lazy    : false,
+            calculation : function* (Y : EffectHandler<CalculationModeGen>) {
+                yield randomDelay()
+
+                const proposedValue : number    = yield ProposedOrPrevious
+
+                return proposedValue
+            }
+        })
+
+        const spy       = t.spyOn(var1, 'calculation')
+
+        var1.write(1)
+
+        t.is(await var1.readAsync(), 1, 'Correct value #1')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //------------------
+        spy.reset()
+
+        var1.write(10)
+
+        t.is(await var1.readAsync(), 10, 'Correct value #2')
+
+        t.expect(spy).toHaveBeenCalled(1)
+    })
+
 })

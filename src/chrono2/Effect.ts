@@ -59,12 +59,12 @@ export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends
     let iteration   = gen.next()
 
     while (!iteration.done) {
-        const effect    = iteration.value
+        const effect    = onEffect(iteration.value)
 
         if (effect instanceof Promise)
             iteration   = gen.next(await effect)
         else
-            iteration   = gen.next(onEffect(effect))
+            iteration   = gen.next(effect)
     }
 
     return iteration.value
@@ -118,7 +118,7 @@ export class Effect extends Base {
     sync        : boolean
 
     @prototypeValue(true)
-    pure        : boolean
+    internal    : boolean
 }
 
 

@@ -9,9 +9,6 @@ import { globalContext } from "../GlobalContext.js"
 import { CalculableBox } from "./CalculableBox.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-const eff = (eff) => null
-
-//---------------------------------------------------------------------------------------------------------------------
 export class CalculableBoxGen<V> extends CalculableBox<V> {
 
     iterator            : CalculationIterator<V>    = undefined
@@ -68,7 +65,9 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
     doCalculate () {
         const uniqable = getUniqable()
 
-        calculateAtomsQueueLevelSync(eff, uniqable, globalContext.stack, [ this ], this.level, true)
+        const effectHandler = this.graph ? this.graph.onEffectAsync : globalContext.onEffectAsync
+
+        calculateAtomsQueueLevelSync(effectHandler, uniqable, globalContext.stack, [ this ], this.level, true)
     }
 
 
@@ -89,10 +88,12 @@ export class CalculableBoxGen<V> extends CalculableBox<V> {
     async doCalculateAsync () : Promise<V> {
         const uniqable = getUniqable()
 
+        const effectHandler = this.graph ? this.graph.onEffectAsync : globalContext.onEffectAsync
+
         await runGeneratorAsyncWithEffect(
-            eff,
+            effectHandler,
             calculateAtomsQueueLevelGen,
-            [ eff, uniqable, globalContext.stack, [ this ], this.level, true ],
+            [ effectHandler, uniqable, globalContext.stack, [ this ], this.level, true ],
             null
         )
 

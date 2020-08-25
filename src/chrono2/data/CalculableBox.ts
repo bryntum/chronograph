@@ -12,8 +12,6 @@ export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStar
 const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> =
     { done : false, value : SynchronousCalculationStarted }
 
-const eff = (eff) => undefined
-
 export class CalculableBox<V> extends Box<V> {
 
     constructor (config? : Partial<CalculableBox<V>>) {
@@ -289,7 +287,7 @@ export class CalculableBox<V> extends Box<V> {
             this.beforeCalculation()
             this.iterationResult    = calculationStartedConstant
 
-            newValue                = this.calculation.call(this.context)
+            newValue                = this.calculation.call(this.context, this.graph ? this.graph.onEffectSync : globalContext.onEffectSync)
 
             // the calculation starts in the `Calculating` state and should end up in the same, otherwise
             // if for example it is "PossiblyStale" or "Stale" - that means

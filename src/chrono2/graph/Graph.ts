@@ -1,4 +1,4 @@
-import { Effect } from "../../chrono/Effect.js"
+import { Effect, ProposedOrPreviousSymbol, RejectEffect } from "../../chrono/Effect.js"
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
 import { Atom } from "../atom/Atom.js"
@@ -6,9 +6,10 @@ import { ChronoReference } from "../atom/Identifiable.js"
 import { Quark } from "../atom/Quark.js"
 import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
+import { CalculationMode, CalculationModeGen, CalculationModeSync } from "../CalculationMode.js"
 import { ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
-import { runGeneratorAsyncWithEffect } from "../Effect.js"
+import { EffectHandler, runGeneratorAsyncWithEffect } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
 import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
@@ -18,7 +19,30 @@ export type GarbageCollectionStrategy = 'eager' //| 'batched' | 'on_idle'
 
 
 //---------------------------------------------------------------------------------------------------------------------
-const eff = (eff) => null
+/**
+ * The type of the argument for the [[commit]] call. Currently empty.
+ */
+export type CommitArguments = {
+}
+
+
+// /**
+//  * The type of the return value of the [[commit]] call.
+//  */
+// export type CommitResult = {
+//     /**
+//      * If the transaction has been rejected, this property will be filled with the [[RejectEffect]] instance
+//      */
+//     rejectedWith?       : RejectEffect<unknown> | null
+// }
+//
+//
+// /**
+//  * A constant which will be used a commit result, when graph is not available.
+//  */
+// export const CommitZero : CommitResult = {
+//     rejectedWith        : null
+// }
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -71,6 +95,10 @@ export class ChronoGraph extends Base implements Owner {
 
     // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
     autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
+
+
+    effectHandlerSync       : EffectHandler<CalculationModeSync>    = null
+    effectHandlerAsync      : EffectHandler<CalculationModeGen>     = null
 
 
 
@@ -228,7 +256,6 @@ export class ChronoGraph extends Base implements Owner {
         nextAfterCollapsible.forEveryFirstQuarkTill(lastIteration, quark => {
             const owner                     = quark.owner
 
-            // this.historySource.set(owner.id, quark)
             lastIteration.storage.addQuark(quark)
 
             quark.iteration = undefined
@@ -245,8 +272,6 @@ export class ChronoGraph extends Base implements Owner {
         iteration                           = collapseStartingFrom
 
         nextAfterCollapsible.storage        = lastIteration.storage
-
-        // this.historySource                  = nextAfterCollapsible
 
         nextAfterCollapsible.previous       = undefined
         nextAfterCollapsible.owner.previous = undefined
@@ -313,7 +338,7 @@ export class ChronoGraph extends Base implements Owner {
 
     scheduleAutoCommit () {
         if (this.autoCommitTimeoutId === null) {
-            this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, 0)
+            this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, this.autoCommitTimeout)
         }
     }
 
@@ -326,28 +351,28 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    onEffectAsync (effect : Effect, activeAtom : Atom) : Promise<unknown> {
+    onEffectAsync (effect : Effect) : Promise<unknown> {
         if (effect instanceof Atom) return effect.readAsync()
 
         if (effect instanceof Promise) return effect
 
-        return this[ effect.handler ](effect, activeAtom)
+        return this[ effect.handler ](effect)
     }
 
 
     // see the comment for the `onEffectSync`
-    onEffectSync (effect : Effect, activeAtom : Atom) : unknown {
+    onEffectSync (effect : Effect) : unknown {
         if (effect instanceof Atom) return effect.read()
 
         if (effect instanceof Promise) {
             throw new Error("Can not yield a promise in the synchronous context")
         }
 
-        return this[ effect.handler ](effect, activeAtom)
+        return this[ effect.handler ](effect)
     }
 
 
-    async commitAsync () {
+    async commitAsync (arg : CommitArguments) {
         this.beforeCommit()
 
         const trasaction    = this.currentTransaction
@@ -355,9 +380,9 @@ export class ChronoGraph extends Base implements Owner {
 
         while (stack.length && !trasaction.isRejected) {
             await runGeneratorAsyncWithEffect(
-                eff,
+                this.onEffectAsync,
                 calculateAtomsQueueGen,
-                [ eff, stack, null, -1 ],
+                [ this.onEffectAsync, stack, null, -1 ],
                 null
             )
 
@@ -376,14 +401,14 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    commit () {
+    commit (arg : CommitArguments) {
         this.beforeCommit()
 
         const trasaction    = this.currentTransaction
         const stack         = globalContext.stack
 
         while (stack.length && !trasaction.isRejected) {
-            calculateAtomsQueueSync(eff, stack, null, -1)
+            calculateAtomsQueueSync(this.onEffectSync, stack, null, -1)
 
             this.finalizeCommit()
         }
@@ -623,4 +648,8 @@ export class ChronoGraph extends Base implements Owner {
         }
     }
 
+
+    [ProposedOrPreviousSymbol] (effect : Effect) : unknown {
+        return globalContext.activeAtom.readProposedOrPrevious()
+    }
 }
