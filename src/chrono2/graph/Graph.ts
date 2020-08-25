@@ -58,6 +58,11 @@ export class ChronoGraph extends Base implements Owner {
     autoCommit              : boolean           = false
 
     /**
+     * How long to delay a commit after the data modification call has been made.
+     */
+    autoCommitTimeout       : number            = 0
+
+    /**
      * Indicates the default commit mode, which is used in [[autoCommit]].
      */
     autoCommitMode          : 'sync' | 'async'  = 'sync'
@@ -86,6 +91,13 @@ export class ChronoGraph extends Base implements Owner {
 
     initialize<T extends ChronoGraph> (props? : Partial<T>) {
         super.initialize(props)
+
+        if (this.autoCommit) {
+            this.autoCommitHandler = this.autoCommitMode === 'sync' ? arg => this.commit(arg) : async arg => this.commitAsync(arg)
+        }
+
+        this.effectHandlerSync      = this.onEffectSync.bind(this)
+        this.effectHandlerAsync     = this.onEffectAsync.bind(this)
 
         this.mark()
     }
@@ -288,6 +300,17 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    onDataWrite<V> (writtenTo : Atom<V>, value : V) {
+        if (this.autoCommit) this.scheduleAutoCommit()
+
+        if (!writtenTo.lazy) {
+            this.addPossiblyStaleStrictAtomToTransaction(writtenTo)
+        }
+
+        this.frozen   = false
+    }
+
+
     scheduleAutoCommit () {
         if (this.autoCommitTimeoutId === null) {
             this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, 0)
@@ -303,20 +326,24 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    yieldAsync (effect : Effect) : Promise<any> {
+    onEffectAsync (effect : Effect, activeAtom : Atom) : Promise<unknown> {
+        if (effect instanceof Atom) return effect.readAsync()
+
         if (effect instanceof Promise) return effect
 
-        return this[ effect.handler ](effect, this)
+        return this[ effect.handler ](effect, activeAtom)
     }
 
 
     // see the comment for the `onEffectSync`
-    yieldSync (effect : Effect) : any {
+    onEffectSync (effect : Effect, activeAtom : Atom) : unknown {
+        if (effect instanceof Atom) return effect.read()
+
         if (effect instanceof Promise) {
             throw new Error("Can not yield a promise in the synchronous context")
         }
 
-        return this[ effect.handler ](effect, this)
+        return this[ effect.handler ](effect, activeAtom)
     }
 
 
@@ -509,6 +536,8 @@ export class ChronoGraph extends Base implements Owner {
         this.immutableForWrite().addQuark(atom.immutable)
 
         if (!atom.lazy) this.addPossiblyStaleStrictAtomToTransaction(atom)
+
+        if (this.autoCommit) this.scheduleAutoCommit()
     }
 
     addAtoms (atoms : Atom[]) {
@@ -517,7 +546,11 @@ export class ChronoGraph extends Base implements Owner {
 
 
     removeAtom (atom : Atom) {
+        atom.propagateStaleDeep()
+
         atom.leaveGraph(this)
+
+        if (this.autoCommit) this.scheduleAutoCommit()
     }
 
     removeAtoms (atoms : Atom[]) {

@@ -325,12 +325,6 @@ export class CalculableBox<V> extends Box<V> {
             // this.proposedValueState = AtomState.Stale
         }
 
-        if (this.graph) {
-            this.graph.scheduleAutoCommit()
-
-            this.graph.frozen   = false
-        }
-
         this.proposedValue      = value
 
         this.stalenessRevision  = getNextRevision()
@@ -339,6 +333,10 @@ export class CalculableBox<V> extends Box<V> {
 
         // see the comment in `write` method of the `Box`
         if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision
+
+        if (this.graph) {
+            this.graph.onDataWrite(this, value)
+        }
     }
 
 

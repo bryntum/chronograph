@@ -102,11 +102,7 @@ export class Box<V> extends Atom<V> {
         if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision
 
         if (this.graph) {
-            this.graph.scheduleAutoCommit()
-
-            if (!this.lazy) {
-                this.graph.addPossiblyStaleStrictAtomToTransaction(this)
-            }
+            this.graph.onDataWrite(this, value)
         }
     }
 }
