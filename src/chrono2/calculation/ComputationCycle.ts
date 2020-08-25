@@ -2,6 +2,13 @@ import { Base } from "../../class/Base.js"
 import { Atom } from "../atom/Atom.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+// TODO figure out a mechanism to include the source line location into cycle
+// something like:
+// Cyclic read detected:
+// - box1 on line 97 char 11 SourceFile2.js
+// - box2 on line 78 char 12 SourceFile1.js
+// - box1 on line 11 char 8 SourceFile2.js
+
 export class ComputationCycle extends Base {
     cycle           : Atom[]
 
@@ -9,18 +16,6 @@ export class ComputationCycle extends Base {
 
         return this.cycle.map(atom => {
             return atom.name
-
-            // //@ts-ignore
-            // const sourcePoint : SourceLinePoint      = identifier.SOURCE_POINT
-            //
-            // if (!sourcePoint) return identifier.name
-            //
-            // const firstEntry       = sourcePoint.stackEntries[ 0 ]
-            //
-            // if (firstEntry) {
-            //     return `${identifier}\n    yielded at ${firstEntry.sourceFile}:${firstEntry.sourceLine}:${firstEntry.sourceCharPos || ''}`
-            // } else
-            //     return identifier.name
         }).join('\n')
     }
 }
