@@ -125,34 +125,4 @@ StartTest(t => {
 
     doTest(t, GraphGen.new({ sync : true }))
     doTest(t, GraphGen.new({ sync : false }))
-
-
-    // t.it('Should throw error on cyclic computation', async t => {
-    //     const graph : ChronoGraph = ChronoGraph.new()
-    //
-    //     const iden1     = graph.identifier(function (Y) {
-    //         return Y(iden2)
-    //     })
-    //
-    //     const iden2     = graph.identifier(function (Y) {
-    //         return Y(iden1)
-    //     })
-    //
-    //     t.throwsOk(() => graph.read(iden1), 'Cycle')
-    // })
-    //
-    //
-    // t.it('Should throw error on cyclic computation', async t => {
-    //     const graph : ChronoGraph = ChronoGraph.new()
-    //
-    //     const iden1     = graph.identifier(function* (Y) {
-    //         return yield iden2
-    //     })
-    //
-    //     const iden2     = graph.identifier(function* (Y) {
-    //         return yield iden1
-    //     })
-    //
-    //     t.throwsOk(() => graph.read(iden1), 'Computation cycle')
-    // })
 })
