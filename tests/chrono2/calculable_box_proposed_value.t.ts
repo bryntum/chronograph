@@ -204,6 +204,7 @@ StartTest(t => {
     doTest(t, GraphGen.new({ sync : false }))
 
 
+    // TODO deprecate and remove effect handler as 1st argument
     t.it('SYNC: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', async t => {
         const var1 : CalculableBox<number>     = new CalculableBox({
             name    : 'var1',
@@ -234,6 +235,7 @@ StartTest(t => {
     })
 
 
+    // TODO deprecate and remove effect handler as 1st argument
     t.it('GEN: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', t => {
         const var1 : CalculableBox<number>     = new CalculableBoxGen({
             name    : 'var1',
@@ -264,6 +266,7 @@ StartTest(t => {
     })
 
 
+    // TODO deprecate and remove effect handler as 1st argument
     t.it('GEN+ASYNC: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', async t => {
         const var1 : CalculableBox<number>     = new CalculableBoxGen({
             name    : 'var1',
