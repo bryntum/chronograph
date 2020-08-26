@@ -144,7 +144,7 @@ export class Entity extends Mixin(
             const atom                  = new atomCls()
 
             atom.field                  = field
-            atom.$meta                  = field
+            atom.meta                   = field
             // TODO
             // @ts-ignore
             atom.context                = this

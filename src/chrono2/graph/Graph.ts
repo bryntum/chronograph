@@ -379,9 +379,9 @@ export class ChronoGraph extends Base implements Owner {
 
         while (stack.length && !trasaction.isRejected) {
             await runGeneratorAsyncWithEffect(
-                this.onEffectAsync,
+                this.effectHandlerAsync,
                 calculateAtomsQueueGen,
-                [ this.onEffectAsync, stack, null, -1 ],
+                [ this.effectHandlerAsync, stack, null, -1 ],
                 null
             )
 
@@ -410,7 +410,7 @@ export class ChronoGraph extends Base implements Owner {
         const stack         = globalContext.stack
 
         while (stack.length && !trasaction.isRejected) {
-            calculateAtomsQueueSync(this.onEffectSync, stack, null, -1)
+            calculateAtomsQueueSync(this.effectHandlerSync, stack, null, -1)
 
             this.finalizeCommit()
         }
