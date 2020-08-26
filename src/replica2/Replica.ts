@@ -1,6 +1,7 @@
 import { ChronoGraph } from "../chrono2/graph/Graph.js"
 import { ClassUnion, Mixin } from "../class/Mixin.js"
 import { Schema } from "../schema2/Schema.js"
+import { FieldAtom } from "./Atom.js"
 import { Entity } from "./Entity.js"
 
 export enum ReadMode {
@@ -86,5 +87,13 @@ class Replica extends base {
      */
     removeEntities (entities : Entity[]) {
         entities.forEach(entity => this.removeEntity(entity))
+    }
+
+
+    readFieldWithAccessor (fieldAtom : FieldAtom) {
+        const readMode  = fieldAtom.graph.readMode
+
+        if (readMode === ReadMode.Consistent) return fieldAtom.sync ? fieldAtom.read() : fieldAtom.readAsync()
+        if (readMode === ReadMode.ProposedOrLatest) return fieldAtom.readProposedOrLatest()
     }
 }){}

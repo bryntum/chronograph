@@ -32,7 +32,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = new ChronoGraph()
+        const graph     = ChronoGraph.new()
 
         // only adding box1 and box2, box3 is "external"
         graph.addAtoms([ box1, box2 ])
@@ -67,7 +67,7 @@ StartTest(t => {
             calculation : () => box2.read() + 1
         })
 
-        const graph     = new ChronoGraph()
+        const graph     = ChronoGraph.new()
 
         // only adding box1 and box2, box3 is "external"
         graph.addAtoms([ box1, box2 ])

@@ -46,7 +46,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = new ChronoGraph()
+        const graph     = ChronoGraph.new()
 
         // box1 not added to graph
         graph.addAtoms([ box2, box3 ])
@@ -97,7 +97,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = new ChronoGraph()
+        const graph     = ChronoGraph.new()
 
         graph.addAtoms([ box1, box2, box3 ])
 
@@ -154,7 +154,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = new ChronoGraph()
+        const graph     = ChronoGraph.new()
 
         graph.addAtoms([ box1, box2, box3 ])
 

@@ -299,10 +299,8 @@ export class Entity extends Mixin(
                     const fieldAtom : FieldAtom = this.$[ propertyKey ]
 
                     if (fieldAtom.graph) {
-                        const readMode  = fieldAtom.graph.readMode
-
-                        if (readMode === ReadMode.Consistent) return fieldAtom.sync ? fieldAtom.read() : fieldAtom.readAsync()
-                        if (readMode === ReadMode.ProposedOrLatest) return fieldAtom.readProposedOrLatest()
+                        // delegate read with accessor to graph, to be easily overridable there
+                        return fieldAtom.graph.readFieldWithAccessor(fieldAtom)
                     }
 
                     return fieldAtom.sync ? fieldAtom.read() : fieldAtom.readAsync()
