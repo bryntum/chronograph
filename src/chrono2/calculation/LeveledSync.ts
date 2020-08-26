@@ -110,6 +110,8 @@ export const calculateAtomsQueueLevelSync = function (
                 if (value.state === AtomState.UpToDate) {
                     iterationResult = atom.continueCalculation(value.read())
                 } else {
+                    value.immutableForWrite().addOutgoing(atom.immutable)
+
                     if (value.uniqable2 === uniqable) {
                         atom.onCyclicReadDetected()
                     } else {
