@@ -80,6 +80,7 @@ project.start(
 
         items       : [
             'replica2/replica.t.js',
+            'replica2/cycle_info.t.js',
         ]
     },
     {

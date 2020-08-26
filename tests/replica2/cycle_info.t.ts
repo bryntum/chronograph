@@ -1,6 +1,6 @@
 import { Base } from "../../src/class/Base.js"
-import { calculate, Entity, field } from "../../src/replica/Entity.js"
-import { Replica } from "../../src/replica/Replica.js"
+import { calculate, Entity, field } from "../../src/replica2/Entity.js"
+import { Replica } from "../../src/replica2/Replica.js"
 
 declare const StartTest : any
 
@@ -31,9 +31,7 @@ StartTest(t => {
 
         replica.addEntity(some)
 
-        // replica.read(some.$.iden1)
-
         // ----------------
-        t.throwsOk(() => replica.read(some.$.iden1), /iden1.*iden2/s, 'Include identifier name in the cycle info')
+        t.throwsOk(() => some.iden1, /iden1.*iden2/s, 'Include identifier name in the cycle info')
     })
 })
