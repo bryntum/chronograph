@@ -67,6 +67,22 @@ project.start(
         ]
     },
     {
+        group       : 'Schema2',
+
+        items       : [
+            'schema2/schema.t.js',
+            'schema2/entity_inheritance.t.js',
+            'schema2/entity_fields.t.js'
+        ]
+    },
+    {
+        group       : 'Replica2',
+
+        items       : [
+            'replica2/replica.t.js',
+        ]
+    },
+    {
         group       : 'ChronoGraph',
 
         items       : [

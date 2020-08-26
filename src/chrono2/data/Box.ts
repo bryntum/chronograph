@@ -71,7 +71,7 @@ export class Box<V = unknown> extends Atom<V> {
     }
 
 
-    write (value : V) {
+    write (value : V, ...args : any[]) {
         if (value === undefined) value = null
 
         if (this.equality(value, this.immutable.read())) return

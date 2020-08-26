@@ -1,4 +1,5 @@
 import { Base } from "../../class/Base.js"
+import { AnyConstructor } from "../../class/Mixin.js"
 import { Equality, strictEquality } from "../../util/Helpers.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
@@ -71,7 +72,7 @@ export class Meta extends Base {
      *
      * @param Y
      */
-    calculation : CalculationFunction<unknown, CalculationMode>     = defaultCalculationSync
+    calculation : CalculationFunction<unknown, CalculationMode>     = undefined
 
     /**
      * The equality check of the identifier. By default is performed with `===`.
@@ -79,13 +80,29 @@ export class Meta extends Base {
      * @param v1 First value
      * @param v2 Second value
      */
-    equality : Equality     = strictEquality
+    equality : Equality                                             = strictEquality
+
+
+    clone () : this {
+        const cls                       = this.constructor as AnyConstructor<this, typeof Meta>
+
+        const clone                     = new cls()
+
+        clone.name                      = this.name
+        clone.lazy                      = this.lazy
+        clone.level                     = this.level
+        clone.sync                      = this.sync
+        clone.calculation               = this.calculation
+        clone.equality                  = this.equality
+
+        return clone
+    }
 }
 
-export const defaultCalculationSync = (Y : EffectHandler<CalculationModeSync>) => {
-    // return Y(ProposedOrPrevious)
-
-    // return globalContext.activeQuark.owner.readProposeOrPrevious()
-}
+// export const defaultCalculationSync = (Y : EffectHandler<CalculationModeSync>) => {
+//     // return Y(ProposedOrPrevious)
+//
+//     // return globalContext.activeQuark.owner.readProposeOrPrevious()
+// }
 
 export const DefaultMetaSync = Meta.new({ name : 'DefaultMetaSync' })

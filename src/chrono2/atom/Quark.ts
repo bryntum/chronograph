@@ -324,7 +324,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
     }
 
 
-    clone () {
+    clone () : this {
         const cls                       = this.constructor as AnyConstructor<this, typeof Quark>
 
         const clone                     = new cls()
