@@ -161,24 +161,21 @@ export const ProposedOrPreviousSymbol    = Symbol('ProposedOrPreviousSymbol')
 export const ProposedOrPrevious : Effect = Effect.new({ handler : ProposedOrPreviousSymbol })
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export const RejectSymbol    = Symbol('RejectSymbol')
-//
-// /**
-//  * Class for [[Reject]] effect.
-//  */
-// export class RejectEffect<Reason> extends Effect {
-//     handler         : symbol    = RejectSymbol
-//
-//     /**
-//      * Reason of the reject
-//      */
-//     reason          : Reason
-//
-//     @prototypeValue(false)
-//     pure            : boolean
-// }
-//
+//---------------------------------------------------------------------------------------------------------------------
+export const RejectSymbol    = Symbol('RejectSymbol')
+
+/**
+ * Class for [[Reject]] effect.
+ */
+export class RejectEffect<Reason> extends Effect {
+    handler         : symbol    = RejectSymbol
+
+    /**
+     * Reason of the reject
+     */
+    reason          : Reason
+}
+
 // /**
 //  * This is constructor for `RejectEffect` class. If this effect will be yielded during computation the current transaction
 //  * will be [[ChronoGraph.reject|rejected]].

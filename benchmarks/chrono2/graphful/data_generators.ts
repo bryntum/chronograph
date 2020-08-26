@@ -14,7 +14,7 @@ import {
 
 
 export interface AbstractGraph {
-    commit ()
+    commit (...args : any[])
 
     reject ()
 

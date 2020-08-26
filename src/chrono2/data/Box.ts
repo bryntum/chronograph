@@ -30,7 +30,7 @@ BoxImmutable.zero.freeze()
 
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
-export class Box<V> extends Atom<V> {
+export class Box<V = unknown> extends Atom<V> {
 
     constructor (value? : V, name? : string) {
         super()

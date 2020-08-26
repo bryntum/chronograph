@@ -1,4 +1,3 @@
-import { Effect, ProposedOrPreviousSymbol, RejectEffect } from "../../chrono/Effect.js"
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
 import { Atom } from "../atom/Atom.js"
@@ -9,7 +8,7 @@ import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
 import { CalculationMode, CalculationModeGen, CalculationModeSync } from "../CalculationMode.js"
 import { ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
-import { EffectHandler, runGeneratorAsyncWithEffect } from "../Effect.js"
+import { Effect, EffectHandler, ProposedOrPreviousSymbol, RejectEffect, runGeneratorAsyncWithEffect } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
 import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
@@ -26,23 +25,23 @@ export type CommitArguments = {
 }
 
 
-// /**
-//  * The type of the return value of the [[commit]] call.
-//  */
-// export type CommitResult = {
-//     /**
-//      * If the transaction has been rejected, this property will be filled with the [[RejectEffect]] instance
-//      */
-//     rejectedWith?       : RejectEffect<unknown> | null
-// }
-//
-//
-// /**
-//  * A constant which will be used a commit result, when graph is not available.
-//  */
-// export const CommitZero : CommitResult = {
-//     rejectedWith        : null
-// }
+/**
+ * The type of the return value of the [[commit]] call.
+ */
+export type CommitResult = {
+    /**
+     * If the transaction has been rejected, this property will be filled with the [[RejectEffect]] instance
+     */
+    rejectedWith?       : RejectEffect<unknown> | null
+}
+
+
+/**
+ * A constant which will be used a commit result, when graph is not available.
+ */
+export const CommitZero : CommitResult = {
+    rejectedWith        : null
+}
 
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -372,7 +371,7 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    async commitAsync (arg : CommitArguments) {
+    async commitAsync (arg? : CommitArguments) : Promise<CommitResult> {
         this.beforeCommit()
 
         const trasaction    = this.currentTransaction
@@ -398,10 +397,13 @@ export class ChronoGraph extends Base implements Owner {
         }
 
         this.afterCommit()
+
+        // TODO
+        return trasaction.isRejected ? { rejectedWith : null } : { rejectedWith : null }
     }
 
 
-    commit (arg : CommitArguments) {
+    commit (arg? : CommitArguments) : CommitResult {
         this.beforeCommit()
 
         const trasaction    = this.currentTransaction
@@ -414,6 +416,9 @@ export class ChronoGraph extends Base implements Owner {
         }
 
         this.afterCommit()
+
+        // TODO
+        return trasaction.isRejected ? { rejectedWith : null } : { rejectedWith : null }
     }
 
 

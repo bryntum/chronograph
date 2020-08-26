@@ -9,7 +9,7 @@ import { globalContext } from "../GlobalContext.js"
 import { CalculableBox } from "./CalculableBox.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculableBoxGen<V> extends CalculableBox<V> {
+export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 
     iterator            : CalculationIterator<V>    = undefined
 

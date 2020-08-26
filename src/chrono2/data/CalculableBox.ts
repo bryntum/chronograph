@@ -12,7 +12,7 @@ export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStar
 const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> =
     { done : false, value : SynchronousCalculationStarted }
 
-export class CalculableBox<V> extends Box<V> {
+export class CalculableBox<V = unknown> extends Box<V> {
 
     constructor (config? : Partial<CalculableBox<V>>) {
         super()
