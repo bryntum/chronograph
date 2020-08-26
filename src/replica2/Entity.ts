@@ -65,10 +65,8 @@ export class Entity extends Mixin(
          * of the class.
          */
         get $entity () : EntityMeta {
-            // this will lazily create an EntityData instance in the prototype
-
-            // TODO should be `ensureEntityOnPrototype` ?? possibly overwrites already created meta
-            return createEntityOnPrototype(this.constructor.prototype)
+            // this will lazily create an EntityMeta instance in the prototype and overwrites the `$entity` property with it
+            return ensureEntityOnPrototype(this.constructor.prototype)
         }
 
 
@@ -94,7 +92,7 @@ export class Entity extends Mixin(
          * ```
          */
         get $ () : { [s in keyof this] : FieldAtom } {
-            const $ = {}
+            const $         = {}
 
             this.$entity.forEachField((field, name) => {
                 $[ name ]   = this.createFieldAtom(field)

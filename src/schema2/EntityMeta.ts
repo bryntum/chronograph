@@ -21,9 +21,7 @@ export class EntityMeta extends Base {
     /**
      * The parent entity
      */
-    parentEntity        : EntityMeta
-
-    // $skeleton           : object                = {}
+    parentEntity        : EntityMeta            = undefined
 
     proto               : object                = undefined
 
@@ -34,7 +32,7 @@ export class EntityMeta extends Base {
      * @param name
      */
     hasField (name : Name) : boolean {
-        return this.getField(name) !== undefined
+        return this.fields.has(name)
     }
 
 
@@ -44,7 +42,7 @@ export class EntityMeta extends Base {
      * @param name
      */
     getField (name : Name) : Field {
-        return this.allFields.get(name)
+        return this.fields.get(name)
     }
 
 
@@ -83,25 +81,34 @@ export class EntityMeta extends Base {
     }
 
 
-    $allFields : Map<Name, Field>       = undefined
+    $fields : Map<Name, Field>       = undefined
 
-    get allFields () : Map<Name, Field> {
-        if (this.$allFields !== undefined) return this.$allFields
+    get fields () : Map<Name, Field> {
+        if (this.$fields !== undefined) return this.$fields
 
-        const allFields : Map<Name, Field>  = new Map()
-        const visited : Set<Name>           = new Set()
+        const fields        = new Map(this.parentEntity ? this.parentEntity.fields : undefined)
 
-        this.forEachParent(entity => {
-            entity.ownFields.forEach((field : Field, name : Name) => {
-                if (!visited.has(name)) {
-                    visited.add(name)
+        if (this.parentEntity) {
+            fields.forEach((field, name) => {
+                const calculation       = this.proto[ this.calculationMappings.get(name) ]
 
-                    allFields.set(name, field)
+                if (field.calculation !== calculation && !this.ownFields.has(name)) {
+                    const clone         = field.clone()
+
+                    clone.calculation   = calculation
+
+                    fields.set(name, clone)
                 }
             })
+        }
+
+        this.ownFields.forEach((field, name) => {
+            field.calculation       = this.proto[ this.calculationMappings.get(name) ]
+
+            fields.set(name, field)
         })
 
-        return this.$allFields = allFields
+        return this.$fields = fields
     }
 
     $calculationMappings : Map<Name, Name>       = undefined
@@ -131,6 +138,6 @@ export class EntityMeta extends Base {
      * @param func
      */
     forEachField (func : (field : Field, name : Name) => any) {
-        this.allFields.forEach(func)
+        this.fields.forEach(func)
     }
 }
