@@ -1,12 +1,11 @@
-import { CalculationIterator } from "../chrono2/CalculationMode.js"
 import { CommitArguments, CommitResult, CommitZero } from "../chrono2/graph/Graph.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
-import { DEBUG, debug, DEBUG_ONLY, SourceLinePoint } from "../environment/Debug.js"
+import { DEBUG, debug } from "../environment/Debug.js"
 import { EntityMeta } from "../schema2/EntityMeta.js"
 import { Field, Name } from "../schema2/Field.js"
 import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
 import { EntityAtom, EntityBox, FieldAtom, FieldBox } from "./Atom.js"
-import { Replica } from "./Replica.js"
+import { ReadMode, Replica } from "./Replica.js"
 
 
 const isEntityMarker      = Symbol('isEntity')
@@ -297,7 +296,16 @@ export class Entity extends Mixin(
 
             Object.defineProperty(target, propertyKey, {
                 get     : function (this : Entity) : any {
-                    return (this.$[ propertyKey ] as FieldAtom).read()
+                    const fieldAtom : FieldAtom = this.$[ propertyKey ]
+
+                    if (fieldAtom.graph) {
+                        const readMode  = fieldAtom.graph.readMode
+
+                        if (readMode === ReadMode.Consistent) return fieldAtom.sync ? fieldAtom.read() : fieldAtom.readAsync()
+                        if (readMode === ReadMode.ProposedOrLatest) return fieldAtom.readProposedOrLatest()
+                    }
+
+                    return fieldAtom.sync ? fieldAtom.read() : fieldAtom.readAsync()
                 },
 
                 set     : function (this : Entity, value : any) {

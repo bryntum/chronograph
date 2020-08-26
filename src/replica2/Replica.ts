@@ -4,10 +4,8 @@ import { Schema } from "../schema2/Schema.js"
 import { Entity } from "./Entity.js"
 
 export enum ReadMode {
-    Current,
-    Previous,
-    ProposedOrPrevious,
-    CurrentOrProposedOrPrevious
+    Consistent,
+    ProposedOrLatest
 }
 
 
@@ -49,7 +47,7 @@ class Replica extends base {
      */
     autoCommit              : boolean           = true
 
-    readMode                : ReadMode          = ReadMode.Current
+    readMode                : ReadMode          = ReadMode.Consistent
 
     /**
      * Add entity instance to the replica

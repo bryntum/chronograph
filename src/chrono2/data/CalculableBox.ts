@@ -162,6 +162,20 @@ export class CalculableBox<V = unknown> extends Box<V> {
     }
 
 
+    // synchronously read the latest available value, either proposed by user or stale from previous iteration
+    // (you should know what you are doing)
+    readProposedOrLatest () : V {
+        const activeAtom    = globalContext.activeAtom
+        const self          = this.checkoutSelf()
+
+        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
+
+        if (self.proposedValue !== undefined) return self.proposedValue
+
+        return self.immutable.read()
+    }
+
+
     readProposedOrPrevious () : V {
         const self          = this.onReadingPast()
 
@@ -348,5 +362,4 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         return clone
     }
-
 }

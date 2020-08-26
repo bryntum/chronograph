@@ -32,6 +32,8 @@ StartTest(t => {
         const promise1      = iden1.readAsync()
         const promise2      = iden1.readAsync()
 
+        t.isStrict(promise1, promise2, 'Used the same promise')
+
         t.is(await promise1, 2, 'Correct value')
         t.is(await promise2, 2, 'Correct value')
 

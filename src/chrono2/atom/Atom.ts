@@ -63,6 +63,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
     level               : number        = 0
     lazy                : boolean       = true
+    sync                : boolean       = true
 
     $meta               : Meta      = undefined
 
@@ -78,6 +79,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         this.$meta      = meta
 
         this.lazy       = meta.lazy
+        this.sync       = meta.sync
         this.level      = meta.level
     }
 
@@ -218,6 +220,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     readPrevious () : V {
+        throw new Error("Abstract method")
+    }
+
+
+    readProposedOrLatest () : V {
         throw new Error("Abstract method")
     }
 

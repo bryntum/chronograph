@@ -225,9 +225,9 @@ StartTest(t => {
 
         replica1.addEntity(markTwain)
 
-        const fullName1         = markTwain.fullName
+        t.isInstanceOf(markTwain.fullName, Promise)
 
-        t.isInstanceOf(fullName1, Promise)
+        t.isStrict(markTwain.fullName, markTwain.fullName)
 
         t.is(await markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 

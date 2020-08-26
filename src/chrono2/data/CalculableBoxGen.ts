@@ -71,13 +71,17 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
     }
 
 
-    async readAsync () : Promise<V> {
+    // this method is intentionally not `async` to avoid creation
+    // of multiple promises if many reads are issued during the same
+    // calculation - we re-use the `calculationPromise` in this case
+    // otherwise every call to `readAsync` would create a new promise
+    readAsync () : Promise<V> {
         const activeAtom    = globalContext.activeAtom
         const self          = this.checkoutSelf()
 
         if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
 
-        if (self.state === AtomState.UpToDate) return self.immutable.read()
+        if (self.state === AtomState.UpToDate) return Promise.resolve(self.immutable.read())
 
         if (self.calculationPromise) return self.calculationPromise
 

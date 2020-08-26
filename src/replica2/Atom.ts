@@ -6,11 +6,14 @@ import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { EntityMeta } from "../schema2/EntityMeta.js"
 import { Field } from "../schema2/Field.js"
 import { Entity } from "./Entity.js"
+import { Replica } from "./Replica.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export interface PartOfEntityAtom {
     self        : Entity
+
+    graph       : Replica
 }
 
 
@@ -33,6 +36,8 @@ class FieldAtom extends base implements PartOfEntityAtom {
      * Reference to the [[Entity]] this identifier represents
      */
     self        : Entity            = undefined
+
+    graph       : Replica
 
 
     toString () : string {
@@ -69,6 +74,8 @@ class EntityAtom extends base implements PartOfEntityAtom {
      * Reference to the [[Entity]] this identifier represents
      */
     self        : Entity            = undefined
+
+    graph       : Replica
 
 
     // entity atom is considered changed if the field atoms has changed
