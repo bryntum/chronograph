@@ -1,8 +1,8 @@
 import { CalculationIterator } from "../../primitives/Calculation.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { AtomState } from "../atom/Atom.js"
-import { calculateAtomsQueueLevelGen } from "../calculation/LeveledGen.js"
-import { calculateAtomsQueueLevelSync } from "../calculation/LeveledSync.js"
+import { calculateAtomsQueueGen, calculateAtomsQueueLevelGen } from "../calculation/LeveledGen.js"
+import { calculateAtomsQueueLevelSync, calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
 import { CalculationModeGen } from "../CalculationMode.js"
 import { EffectHandler, runGeneratorAsyncWithEffect } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
@@ -63,11 +63,9 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 
 
     doCalculate () {
-        const uniqable = getUniqable()
+        const effectHandler = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
 
-        const effectHandler = this.graph ? this.graph.onEffectAsync : globalContext.onEffectAsync
-
-        calculateAtomsQueueLevelSync(effectHandler, uniqable, globalContext.stack, [ this ], this.level, true)
+        calculateAtomsQueueSync(effectHandler, globalContext.stack, [ this ], this.level)
     }
 
 
@@ -90,14 +88,12 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 
 
     async doCalculateAsync () : Promise<V> {
-        const uniqable = getUniqable()
-
-        const effectHandler = this.graph ? this.graph.onEffectAsync : globalContext.onEffectAsync
+        const effectHandler = this.graph ? this.graph.effectHandlerAsync : globalContext.onEffectAsync
 
         await runGeneratorAsyncWithEffect(
             effectHandler,
-            calculateAtomsQueueLevelGen,
-            [ effectHandler, uniqable, globalContext.stack, [ this ], this.level, true ],
+            calculateAtomsQueueGen,
+            [ effectHandler, globalContext.stack, [ this ], this.level ],
             null
         )
 

@@ -324,7 +324,7 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    onDataWrite<V> (writtenTo : Atom<V>, value : V) {
+    onDataWrite<V> (writtenTo : Atom<V>) {
         if (this.autoCommit) this.scheduleAutoCommit()
 
         if (!writtenTo.lazy) {
@@ -347,6 +347,19 @@ export class ChronoGraph extends Base implements Owner {
             clearTimeout(this.autoCommitTimeoutId)
             this.autoCommitTimeoutId    = null
         }
+    }
+
+
+    /**
+     * Returns boolean, indicating whether the auto-commit is pending.
+     */
+    hasPendingAutoCommit () : boolean {
+        return this.autoCommitTimeoutId !== null
+    }
+
+
+    get dirty () : boolean {
+        return !this.currentTransaction.frozen
     }
 
 

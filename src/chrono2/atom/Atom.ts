@@ -15,6 +15,15 @@ import { Quark } from "./Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export enum AtomCalculationPriorityLevel {
+    UserInput                               = 0,
+    DependsOnlyOnUserInput                  = 1,
+    DependsOnlyOnDependsOnlyOnUserInput     = 2,
+    DependsOnSelfKind                       = 3
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 // Benchmarking has shown that there's no difference when using numbers
 // v8 optimizes comparison of immutable strings to pointer comparison I guess
 export enum AtomState {
@@ -39,6 +48,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     uniqableBox         : any           = undefined
     uniqableBox2        : any           = undefined
 
+    // TODO find better name, "userInputRevision" ?
     stalenessRevision   : number        = MIN_SMI
 
     immutable           : Quark         = this.buildDefaultImmutable()
@@ -61,7 +71,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     //region meta
     name                : string        = undefined
 
-    level               : number        = 0
+    level               : AtomCalculationPriorityLevel = AtomCalculationPriorityLevel.UserInput
     lazy                : boolean       = true
     sync                : boolean       = true
 

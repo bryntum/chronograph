@@ -1,15 +1,16 @@
+import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
 import { Base } from "../../src/class/Base.js"
-import { calculate, Entity, field } from "../../src/replica/Entity.js"
-import { reference } from "../../src/replica/Reference.js"
-import { bucket } from "../../src/replica/ReferenceBucket.js"
-import { Replica } from "../../src/replica/Replica.js"
-import { Schema } from "../../src/schema/Schema.js"
+import { calculate, Entity, field } from "../../src/replica2/Entity.js"
+import { reference } from "../../src/replica2/Reference.js"
+import { bucket } from "../../src/replica2/ReferenceBucket.js"
+import { Replica } from "../../src/replica2/Replica.js"
+import { Schema } from "../../src/schema2/Schema.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
-    t.it('Author/Book no commits', async t => {
+    t.iit('Author/Book no commits', async t => {
         const SomeSchema        = Schema.new({ name : 'Cool data schema' })
 
         const entity            = SomeSchema.getEntityDecorator()
@@ -17,13 +18,13 @@ StartTest(t => {
         @entity
         class Author extends Entity.mix(Base) {
             @bucket()
-            books           : Set<Book>
+            books           : Set<Book>     = undefined
         }
 
         @entity
         class Book extends Entity.mix(Base) {
             @reference({ bucket : 'books' })
-            writtenBy       : Author
+            writtenBy       : Author        = undefined
         }
 
         const replica1          = Replica.new({ schema : SomeSchema })
@@ -38,27 +39,27 @@ StartTest(t => {
         t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
         t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
 
-        //--------------------
-        const tomSoyer2         = Book.new({ writtenBy : markTwain })
-
-        replica1.addEntity(tomSoyer2)
-
-        t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference #1')
-
-        //--------------------
-        tomSoyer2.writtenBy     = null
-
-        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference #2')
-
-        //--------------------
-        replica1.removeEntity(tomSoyer)
-
-        t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference #3')
-
-        //--------------------
-        replica1.addEntity(tomSoyer)
-
-        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference #4')
+        // //--------------------
+        // const tomSoyer2         = Book.new({ writtenBy : markTwain })
+        //
+        // replica1.addEntity(tomSoyer2)
+        //
+        // t.isDeeply(markTwain.books, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly resolved reference #1')
+        //
+        // //--------------------
+        // tomSoyer2.writtenBy     = null
+        //
+        // t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference #2')
+        //
+        // //--------------------
+        // replica1.removeEntity(tomSoyer)
+        //
+        // t.isDeeply(markTwain.books, new Set(), 'Correctly resolved reference #3')
+        //
+        // //--------------------
+        // replica1.addEntity(tomSoyer)
+        //
+        // t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly resolved reference #4')
     })
 
 
@@ -488,4 +489,56 @@ StartTest(t => {
         await t.waitFor(() => !replica1.dirty)
         t.is(replica1.hasPendingAutoCommit(), false, 'No pending commit')
     })
+
+
+    t.it('References should work correctly when reading from individual atom', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity.mix(Base) {
+            @bucket()
+            books           : Set<Book>
+
+            @field()
+            booksCount      : number
+
+
+            @calculate('booksCount')
+            * calculateBooksCount () : CalculationIterator<number> {
+                const books : Set<Book>    = yield this.$.books
+
+                return books.size
+            }
+        }
+
+        @entity
+        class Book extends Entity.mix(Base) {
+            @reference({ bucket : 'books' })
+            writtenBy       : Author
+        }
+
+        const replica1          = Replica.new({ schema : SomeSchema })
+
+        const markTwain         = Author.new()
+        const tomSoyer          = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(markTwain)
+        replica1.addEntity(tomSoyer)
+
+        //--------------------
+        replica1.commit()
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
+        t.isDeeply(tomSoyer.writtenBy, markTwain, 'Correct reference value')
+
+        //--------------------
+        const tomSoyer2         = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(tomSoyer2)
+
+        t.is(markTwain.$.booksCount.read(), 2, 'Correctly taken new reference into account when reading from individual atom instead of doing `commit`')
+    })
+
 })

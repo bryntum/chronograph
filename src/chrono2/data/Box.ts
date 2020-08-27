@@ -5,8 +5,7 @@ import { globalContext } from "../GlobalContext.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class BoxImmutable<V> extends Quark {
-    value               : V                 = undefined
+export class BoxImmutable<V> extends Quark<V> {
 
     constructor (owner : Atom<V>) {
         super()
@@ -46,7 +45,7 @@ export class Box<V = unknown> extends Atom<V> {
 
 
     buildDefaultImmutable () : BoxImmutable<V> {
-        const defaultBoxImmutable = new BoxImmutable<V>(this)
+        const defaultBoxImmutable       = new BoxImmutable<V>(this)
 
         defaultBoxImmutable.previous    = BoxImmutable.zero as any
 
@@ -102,7 +101,7 @@ export class Box<V = unknown> extends Atom<V> {
         if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision
 
         if (this.graph) {
-            this.graph.onDataWrite(this, value)
+            this.graph.onDataWrite(this)
         }
     }
 }

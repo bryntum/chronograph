@@ -1,4 +1,4 @@
-import { AtomState } from "../atom/Atom.js"
+import { AtomCalculationPriorityLevel, AtomState } from "../atom/Atom.js"
 import { getNextRevision } from "../atom/Node.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
@@ -13,6 +13,7 @@ const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationS
     { done : false, value : SynchronousCalculationStarted }
 
 export class CalculableBox<V = unknown> extends Box<V> {
+    level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnSelfKind
 
     constructor (config? : Partial<CalculableBox<V>>) {
         super()
@@ -31,22 +32,6 @@ export class CalculableBox<V = unknown> extends Box<V> {
         }
     }
 
-    // $meta   : Meta      = undefined
-    //
-    // get meta () : Meta {
-    //     if (this.$meta !== undefined) return this.$meta
-    //
-    //     const cls = this.constructor as AnyConstructor<this, typeof CalculableBox>
-    //
-    //     return this.$meta = cls.meta
-    // }
-    //
-    // set meta (value : Meta) {
-    //     this.$meta  = value
-    // }
-    //
-    // static meta : Meta     = DefaultMetaSync
-
 
     context     : unknown           = undefined
 
@@ -62,40 +47,16 @@ export class CalculableBox<V = unknown> extends Box<V> {
     }
 
 
-    // $equality       : (v1 : unknown, v2 : unknown) => boolean   = undefined
+    // $sync : boolean      = undefined
     //
-    // get equality () : (v1 : unknown, v2 : unknown) => boolean {
-    //     if (this.$equality !== undefined) return this.$equality
+    // get sync () : boolean {
+    //     if (this.$sync !== undefined) return this.$sync
     //
-    //     return this.meta.equality
+    //     return this.meta.sync
     // }
-    // set equality (value : (v1 : unknown, v2 : unknown) => boolean) {
-    //     this.$equality = value
+    // set sync (value : boolean) {
+    //     this.$sync = value
     // }
-
-
-    // $lazy : boolean      = undefined
-    //
-    // get lazy () : boolean {
-    //     if (this.$lazy !== undefined) return this.$lazy
-    //
-    //     return this.meta.lazy
-    // }
-    // set lazy (value : boolean) {
-    //     this.$lazy = value
-    // }
-
-
-    $sync : boolean      = undefined
-
-    get sync () : boolean {
-        if (this.$sync !== undefined) return this.$sync
-
-        return this.meta.sync
-    }
-    set sync (value : boolean) {
-        this.$sync = value
-    }
 
 
     iterationResult     : IteratorResult<any>       = undefined
@@ -347,7 +308,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision
 
         if (this.graph) {
-            this.graph.onDataWrite(this, value)
+            this.graph.onDataWrite(this)
         }
     }
 
