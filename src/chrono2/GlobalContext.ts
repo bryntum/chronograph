@@ -1,5 +1,5 @@
 import { Base } from "../class/Base.js"
-import { LeveledQueue } from "../util/LeveledQueue.js"
+import { LeveledQueue } from "../util/LeveledQueue2.js"
 import { Atom } from "./atom/Atom.js"
 import { Effect, ProposedOrPreviousSymbol } from "./Effect.js"
 

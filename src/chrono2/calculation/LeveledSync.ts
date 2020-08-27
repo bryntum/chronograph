@@ -1,4 +1,4 @@
-import { LeveledQueue } from "../../util/LeveledQueue.js"
+import { LeveledQueue } from "../../util/LeveledQueue2.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { Atom, AtomState } from "../atom/Atom.js"
 import { CalculationModeGen } from "../CalculationMode.js"
@@ -16,14 +16,28 @@ export const calculateAtomsQueueSync = function (
 ) {
     const uniqable          = getUniqable()
 
-    while (stack.length) {
-        const levelIndex      = stack.getLowestLevelIndex()
-        // stop the loop if we've been given a "level override" and we've calculated beyond it
-        if (levelOverrideIndex !== -1 && levelIndex > levelOverrideIndex) break
+    while (true) {
+        const levelIndex    = stack.lowestLevelIndex
 
-        const level           = levelOverrideIndex === levelIndex ? levelOverride : stack.levels[ levelIndex ]
+        if (levelOverrideIndex !== -1) {
+            if (levelIndex < levelOverrideIndex) {
+                calculateAtomsQueueLevelSync(onEffect, uniqable, stack, stack.levels[ levelIndex ], levelIndex, false)
 
-        calculateAtomsQueueLevelSync(onEffect, uniqable, stack, level, levelIndex, levelOverrideIndex !== -1)
+                stack.refreshLowestLevel()
+            } else if (levelIndex >= levelOverrideIndex) {
+                calculateAtomsQueueLevelSync(onEffect, uniqable, stack, levelOverride, levelOverrideIndex, true)
+
+                stack.refreshLowestLevel()
+
+                if (levelOverride.length === 0) break
+            }
+        } else {
+            calculateAtomsQueueLevelSync(onEffect, uniqable, stack, stack.levels[ levelIndex ], levelIndex, false)
+
+            stack.refreshLowestLevel()
+
+            if (stack.size === 0) break
+        }
     }
 }
 
@@ -37,7 +51,7 @@ export const calculateAtomsQueueLevelSync = function (
     isOverride  : boolean
 ) {
     let prevActiveAtom              = globalContext.activeAtom
-    const startedAtLowestLevelIndex = stack.getLowestLevelIndex()
+    const startedAtLowestLevelIndex = stack.lowestLevelIndex
     const modifyStack               = !isOverride
 
     while (level.length && stack.lowestLevelIndex === startedAtLowestLevelIndex) {
@@ -47,13 +61,13 @@ export const calculateAtomsQueueLevelSync = function (
         if (state === AtomState.CheckingDeps) {
             atom.state      = AtomState.UpToDate
             level.pop()
-            modifyStack && stack.length--
+            modifyStack && stack.size--
             continue
         }
 
         if (state === AtomState.UpToDate) {
             level.pop()
-            modifyStack && stack.length--
+            modifyStack && stack.size--
             continue
         }
 
@@ -69,7 +83,7 @@ export const calculateAtomsQueueLevelSync = function (
                     if (dependencyAtom.state !== AtomState.UpToDate) {
                         // TODO should take level into account
                         level.push(dependencyAtom)
-                        modifyStack && stack.length++
+                        modifyStack && stack.size++
                     }
                 }
 
@@ -99,7 +113,7 @@ export const calculateAtomsQueueLevelSync = function (
                 atom.updateValue(value)
 
                 level.pop()
-                modifyStack && stack.length--
+                modifyStack && stack.size--
                 break
             }
             else if (value instanceof Atom) {
@@ -119,9 +133,9 @@ export const calculateAtomsQueueLevelSync = function (
 
                         if (requestedLevel === levelIndex) {
                             level.push(value)
-                            modifyStack && stack.length++
+                            modifyStack && stack.size++
                         } else {
-                            stack.push(value)
+                            stack.in(value)
                         }
                         break
                     }

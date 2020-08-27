@@ -390,7 +390,7 @@ export class ChronoGraph extends Base implements Owner {
         const trasaction    = this.currentTransaction
         const stack         = globalContext.stack
 
-        while (stack.length && !trasaction.isRejected) {
+        while (stack.size && !trasaction.isRejected) {
             await runGeneratorAsyncWithEffect(
                 this.effectHandlerAsync,
                 calculateAtomsQueueGen,
@@ -422,7 +422,7 @@ export class ChronoGraph extends Base implements Owner {
         const trasaction    = this.currentTransaction
         const stack         = globalContext.stack
 
-        while (stack.length && !trasaction.isRejected) {
+        while (stack.size && !trasaction.isRejected) {
             calculateAtomsQueueSync(this.effectHandlerSync, stack, null, -1)
 
             this.finalizeCommit()
@@ -602,7 +602,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     addPossiblyStaleStrictAtomToTransaction (atom : Atom) {
-        globalContext.stack.push(atom)
+        globalContext.stack.in(atom)
     }
 
 

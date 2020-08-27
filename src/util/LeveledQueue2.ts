@@ -3,7 +3,7 @@ import { MAX_SMI } from "./Helpers.js"
 // Leveled LIFO queue
 
 export class LeveledQueue<T extends { level : number }> {
-    length              : number            = 0
+    size                : number            = 0
 
     levels              : T[][]             = []
 
@@ -28,26 +28,43 @@ export class LeveledQueue<T extends { level : number }> {
     }
 
 
-    pop () : T {
+    outCandidate () : T {
         const lowestLevel       = this.lowestLevel
 
         if (lowestLevel) {
             if (lowestLevel.length) {
-                this.length--
-                return lowestLevel.pop()
+                return lowestLevel[ lowestLevel.length - 1 ]
             }
 
             this.refreshLowestLevel()
 
-            return this.pop()
+            return this.outCandidate()
         } else {
             return undefined
         }
     }
 
 
-    push (el : T) {
-        this.length++
+    out () : T {
+        const lowestLevel       = this.lowestLevel
+
+        if (lowestLevel) {
+            if (lowestLevel.length) {
+                this.size--
+                return lowestLevel.pop()
+            }
+
+            this.refreshLowestLevel()
+
+            return this.out()
+        } else {
+            return undefined
+        }
+    }
+
+
+    in (el : T) {
+        this.size++
 
         const elLevel       = el.level
 
@@ -83,7 +100,7 @@ export class LeveledQueue<T extends { level : number }> {
 
 
     clear () {
-        this.length             = 0
+        this.size               = 0
         this.levels             = []
 
         this.lowestLevel        = undefined

@@ -61,9 +61,9 @@ StartTest(t => {
 
         t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
 
-        t.is(box1.read(), 10)
-        t.is(box2.read(), 11)
-        t.is(box3.read(), 12)
+        t.is(await box1.readAsync(), 10)
+        t.is(await box2.readAsync(), 11)
+        t.is(await box3.readAsync(), 12)
 
         //----------------
         counter2 = counter3 = 0
