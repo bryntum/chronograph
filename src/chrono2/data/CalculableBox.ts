@@ -1,4 +1,5 @@
-import { AtomCalculationPriorityLevel, AtomState } from "../atom/Atom.js"
+import { AtomState } from "../atom/Atom.js"
+import { AtomCalculationPriorityLevel } from "../atom/Meta.js"
 import { getNextRevision } from "../atom/Node.js"
 import { calculateLowerStackLevelsSync } from "../calculation/LeveledSync.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
@@ -284,25 +285,21 @@ export class CalculableBox<V = unknown> extends Box<V> {
     write (value : V) {
         if (value === undefined) value = null
 
-        // // ignore the write of the same value? what about `keepIfPossible` => `pin`
-        // if (this.proposedValue === undefined && this.equality(this.immutable.read(), value)) return
-
         if (this.proposedValue === undefined) {
             // still update the `proposedValue` to indicate the user input?
             this.proposedValue  = value
 
             // ignore the write of the same value? what about `keepIfPossible` => `pin`
             if (this.equality(this.immutable.read(), value)) return
-
-            // this.proposedValueState = AtomState.UpToDate
         } else {
-            const valueToCompareWith = this.proposedValue
-
-            if (this.equality(valueToCompareWith, value)) return
-
-            // this.proposedValueState = AtomState.Stale
+            if (this.equality(this.proposedValue, value)) return
         }
 
+        this.writeConfirmedDifferentValue(value)
+    }
+
+
+    writeConfirmedDifferentValue (value : V) {
         this.proposedValue      = value
 
         this.stalenessRevision  = getNextRevision()

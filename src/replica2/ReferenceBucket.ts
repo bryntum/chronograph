@@ -1,4 +1,5 @@
-import { AtomCalculationPriorityLevel, AtomState } from "../chrono2/atom/Atom.js"
+import { AtomState } from "../chrono2/atom/Atom.js"
+import { AtomCalculationPriorityLevel } from "../chrono2/atom/Meta.js"
 import { CalculationFunction, CalculationModeSync } from "../chrono2/CalculationMode.js"
 import { BoxImmutable } from "../chrono2/data/Box.js"
 import { AnyConstructor, ClassUnion, Mixin } from "../class/Mixin.js"

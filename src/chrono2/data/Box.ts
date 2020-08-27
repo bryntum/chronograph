@@ -75,6 +75,11 @@ export class Box<V = unknown> extends Atom<V> {
 
         if (this.equality(value, this.immutable.read())) return
 
+        this.writeConfirmedDifferentValue(value, ...args)
+    }
+
+
+    writeConfirmedDifferentValue (value : V, ...args : any[]) {
         if (this.graph) {
             this.graph.frozen = false
             // start new iteration right away
@@ -104,6 +109,7 @@ export class Box<V = unknown> extends Atom<V> {
             this.graph.onDataWrite(this)
         }
     }
+
 }
 
 export const ZeroBox = new Box()

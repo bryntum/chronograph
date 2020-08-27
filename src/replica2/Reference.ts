@@ -1,4 +1,5 @@
-import { AtomCalculationPriorityLevel } from "../chrono2/atom/Atom.js"
+import { AtomState } from "../chrono2/atom/Atom.js"
+import { AtomCalculationPriorityLevel } from "../chrono2/atom/Meta.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../chrono2/CalculationMode.js"
 import { ChronoGraph } from "../chrono2/graph/Graph.js"
 import { AnyConstructor, isInstanceOf, Mixin } from "../class/Mixin.js"
@@ -106,7 +107,7 @@ export class ReferenceAtom extends Mixin(
 
             const value : Entity    = isInstanceOf(proposedValue, Entity) ? proposedValue : this.resolve(proposedValue)
 
-            if (value && this.hasBucket() && isInstanceOf(value, Entity)) {
+            if (value && this.graph && this.hasBucket() && isInstanceOf(value, Entity)) {
                 this.getBucket(value).addToBucket(this.self)
             }
 
@@ -123,7 +124,7 @@ export class ReferenceAtom extends Mixin(
 
         enterGraph (graph : ChronoGraph) {
             if (this.hasBucket()) {
-                const value     = this.immutable.read()
+                const value     = this.proposedValue !== undefined ? this.proposedValue : this.immutable.read()
 
                 if (value instanceof Entity) {
                     this.getBucket(value).addToBucket(this.self)
@@ -147,16 +148,20 @@ export class ReferenceAtom extends Mixin(
         }
 
 
-        write (value : Entity) {
+        writeConfirmedDifferentValue (value : Entity) {
             if (this.hasBucket()) {
                 const previousValue     = this.immutable.read()
 
                 if (previousValue instanceof Entity) {
                     this.getBucket(previousValue).removeFromBucket(this.self)
                 }
+
+                if (value instanceof Entity) {
+                    this.getBucket(value).state = AtomState.Stale
+                }
             }
 
-            super.write(value)
+            super.writeConfirmedDifferentValue(value)
         }
     }
 

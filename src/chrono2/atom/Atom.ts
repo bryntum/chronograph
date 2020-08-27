@@ -10,17 +10,8 @@ import { globalContext } from "../GlobalContext.js"
 import { ChronoGraph } from "../graph/Graph.js"
 import { Iteration } from "../graph/Iteration.js"
 import { chronoReference, ChronoReference, Identifiable } from "./Identifiable.js"
-import { DefaultMetaSync, Meta } from "./Meta.js"
+import { AtomCalculationPriorityLevel, DefaultMetaSync, Meta } from "./Meta.js"
 import { Quark } from "./Quark.js"
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export enum AtomCalculationPriorityLevel {
-    UserInput                               = 0,
-    DependsOnlyOnUserInput                  = 1,
-    DependsOnlyOnDependsOnlyOnUserInput     = 2,
-    DependsOnSelfKind                       = 3
-}
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -221,6 +212,16 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
     async readAsync () : Promise<V> {
         return this.read()
+    }
+
+
+    get value () : V {
+        return this.read()
+    }
+
+
+    get valueAsync () : Promise<V> {
+        return this.readAsync()
     }
 
 

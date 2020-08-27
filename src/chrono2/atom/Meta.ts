@@ -1,8 +1,15 @@
 import { Base } from "../../class/Base.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { Equality, strictEquality } from "../../util/Helpers.js"
-import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
-import { EffectHandler } from "../Effect.js"
+import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
+
+//---------------------------------------------------------------------------------------------------------------------
+export enum AtomCalculationPriorityLevel {
+    UserInput                               = 0,
+    DependsOnlyOnUserInput                  = 1,
+    DependsOnlyOnDependsOnlyOnUserInput     = 2,
+    DependsOnSelfKind                       = 3
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
@@ -34,7 +41,7 @@ export class Meta extends Base {
      */
     lazy                : boolean   = true
 
-    level               : number    = 0
+    level               : AtomCalculationPriorityLevel    = AtomCalculationPriorityLevel.DependsOnSelfKind
 
     /**
      * Whether this identifier is sync (`true`) or generator-based (`false`). Default value is `true`.

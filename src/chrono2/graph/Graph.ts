@@ -359,7 +359,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     get dirty () : boolean {
-        return !this.currentTransaction.frozen
+        return globalContext.stack.size > 0
     }
 
 
