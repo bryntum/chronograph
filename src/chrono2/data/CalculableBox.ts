@@ -1,5 +1,6 @@
 import { AtomCalculationPriorityLevel, AtomState } from "../atom/Atom.js"
 import { getNextRevision } from "../atom/Node.js"
+import { calculateLowerStackLevelsSync } from "../calculation/LeveledSync.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
@@ -258,11 +259,15 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         let newValue : V            = undefined
 
+        const onEffectSync          = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
+
         do {
+            calculateLowerStackLevelsSync(onEffectSync, globalContext.stack, this)
+
             this.beforeCalculation()
             this.iterationResult    = calculationStartedConstant
 
-            newValue                = this.calculation.call(this.context, this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync)
+            newValue                = this.calculation.call(this.context, onEffectSync)
 
             // the calculation starts in the `Calculating` state and should end up in the same, otherwise
             // if for example it is "PossiblyStale" or "Stale" - that means

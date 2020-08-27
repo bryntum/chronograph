@@ -9,6 +9,21 @@ import { globalContext } from "../GlobalContext.js"
 // The `Gen` and `Sync` files are separated intentionally, to be able to get
 // their diff and synchronize changes if needed
 
+//---------------------------------------------------------------------------------------------------------------------
+export const calculateLowerStackLevelsGen = function* (
+    onEffect : EffectHandler<CalculationModeGen>, stack : LeveledQueue<Atom>, atom : Atom
+) {
+    const uniqable          = getUniqable()
+
+    while (stack.lowestLevelIndex < atom.level) {
+        const levelIndex    = stack.lowestLevelIndex
+
+        yield* calculateAtomsQueueLevelGen(onEffect, uniqable, stack, stack.levels[ levelIndex ], levelIndex, false)
+
+        stack.refreshLowestLevel()
+    }
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const calculateAtomsQueueGen = function* (
