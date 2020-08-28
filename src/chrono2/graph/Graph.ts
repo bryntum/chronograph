@@ -12,7 +12,7 @@ import {
     Effect,
     EffectHandler, HasProposedValueEffect, HasProposedValueSymbol,
     PreviousValueOfEffect,
-    PreviousValueOfSymbol,
+    PreviousValueOfSymbol, ProposedArgumentsOfEffect, ProposedArgumentsOfSymbol,
     ProposedOrPreviousSymbol, ProposedOrPreviousValueOfEffect, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol,
     RejectEffect,
     runGeneratorAsyncWithEffect
@@ -689,6 +689,11 @@ export class ChronoGraph extends Base implements Owner {
 
     [ProposedValueOfSymbol] (effect : ProposedValueOfEffect) : unknown {
         return effect.atom.readProposed()
+    }
+
+
+    [ProposedArgumentsOfSymbol] (effect : ProposedArgumentsOfEffect) : unknown {
+        return effect.atom.readProposedArgs()
     }
 
 

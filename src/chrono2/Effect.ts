@@ -4,10 +4,6 @@ import { Atom } from "./atom/Atom.js"
 import { CalculationMode, CalculationModeGen, CalculationModeSync } from "./CalculationMode.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-// export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
-
-
-//---------------------------------------------------------------------------------------------------------------------
 /**
  * This is a calculation context type. It is represented with a function, that receives some value (effect) and returns the result
  * (effect processing results). Can be also thought as "effect handler".
@@ -25,26 +21,6 @@ export type EffectHandler<Mode extends CalculationMode> =
             //     (effect : unknown) => Promise<any>
             //     :
                 never
-
-
-// // //---------------------------------------------------------------------------------------------------------------------
-// // export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends any[]> (
-// //     effect      : CalculationContext<YieldT>,
-// //     func        : (...args : ArgsT) => Generator<YieldT, ResultT, any>,
-// //     args        : ArgsT,
-// //     scope?      : any
-// // ) : ResultT
-// // {
-// //     const gen       = func.apply(scope || null, args)
-// //
-// //     let iteration   = gen.next()
-// //
-// //     while (!iteration.done) {
-// //         iteration   = gen.next(effect(iteration.value))
-// //     }
-// //
-// //     return iteration.value
-// // }
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -177,74 +153,17 @@ export class RejectEffect<Reason> extends Effect {
     reason          : Reason
 }
 
-// /**
-//  * This is constructor for `RejectEffect` class. If this effect will be yielded during computation the current transaction
-//  * will be [[ChronoGraph.reject|rejected]].
-//  *
-//  * @param reason
-//  * @constructor
-//  */
-// export const Reject = <Reason>(reason : Reason) : RejectEffect<Reason> => RejectEffect.new({ reason }) as RejectEffect<Reason>
-//
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const TransactionSymbol    = Symbol('TransactionSymbol')
-//
-// export const GetTransaction : Effect = Effect.new({ handler : TransactionSymbol })
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const OwnQuarkSymbol    = Symbol('OwnQuarkSymbol')
-//
-// export const OwnQuark : Effect = Effect.new({ handler : OwnQuarkSymbol })
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const OwnIdentifierSymbol    = Symbol('OwnIdentifierSymbol')
-//
-// export const OwnIdentifier : Effect = Effect.new({ handler : OwnIdentifierSymbol })
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const WriteSymbol    = Symbol('WriteSymbol')
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export type WriteInfo = {
-//     identifier      : Identifier
-//     proposedArgs    : [ any, ...any[] ]
-// }
-//
-//
-// export class WriteEffect extends Effect implements WriteInfo {
-//     handler                 : symbol    = WriteSymbol
-//
-//     identifier              : Identifier
-//     proposedArgs            : [ any, ...any[] ]
-//
-//     @prototypeValue(false)
-//     pure                    : boolean
-// }
-//
-//
-// export const Write = (identifier : Identifier, proposedValue : any, ...proposedArgs : any[]) : WriteEffect =>
-//     WriteEffect.new({ identifier, proposedArgs : [ proposedValue, ...proposedArgs ] })
-//
-//
-// export const WriteSeveralSymbol    = Symbol('WriteSeveralSymbol')
-//
-// export class WriteSeveralEffect extends Effect {
-//     handler                 : symbol    = WriteSeveralSymbol
-//
-//     writes                  : WriteInfo[]
-//
-//     @prototypeValue(false)
-//     pure                    : boolean
-// }
-//
-// export const WriteSeveral = (writes : WriteInfo[]) : WriteSeveralEffect => WriteSeveralEffect.new({ writes })
-//
-//
+/**
+ * This is constructor for `RejectEffect` class. If this effect will be yielded during computation the current transaction
+ * will be [[ChronoGraph.reject|rejected]].
+ *
+ * @param reason
+ * @constructor
+ */
+export const Reject = <Reason>(reason : Reason) : RejectEffect<Reason> => RejectEffect.new({ reason }) as RejectEffect<Reason>
+
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export const PreviousValueOfSymbol    = Symbol('PreviousValueOfSymbol')
 
@@ -293,42 +212,18 @@ export class ProposedOrPreviousValueOfEffect extends Effect {
 export const ProposedOrPreviousValueOf = (atom : Atom) : ProposedOrPreviousValueOfEffect => ProposedOrPreviousValueOfEffect.new({ atom })
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export const ProposedArgumentsOfSymbol    = Symbol('ProposedArgumentsOfSymbol')
-//
-// export class ProposedArgumentsOfEffect extends Effect {
-//     handler         : symbol    = ProposedArgumentsOfSymbol
-//
-//     identifier      : Identifier
-// }
-//
-// export const ProposedArgumentsOf = (identifier : Identifier) : ProposedArgumentsOfEffect => ProposedArgumentsOfEffect.new({ identifier })
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const UnsafeProposedOrPreviousValueOfSymbol    = Symbol('UnsafeProposedOrPreviousValueOfSymbol')
-//
-// export class UnsafeProposedOrPreviousValueOfEffect extends Effect {
-//     handler         : symbol    = UnsafeProposedOrPreviousValueOfSymbol
-//
-//     identifier      : Identifier
-// }
-//
-// export const UnsafeProposedOrPreviousValueOf = (identifier : Identifier) : UnsafeProposedOrPreviousValueOfEffect => UnsafeProposedOrPreviousValueOfEffect.new({ identifier })
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const UnsafePreviousValueOfSymbol    = Symbol('UnsafePreviousValueOfSymbol')
-//
-// export class UnsafePreviousValueOfEffect extends Effect {
-//     handler         : symbol    = UnsafePreviousValueOfSymbol
-//
-//     identifier      : Identifier
-// }
-//
-// export const UnsafePreviousValueOf = (identifier : Identifier) : UnsafePreviousValueOfEffect => UnsafePreviousValueOfEffect.new({ identifier })
-//
-//
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedArgumentsOfSymbol    = Symbol('ProposedArgumentsOfSymbol')
+
+export class ProposedArgumentsOfEffect extends Effect {
+    handler         : symbol    = ProposedArgumentsOfSymbol
+
+    atom            : Atom
+}
+
+export const ProposedArgumentsOf = (atom : Atom) : ProposedArgumentsOfEffect => ProposedArgumentsOfEffect.new({ atom })
+
+
 // //---------------------------------------------------------------------------------------------------------------------
 // export type ProgressNotificationEffect = {
 //     total           : number

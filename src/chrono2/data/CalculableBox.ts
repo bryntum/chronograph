@@ -104,12 +104,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
     resetCalculation () {
         this.proposedValue          = undefined
+        this.proposedArgs           = undefined
 
         this.iterationResult        = undefined
     }
 
 
     proposedValue               : V             = undefined
+    proposedArgs                : unknown[]     = undefined
     usedProposedOrPrevious      : boolean       = false
 
 
@@ -128,17 +130,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
     }
 
 
-    // synchronously read the latest available value, either proposed by user or stale from previous iteration
+    // synchronously read the latest available value, either proposed by user or possibly stale from previous iteration
     // (you should know what you are doing)
     readProposedOrLatest () : V {
-        const activeAtom    = globalContext.activeAtom
-        const self          = this.checkoutSelf()
+        const self          = this.onReadingPast()
 
-        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
+        const proposedValue = self.readProposedInternal()
 
-        if (self.proposedValue !== undefined) return self.proposedValue
-
-        return self.immutable.read()
+        return proposedValue !== undefined ? proposedValue : self.immutable.read()
     }
 
 
@@ -158,6 +157,13 @@ export class CalculableBox<V = unknown> extends Box<V> {
     }
 
 
+    readProposedArgs () : unknown[] {
+        const self          = this.onReadingPast()
+
+        return self.readProposedArgsInternal()
+    }
+
+
     readPrevious () : V {
         const self          = this.onReadingPast()
 
@@ -170,6 +176,15 @@ export class CalculableBox<V = unknown> extends Box<V> {
             return this.immutable.proposedValue
         } else {
             return this.proposedValue
+        }
+    }
+
+
+    readProposedArgsInternal () : unknown[] {
+        if (this.state === AtomState.UpToDate) {
+            return this.immutable.proposedArgs
+        } else {
+            return this.proposedArgs
         }
     }
 
@@ -229,6 +244,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         this.immutableForWrite().write(newValue)
 
         this.immutable.proposedValue            = this.proposedValue
+        this.immutable.proposedArgs             = this.proposedArgs
         this.immutable.usedProposedOrPrevious   = this.usedProposedOrPrevious
 
         if (this.usedProposedOrPrevious) {
@@ -302,12 +318,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
     }
 
 
-    write (value : V) {
+    write (value : V, ...args : unknown[]) {
         if (value === undefined) value = null
 
         if (this.proposedValue === undefined) {
             // still update the `proposedValue` to indicate the user input?
             this.proposedValue  = value
+
+            if (args.length) this.proposedArgs = args
 
             // ignore the write of the same value? what about `keepIfPossible` => `pin`
             if (this.equality(this.immutable.read(), value)) return

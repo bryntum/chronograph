@@ -19,6 +19,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
     usedProposedOrPrevious  : boolean           = false
 
     proposedValue           : V                 = undefined
+    proposedArgs            : unknown[]         = undefined
 
     // if the newly calculated value is the same as previous - this property is
     // not updated, otherwise it is set to `revision`

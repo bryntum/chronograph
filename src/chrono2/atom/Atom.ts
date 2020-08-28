@@ -235,6 +235,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    readProposedArgs () : unknown[] {
+        throw new Error("Abstract method")
+    }
+
+
     readPrevious () : V {
         throw new Error("Abstract method")
     }
