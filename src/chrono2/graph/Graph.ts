@@ -14,7 +14,7 @@ import {
     PreviousValueOfEffect,
     PreviousValueOfSymbol, ProposedArgumentsOfEffect, ProposedArgumentsOfSymbol,
     ProposedOrPreviousSymbol, ProposedOrPreviousValueOfEffect, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol,
-    RejectEffect,
+    RejectEffect, RejectSymbol,
     runGeneratorAsyncWithEffect
 } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
@@ -398,7 +398,7 @@ export class ChronoGraph extends Base implements Owner {
         const trasaction    = this.currentTransaction
         const stack         = globalContext.stack
 
-        while (stack.size && !trasaction.isRejected) {
+        while (stack.size && !trasaction.rejectedWith) {
             await runGeneratorAsyncWithEffect(
                 this.effectHandlerAsync,
                 calculateAtomsQueueGen,
@@ -419,8 +419,7 @@ export class ChronoGraph extends Base implements Owner {
 
         this.afterCommit()
 
-        // TODO
-        return trasaction.isRejected ? { rejectedWith : null } : { rejectedWith : null }
+        return { rejectedWith : trasaction.rejectedWith }
     }
 
 
@@ -430,7 +429,7 @@ export class ChronoGraph extends Base implements Owner {
         const trasaction    = this.currentTransaction
         const stack         = globalContext.stack
 
-        while (stack.size && !trasaction.isRejected) {
+        while (stack.size && !trasaction.rejectedWith) {
             calculateAtomsQueueSync(this.effectHandlerSync, stack, null, -1)
 
             this.finalizeCommit()
@@ -438,8 +437,7 @@ export class ChronoGraph extends Base implements Owner {
 
         this.afterCommit()
 
-        // TODO
-        return trasaction.isRejected ? { rejectedWith : null } : { rejectedWith : null }
+        return { rejectedWith : trasaction.rejectedWith }
     }
 
 
@@ -464,12 +462,11 @@ export class ChronoGraph extends Base implements Owner {
         this.sweep()
     }
 
-
-    reject () {
+    reject<Reason> (reason? : Reason) {
         // nothing to reject
         if (this.frozen || this.immutable.frozen) return
 
-        this.immutable.reject()
+        this.immutable.reject(RejectEffect.new({ reason }))
 
         this.undoTo(this.immutable, this.immutable.previous)
 
@@ -674,6 +671,11 @@ export class ChronoGraph extends Base implements Owner {
 
             atom.identity.uniqableBox   = undefined
         }
+    }
+
+
+    [RejectSymbol] (effect : RejectEffect<unknown>) : unknown {
+        return globalContext.activeAtom.graph?.reject(effect.reason)
     }
 
 

@@ -1,6 +1,7 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "../data/Immutable.js"
+import { RejectEffect } from "../Effect.js"
 import { ChronoGraph } from "./Graph.js"
 import { Iteration } from "./Iteration.js"
 
@@ -10,7 +11,7 @@ let transactionIdSequence : number = 0
 export class Transaction extends Owner implements Immutable {
     name            : string            = `transaction#${transactionIdSequence++}`
 
-    isRejected      : boolean           = false
+    rejectedWith    : RejectEffect<unknown> = undefined
 
     //region Transaction as Owner
     $immutable      : Iteration         = undefined
@@ -111,8 +112,8 @@ export class Transaction extends Owner implements Immutable {
     }
 
 
-    reject () {
-        this.isRejected     = true
+    reject (rejectEffect : RejectEffect<unknown>) {
+        this.rejectedWith     = rejectEffect
 
         this.forEveryIteration(iteration => iteration.isRejected = true)
     }

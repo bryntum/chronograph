@@ -1,6 +1,8 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { Reject } from "../../src/chrono2/Effect.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 
 declare const StartTest : any
@@ -367,36 +369,40 @@ StartTest(t => {
     })
 
 
-    // t.it('Should be able to reject transaction using effect', async t => {
-    //     const graph : ChronoGraph       = ChronoGraph.new()
-    //
-    //     const i1        = graph.variableNamed('i1', 0)
-    //     const i2        = graph.variableNamed('i2', 10)
-    //
-    //     const c1        = graph.identifierNamed('c1', function* () {
-    //         const sum : number = (yield i1) + (yield i2)
-    //
-    //         if (sum > 10) yield Reject('Too big')
-    //
-    //         return sum
-    //     })
-    //
-    //     graph.commit()
-    //
-    //     // ----------------
-    //     const nodes             = [ i1, i2, c1 ]
-    //
-    //     t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10 ], "Correct result calculated #1")
-    //
-    //     // ----------------
-    //     graph.write(i1, 8)
-    //     graph.write(i2, 7)
-    //
-    //     const result = graph.commit()
-    //
-    //     t.like(result.rejectedWith.reason, /Too big/)
-    //
-    //     t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 10 ], "Correct result calculated #1")
-    // })
+    t.it('Should be able to reject transaction using effect', async t => {
+        const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
+        const i1        = new Box(0, 'i1')
+        const i2        = new Box(10, 'i2')
+
+        const c1        = new CalculableBoxGen({
+            lazy        : false,
+            name : 'c1', calculation : function* () {
+                const sum : number = (yield i1) + (yield i2)
+
+                if (sum > 10) yield Reject('Too big')
+
+                return sum
+            }
+        })
+
+        graph.addAtoms([ i1, i2, c1 ])
+
+        graph.commit()
+
+        // ----------------
+        const nodes             = [ i1, i2, c1 ]
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 10 ], "Correct result calculated #1")
+
+        // ----------------
+        i1.write(8)
+        i2.write(7)
+
+        const result = graph.commit()
+
+        t.like(result.rejectedWith.reason, /Too big/)
+
+        t.isDeeply(nodes.map(node => node.read()), [ 0, 10, 10 ], "Correct result calculated #2")
+    })
 })
