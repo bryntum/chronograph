@@ -8,7 +8,15 @@ import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
 import { CalculationMode, CalculationModeGen, CalculationModeSync } from "../CalculationMode.js"
 import { ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
-import { Effect, EffectHandler, ProposedOrPreviousSymbol, RejectEffect, runGeneratorAsyncWithEffect } from "../Effect.js"
+import {
+    Effect,
+    EffectHandler, HasProposedValueEffect, HasProposedValueSymbol,
+    PreviousValueOfEffect,
+    PreviousValueOfSymbol,
+    ProposedOrPreviousSymbol, ProposedValueOfEffect, ProposedValueOfSymbol,
+    RejectEffect,
+    runGeneratorAsyncWithEffect
+} from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
 import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
@@ -573,7 +581,7 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    addAtom (atom : Atom) {
+    addAtom<A extends Atom> (atom : A) : A {
         atom.enterGraph(this)
 
         this.immutableForWrite().addQuark(atom.immutable)
@@ -581,6 +589,8 @@ export class ChronoGraph extends Base implements Owner {
         if (!atom.lazy) this.addPossiblyStaleStrictAtomToTransaction(atom)
 
         if (this.autoCommit) this.scheduleAutoCommit()
+
+        return atom
     }
 
     addAtoms (atoms : Atom[]) {
@@ -669,5 +679,20 @@ export class ChronoGraph extends Base implements Owner {
 
     [ProposedOrPreviousSymbol] (effect : Effect) : unknown {
         return globalContext.activeAtom.readProposedOrPrevious()
+    }
+
+
+    [PreviousValueOfSymbol] (effect : PreviousValueOfEffect) : unknown {
+        return effect.atom.readPrevious()
+    }
+
+
+    [ProposedValueOfSymbol] (effect : ProposedValueOfEffect) : unknown {
+        return effect.atom.readProposed()
+    }
+
+
+    [HasProposedValueSymbol] (effect : HasProposedValueEffect) : any {
+        return effect.atom.readProposed() !== undefined
     }
 }

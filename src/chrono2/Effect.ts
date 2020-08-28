@@ -1,5 +1,6 @@
 import { Base } from "../class/Base.js"
 import { prototypeValue } from "../util/Helpers.js"
+import { Atom } from "./atom/Atom.js"
 import { CalculationMode, CalculationModeGen, CalculationModeSync } from "./CalculationMode.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -244,42 +245,42 @@ export class RejectEffect<Reason> extends Effect {
 // export const WriteSeveral = (writes : WriteInfo[]) : WriteSeveralEffect => WriteSeveralEffect.new({ writes })
 //
 //
-// //---------------------------------------------------------------------------------------------------------------------
-// export const PreviousValueOfSymbol    = Symbol('PreviousValueOfSymbol')
-//
-// export class PreviousValueOfEffect extends Effect {
-//     handler         : symbol    = PreviousValueOfSymbol
-//
-//     identifier      : Identifier
-// }
-//
-// export const PreviousValueOf = (identifier : Identifier) : PreviousValueOfEffect => PreviousValueOfEffect.new({ identifier })
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const ProposedValueOfSymbol    = Symbol('ProposedValueOfSymbol')
-//
-// export class ProposedValueOfEffect extends Effect {
-//     handler         : symbol    = ProposedValueOfSymbol
-//
-//     identifier      : Identifier
-// }
-//
-// export const ProposedValueOf = (identifier : Identifier) : ProposedValueOfEffect => ProposedValueOfEffect.new({ identifier })
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const HasProposedValueSymbol    = Symbol('HasProposedValueSymbol')
-//
-// export class HasProposedValueEffect extends Effect {
-//     handler         : symbol    = HasProposedValueSymbol
-//
-//     identifier      : Identifier
-// }
-//
-// export const HasProposedValue = (identifier : Identifier) : HasProposedValueEffect => HasProposedValueEffect.new({ identifier })
-//
-//
+//---------------------------------------------------------------------------------------------------------------------
+export const PreviousValueOfSymbol    = Symbol('PreviousValueOfSymbol')
+
+export class PreviousValueOfEffect extends Effect {
+    handler         : symbol    = PreviousValueOfSymbol
+
+    atom            : Atom
+}
+
+export const PreviousValueOf = (atom : Atom) : PreviousValueOfEffect => PreviousValueOfEffect.new({ atom })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedValueOfSymbol    = Symbol('ProposedValueOfSymbol')
+
+export class ProposedValueOfEffect extends Effect {
+    handler         : symbol    = ProposedValueOfSymbol
+
+    atom            : Atom
+}
+
+export const ProposedValueOf = (atom : Atom) : ProposedValueOfEffect => ProposedValueOfEffect.new({ atom })
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const HasProposedValueSymbol    = Symbol('HasProposedValueSymbol')
+
+export class HasProposedValueEffect extends Effect {
+    handler         : symbol    = HasProposedValueSymbol
+
+    atom            : Atom
+}
+
+export const HasProposedValue = (atom : Atom) : HasProposedValueEffect => HasProposedValueEffect.new({ atom })
+
+
 // //---------------------------------------------------------------------------------------------------------------------
 // export const ProposedOrPreviousValueOfSymbol    = Symbol('ProposedOrPreviousValueOfSymbol')
 //

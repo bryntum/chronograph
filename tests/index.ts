@@ -53,6 +53,7 @@ project.start(
             'chrono2/calculable_box_mixed.t.js',
             'chrono2/calculable_box_proposed_value.t.js',
             'chrono2/calculable_box_lazyness.t.js',
+            'chrono2/calculable_box_reading_past.t.js',
             'chrono2/calculable_box_propagation.t.js',
             'chrono2/calculable_box_write_during_calculation.t.js',
             'chrono2/calculable_box_cycle.t.js',
@@ -81,7 +82,8 @@ project.start(
         items       : [
             'replica2/replica.t.js',
             'replica2/cycle_info.t.js',
-            'replica2/reference.t.js'
+            'replica2/reference.t.js',
+            'replica2/cycle_dispatcher_example.t.js'
         ]
     },
     {

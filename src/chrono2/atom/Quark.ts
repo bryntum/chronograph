@@ -8,26 +8,27 @@ import { Node } from "./Node.js"
 
 
 export class Quark<V = unknown> extends Node implements Immutable {
-    owner       : Atom<V>       = undefined
+    owner                   : Atom<V>           = undefined
 
-    previous    : this          = undefined
+    previous                : this              = undefined
 
-    frozen      : boolean       = false
+    frozen                  : boolean           = false
 
-    value       : V             = undefined
+    value                   : V                 = undefined
 
-    usedProposedOrPrevious  : boolean   = false
-    // TODO update the comment
-    // indicates that atom's value has been calculated into the same value
-    // in such case, the outgoings won't be triggered and
-    // one need to dive deeper for full history
+    usedProposedOrPrevious  : boolean           = false
+
+    proposedValue           : V                 = undefined
+
+    // if the newly calculated value is the same as previous - this property is
+    // not updated, otherwise it is set to `revision`
+    // this allows us to track the series of the same-value quarks, which does
+    // not propagate staleness
     valueRevision           : number            = MIN_SMI
 
-    iteration       : Iteration = undefined
+    iteration               : Iteration         = undefined
 
-    state           : AtomState = AtomState.Empty
-
-    calculationRevision         : number        = MIN_SMI
+    state                   : AtomState         = AtomState.Empty
 
 
     hasValue () : boolean {
@@ -80,11 +81,11 @@ export class Quark<V = unknown> extends Node implements Immutable {
     createNext (owner? : Atom<V>) : this {
         this.freeze()
 
-        const self      = this.constructor as AnyConstructor<this, typeof Immutable>
-        const next      = new self()
+        const self          = this.constructor as AnyConstructor<this, typeof Immutable>
+        const next          = new self()
 
-        next.previous   = this
-        next.owner      = owner || this.owner
+        next.previous       = this
+        next.owner          = owner || this.owner
 
         next.revision       = this.revision
         next.valueRevision  = this.valueRevision

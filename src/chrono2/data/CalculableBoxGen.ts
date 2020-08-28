@@ -50,6 +50,8 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 
 
     resetCalculation () {
+        this.proposedValue          = undefined
+
         this.iterationResult        = undefined
         this.iterator               = undefined
         this.iterationNumber        = -1

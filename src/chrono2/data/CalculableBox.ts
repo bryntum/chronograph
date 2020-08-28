@@ -75,9 +75,9 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
 
     beforeCalculation () {
-        this.immutableForWrite().$incoming      = undefined
-        this.immutable.usedProposedOrPrevious   = false
+        this.usedProposedOrPrevious             = false
 
+        this.immutableForWrite().$incoming      = undefined
         this.immutable.revision                 = getNextRevision()
 
         this.state                              = AtomState.Calculating
@@ -103,11 +103,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
 
     resetCalculation () {
+        this.proposedValue          = undefined
+
         this.iterationResult        = undefined
     }
 
 
-    proposedValue           : V     = undefined
+    proposedValue               : V             = undefined
+    usedProposedOrPrevious      : boolean       = false
 
 
     onReadingPast () : this {
@@ -115,9 +118,9 @@ export class CalculableBox<V = unknown> extends Box<V> {
         const self          = this.checkoutSelf()
 
         if (activeAtom) {
-            if (activeAtom === self)
-                self.immutableForWrite().usedProposedOrPrevious = true
-            else
+            if (activeAtom === self) {
+                self.usedProposedOrPrevious = true
+            } else
                 self.immutableForWrite().addOutgoing(activeAtom.immutable)
         }
 
@@ -142,9 +145,16 @@ export class CalculableBox<V = unknown> extends Box<V> {
     readProposedOrPrevious () : V {
         const self          = this.onReadingPast()
 
-        if (self.proposedValue !== undefined) return self.proposedValue
+        const proposedValue = self.readProposedInternal()
 
-        return self.readPreviousInternal()
+        return proposedValue !== undefined ? proposedValue : self.readPreviousInternal()
+    }
+
+
+    readProposed () : V {
+        const self          = this.onReadingPast()
+
+        return self.readProposedInternal()
     }
 
 
@@ -152,6 +162,15 @@ export class CalculableBox<V = unknown> extends Box<V> {
         const self          = this.onReadingPast()
 
         return self.readPreviousInternal()
+    }
+
+
+    readProposedInternal () : V {
+        if (this.state === AtomState.UpToDate) {
+            return this.immutable.proposedValue
+        } else {
+            return this.proposedValue
+        }
     }
 
 
@@ -195,8 +214,6 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
 
     updateValue (newValue : V) {
-        this.resetCalculation()
-
         if (newValue === undefined) newValue = null
 
         const previous              = this.immutable.readRaw()
@@ -211,13 +228,16 @@ export class CalculableBox<V = unknown> extends Box<V> {
         // only write the value, revision has been already updated in the `beforeCalculation`
         this.immutableForWrite().write(newValue)
 
-        if (this.immutable.usedProposedOrPrevious) {
+        this.immutable.proposedValue            = this.proposedValue
+        this.immutable.usedProposedOrPrevious   = this.usedProposedOrPrevious
+
+        if (this.usedProposedOrPrevious) {
             this.state              = this.equality(newValue, this.proposedValue) ? AtomState.UpToDate : AtomState.Stale
         } else {
             this.state              = AtomState.UpToDate
         }
 
-        this.proposedValue          = undefined
+        this.resetCalculation()
     }
 
 
