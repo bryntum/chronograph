@@ -281,18 +281,18 @@ export class HasProposedValueEffect extends Effect {
 export const HasProposedValue = (atom : Atom) : HasProposedValueEffect => HasProposedValueEffect.new({ atom })
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export const ProposedOrPreviousValueOfSymbol    = Symbol('ProposedOrPreviousValueOfSymbol')
-//
-// export class ProposedOrPreviousValueOfEffect extends Effect {
-//     handler         : symbol    = ProposedOrPreviousValueOfSymbol
-//
-//     identifier      : Identifier
-// }
-//
-// export const ProposedOrPreviousValueOf = (identifier : Identifier) : ProposedOrPreviousValueOfEffect => ProposedOrPreviousValueOfEffect.new({ identifier })
-//
-//
+//---------------------------------------------------------------------------------------------------------------------
+export const ProposedOrPreviousValueOfSymbol    = Symbol('ProposedOrPreviousValueOfSymbol')
+
+export class ProposedOrPreviousValueOfEffect extends Effect {
+    handler         : symbol    = ProposedOrPreviousValueOfSymbol
+
+    atom            : Atom
+}
+
+export const ProposedOrPreviousValueOf = (atom : Atom) : ProposedOrPreviousValueOfEffect => ProposedOrPreviousValueOfEffect.new({ atom })
+
+
 // //---------------------------------------------------------------------------------------------------------------------
 // export const ProposedArgumentsOfSymbol    = Symbol('ProposedArgumentsOfSymbol')
 //

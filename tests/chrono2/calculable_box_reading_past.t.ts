@@ -1,7 +1,7 @@
 import { CalculationModeSync } from "../../src/chrono2/CalculationMode.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
-import { EffectHandler, PreviousValueOf, ProposedOrPrevious, ProposedValueOf } from "../../src/chrono2/Effect.js"
+import { EffectHandler, PreviousValueOf, ProposedOrPrevious, ProposedOrPreviousValueOf, ProposedValueOf } from "../../src/chrono2/Effect.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 
 declare const StartTest : any
@@ -87,7 +87,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should be able to read the past of the identifier which is being listened - ProposedValueOf', async t => {
+    t.it('Should be able to read the past of the identifier which is being listened - ProposedValueOf', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
         let result
@@ -125,122 +125,122 @@ StartTest(t => {
 
         t.expect(spy).toHaveBeenCalled(1)
 
-        // //----------------
-        // spy.reset()
-        //
-        // sourceMode.write('pure')
-        //
-        // graph.commit()
-        //
-        // t.is(source.read(), 1, 'Source value correct #2')
-        // t.isStrict(listener.read(), null, 'Listener value correct #2')
-        // t.isStrict(result, undefined, 'Listener value correct #2')
-        //
-        // t.expect(spy).toHaveBeenCalled(1)
-        //
-        // //----------------
-        // spy.reset()
-        //
-        // var1.write(1)
-        //
-        // graph.commit()
-        //
-        // t.is(source.read(), 2, 'Source value correct #3')
-        // t.isStrict(listener.read(), null, 'Listener value correct #2')
-        // t.isStrict(result, undefined, 'Listener value correct #2')
-        //
-        // t.expect(spy).toHaveBeenCalled(1)
-        //
-        // //----------------
-        // spy.reset()
-        //
-        // sourceMode.write('proposed')
-        // source.write(14)
-        //
-        // graph.commit()
-        //
-        // t.is(source.read(), 14, 'Source value correct #4')
-        // t.is(listener.read(), 14, 'Listener value correct #4')
-        //
-        // t.expect(spy).toHaveBeenCalled(1)
+        //----------------
+        spy.reset()
+
+        sourceMode.write('pure')
+
+        graph.commit()
+
+        t.is(source.read(), 1, 'Source value correct #2')
+        t.isStrict(listener.read(), null, 'Listener value correct #2')
+        t.isStrict(result, undefined, 'Listener value correct #2')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //----------------
+        spy.reset()
+
+        var1.write(1)
+
+        graph.commit()
+
+        t.is(source.read(), 2, 'Source value correct #3')
+        t.isStrict(listener.read(), null, 'Listener value correct #2')
+        t.isStrict(result, undefined, 'Listener value correct #2')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //----------------
+        spy.reset()
+
+        sourceMode.write('proposed')
+        source.write(14)
+
+        graph.commit()
+
+        t.is(source.read(), 14, 'Source value correct #4')
+        t.is(listener.read(), 14, 'Listener value correct #4')
+
+        t.expect(spy).toHaveBeenCalled(1)
     })
 
 
-    // t.it('Should be able to read the past of the identifier which is being listened - ProposedOrPreviousValueOf', async t => {
-    //     const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
-    //
-    //     const listener      = graph.addAtom(new CalculableBox({
-    //         calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
-    //             return YIELD(ProposedOrPreviousValueOf(source))
-    //         }
-    //     }))
-    //
-    //     const var1          = new Box(0)
-    //
-    //     const sourceMode    = new Box('proposed')
-    //
-    //     const source        = graph.addAtom(new CalculableBox({
-    //         calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
-    //             const mode : string     = YIELD(sourceMode)
-    //
-    //             if (mode === 'proposed')
-    //                 return YIELD(ProposedOrPrevious)
-    //             else
-    //                 return YIELD(var1) + 1
-    //         }
-    //     }))
-    //
-    //     const spy           = t.spyOn(listener, 'calculation')
-    //
-    //     //----------------
-    //     source.write(10)
-    //
-    //     graph.commit()
-    //
-    //     t.is(source.read(), 10, 'Source value correct #1')
-    //     t.is(listener.read(), 10, 'Listener value correct #1')
-    //
-    //     t.expect(spy).toHaveBeenCalled(1)
-    //
-    //     //----------------
-    //     spy.reset()
-    //
-    //     sourceMode.write('pure')
-    //
-    //     graph.commit()
-    //
-    //     t.is(source.read(), 1, 'Source value correct #2')
-    //     t.is(listener.read(), 10, 'Listener value correct #2')
-    //
-    //     t.expect(spy).toHaveBeenCalled(1)
-    //
-    //     //----------------
-    //     spy.reset()
-    //
-    //     var1.write(1)
-    //
-    //     graph.commit()
-    //
-    //     t.is(source.read(), 2, 'Source value correct #3')
-    //     t.is(listener.read(), 1, 'Listener value correct #3')
-    //
-    //     t.expect(spy).toHaveBeenCalled(1)
-    //
-    //     //----------------
-    //     spy.reset()
-    //
-    //     sourceMode.write('proposed')
-    //     source.write(14)
-    //
-    //     graph.commit()
-    //
-    //     t.is(source.read(), 14, 'Source value correct #4')
-    //     t.is(listener.read(), 14, 'Listener value correct #4')
-    //
-    //     t.expect(spy).toHaveBeenCalled(1)
-    // })
-    //
-    //
+    t.it('Should be able to read the past of the identifier which is being listened - ProposedOrPreviousValueOf', async t => {
+        const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
+
+        const listener      = graph.addAtom(new CalculableBox({
+            calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
+                return YIELD(ProposedOrPreviousValueOf(source))
+            }
+        }))
+
+        const var1          = new Box(0)
+
+        const sourceMode    = new Box('proposed')
+
+        const source        = graph.addAtom(new CalculableBox({
+            calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
+                const mode : string     = YIELD(sourceMode)
+
+                if (mode === 'proposed')
+                    return YIELD(ProposedOrPrevious)
+                else
+                    return YIELD(var1) + 1
+            }
+        }))
+
+        const spy           = t.spyOn(listener, 'calculation')
+
+        //----------------
+        source.write(10)
+
+        graph.commit()
+
+        t.is(source.read(), 10, 'Source value correct #1')
+        t.is(listener.read(), 10, 'Listener value correct #1')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //----------------
+        spy.reset()
+
+        sourceMode.write('pure')
+
+        graph.commit()
+
+        t.is(source.read(), 1, 'Source value correct #2')
+        t.is(listener.read(), 10, 'Listener value correct #2')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //----------------
+        spy.reset()
+
+        var1.write(1)
+
+        graph.commit()
+
+        t.is(source.read(), 2, 'Source value correct #3')
+        t.is(listener.read(), 1, 'Listener value correct #3')
+
+        t.expect(spy).toHaveBeenCalled(1)
+
+        //----------------
+        spy.reset()
+
+        sourceMode.write('proposed')
+        source.write(14)
+
+        graph.commit()
+
+        t.is(source.read(), 14, 'Source value correct #4')
+        t.is(listener.read(), 14, 'Listener value correct #4')
+
+        t.expect(spy).toHaveBeenCalled(1)
+    })
+
+
     // t.it('Should be able to read the past of the identifier which is being listened - ProposedArgumentsOf', async t => {
     //     const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
     //
