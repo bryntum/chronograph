@@ -232,7 +232,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         if (newValue === undefined) newValue = null
 
         const previous              = this.immutable.readRaw()
-        const isSameValue           = this.equality(previous === undefined ? null : previous, newValue)
+        const isSameValue           = previous === undefined ? false : this.equality(previous, newValue)
 
         if (previous !== undefined && !isSameValue) this.propagateStaleShallow()
 
