@@ -10,6 +10,7 @@ import {
     ProposedValueOf
 } from "../../src/chrono2/Effect.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
+import { takeUntilExcluding } from "../../src/collection/Iterator.js"
 
 declare const StartTest : any
 
@@ -336,5 +337,35 @@ StartTest(t => {
         t.is(listener.read(), null, 'Listener value correct #4')
 
         t.expect(spy).toHaveBeenCalled(1)
+    })
+
+
+    t.iit('Reading past should not cause cycles', async t => {
+        const var1          = new Box(0)
+
+        const dispatcher    = new CalculableBox({
+            calculation () : boolean {
+                return box2.readProposed() !== undefined
+            }
+        })
+
+        const box2          = new CalculableBox({
+            calculation () : number {
+                const dispatcherValue    = dispatcher.read()
+
+                if (dispatcherValue)
+                    return box2.readProposedOrPrevious()
+                else
+                    return var1.read()
+            }
+        })
+
+        t.is(box2.read(), 0)
+        t.is(dispatcher.read(), false)
+
+        box2.write(100)
+
+        t.is(dispatcher.read(), true)
+        t.is(box2.read(), 100)
     })
 })
