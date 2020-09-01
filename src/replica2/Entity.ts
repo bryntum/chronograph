@@ -521,26 +521,15 @@ export const calculate = function <Cls extends Entity = Entity>(fieldName : KeyO
 //         writes[ fieldName ]     = propertyKey
 //     }
 // }
-//
-//
-// //---------------------------------------------------------------------------------------------------------------------
-// export const build_proposed = function (fieldName : Name) : MethodDecorator {
-//
-//     // `target` will be a prototype of the class with Entity mixin
-//     return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
-//         ensureEntityOnPrototype(target)
-//
-//         let buildProposed : Entity[ '$buildProposed' ]
-//
-//         if (!target.$buildProposed) {
-//             buildProposed        = target.$buildProposed = {} as any
-//         } else {
-//             if (!target.hasOwnProperty('$buildProposed')) {
-//                 buildProposed    = target.$buildProposed = Object.create(target.$buildProposed)
-//             } else
-//                 buildProposed    = target.$buildProposed
-//         }
-//
-//         buildProposed[ fieldName ]     = propertyKey
-//     }
-// }
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export const calculate_etalon = function (fieldName : Name) : MethodDecorator {
+
+    // `target` will be a prototype of the class with Entity mixin
+    return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
+        const entityMeta    = ensureEntityOnPrototype(target)
+
+        entityMeta.addCalculationEtalonMapping(fieldName as Name, propertyKey)
+    }
+}

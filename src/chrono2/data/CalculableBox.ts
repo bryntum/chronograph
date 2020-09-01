@@ -17,10 +17,16 @@ const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationS
 export class CalculableBox<V = unknown> extends Box<V> {
     level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnSelfKind
 
-    useEtalon       : boolean       = false
+    $calculationEtalon  : CalculationFunction<V, CalculationModeSync>        = undefined
 
-    $calculationEtalon  : CalculationFunction<V, CalculationMode>      = undefined
+    get calculationEtalon () : CalculationFunction<V, CalculationMode> {
+        if (this.$calculationEtalon !== undefined) return this.$calculationEtalon
 
+        return this.meta.calculationEtalon as any
+    }
+    set calculationEtalon (value : CalculationFunction<V, CalculationMode>) {
+        this.$calculationEtalon = value
+    }
 
     constructor (config? : Partial<CalculableBox<V>>) {
         super()
@@ -32,6 +38,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
             this.context        = config.context !== undefined ? config.context : this
 
             this.calculation    = config.calculation
+            this.calculationEtalon = config.calculationEtalon
             this.equality       = config.equality
             this.lazy           = config.lazy !== undefined ? config.lazy : true
             // TODO not needed explicitly (can defined based on the type of the `calculation` function?
@@ -263,11 +270,20 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         this.state                              = AtomState.UpToDate
 
-        if (this.usedProposedOrPrevious || this.useEtalon) {
-            if (this.proposedValue !== undefined && !this.equality(newValue, this.proposedValue)) {
+        if (this.calculationEtalon !== undefined) {
+            const onEffectSync          = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
+
+            const etalon    = this.calculationEtalon.call(this.context, onEffectSync)
+
+            if (etalon !== undefined && !this.equality(newValue, etalon)) {
                 globalContext.staleInNextBatch.push(this)
             }
-        }
+        } else
+            if (this.usedProposedOrPrevious) {
+                if (this.proposedValue !== undefined && !this.equality(newValue, this.proposedValue)) {
+                    globalContext.staleInNextBatch.push(this)
+                }
+            }
 
         this.resetCalculation()
     }
@@ -328,9 +344,9 @@ export class CalculableBox<V = unknown> extends Box<V> {
             // in such case we repeat the calculation
         } while (this.state !== AtomState.Calculating)
 
-        globalContext.activeAtom    = prevActiveAtom
-
         this.updateValue(newValue)
+
+        globalContext.activeAtom    = prevActiveAtom
     }
 
 

@@ -2,6 +2,7 @@ import { Atom } from "../../src/chrono2/atom/Atom.js"
 import { CalculationModeSync } from "../../src/chrono2/CalculationMode.js"
 import { Box } from "../../src/chrono2/data/Box.js"
 import { EffectHandler, HasProposedValue, PreviousValueOf, ProposedArgumentsOf, ProposedOrPrevious } from "../../src/chrono2/Effect.js"
+import { globalContext } from "../../src/chrono2/GlobalContext.js"
 import { Base } from "../../src/class/Base.js"
 import {
     Formula,
@@ -11,7 +12,7 @@ import {
     CalculateProposed,
     CycleResolutionInput, Variable
 } from "../../src/cycle_resolver/CycleResolver.js"
-import { calculate, Entity, field } from "../../src/replica2/Entity.js"
+import { calculate, calculate_etalon, Entity, field } from "../../src/replica2/Entity.js"
 import { Replica } from "../../src/replica2/Replica.js"
 
 declare const StartTest : any
@@ -92,16 +93,16 @@ defaultDispatcher.addPreviousValueFlag(EndVar)
 defaultDispatcher.addPreviousValueFlag(DurationVar)
 
 class Event extends Entity.mix(Base) {
-    @field()
+    @field({ lazy : false })
     start       : number
 
-    @field()
+    @field({ lazy : false })
     end         : number
 
-    @field()
+    @field({ lazy : false })
     duration    : number
 
-    @field({ equality : dispatcherEq })
+    @field({ lazy : false, equality : dispatcherEq })
     dispatcher  : CycleDispatcher
 
 
@@ -170,16 +171,14 @@ class Event extends Entity.mix(Base) {
     }
 
 
-    // @build_proposed('dispatcher')
-    // buildProposedDispatcher (me : Identifier, quark : Quark, transaction : Transaction) : CycleDispatcher {
-    //     return defaultDispatcher
-    // }
+    @calculate_etalon('dispatcher')
+    buildProposedDispatcher () : CycleDispatcher {
+        return defaultDispatcher
+    }
 
 
     @calculate('dispatcher')
     calculateDispatcher (Y : EffectHandler<CalculationModeSync>) : CycleDispatcher {
-        const proposedOrPrevious        = Y(ProposedOrPrevious)
-
         const cycleDispatcher           = CycleDispatcher.new({ context : cycleResolution })
 
         cycleDispatcher.collectInfo(Y, this.$.start, StartVar)
@@ -232,14 +231,14 @@ StartTest(t => {
     })
 
 
-    t.iit('Should keep all-null state', async t => {
+    t.it('Should keep all-null state', t => {
         replica.commit()
 
         t.isDeeply(read(), [ null, null, null ], 'Initial propagation is ok')
     })
 
 
-    t.it('Should keep partial data - start', async t => {
+    t.it('Should keep partial data - start', t => {
         event.start = 10
 
         replica.commit()
@@ -248,7 +247,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should keep partial data - end', async t => {
+    t.it('Should keep partial data - end', t => {
         event.end = 10
 
         replica.commit()
@@ -257,7 +256,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should keep partial data - duration', async t => {
+    t.it('Should keep partial data - duration', t => {
         event.duration = 10
 
         replica.commit()
@@ -266,7 +265,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should normalize end date', async t => {
+    t.it('Should normalize end date', t => {
         event.start = 10
         event.duration = 5
 
@@ -276,7 +275,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should normalize duration', async t => {
+    t.it('Should normalize duration', t => {
         event.start = 10
         event.end = 15
 
@@ -286,20 +285,19 @@ StartTest(t => {
     })
 
 
-    t.it('Should normalize start and recalculate everything after', async t => {
+    t.it('Should normalize start and recalculate everything on next commit', t => {
         const spyDispatcher     = t.spyOn(event.$.dispatcher, 'calculation')
         const spyStart          = t.spyOn(event.$.start, 'calculation')
         const spyEnd            = t.spyOn(event.$.end, 'calculation')
         const spyDuration       = t.spyOn(event.$.duration, 'calculation')
 
-        event.end = 15
-        event.duration = 5
+        event.end       = 15
+        event.duration  = 5
 
         replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
 
-        // 1st time calculation is done during the propagate - 2nd during read
         t.expect(spyDispatcher).toHaveBeenCalled(1)
         t.expect(spyStart).toHaveBeenCalled(1)
         t.expect(spyEnd).toHaveBeenCalled(1)
@@ -313,7 +311,7 @@ StartTest(t => {
 
         replica.commit()
 
-        // no calculations during the propagate, as those were already done during the read
+        // should recalculate everything, since dispatcher won't match the "etalon" value
         t.expect(spyDispatcher).toHaveBeenCalled(1)
         t.expect(spyStart).toHaveBeenCalled(1)
         t.expect(spyEnd).toHaveBeenCalled(1)
@@ -321,7 +319,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should normalize end date by default', async t => {
+    t.it('Should normalize end date by default', t => {
         event.start = 10
         event.end = 18
         event.duration = 5
@@ -332,7 +330,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should not recalculate everything on 2nd propagation', async t => {
+    t.it('Should not recalculate everything on 2nd propagation', t => {
         const spy           = t.spyOn(event.$.dispatcher, 'calculation')
 
         event.start = 10
@@ -356,33 +354,33 @@ StartTest(t => {
     })
 
 
-    t.it('Should rebuild edges dynamically', async t => {
-        event.start = 10
-        event.duration = 5
+    t.iit('Should rebuild edges dynamically', t => {
+        event.start     = 10
+        event.duration  = 5
 
         replica.commit()
 
         t.isDeeply(read(), [ 10, 15, 5 ], 'Initial propagation is ok')
 
         //-----------------------
-        await event.setDuration(1, Instruction.KeepEnd)
+        event.setDuration(1, Instruction.KeepEnd)
 
         replica.commit()
 
-        t.isDeeply(read(), [ 14, 15, 1 ], 'Edges rebuilt correctly')
-
-        //-----------------------
-        await event.setDuration(3, Instruction.KeepStart)
-
-        replica.commit()
-
-        t.isDeeply(read(), [ 14, 17, 3 ], 'Edges rebuilt correctly')
-
-        //-----------------------
-        await event.setStart(5, Instruction.KeepDuration)
-
-        replica.commit()
-
-        t.isDeeply(read(), [ 5, 8, 3 ], 'Edges rebuilt correctly')
+        // t.isDeeply(read(), [ 14, 15, 1 ], 'Edges rebuilt correctly')
+        //
+        // //-----------------------
+        // await event.setDuration(3, Instruction.KeepStart)
+        //
+        // replica.commit()
+        //
+        // t.isDeeply(read(), [ 14, 17, 3 ], 'Edges rebuilt correctly')
+        //
+        // //-----------------------
+        // await event.setStart(5, Instruction.KeepDuration)
+        //
+        // replica.commit()
+        //
+        // t.isDeeply(read(), [ 5, 8, 3 ], 'Edges rebuilt correctly')
     })
 })

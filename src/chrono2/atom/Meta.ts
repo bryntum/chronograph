@@ -1,7 +1,7 @@
 import { Base } from "../../class/Base.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { Equality, strictEquality } from "../../util/Helpers.js"
-import { CalculationFunction, CalculationMode } from "../CalculationMode.js"
+import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export enum AtomCalculationPriorityLevel {
@@ -81,6 +81,8 @@ export class Meta extends Base {
      */
     calculation : CalculationFunction<unknown, CalculationMode>     = undefined
 
+    calculationEtalon : CalculationFunction<unknown, CalculationModeSync>     = undefined
+
     /**
      * The equality check of the identifier. By default is performed with `===`.
      *
@@ -100,6 +102,7 @@ export class Meta extends Base {
         clone.level                     = this.level
         clone.sync                      = this.sync
         clone.calculation               = this.calculation
+        clone.calculationEtalon         = this.calculationEtalon
         clone.equality                  = this.equality
 
         return clone
