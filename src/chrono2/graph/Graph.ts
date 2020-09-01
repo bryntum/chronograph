@@ -398,6 +398,8 @@ export class ChronoGraph extends Base implements Owner {
         const trasaction    = this.currentTransaction
         const stack         = globalContext.stack
 
+        globalContext.enterBatch()
+
         while (stack.size && !trasaction.rejectedWith) {
             await runGeneratorAsyncWithEffect(
                 this.effectHandlerAsync,
@@ -417,6 +419,8 @@ export class ChronoGraph extends Base implements Owner {
             this.unScheduleAutoCommit()
         }
 
+        globalContext.leaveBatch()
+
         this.afterCommit()
 
         return { rejectedWith : trasaction.rejectedWith }
@@ -429,11 +433,15 @@ export class ChronoGraph extends Base implements Owner {
         const trasaction    = this.currentTransaction
         const stack         = globalContext.stack
 
+        globalContext.enterBatch()
+
         while (stack.size && !trasaction.rejectedWith) {
             calculateAtomsQueueSync(this.effectHandlerSync, stack, null, -1)
 
             this.finalizeCommit()
         }
+
+        globalContext.leaveBatch()
 
         this.afterCommit()
 

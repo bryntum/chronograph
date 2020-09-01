@@ -71,13 +71,15 @@ export class GlobalContext extends Base {
     startBatch () {
         this.activeBatchRevision  = getNextRevision()
 
-        for (let i = 0; i < this.staleInNextBatch.length;i++) {
+        for (let i = 0; i < this.staleInNextBatch.length; i++) {
             const staleAtom     = this.staleInNextBatch[ i ]
 
             staleAtom.propagatePossiblyStale()
 
             staleAtom.state     = AtomState.Stale
         }
+
+        this.staleInNextBatch   = []
     }
 
 
