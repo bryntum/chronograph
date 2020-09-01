@@ -363,11 +363,6 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     propagatePossiblyStale () {
-        // TODO: also benchmark the following on big graphs
-        //         const toVisit : Quark[]         = new Array(1000)
-        //
-        //         toVisit[ 0 ] = this.immutable
-
         const toVisit : Quark[]         = [ this.immutable ]
 
         while (toVisit.length) {
@@ -384,7 +379,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
                 }
 
                 quark.forEachOutgoing((outgoing, atom) => {
-                    if (atom.state === AtomState.UpToDate) toVisit.push(atom.immutable)
+                    if (atom.isValueVulnerableToChanges()) toVisit.push(atom.immutable)
                 })
             }
         }

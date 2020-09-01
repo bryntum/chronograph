@@ -17,6 +17,11 @@ const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationS
 export class CalculableBox<V = unknown> extends Box<V> {
     level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnSelfKind
 
+    useEtalon       : boolean       = false
+
+    $calculationEtalon  : CalculationFunction<V, CalculationMode>      = undefined
+
+
     constructor (config? : Partial<CalculableBox<V>>) {
         super()
 
@@ -207,10 +212,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         // inlined `actualize` to save 1 stack level
         if (self.state !== AtomState.UpToDate) {
+            globalContext.enterBatch()
+
             if (self.shouldCalculate())
                 self.doCalculate()
             else
                 self.state = AtomState.UpToDate
+
+            globalContext.leaveBatch()
         }
         // eof inlined `actualize`
 
@@ -220,10 +229,15 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
     actualize () {
         if (this.state !== AtomState.UpToDate) {
+            // TODO seems actualize is only used inside the batch already, not needed
+            // globalContext.enterBatch()
+
             if (this.shouldCalculate())
                 this.doCalculate()
             else
                 this.state = AtomState.UpToDate
+
+            // globalContext.leaveBatch()
         }
     }
 
@@ -247,10 +261,12 @@ export class CalculableBox<V = unknown> extends Box<V> {
         this.immutable.proposedArgs             = this.proposedArgs
         this.immutable.usedProposedOrPrevious   = this.usedProposedOrPrevious
 
-        if (this.usedProposedOrPrevious) {
-            this.state              = this.equality(newValue, this.proposedValue) ? AtomState.UpToDate : AtomState.Stale
-        } else {
-            this.state              = AtomState.UpToDate
+        this.state                              = AtomState.UpToDate
+
+        if (this.usedProposedOrPrevious || this.useEtalon) {
+            if (this.proposedValue !== undefined && !this.equality(newValue, this.proposedValue)) {
+                globalContext.staleInNextBatch.push(this)
+            }
         }
 
         this.resetCalculation()

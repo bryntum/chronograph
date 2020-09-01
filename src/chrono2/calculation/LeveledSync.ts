@@ -29,6 +29,7 @@ export const calculateLowerStackLevelsSync = function (
 export const calculateAtomsQueueSync = function (
     onEffect : EffectHandler<CalculationModeGen>, stack : LeveledQueue<Atom>, levelOverride : Atom[], levelOverrideIndex : number = -1
 ) {
+    globalContext.enterBatch()
     const uniqable          = getUniqable()
 
     while (true) {
@@ -54,6 +55,8 @@ export const calculateAtomsQueueSync = function (
             if (stack.size === 0) break
         }
     }
+
+    globalContext.leaveBatch()
 }
 
 
@@ -65,6 +68,8 @@ export const calculateAtomsQueueLevelSync = function (
     levelIndex  : number,
     isOverride  : boolean
 ) {
+    globalContext.enterBatch()
+
     let prevActiveAtom              = globalContext.activeAtom
     const startedAtLowestLevelIndex = stack.lowestLevelIndex
     const modifyStack               = !isOverride
@@ -175,8 +180,12 @@ export const calculateAtomsQueueLevelSync = function (
 
                 globalContext.activeAtom    = prevActiveAtom
 
+                globalContext.leaveBatch()
+
                 // bypass the unrecognized effect to the outer context
                 const res                   = onEffect(value)
+
+                globalContext.enterBatch()
 
                 prevActiveAtom              = globalContext.activeAtom
 
@@ -202,4 +211,6 @@ export const calculateAtomsQueueLevelSync = function (
     }
 
     globalContext.activeAtom    = prevActiveAtom
+
+    globalContext.leaveBatch()
 }

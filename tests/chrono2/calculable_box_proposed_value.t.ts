@@ -57,18 +57,25 @@ StartTest(t => {
         })
 
 
-        t.it(prefix + 'ProposedOrPrevious - invalidation, sync', async t => {
+        t.it(prefix + 'ProposedOrPrevious - invalidation', async t => {
             const max       = new Box(100)
 
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
                     const proposedValue : number    = box1.readProposedOrPrevious()
 
-                    const maxValue : number         = max.read()
+                    const maxValue : number         = (yield max)
 
                     return proposedValue <= maxValue ? proposedValue : maxValue
                 }))
             })
+
+            const box2 : CalculableBox<number>     = graphGen.calculableBox({
+                calculation : eval(graphGen.calc(function* () {
+                    return box2.readProposedOrPrevious()
+                }))
+            })
+
 
             const spy       = t.spyOn(box1, 'calculation')
 
@@ -97,7 +104,17 @@ StartTest(t => {
             //------------------
             spy.reset()
 
-            t.is(box1.read(), 100, 'Calculation has been invoked, because previously calculated value is different from `proposedOrPrevious`    ')
+            t.is(box1.read(), 100, 'Calculation has not been invoked, because no new batch has started')
+
+            t.expect(spy).toHaveBeenCalled(0)
+
+            //------------------
+            spy.reset()
+
+            box2.write(50)
+            box2.read()
+
+            t.is(box1.read(), 100, 'Calculation has been invoked, because new batch has started')
 
             t.expect(spy).toHaveBeenCalled(1)
 
@@ -133,7 +150,7 @@ StartTest(t => {
         })
 
 
-        t.it(prefix + 'Lazily calculated impure identifier, generators', async t => {
+        t.it(prefix + 'Lazily calculated impure identifier', async t => {
             const var0      = new Box(1, 'var0')
 
             const max       = new Box(100, 'max')
@@ -197,6 +214,78 @@ StartTest(t => {
             t.is(var1.read(), 10, 'Correct value')
 
             t.expect(spy).toHaveBeenCalled(1)
+        })
+
+
+        t.it(prefix + 'ProposedOrPrevious - stale after etalon mismatch', async t => {
+            const max       = new Box(100)
+
+            let counter1    = 0
+            const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box1',
+                calculation : eval(graphGen.calc(function* () {
+                    counter1++
+
+                    const proposedValue : number    = box1.readProposedOrPrevious()
+
+                    const maxValue : number         = max.read()
+
+                    return proposedValue <= maxValue ? proposedValue : maxValue
+                }))
+            })
+
+            let counter2    = 0
+            const box2 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box2',
+                calculation : eval(graphGen.calc(function* () {
+                    counter2++
+
+                    return (yield box1) + 1
+                }))
+            })
+
+            let counter3    = 0
+            const box3 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box3',
+                calculation : eval(graphGen.calc(function* () {
+                    counter3++
+
+                    return (yield box1) + (yield box2) + 1
+                }))
+            })
+
+            box1.write(18)
+
+            t.is(box3.read(), 18 + 19 + 1, 'Regular case #1')
+            t.is(box2.read(), 19, 'Regular case #1')
+
+            t.isDeeply([ counter1, counter2, counter3 ], [ 1, 1, 1 ])
+
+            //-------------------------
+            counter1 = counter2 = counter3 = 0
+
+            box1.write(180)
+
+            // `box3` will read `box1` and `box2`, `box2` will read `box1` too
+            // so in total during `box3` calculation, `box1` is read twice,
+            // the 1st read will trigger calculation with "etalon mismatch"
+            // the 2nd should not trigger recalculation, since its the same batch
+            t.is(box3.read(), 100 + 101 + 1)
+
+            t.isDeeply(
+                [ counter1, counter2, counter3 ],
+                [ 1, 1, 1 ],
+                'Even if `box1` mismatches the etalon value, it should be still calculated only once during the current batch'
+            )
+
+            //-------------------------
+            counter1 = counter2 = counter3 = 0
+
+            // now re-reading the `box2` should not trigger recalculation, since its in `UpToDate` state and
+            // we consider reading to be "pure" operation that does not change the graph
+            t.is(box2.read(), 101, 'Value did not change')
+
+            t.isDeeply([ counter1, counter2 ], [ 0, 0 ])
         })
     }
 

@@ -1,11 +1,18 @@
 import { Base } from "../class/Base.js"
+import { MIN_SMI } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue2.js"
-import { Atom } from "./atom/Atom.js"
+import { Atom, AtomState } from "./atom/Atom.js"
+import { getNextRevision } from "./atom/Node.js"
 import { Effect, ProposedOrPreviousSymbol } from "./Effect.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Global context should be just an anonymous instance of ChronoGraph
 export class GlobalContext extends Base {
+
+    staleInNextBatch        : Atom[]                = []
+
+    activeBatchRevision     : number                = MIN_SMI
+    batchDepth              : number                = 0
 
     activeAtom              : Atom                  = undefined
 
@@ -41,6 +48,43 @@ export class GlobalContext extends Base {
     [ProposedOrPreviousSymbol] (effect : Effect) : unknown {
         return globalContext.activeAtom.readProposedOrPrevious()
     }
+
+
+    enterBatch () {
+        this.batchDepth++
+
+        if (this.batchDepth === 1) {
+            this.startBatch()
+        }
+    }
+
+
+    leaveBatch () {
+        this.batchDepth--
+
+        if (this.batchDepth === 0) {
+            this.endBatch()
+        }
+    }
+
+
+    startBatch () {
+        this.activeBatchRevision  = getNextRevision()
+
+        for (let i = 0; i < this.staleInNextBatch.length;i++) {
+            const staleAtom     = this.staleInNextBatch[ i ]
+
+            staleAtom.propagatePossiblyStale()
+
+            staleAtom.state     = AtomState.Stale
+        }
+    }
+
+
+    endBatch () {
+        this.activeBatchRevision  = MIN_SMI
+    }
+
 }
 
 export const globalContext = GlobalContext.new()
