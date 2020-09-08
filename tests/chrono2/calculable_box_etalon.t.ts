@@ -19,47 +19,84 @@ StartTest(t => {
     const doTest = (t : any, graphGen : GraphGen) => {
         const prefix    = graphGen.sync ? 'SYNC: ' : 'GEN: '
 
-        // TODO
+        t.it(prefix + 'Should converge to etalon value', async t => {
+            const etalonBox       = new Box(100)
 
-        // t.it(prefix + '`ProposedOrPrevious` effect', async t => {
-        //     const max       = new Box(100)
-        //
-        //     const box1 : CalculableBox<number>     = graphGen.calculableBox({
-        //         calculation : eval(graphGen.calc(function* () {
-        //             const proposedValue : number    = box1.readProposedOrPrevious()
-        //
-        //             const maxValue : number         = max.read()
-        //
-        //             return proposedValue <= maxValue ? proposedValue : maxValue
-        //         }))
-        //     })
-        //
-        //     box1.write(18)
-        //
-        //     t.is(box1.read(), 18, 'Correct value #1')
-        //
-        //     //------------------
-        //     box1.write(180)
-        //
-        //     t.is(box1.read(), 100, 'Correct value #2')
-        //
-        //     //------------------
-        //     max.write(1000)
-        //
-        //     t.is(box1.read(), 100, 'Correct value #3')
-        //
-        //     //------------------
-        //     max.write(50)
-        //
-        //     t.is(box1.read(), 50, 'Correct value')
-        //
-        //     //------------------
-        //     max.write(100)
-        //
-        //     t.is(box1.read(), 50, 'Correct value')
-        // })
+            const dummyBox : CalculableBox<number>     = graphGen.calculableBox({
+                calculation : eval(graphGen.calc(function* () {
+                    return box1.readProposedOrPrevious()
+                }))
+            })
 
+            const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                calculation : eval(graphGen.calc(function* () {
+                    return box1.readProposedOrPrevious()
+                })),
 
+                calculationEtalon : function () {
+                    return etalonBox.read()
+                }
+            })
+
+            const spy       = t.spyOn(box1, 'calculation')
+
+            box1.write(18)
+
+            t.is(box1.read(), 18, 'Correct value #1')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //------------------
+            spy.reset()
+
+            // to advance to next batch
+            dummyBox.write(1)
+            dummyBox.read()
+
+            t.is(box1.read(), 18, 'Correct value #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //------------------
+            spy.reset()
+
+            box1.write(100)
+
+            t.is(box1.read(), 100, 'Correct value #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //------------------
+            spy.reset()
+
+            // to advance to next batch
+            dummyBox.write(1)
+            dummyBox.read()
+
+            t.is(box1.read(), 100, 'Correct value #2')
+
+            t.expect(spy).toHaveBeenCalled(0)
+
+            //------------------
+            spy.reset()
+
+            etalonBox.write(101)
+
+            t.is(box1.read(), 100, 'Correct value #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            //------------------
+            spy.reset()
+
+            // to advance to next batch
+            dummyBox.write(1)
+            dummyBox.read()
+
+            t.is(box1.read(), 100, 'Correct value #2')
+
+            t.expect(spy).toHaveBeenCalled(1)
+        })
     }
 
     doTest(t, GraphGen.new({ sync : true }))
