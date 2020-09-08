@@ -1,6 +1,7 @@
 import { AtomState } from "../atom/Atom.js"
 import { AtomCalculationPriorityLevel } from "../atom/Meta.js"
 import { getNextRevision } from "../atom/Node.js"
+import { Quark } from "../atom/Quark.js"
 import { calculateLowerStackLevelsSync } from "../calculation/LeveledSync.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
@@ -135,7 +136,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
             if (activeAtom === self) {
                 self.usedProposedOrPrevious = true
             } else
-                self.immutableForWrite().addOutgoing(activeAtom.immutable)
+                self.immutableForWrite().addOutgoing(activeAtom.immutable, true)
         }
 
         return self
@@ -213,7 +214,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         const activeAtom    = globalContext.activeAtom
         const self          = this.checkoutSelf()
 
-        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
+        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable, false)
 
         if (self.isCalculationStarted()) self.onCyclicReadDetected()
 
@@ -317,6 +318,18 @@ export class CalculableBox<V = unknown> extends Box<V> {
             }
         }
 
+        const incomingPast  = this.immutable.getIncomingPastDeep() as Quark[]
+
+        if (incomingPast) {
+            for (let i = 0; i < incomingPast.length; i++) {
+                const dependencyAtom        = incomingPast[ i ].owner
+
+                // TODO
+                // @ts-ignore
+                if (dependencyAtom.proposedValue !== undefined) return true
+            }
+        }
+
         return false
     }
 
@@ -344,9 +357,19 @@ export class CalculableBox<V = unknown> extends Box<V> {
             // in such case we repeat the calculation
         } while (this.state !== AtomState.Calculating)
 
-        this.updateValue(newValue)
-
+        // START
+        // TODO the order of the following 2 lines is important
+        // `updateValue` uses `propagateStaleShallow`, which clears
+        // the outgoings unless there's an `activeAtom`
+        // The clearing affects performance significantly
+        // however, I recall I had to place the `updateValue` call
+        // before this assignment (IIRC some benchmark was throwing exception)
+        // need to find this benchmark again, create a test case from it
+        // and figure out a proper fix
         globalContext.activeAtom    = prevActiveAtom
+
+        this.updateValue(newValue)
+        // END
     }
 
 

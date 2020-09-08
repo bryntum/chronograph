@@ -117,6 +117,20 @@ export class Quark<V = unknown> extends Node implements Immutable {
     }
 
 
+    getIncomingPastDeep () : this[ '$incomingPast' ] {
+        let box : this = this
+
+        while (box) {
+            // as an edge case, atom may compute its value w/o external dependencies all of the sudden
+            // in such case `$incoming` will be empty
+            if (box.$incomingPast !== undefined || box.value !== undefined) return box.$incomingPast
+
+            box     = box.previous
+        }
+
+        return undefined
+    }
+
 
     // IMPORTANT LIMITATION : can not nest calls to `forEachOutgoing` (call `forEachOutgoing` in the `func` argument)
     // this messes up internal "uniqables" state

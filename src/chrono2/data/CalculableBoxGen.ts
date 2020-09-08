@@ -51,6 +51,7 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 
     resetCalculation () {
         this.proposedValue          = undefined
+        this.proposedArgs           = undefined
 
         this.iterationResult        = undefined
         this.iterator               = undefined
@@ -79,7 +80,7 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
         const activeAtom    = globalContext.activeAtom
         const self          = this.checkoutSelf()
 
-        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable)
+        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable, false)
 
         if (self.state === AtomState.UpToDate) return Promise.resolve(self.immutable.read())
 

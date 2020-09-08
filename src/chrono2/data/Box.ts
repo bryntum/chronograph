@@ -53,6 +53,11 @@ export class Box<V = unknown> extends Atom<V> {
     }
 
 
+    // do nothing for boxes - boxes are always synchronously up-to-date
+    actualize () {
+    }
+
+
     read () : V {
         const activeAtom    = globalContext.activeAtom
         const activeGraph   = activeAtom ? activeAtom.graph : undefined
@@ -64,7 +69,7 @@ export class Box<V = unknown> extends Atom<V> {
             return activeGraph.checkout(this).read()
         }
 
-        if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable)
+        if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable, false)
 
         return this.immutable.read()
     }

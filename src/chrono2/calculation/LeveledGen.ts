@@ -144,7 +144,7 @@ export const calculateAtomsQueueLevelGen = function* (
                 if (value.state === AtomState.UpToDate) {
                     iterationResult = atom.continueCalculation(value.read())
                 } else {
-                    value.immutableForWrite().addOutgoing(atom.immutable)
+                    value.immutableForWrite().addOutgoing(atom.immutable, false)
 
                     if (value.uniqable2 === uniqable) {
                         atom.onCyclicReadDetected()

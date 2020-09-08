@@ -340,16 +340,18 @@ StartTest(t => {
     })
 
 
-    t.iit('Reading past should not cause cycles', async t => {
-        const var1          = new Box(0)
+    t.it('Reading past should not cause cycles', async t => {
+        const var1          = new Box(0, 'var1')
 
         const dispatcher    = new CalculableBox({
+            name : 'dispatcher',
             calculation () : boolean {
                 return box2.readProposed() !== undefined
             }
         })
 
         const box2          = new CalculableBox({
+            name : 'box2',
             calculation () : number {
                 const dispatcherValue    = dispatcher.read()
 

@@ -24,6 +24,8 @@ export class Node implements Uniqable {
     revision            : number        = MIN_SMI
 
     $incoming           : Node[]        = undefined
+    $incomingPast       : Node[]        = undefined
+
     $outgoing           : Node[]        = undefined
     $outgoingRev        : number[]      = undefined
 
@@ -34,27 +36,6 @@ export class Node implements Uniqable {
     // TODO we can also just check the last element in the `$outgoing`, need to benchmark
     lastOutgoingTo      : Node          = undefined
     lastOutgoingToRev   : number        = MIN_SMI
-
-
-    getIncoming () : this[ '$incoming' ] {
-        if (this.$incoming !== undefined) return this.$incoming
-
-        return this.$incoming = []
-    }
-
-
-    // getOutgoing () : this[ '$outgoing' ] {
-    //     if (this.$outgoing !== undefined) {
-    //         if (!this.outgoingCompacted) {
-    //             compact(this.$outgoing)
-    //
-    //             this.outgoingCompacted = true
-    //         }
-    //
-    //         return this.$outgoing
-    //     } else
-    //         return this.$outgoing = []
-    // }
 
 
     clearOutgoing () {
@@ -72,7 +53,7 @@ export class Node implements Uniqable {
     }
 
 
-    addOutgoing (to : Node) {
+    addOutgoing (to : Node, isFromPast : boolean) {
         const toRevision            = to.revision
 
         if (this.lastOutgoingTo === to && this.lastOutgoingToRev === toRevision) {
@@ -111,7 +92,15 @@ export class Node implements Uniqable {
         this.$outgoing.push(to)
         this.$outgoingRev.push(toRevision)
 
-        to.getIncoming().push(this)
+        if (isFromPast) {
+            if (to.$incomingPast === undefined) to.$incomingPast = []
+
+            to.$incomingPast.push(this)
+        } else {
+            if (to.$incoming === undefined) to.$incoming = []
+
+            to.$incoming.push(this)
+        }
     }
 }
 
