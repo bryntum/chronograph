@@ -173,12 +173,6 @@ export class Transaction extends Base {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldAsync(identifier as Effect)
 
-        //----------------------
-        while (this.stackGen.lowestLevel < identifier.level) {
-            await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, this.stackGen.takeLowestLevel() ], this)
-        }
-
-
         let entry : Quark
 
         const activeEntry   = this.getActiveEntry()
@@ -205,6 +199,11 @@ export class Transaction extends Base {
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
+        //----------------------
+        while (this.stackGen.lowestLevel < identifier.level) {
+            await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, this.stackGen.takeLowestLevel() ], this)
+        }
+
         this.markSelfDependent()
 
         return this.ongoing = entry.promise = this.ongoing.then(() => {
@@ -227,12 +226,6 @@ export class Transaction extends Base {
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
-
-        //----------------------
-        while (this.stackGen.getLowestLevel() < identifier.level) {
-            // here we force the computations for lower level identifiers should be sync
-            this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
-        }
 
         let entry : Quark
 
@@ -264,6 +257,12 @@ export class Transaction extends Base {
         // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
+
+        //----------------------
+        while (this.stackGen.getLowestLevel() < identifier.level) {
+            // here we force the computations for lower level identifiers should be sync
+            this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
+        }
 
         this.markSelfDependent()
 
@@ -327,11 +326,6 @@ export class Transaction extends Base {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
-        //----------------------
-        while (this.stackGen.getLowestLevel() < identifier.level) {
-            this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
-        }
-
         let entry : Quark
 
         const activeEntry   = this.getActiveEntry()
@@ -360,6 +354,11 @@ export class Transaction extends Base {
         // TODO should use `onReadIdentifier` somehow? to have the same control flow for reading sync/gen identifiers?
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
+
+        //----------------------
+        while (this.stackGen.getLowestLevel() < identifier.level) {
+            this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
+        }
 
         //----------------------
         this.markSelfDependent()
