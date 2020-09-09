@@ -130,6 +130,86 @@ StartTest(t => {
         })
 
 
+        t.it(prefix + 'Should mark atoms that did not match the "etalon" as stale on next commit', async t => {
+            const graph     = ChronoGraph.new()
+
+            const max       = new Box(100)
+
+            const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                lazy : false,
+                calculation : eval(graphGen.calc(function* () {
+                    const proposedValue : number    = box1.readProposedOrPrevious()
+
+                    const maxValue : number         = (yield max)
+
+                    return proposedValue <= maxValue ? proposedValue : maxValue
+                }))
+            })
+
+            graph.addAtoms([ max, box1 ])
+
+            const spy       = t.spyOn(box1, 'calculation')
+
+            box1.write(18)
+
+            graph.commit()
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            t.is(box1.read(), 18, 'Regular case #1')
+
+
+            //------------------
+            spy.reset()
+
+            graph.commit()
+
+            t.expect(spy).toHaveBeenCalled(0)
+
+            t.is(box1.read(), 18, 'Calculation has not been invoked, because the calculated value is same as proposed')
+
+
+            //------------------
+            spy.reset()
+
+            box1.write(110)
+
+            graph.commit()
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            t.is(box1.read(), 100, 'Restricted by max value')
+
+
+            //------------------
+            spy.reset()
+
+            t.is(box1.read(), 100, 'Calculation has not been invoked, because no new batch has started')
+
+            t.expect(spy).toHaveBeenCalled(0)
+
+            //------------------
+            spy.reset()
+
+            graph.commit()
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            t.is(box1.read(), 100, 'Calculation has been invoked, because new batch has started')
+
+            //------------------
+            spy.reset()
+
+            max.write(50)
+
+            graph.commit()
+
+            t.expect(spy).toHaveBeenCalled(1)
+
+            t.is(box1.read(), 50, 'Regular case')
+        })
+
+
         t.it(prefix + '`ProposedOrPrevious` for newly added calculable identifier w/o value should return `undefined`', async t => {
             let called = false
 
