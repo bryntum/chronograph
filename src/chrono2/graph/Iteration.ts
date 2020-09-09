@@ -315,3 +315,71 @@ export class IterationStorageShredding extends IterationStorage {
         this.quarksMap.set(quark.owner.id, quark)
     }
 }
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// using this storage class does not improve performance (remains the same), which is weird, since
+// there's no lookups with it
+// need more benchmarks perhaps? what if graph mutates a lot (
+export class IterationStorageShreddingArray extends IterationStorage {
+
+    previous        : Quark[][]     = []
+
+    previousSize    : number        = 0
+
+
+    startNewLayer () {
+        this.previous.push(this.quarks)
+
+        this.previousSize   += this.quarks.length
+
+        this.quarks         = []
+    }
+
+
+    get size () : number {
+        return this.quarks.length + this.previousSize
+    }
+
+
+    filterPreviousLayers (uniqable : number) {
+        const previous      = this.previous
+
+        for (let i = previous.length - 1; i >= 0; i--) {
+            const layer     = previous[ i ]
+
+            let uniqueIndex : number    = 0
+
+            for (let i = 0; i < layer.length; i++) {
+                const quark             = layer[ i ]
+
+                if (quark.owner.identity.uniqable2 !== uniqable) {
+                    if (uniqueIndex !== i) layer[ uniqueIndex ] = quark
+                    ++uniqueIndex
+                }
+            }
+
+            if (layer.length !== uniqueIndex) layer.length = uniqueIndex
+        }
+
+        let uniqueIndex : number    = 0
+
+        let previousSize    = 0
+
+        for (let i = 0; i < previous.length; i++) {
+            const layer     = previous[ i ]
+
+            previousSize    += layer.length
+
+            if (layer.length > 0) {
+                if (uniqueIndex !== i) previous[ uniqueIndex ] = layer
+
+                ++uniqueIndex
+            }
+        }
+
+        if (previous.length !== uniqueIndex) previous.length = uniqueIndex
+
+        this.previousSize   = previousSize
+    }
+}

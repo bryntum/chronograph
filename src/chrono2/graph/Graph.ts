@@ -1,5 +1,6 @@
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
+import { getUniqable } from "../../util/Uniqable.js"
 import { Atom } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
 import { Quark } from "../atom/Quark.js"
@@ -18,7 +19,7 @@ import {
     runGeneratorAsyncWithEffect
 } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
-import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
+import { Iteration, IterationStorage, IterationStorageShredding, IterationStorageShreddingArray } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -231,9 +232,7 @@ export class ChronoGraph extends Base implements Owner {
         // empty graph
         if (!lastReachableTransaction) return
 
-        const lastReachableIteration    = lastReachableTransaction.immutable
-
-        let iteration : Iteration       = lastReachableIteration
+        let iteration : Iteration       = lastReachableTransaction.immutable
 
         const iterations : Iteration[]  = []
 
@@ -249,7 +248,7 @@ export class ChronoGraph extends Base implements Owner {
         let nextAfterCollapsible : Iteration
 
         for (let i = iterations.length - 1; i > 0; i--) {
-            const currentIteration  = iterations[ i ]
+            const currentIteration      = iterations[ i ]
 
             if (currentIteration.canBeCollapsedWithNext()) {
                 collapseStartingFrom    = currentIteration
@@ -260,35 +259,48 @@ export class ChronoGraph extends Base implements Owner {
 
         if (!nextAfterCollapsible || nextAfterCollapsible === lastIteration) return
 
+        //
+        // const uniqable                      = getUniqable()
+
+        const lastIterationStorage          = lastIteration.storage //as IterationStorageShreddingArray
+
+        // lastIterationStorage.startNewLayer()
+
         nextAfterCollapsible.forEveryFirstQuarkTill(lastIteration, quark => {
             const owner                     = quark.owner
 
-            lastIteration.storage.addQuark(quark)
+            lastIterationStorage.addQuark(quark)
 
             quark.iteration = undefined
 
             // set the magic data
             owner.identity.uniqableBox      = quark
+
+            // owner.identity.uniqable2        = uniqable
         })
+
+        // lastIterationStorage.filterPreviousLayers(uniqable)
 
         nextAfterCollapsible.forEveryFirstQuarkTill(lastIteration, quark => {
             // magic dependency on `this.owner.identity.uniqableBox`
             quark.collectGarbage()
         })
 
-        iteration                           = collapseStartingFrom
-
+        // move the storage
         nextAfterCollapsible.storage        = lastIteration.storage
 
+        // truncate the history
         nextAfterCollapsible.previous       = undefined
         nextAfterCollapsible.owner.previous = undefined
+
+        iteration                           = collapseStartingFrom
 
         while (iteration) {
             const previous  = iteration.previous
 
             iteration.destroy()
 
-            iteration   = previous
+            iteration       = previous
         }
     }
 
