@@ -49,12 +49,21 @@ StartTest(t => {
             //------------------
             spy.reset()
 
+            t.is(box1.read(), 18, 'Correct value #2')
+
+            // no call to calculation function, because no new batch has started
+            t.expect(spy).toHaveBeenCalled(0)
+
+            //------------------
+            spy.reset()
+
             // to advance to next batch
             dummyBox.write(1)
             dummyBox.read()
 
             t.is(box1.read(), 18, 'Correct value #2')
 
+            // one call because a new batch has been started
             t.expect(spy).toHaveBeenCalled(1)
 
             //------------------
@@ -75,6 +84,7 @@ StartTest(t => {
 
             t.is(box1.read(), 100, 'Correct value #2')
 
+            // no call to calculation function - value matches the etalon
             t.expect(spy).toHaveBeenCalled(0)
 
             //------------------
