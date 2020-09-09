@@ -274,7 +274,13 @@ export class CalculableBox<V = unknown> extends Box<V> {
         if (this.calculationEtalon !== undefined) {
             const onEffectSync          = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
 
-            const etalon    = this.calculationEtalon.call(this.context, onEffectSync)
+            const prevActiveAtom        = globalContext.activeAtom
+
+            globalContext.activeAtom    = this
+
+            const etalon                = this.calculationEtalon.call(this.context, onEffectSync)
+
+            globalContext.activeAtom    = prevActiveAtom
 
             if (etalon !== undefined && !this.equality(newValue, etalon)) {
                 globalContext.staleInNextBatch.push(this)
