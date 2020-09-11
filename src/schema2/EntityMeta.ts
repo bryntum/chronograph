@@ -13,9 +13,11 @@ export class EntityMeta extends Base {
      */
     name                : Name                  = undefined
 
-    ownFields           : Map<Name, Field>      = new Map()
-    ownCalculationMappings : Map<Name, Name>    = new Map()
-    ownCalculationEtalonMappings : Map<Name, Name> = new Map()
+    ownFields                       : Map<Name, Field>  = new Map()
+
+    ownCalculationMappings          : Map<Name, Name>   = new Map()
+    ownWriteMappings                : Map<Name, Name>   = new Map()
+    ownCalculationEtalonMappings    : Map<Name, Name>   = new Map()
 
     schema              : Schema                = undefined
 
@@ -71,6 +73,11 @@ export class EntityMeta extends Base {
     }
 
 
+    addWriteMapping (fieldName : Name, writeMethodName : Name) {
+        this.ownWriteMappings.set(fieldName, writeMethodName)
+    }
+
+
     addCalculationEtalonMapping (fieldName : Name, calculationMethodName : Name) {
         this.ownCalculationEtalonMappings.set(fieldName, calculationMethodName)
     }
@@ -97,12 +104,18 @@ export class EntityMeta extends Base {
         if (this.parentEntity) {
             fields.forEach((field, name) => {
                 const calculation       = this.proto[ this.calculationMappings.get(name) ]
+                const write             = this.proto[ this.writeMappings.get(name) ]
                 const calculationEtalon = this.proto[ this.calculationEtalonMappings.get(name) ]
 
-                if ((field.calculation !== calculation || field.calculationEtalon !== calculationEtalon) && !this.ownFields.has(name)) {
+                if (
+                    (field.calculation !== calculation || field.write !== write || field.calculationEtalon !== calculationEtalon)
+                    &&
+                    !this.ownFields.has(name)
+                ) {
                     const clone         = field.clone()
 
                     clone.calculation           = calculation
+                    clone.write                 = write
                     clone.calculationEtalon     = calculationEtalon
 
                     fields.set(name, clone)
@@ -112,6 +125,7 @@ export class EntityMeta extends Base {
 
         this.ownFields.forEach((field, name) => {
             field.calculation       = this.proto[ this.calculationMappings.get(name) ]
+            field.write             = this.proto[ this.writeMappings.get(name) ]
             field.calculationEtalon = this.proto[ this.calculationEtalonMappings.get(name) ]
 
             fields.set(name, field)
@@ -142,13 +156,35 @@ export class EntityMeta extends Base {
     }
 
 
+    $writeMappings : Map<Name, Name>       = undefined
+
+    get writeMappings () : Map<Name, Name> {
+        if (this.$writeMappings !== undefined) return this.$writeMappings
+
+        const writeMappings : Map<Name, Name>           = new Map()
+        const visited : Set<Name>                       = new Set()
+
+        this.forEachParent(entity => {
+            entity.ownWriteMappings.forEach((calculationMethodName : Name, fieldName : Name) => {
+                if (!visited.has(fieldName)) {
+                    visited.add(fieldName)
+
+                    writeMappings.set(fieldName, calculationMethodName)
+                }
+            })
+        })
+
+        return this.$writeMappings = writeMappings
+    }
+
+
     $calculationEtalonMappings : Map<Name, Name>       = undefined
 
     get calculationEtalonMappings () : Map<Name, Name> {
         if (this.$calculationEtalonMappings !== undefined) return this.$calculationEtalonMappings
 
-        const calculationEtalonMappings : Map<Name, Name>     = new Map()
-        const visited : Set<Name>                       = new Set()
+        const calculationEtalonMappings : Map<Name, Name>   = new Map()
+        const visited : Set<Name>                           = new Set()
 
         this.forEachParent(entity => {
             entity.ownCalculationEtalonMappings.forEach((calculationMethodName : Name, fieldName : Name) => {

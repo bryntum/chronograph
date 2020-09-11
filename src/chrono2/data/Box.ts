@@ -1,4 +1,5 @@
 import { Atom, AtomState } from "../atom/Atom.js"
+import { DefaultMetaBox, Meta } from "../atom/Meta.js"
 import { getNextRevision } from "../atom/Node.js"
 import { Quark } from "../atom/Quark.js"
 import { globalContext } from "../GlobalContext.js"
@@ -38,6 +39,9 @@ export class Box<V = unknown> extends Atom<V> {
 
         this.name   = name
     }
+
+
+    static meta : Meta     = DefaultMetaBox
 
 
     // this property should be a "real" property, not an accessor, to be optimizable by v8

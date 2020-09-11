@@ -1,5 +1,5 @@
 import { Base } from "../../class/Base.js"
-import { AnyConstructor } from "../../class/Mixin.js"
+import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
 import { Equality, strictEquality } from "../../util/Helpers.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 
@@ -79,9 +79,11 @@ export class Meta extends Base {
      *
      * @param Y
      */
-    calculation : CalculationFunction<unknown, CalculationMode>     = undefined
+    calculation : CalculationFunction<unknown, CalculationMode>             = undefined
 
-    calculationEtalon : CalculationFunction<unknown, CalculationModeSync>     = undefined
+    write : AnyFunction                                                     = undefined
+
+    calculationEtalon : CalculationFunction<unknown, CalculationModeSync>   = undefined
 
     /**
      * The equality check of the identifier. By default is performed with `===`.
@@ -89,7 +91,7 @@ export class Meta extends Base {
      * @param v1 First value
      * @param v2 Second value
      */
-    equality : Equality                                             = strictEquality
+    equality : Equality                                                     = strictEquality
 
 
     clone () : this {
@@ -102,6 +104,7 @@ export class Meta extends Base {
         clone.level                     = this.level
         clone.sync                      = this.sync
         clone.calculation               = this.calculation
+        clone.write                     = this.write
         clone.calculationEtalon         = this.calculationEtalon
         clone.equality                  = this.equality
 
@@ -116,3 +119,5 @@ export class Meta extends Base {
 // }
 
 export const DefaultMetaSync = Meta.new({ name : 'DefaultMetaSync' })
+
+export const DefaultMetaBox = Meta.new({ name : 'DefaultMetaBox', level : AtomCalculationPriorityLevel.UserInput })

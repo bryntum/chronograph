@@ -288,10 +288,10 @@ export class Entity extends Mixin(
         // }
 
 
-        static createPropertyAccessorsFor (fieldName : string) {
+        static createPropertyAccessorsFor (field : Field) {
             // idea is to indicate to the v8, that `propertyKey` is a constant and thus
             // it can optimize access by it
-            const propertyKey   = fieldName
+            const propertyKey   = field.name
             const target        = this.prototype
 
             Object.defineProperty(target, propertyKey, {
@@ -307,21 +307,30 @@ export class Entity extends Mixin(
                 },
 
                 set     : function (this : Entity, value : any) {
-                    (this.$[ propertyKey ] as FieldBox).write(value)
+                    const atom = this.$[ propertyKey ] as FieldBox
+
+                    // magical effect warning:
+                    // `field.write` is populated only after 1st access to `this.$`
+                    field.write
+                        ?
+                            field.write.call(this, atom, value)
+                        :
+                            atom.write(value)
                 }
             })
         }
 
 
-        static createMethodAccessorsFor (fieldName : string) {
+        static createMethodAccessorsFor (field : Field) {
             // idea is to indicate to the v8, that `propertyKey` is a constant and thus
             // it can optimize access by it
-            const propertyKey   = fieldName
+            const propertyKey   = field.name
             const target        = this.prototype
+            const upperCased    = uppercaseFirst(propertyKey)
 
-            const getterFnName = `get${ uppercaseFirst(propertyKey) }`
-            const setterFnName = `set${ uppercaseFirst(propertyKey) }`
-            const putterFnName = `put${ uppercaseFirst(propertyKey) }`
+            const getterFnName  = `get${ upperCased }`
+            const setterFnName  = `set${ upperCased }`
+            const putterFnName  = `put${ upperCased }`
 
             if (!(getterFnName in target)) {
                 target[ getterFnName ] = function (this : Entity) : any {
@@ -331,7 +340,15 @@ export class Entity extends Mixin(
 
             if (!(setterFnName in target)) {
                 target[ setterFnName ] = function (this : Entity, value : any, ...args) : CommitResult | Promise<CommitResult> {
-                    (this.$[ propertyKey ] as FieldBox).write(value, ...args)
+                    const atom = this.$[ propertyKey ] as FieldBox
+
+                    // magical effect warning:
+                    // `field.write` is populated only after 1st access to `this.$`
+                    field.write
+                        ?
+                            field.write.call(this, atom, value, ...args)
+                        :
+                            atom.write(value, ...args)
 
                     return this.graph
                         ?
@@ -400,8 +417,8 @@ export const generic_field : FieldDecorator<typeof Field> =
 
             const cons          = target.constructor as typeof Entity
 
-            cons.createPropertyAccessorsFor(fieldName)
-            cons.createMethodAccessorsFor(fieldName)
+            cons.createPropertyAccessorsFor(field)
+            cons.createMethodAccessorsFor(field)
         }
     }
 
@@ -500,31 +517,19 @@ export const calculate = function <Cls extends Entity = Entity>(fieldName : KeyO
 }
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export const write = function (fieldName : Name) : MethodDecorator {
-//
-//     // `target` will be a prototype of the class with Entity mixin
-//     return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
-//         ensureEntityOnPrototype(target)
-//
-//         let writes : Entity[ '$writes' ]
-//
-//         if (!target.$writes) {
-//             writes        = target.$writes = {} as any
-//         } else {
-//             if (!target.hasOwnProperty('$writes')) {
-//                 writes    = target.$writes = Object.create(target.$writes)
-//             } else
-//                 writes    = target.$writes
-//         }
-//
-//         writes[ fieldName ]     = propertyKey
-//     }
-// }
+export const write = function <Cls extends Entity = Entity>(fieldName : KeyOfIfNotEntity<Cls>) : MethodDecorator {
+
+    // `target` will be a prototype of the class with Entity mixin
+    return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
+        const entityMeta    = ensureEntityOnPrototype(target)
+
+        entityMeta.addWriteMapping(fieldName as Name, propertyKey)
+    }
+}
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export const calculate_etalon = function (fieldName : Name) : MethodDecorator {
+export const calculate_etalon = function <Cls extends Entity = Entity>(fieldName : KeyOfIfNotEntity<Cls>) : MethodDecorator {
 
     // `target` will be a prototype of the class with Entity mixin
     return function (target : Entity, propertyKey : string, _descriptor : TypedPropertyDescriptor<any>) : void {
