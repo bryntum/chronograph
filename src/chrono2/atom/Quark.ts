@@ -55,7 +55,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
     }
 
 
-    // TODO
+    // TODO - only difference from `read` is "default" returning value
     readRaw () : any {
         let box : this = this
 
