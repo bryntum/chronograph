@@ -314,6 +314,12 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    // TODO decide on the name - `current/active`
+    get activeTransaction () : Transaction {
+        return this.immutable
+    }
+
+
     get currentTransaction () : Transaction {
         return this.immutable
     }
