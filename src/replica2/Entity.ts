@@ -4,7 +4,7 @@ import { DEBUG, debug } from "../environment/Debug.js"
 import { EntityMeta } from "../schema2/EntityMeta.js"
 import { Field, Name } from "../schema2/Field.js"
 import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
-import { EntityAtom, EntityBox, FieldAtom, FieldBox } from "./Atom.js"
+import { EntityAtom, EntityBox, FieldAtom, FieldBox, FieldCalculableBox } from "./Atom.js"
 import { ReadMode, Replica } from "./Replica.js"
 
 
@@ -90,7 +90,7 @@ export class Entity extends Mixin(
          * const firstName = replica.read(author.$.firstName)
          * ```
          */
-        get $ () : { [s in keyof this] : FieldAtom } {
+        get $ () : { [s in keyof this] : FieldCalculableBox } {
             const $         = {}
 
             this.$entity.forEachField((field, name) => {

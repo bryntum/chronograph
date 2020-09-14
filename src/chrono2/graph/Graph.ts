@@ -222,6 +222,12 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    // TODO
+    clear () {
+
+    }
+
+
     sweep () {
         let lastReachableTransaction : Transaction
 
