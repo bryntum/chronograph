@@ -57,7 +57,7 @@ export class Entity extends Mixin(
          * A reference to the graph, this entity belongs to. Initially empty, and is populated when the entity instance
          * is added to the replica ([[Replica.addEntity]])
          */
-        graph           : Replica           = undefined
+        graph           : Replica
 
         /**
          * An [[EntityMeta]] instance, representing the "meta" information about the entity class. It is shared among all instances

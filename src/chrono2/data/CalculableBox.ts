@@ -145,8 +145,10 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
     // synchronously read the latest available value, either proposed by user or possibly stale from previous iteration
     // (you should know what you are doing)
-    readProposedOrLatest () : V {
+    readConsistentOrProposedOrPrevious () : V {
         const self          = this.onReadingPast()
+
+        if (self.state === AtomState.UpToDate) return self.immutable.read()
 
         const proposedValue = self.readProposedInternal()
 
@@ -305,6 +307,18 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         if (this.immutable.usedProposedOrPrevious && this.proposedValue !== undefined) return false
 
+        const incomingPast  = this.immutable.getIncomingPastDeep() as Quark[]
+
+        if (incomingPast) {
+            for (let i = 0; i < incomingPast.length; i++) {
+                const dependencyAtom        = incomingPast[ i ].owner
+
+                // TODO
+                // @ts-ignore
+                if (dependencyAtom.proposedValue !== undefined) return false
+            }
+        }
+
         return true
     }
 
@@ -321,18 +335,6 @@ export class CalculableBox<V = unknown> extends Box<V> {
                 dependencyAtom.actualize()
 
                 if (this.state === AtomState.Stale) return true
-            }
-        }
-
-        const incomingPast  = this.immutable.getIncomingPastDeep() as Quark[]
-
-        if (incomingPast) {
-            for (let i = 0; i < incomingPast.length; i++) {
-                const dependencyAtom        = incomingPast[ i ].owner
-
-                // TODO
-                // @ts-ignore
-                if (dependencyAtom.proposedValue !== undefined) return true
             }
         }
 

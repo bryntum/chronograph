@@ -6,7 +6,7 @@ import { Entity } from "./Entity.js"
 
 export enum ReadMode {
     Consistent,
-    ProposedOrLatest
+    ConsistentOrProposedOrPrevious
 }
 
 
@@ -94,6 +94,6 @@ class Replica extends base {
         const readMode  = fieldAtom.graph.readMode
 
         if (readMode === ReadMode.Consistent) return fieldAtom.sync ? fieldAtom.read() : fieldAtom.readAsync()
-        if (readMode === ReadMode.ProposedOrLatest) return fieldAtom.readProposedOrLatest()
+        if (readMode === ReadMode.ConsistentOrProposedOrPrevious) return fieldAtom.readConsistentOrProposedOrPrevious()
     }
 }){}

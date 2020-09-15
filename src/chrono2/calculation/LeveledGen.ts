@@ -29,7 +29,7 @@ export const calculateLowerStackLevelsGen = function* (
 export const calculateAtomsQueueGen = function* (
     onEffect : EffectHandler<CalculationModeGen>, stack : LeveledQueue<Atom>, levelOverride : Atom[], levelOverrideIndex : number = -1
 ) {
-    globalContext.enterBatch()
+    // globalContext.enterBatch()
     const uniqable          = getUniqable()
 
     while (true) {
@@ -56,7 +56,7 @@ export const calculateAtomsQueueGen = function* (
         }
     }
 
-    globalContext.leaveBatch()
+    // globalContext.leaveBatch()
 }
 
 

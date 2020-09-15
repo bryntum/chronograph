@@ -35,7 +35,7 @@ export class Box<V = unknown> extends Atom<V> {
     constructor (value? : V, name? : string) {
         super()
 
-        if (value !== undefined) this.write(value)
+        this.write(value)
 
         this.name   = name
     }
@@ -62,6 +62,11 @@ export class Box<V = unknown> extends Atom<V> {
     }
 
 
+    readConsistentOrProposedOrPrevious () : V {
+        return this.immutable.read()
+    }
+
+
     read () : V {
         const activeAtom    = globalContext.activeAtom
         const activeGraph   = activeAtom ? activeAtom.graph : undefined
@@ -80,9 +85,11 @@ export class Box<V = unknown> extends Atom<V> {
 
 
     write (value : V, ...args : any[]) {
-        if (value === undefined) value = null
+        const prevRaw       = this.immutable.readRaw()
 
-        if (this.equality(value, this.immutable.read())) return
+        if (this.equality(value, prevRaw) && prevRaw !== undefined) return
+
+        if (value === undefined) value = null
 
         this.writeConfirmedDifferentValue(value, ...args)
     }

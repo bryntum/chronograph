@@ -245,7 +245,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    readProposedOrLatest () : V {
+    readConsistentOrProposedOrPrevious () : V {
         throw new Error("Abstract method")
     }
 
@@ -513,9 +513,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     onCyclicReadDetected () {
+        const cyclicReadException   = this.getCyclicReadException()
+
         // switch (this.graph.onComputationCycle) {
         //     case 'throw' :
-                throw this.getCyclicReadException()
+                throw cyclicReadException
             // case 'reject' :
             //     this.graph.reject(exception)
             //     break

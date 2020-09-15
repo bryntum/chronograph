@@ -396,7 +396,9 @@ export class ChronoGraph extends Base implements Owner {
 
 
     onEffectAsync (effect : Effect) : Promise<unknown> {
-        if (effect instanceof Atom) return effect.readAsync()
+        if (effect instanceof Atom) {
+            return effect.sync ? effect.read() : effect.readAsync()
+        }
 
         if (effect instanceof Promise) return effect
 
@@ -406,7 +408,9 @@ export class ChronoGraph extends Base implements Owner {
 
     // see the comment for the `onEffectSync`
     onEffectSync (effect : Effect) : unknown {
-        if (effect instanceof Atom) return effect.read()
+        if (effect instanceof Atom) {
+            return effect.sync ? effect.read() : effect.readAsync()
+        }
 
         if (effect instanceof Promise) {
             throw new Error("Can not yield a promise in the synchronous context")
