@@ -91,7 +91,7 @@ export const calculateAtomsQueueLevelSync = function (
             continue
         }
 
-        if (atom.shouldCheckDependencies()) {
+        if (state !== AtomState.Calculating && atom.shouldCheckDependencies()) {
             atom.state      = AtomState.CheckingDeps
 
             const incoming  = atom.immutable.getIncomingDeep()
