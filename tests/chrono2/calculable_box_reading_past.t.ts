@@ -22,6 +22,7 @@ StartTest(t => {
         let result
 
         const listener      = graph.addAtom(new CalculableBox({
+            // lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : any {
                 return result = Y(PreviousValueOf(source))
             }
@@ -32,6 +33,7 @@ StartTest(t => {
         const sourceMode    = new Box('proposed')
 
         const source        = graph.addAtom(new CalculableBox({
+            // lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = Y(sourceMode)
 
@@ -370,4 +372,62 @@ StartTest(t => {
         t.is(dispatcher.read(), true)
         t.is(box2.read(), 100)
     })
+
+
+    t.it('Reading past should not cause cycles and extra computations', async t => {
+        const graph         = ChronoGraph.new()
+
+        const var1          = new Box(0, 'var1')
+
+        let counter1        = 0
+
+        const dispatcher    = new CalculableBox({
+            name    : 'dispatcher',
+            lazy    : false,
+            calculation () : boolean {
+                counter1++
+
+                return box2.readProposed() !== undefined
+            }
+        })
+
+        let counter2        = 0
+
+        const box2          = new CalculableBox({
+            name    : 'box2',
+            lazy    : false,
+            calculation () : number {
+                counter2++
+
+                const dispatcherValue    = dispatcher.read()
+
+                if (dispatcherValue)
+                    return box2.readProposedOrPrevious()
+                else
+                    return var1.read()
+            }
+        })
+
+        graph.addAtoms([ var1, dispatcher, box2 ])
+
+        graph.commit()
+
+        t.isDeeply([ counter1, counter2 ], [ 1, 1 ])
+
+        t.is(box2.read(), 0)
+        t.is(dispatcher.read(), false)
+
+        //----------------------
+        counter1 = counter2 = 0
+
+        box2.write(100)
+
+        graph.commit()
+
+        t.isDeeply([ counter1, counter2 ], [ 1, 1 ])
+
+        t.is(box2.read(), 100)
+        t.is(dispatcher.read(), true)
+    })
+
 })

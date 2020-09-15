@@ -104,7 +104,7 @@ export class Box<V = unknown> extends Atom<V> {
 
         this.stalenessRevision  = getNextRevision()
 
-        this.propagateStaleDeep()
+        this.propagateStaleDeep(true)
 
         this.immutableForWrite().write(value)
 

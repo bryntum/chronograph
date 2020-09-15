@@ -632,7 +632,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     removeAtom (atom : Atom) {
-        atom.propagateStaleDeep()
+        atom.propagateStaleDeep(true)
 
         atom.leaveGraph(this)
 

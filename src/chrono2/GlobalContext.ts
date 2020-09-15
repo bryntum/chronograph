@@ -74,7 +74,7 @@ export class GlobalContext extends Base {
         for (let i = 0; i < this.staleInNextBatch.length; i++) {
             const staleAtom     = this.staleInNextBatch[ i ]
 
-            staleAtom.propagatePossiblyStale()
+            staleAtom.propagatePossiblyStale(true)
 
             staleAtom.state     = AtomState.Stale
         }

@@ -100,6 +100,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
 
     $incoming           : Quark[]
     $outgoing           : Quark[]
+    $outgoingPast       : Quark[]
 
 
     getIncomingDeep () : this[ '$incoming' ] {
@@ -134,7 +135,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
 
     // IMPORTANT LIMITATION : can not nest calls to `forEachOutgoing` (call `forEachOutgoing` in the `func` argument)
     // this messes up internal "uniqables" state
-    forEachOutgoing (func : (quark : Quark, resolvedAtom : Atom) => any) {
+    forEachOutgoing (includePast : boolean, func : (quark : Quark, resolvedAtom : Atom) => any) {
         const uniqable      = getUniqable()
         const graph         = this.owner.graph
 
@@ -157,6 +158,28 @@ export class Quark<V = unknown> extends Node implements Immutable {
                         const outgoingAtom  = !graph || !outgoingOwner.graph || outgoingOwner.graph === graph ? outgoingOwner : graph.checkout(outgoingOwner)
 
                         if (outgoingAtom.immutable.revision === outgoingRev[ i ]) func(outgoingQuark, outgoingAtom)
+                    }
+                }
+            }
+
+            if (includePast) {
+                const outgoingPast      = quark.$outgoingPast
+                const outgoingPastRev   = quark.$outgoingPastRev
+
+                if (outgoingPast) {
+
+                    for (let i = outgoingPast.length - 1; i >= 0; i--) {
+                        const outgoingQuark     = outgoingPast[ i ]
+                        const outgoingOwner     = outgoingQuark.owner
+                        const identity          = outgoingOwner.identity
+
+                        if (identity.uniqable !== uniqable) {
+                            identity.uniqable   = uniqable
+
+                            const outgoingAtom  = !graph || !outgoingOwner.graph || outgoingOwner.graph === graph ? outgoingOwner : graph.checkout(outgoingOwner)
+
+                            if (outgoingAtom.immutable.revision === outgoingPastRev[ i ]) func(outgoingQuark, outgoingAtom)
+                        }
                     }
                 }
             }

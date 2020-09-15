@@ -258,7 +258,10 @@ export class CalculableBox<V = unknown> extends Box<V> {
         const previous              = this.immutable.readRaw()
         const isSameValue           = previous === undefined ? false : this.equality(previous, newValue)
 
-        if (previous !== undefined && !isSameValue) this.propagateStaleShallow()
+        // TODO convince myself this is not a monkey-patching (about `globalContext.activeAtom ? false : true`)
+        // idea is that we should not reset to stale atoms, that has already used this atom in "past" context
+        // (like dispatchers)
+        if (previous !== undefined && !isSameValue) this.propagateStaleShallow(globalContext.activeAtom ? false : true)
 
         if (!isSameValue || previous === undefined) {
             this.immutable.valueRevision = this.immutable.revision
@@ -405,7 +408,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         this.stalenessRevision  = getNextRevision()
 
-        this.propagatePossiblyStale()
+        this.propagatePossiblyStale(true)
 
         // see the comment in `write` method of the `Box`
         if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision

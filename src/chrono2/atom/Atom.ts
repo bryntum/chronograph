@@ -347,7 +347,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         const newValue      = quark.readRaw()
         const oldValue      = this.immutable.readRaw()
 
-        if (!this.equality(newValue, oldValue)) this.propagateDeepStaleOutsideOfGraph()
+        if (!this.equality(newValue, oldValue)) this.propagateDeepStaleOutsideOfGraph(true)
 
         this.immutable          = quark
 
@@ -362,7 +362,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    propagatePossiblyStale () {
+    propagatePossiblyStale (includePast : boolean) {
         const toVisit : Quark[]         = [ this.immutable ]
 
         while (toVisit.length) {
@@ -378,7 +378,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
                 }
 
-                quark.forEachOutgoing((outgoing, atom) => {
+                quark.forEachOutgoing(includePast, (outgoing, atom) => {
                     if (atom.isValueVulnerableToChanges()) toVisit.push(atom.immutable)
                 })
             }
@@ -386,12 +386,12 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    propagateDeepStaleOutsideOfGraph () {
+    propagateDeepStaleOutsideOfGraph (includePast : boolean) {
         const toVisit1 : Quark[]    = []
 
         const graph                 = this.graph
 
-        this.immutable.forEachOutgoing((outgoing, atom) => {
+        this.immutable.forEachOutgoing(includePast, (outgoing, atom) => {
             if (atom.graph !== graph) {
                 // only go deeper if state was UpToDate
                 if (atom.isValueVulnerableToChanges()) toVisit1.push(atom.immutable)
@@ -412,7 +412,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         for (let i = 0; i < toVisit1.length; i++) {
             const quark     = toVisit1[ i ]
 
-            quark.forEachOutgoing((outgoing, atom) => {
+            quark.forEachOutgoing(includePast, (outgoing, atom) => {
                 if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
             })
         }
@@ -430,7 +430,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
                 }
 
-                quark.forEachOutgoing((outgoing, atom) => {
+                quark.forEachOutgoing(includePast, (outgoing, atom) => {
                     if (atom.graph !== graph) {
                         if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
                     }
@@ -441,10 +441,10 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     // immediate outgoings should become stale, further outgoings - possibly stale
-    propagateStaleDeep () {
+    propagateStaleDeep (includePast : boolean) {
         const toVisit1 : Quark[]         = []
 
-        this.immutable.forEachOutgoing((outgoing, atom) => {
+        this.immutable.forEachOutgoing(includePast, (outgoing, atom) => {
             // only go deeper if state was UpToDate
             if (atom.isValueVulnerableToChanges()) {
                 toVisit1.push(atom.immutable)
@@ -466,7 +466,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         for (let i = 0; i < toVisit1.length; i++) {
             const quark     = toVisit1[ i ]
 
-            quark.forEachOutgoing((outgoing, atom) => {
+            quark.forEachOutgoing(includePast, (outgoing, atom) => {
                 if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
             })
         }
@@ -484,7 +484,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
                 }
 
-                quark.forEachOutgoing((outgoing, atom) => {
+                quark.forEachOutgoing(includePast, (outgoing, atom) => {
                     if (atom.isValueVulnerableToChanges()) toVisit2.push(atom.immutable)
                 })
             }
@@ -492,10 +492,10 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    propagateStaleShallow () {
+    propagateStaleShallow (includePast : boolean) {
         const stalenessRevision  = this.stalenessRevision
 
-        this.immutable.forEachOutgoing((quark, atom) => {
+        this.immutable.forEachOutgoing(includePast, (quark, atom) => {
             const state     = atom.state
 
             if (atom.graph && !atom.lazy && state === AtomState.UpToDate) {
@@ -531,7 +531,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     getWalkDepthContext (cycleRef : { cycle : ComputationCycle }) : WalkContext<Atom> {
         return WalkDepthC({
             collectNext (node : Atom, toVisit : WalkStep<Atom>[], visitInfo : VisitInfo) {
-                node.immutable.forEachOutgoing((quark, resolvedAtom) => toVisit.push({ node : resolvedAtom, from : node, label : null }))
+                node.immutable.forEachOutgoing(false, (quark, resolvedAtom) => toVisit.push({ node : resolvedAtom, from : node, label : null }))
             },
             onCycle (node : Atom, stack : WalkStep<Atom>[]) : OnCycleAction {
                 cycleRef.cycle = ComputationCycle.new({ cycle : cycleInfo(stack) })

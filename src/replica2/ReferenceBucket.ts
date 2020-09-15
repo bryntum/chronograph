@@ -106,7 +106,7 @@ export class ReferenceBucketAtom extends Mixin(
 
 
         addToBucket (entity : Entity) {
-            this.propagateStaleDeep()
+            this.propagateStaleDeep(true)
 
             const quark         = this.immutableForWrite()
 
@@ -121,7 +121,7 @@ export class ReferenceBucketAtom extends Mixin(
 
 
         removeFromBucket (entity : Entity) {
-            this.propagateStaleDeep()
+            this.propagateStaleDeep(true)
 
             const quark         = this.immutableForWrite()
 
