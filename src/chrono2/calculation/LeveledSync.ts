@@ -85,7 +85,7 @@ export const calculateAtomsQueueLevelSync = function (
             continue
         }
 
-        if (state === AtomState.UpToDate) {
+        if (state === AtomState.UpToDate || atom.immutable.isTombstone) {
             level.pop()
             modifyStack && stack.size--
             continue
@@ -126,7 +126,7 @@ export const calculateAtomsQueueLevelSync = function (
                 // there have been write to atom or its dependency
                 if (atom.state !== AtomState.Calculating) {
                     // start over w/o stack modification
-                    atom.resetCalculation()
+                    atom.resetCalculation(true)
                     break
                 }
 
@@ -146,10 +146,10 @@ export const calculateAtomsQueueLevelSync = function (
                 } else {
                     value.immutableForWrite().addOutgoing(atom.immutable, false)
 
-                    if (value.uniqable2 === uniqable) {
+                    if (value.isCalculationStarted()) {
                         atom.onCyclicReadDetected()
                     } else {
-                        value.uniqable2 = uniqable
+                        // value.uniqable2 = uniqable
 
                         if (requestedLevel === levelIndex) {
                             level.push(value)

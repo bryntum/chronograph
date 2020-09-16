@@ -423,12 +423,12 @@ export class ChronoGraph extends Base implements Owner {
     async commitAsync (arg? : CommitArguments) : Promise<CommitResult> {
         this.beforeCommit()
 
-        const trasaction    = this.currentTransaction
+        const transaction   = this.currentTransaction
         const stack         = globalContext.stack
 
         globalContext.enterBatch()
 
-        while (stack.size && !trasaction.rejectedWith) {
+        while (stack.size && !transaction.rejectedWith) {
             await runGeneratorAsyncWithEffect(
                 this.effectHandlerAsync,
                 calculateAtomsQueueGen,
@@ -451,19 +451,19 @@ export class ChronoGraph extends Base implements Owner {
 
         this.afterCommit()
 
-        return { rejectedWith : trasaction.rejectedWith }
+        return { rejectedWith : transaction.rejectedWith }
     }
 
 
     commit (arg? : CommitArguments) : CommitResult {
         this.beforeCommit()
 
-        const trasaction    = this.currentTransaction
+        const transaction   = this.currentTransaction
         const stack         = globalContext.stack
 
         globalContext.enterBatch()
 
-        while (stack.size && !trasaction.rejectedWith) {
+        while (stack.size && !transaction.rejectedWith) {
             calculateAtomsQueueSync(this.effectHandlerSync, stack, null, -1)
 
             this.finalizeCommit()
@@ -473,7 +473,7 @@ export class ChronoGraph extends Base implements Owner {
 
         this.afterCommit()
 
-        return { rejectedWith : trasaction.rejectedWith }
+        return { rejectedWith : transaction.rejectedWith }
     }
 
 
@@ -621,7 +621,7 @@ export class ChronoGraph extends Base implements Owner {
 
         if (!atom.lazy) this.addPossiblyStaleStrictAtomToTransaction(atom)
 
-        if (this.autoCommit) this.scheduleAutoCommit()
+        if (this.autoCommit && this.autoCommitTimeoutId !== null) this.scheduleAutoCommit()
 
         return atom
     }
@@ -632,11 +632,13 @@ export class ChronoGraph extends Base implements Owner {
 
 
     removeAtom (atom : Atom) {
+        atom.immutableForWrite().isTombstone = true
+
         atom.propagateStaleDeep(true)
 
         atom.leaveGraph(this)
 
-        if (this.autoCommit) this.scheduleAutoCommit()
+        if (this.autoCommit && this.autoCommitTimeoutId !== null) this.scheduleAutoCommit()
     }
 
     removeAtoms (atoms : Atom[]) {

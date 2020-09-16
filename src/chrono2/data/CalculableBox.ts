@@ -115,9 +115,11 @@ export class CalculableBox<V = unknown> extends Box<V> {
     }
 
 
-    resetCalculation () {
-        this.proposedValue          = undefined
-        this.proposedArgs           = undefined
+    resetCalculation (keepProposed : boolean) {
+        if (!keepProposed) {
+            this.proposedValue          = undefined
+            this.proposedArgs           = undefined
+        }
 
         this.iterationResult        = undefined
     }
@@ -216,6 +218,8 @@ export class CalculableBox<V = unknown> extends Box<V> {
         const activeAtom    = globalContext.activeAtom
         const self          = this.checkoutSelf()
 
+        if (self.immutable.isTombstone) return self.immutable.read()
+
         if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable, false)
 
         if (self.isCalculationStarted()) self.onCyclicReadDetected()
@@ -297,7 +301,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
                 }
             }
 
-        this.resetCalculation()
+        this.resetCalculation(false)
     }
 
 

@@ -200,7 +200,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    resetCalculation () {
+    resetCalculation (keepProposed : boolean) {
         throw new Error("Abstract method")
     }
 

@@ -112,6 +112,11 @@ export class Transaction extends Owner implements Immutable {
     }
 
 
+    forEveryFirstQuark (func : (quark : Quark) => any) {
+        this.immutable.forEveryFirstQuarkTill(this.previous ? this.previous.immutable : undefined, func)
+    }
+
+
     reject (rejectEffect : RejectEffect<unknown>) {
         this.rejectedWith     = rejectEffect
 

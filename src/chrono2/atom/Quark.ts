@@ -31,6 +31,8 @@ export class Quark<V = unknown> extends Node implements Immutable {
 
     state                   : AtomState         = AtomState.Empty
 
+    isTombstone             : boolean           = false
+
 
     hasValue () : boolean {
         return this.readRaw() !== undefined
