@@ -621,7 +621,7 @@ export class ChronoGraph extends Base implements Owner {
 
         if (!atom.lazy) this.addPossiblyStaleStrictAtomToTransaction(atom)
 
-        if (this.autoCommit && this.autoCommitTimeoutId !== null) this.scheduleAutoCommit()
+        if (this.autoCommit && this.autoCommitTimeoutId === null) this.scheduleAutoCommit()
 
         return atom
     }
@@ -638,7 +638,7 @@ export class ChronoGraph extends Base implements Owner {
 
         atom.leaveGraph(this)
 
-        if (this.autoCommit && this.autoCommitTimeoutId !== null) this.scheduleAutoCommit()
+        if (this.autoCommit && this.autoCommitTimeoutId === null) this.scheduleAutoCommit()
     }
 
     removeAtoms (atoms : Atom[]) {
