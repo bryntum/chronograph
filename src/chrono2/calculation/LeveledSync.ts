@@ -4,6 +4,7 @@ import { Atom, AtomState } from "../atom/Atom.js"
 import { CalculationModeGen } from "../CalculationMode.js"
 import { Effect, EffectHandler } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
+import { Transaction } from "../graph/Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 // The `Gen` and `Sync` files are separated intentionally, to be able to get
@@ -18,7 +19,7 @@ export const calculateLowerStackLevelsSync = function (
     while (stack.lowestLevelIndex < atom.level) {
         const levelIndex    = stack.lowestLevelIndex
 
-        calculateAtomsQueueLevelSync(onEffect, uniqable, stack, stack.levels[ levelIndex ], levelIndex, false)
+        calculateAtomsQueueLevelSync(onEffect, uniqable, stack, undefined, stack.levels[ levelIndex ], levelIndex, false)
 
         stack.refreshLowestLevel()
     }
@@ -27,7 +28,7 @@ export const calculateLowerStackLevelsSync = function (
 
 //---------------------------------------------------------------------------------------------------------------------
 export const calculateAtomsQueueSync = function (
-    onEffect : EffectHandler<CalculationModeGen>, stack : LeveledQueue<Atom>, levelOverride : Atom[], levelOverrideIndex : number = -1
+    onEffect : EffectHandler<CalculationModeGen>, stack : LeveledQueue<Atom>, transaction : Transaction, levelOverride : Atom[], levelOverrideIndex : number = -1
 ) {
     // globalContext.enterBatch()
     const uniqable          = getUniqable()
@@ -37,18 +38,18 @@ export const calculateAtomsQueueSync = function (
 
         if (levelOverrideIndex !== -1) {
             if (levelIndex < levelOverrideIndex) {
-                calculateAtomsQueueLevelSync(onEffect, uniqable, stack, stack.levels[ levelIndex ], levelIndex, false)
+                calculateAtomsQueueLevelSync(onEffect, uniqable, stack, transaction, stack.levels[ levelIndex ], levelIndex, false)
 
                 stack.refreshLowestLevel()
             } else if (levelIndex >= levelOverrideIndex) {
-                calculateAtomsQueueLevelSync(onEffect, uniqable, stack, levelOverride, levelOverrideIndex, true)
+                calculateAtomsQueueLevelSync(onEffect, uniqable, stack, transaction, levelOverride, levelOverrideIndex, true)
 
                 stack.refreshLowestLevel()
 
                 if (levelOverride.length === 0) break
             }
         } else {
-            calculateAtomsQueueLevelSync(onEffect, uniqable, stack, stack.levels[ levelIndex ], levelIndex, false)
+            calculateAtomsQueueLevelSync(onEffect, uniqable, stack, transaction, stack.levels[ levelIndex ], levelIndex, false)
 
             stack.refreshLowestLevel()
 
@@ -64,6 +65,7 @@ export const calculateAtomsQueueLevelSync = function (
     onEffect    : EffectHandler<CalculationModeGen>,
     uniqable    : number,
     stack       : LeveledQueue<Atom>,
+    transaction : Transaction,
     level       : Atom[],
     levelIndex  : number,
     isOverride  : boolean
@@ -74,7 +76,31 @@ export const calculateAtomsQueueLevelSync = function (
     const startedAtLowestLevelIndex = stack.lowestLevelIndex
     const modifyStack               = !isOverride
 
+    const enableProgressNotifications   = transaction ? transaction.graph.enableProgressNotifications : false
+    let counter : number                = 0
+
     while (level.length && stack.lowestLevelIndex === startedAtLowestLevelIndex) {
+        if (false) {
+            const now               = Date.now()
+            const elapsed           = now - transaction.propagationStartDate
+
+            if (elapsed > transaction.startProgressNotificationsAfterMs) {
+                const lastProgressNotificationDate      = transaction.lastProgressNotificationDate
+
+                if (!lastProgressNotificationDate || (now - lastProgressNotificationDate) > transaction.emitProgressNotificationsEveryMs) {
+                    transaction.lastProgressNotificationDate   = now
+
+                    transaction.graph.onPropagationProgressNotification({
+                        total       : transaction.plannedTotalIdentifiersToCalculate,
+                        remaining   : stack.size,
+                        phase       : 'propagating'
+                    })
+
+                    // yield delay(0)
+                }
+            }
+        }
+
         const atom          = level[ level.length - 1 ]
         const state         = atom.state
 

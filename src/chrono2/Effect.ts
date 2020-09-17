@@ -224,11 +224,11 @@ export class ProposedArgumentsOfEffect extends Effect {
 export const ProposedArgumentsOf = (atom : Atom) : ProposedArgumentsOfEffect => ProposedArgumentsOfEffect.new({ atom })
 
 
-// //---------------------------------------------------------------------------------------------------------------------
-// export type ProgressNotificationEffect = {
-//     total           : number
-//
-//     remaining       : number
-//
-//     phase           : string
-// }
+//---------------------------------------------------------------------------------------------------------------------
+export type ProgressNotificationEffect = {
+    total           : number
+
+    remaining       : number
+
+    phase           : string
+}

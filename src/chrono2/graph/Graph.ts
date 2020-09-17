@@ -1,25 +1,34 @@
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
-import { getUniqable } from "../../util/Uniqable.js"
 import { Atom } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
 import { Quark } from "../atom/Quark.js"
 import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
-import { CalculationMode, CalculationModeGen, CalculationModeSync } from "../CalculationMode.js"
+import { CalculationModeGen, CalculationModeSync } from "../CalculationMode.js"
 import { ZeroBox } from "../data/Box.js"
 import { Owner } from "../data/Immutable.js"
 import {
     Effect,
-    EffectHandler, HasProposedValueEffect, HasProposedValueSymbol,
+    EffectHandler,
+    HasProposedValueEffect,
+    HasProposedValueSymbol,
     PreviousValueOfEffect,
-    PreviousValueOfSymbol, ProposedArgumentsOfEffect, ProposedArgumentsOfSymbol,
-    ProposedOrPreviousSymbol, ProposedOrPreviousValueOfEffect, ProposedOrPreviousValueOfSymbol, ProposedValueOfEffect, ProposedValueOfSymbol,
-    RejectEffect, RejectSymbol,
+    PreviousValueOfSymbol,
+    ProgressNotificationEffect,
+    ProposedArgumentsOfEffect,
+    ProposedArgumentsOfSymbol,
+    ProposedOrPreviousSymbol,
+    ProposedOrPreviousValueOfEffect,
+    ProposedOrPreviousValueOfSymbol,
+    ProposedValueOfEffect,
+    ProposedValueOfSymbol,
+    RejectEffect,
+    RejectSymbol,
     runGeneratorAsyncWithEffect
 } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
-import { Iteration, IterationStorage, IterationStorageShredding, IterationStorageShreddingArray } from "./Iteration.js"
+import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -115,14 +124,14 @@ export class ChronoGraph extends Base implements Owner {
 
     garbageCollection       : GarbageCollectionStrategy     = 'eager'
 
+    // TODO do we really need this?
     // special flag only used for `historyLimit === 0` case
     // indicates the current transaction is "frozen"
     // we use it to avoid unnecessary freezing / thawing of the transaction
     // it is handling the "reject immediately after commit should do nothing" condition
     frozen                  : boolean               = false
 
-
-    ongoing                 : Promise<any>          = undefined
+    enableProgressNotifications     : boolean       = false
 
 
     initialize<T extends ChronoGraph> (props? : Partial<T>) {
@@ -395,6 +404,10 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    onPropagationProgressNotification (notification : ProgressNotificationEffect) {
+    }
+
+
     onEffectAsync (effect : Effect) : Promise<unknown> {
         if (effect instanceof Atom) {
             return effect.sync ? effect.read() : effect.readAsync()
@@ -432,7 +445,7 @@ export class ChronoGraph extends Base implements Owner {
             await runGeneratorAsyncWithEffect(
                 this.effectHandlerAsync,
                 calculateAtomsQueueGen,
-                [ this.effectHandlerAsync, stack, null, -1 ],
+                [ this.effectHandlerAsync, stack, transaction, null, -1 ],
                 null
             )
 
@@ -464,7 +477,7 @@ export class ChronoGraph extends Base implements Owner {
         globalContext.enterBatch()
 
         while (stack.size && !transaction.rejectedWith) {
-            calculateAtomsQueueSync(this.effectHandlerSync, stack, null, -1)
+            calculateAtomsQueueSync(this.effectHandlerSync, stack, transaction, null, -1)
 
             this.finalizeCommit()
         }

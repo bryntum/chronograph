@@ -70,7 +70,7 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
     doCalculate () {
         const effectHandler = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
 
-        calculateAtomsQueueSync(effectHandler, globalContext.stack, [ this ], this.level)
+        calculateAtomsQueueSync(effectHandler, globalContext.stack, this.graph ? this.graph.currentTransaction : undefined, [ this ], this.level)
     }
 
 
@@ -98,7 +98,7 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
         await runGeneratorAsyncWithEffect(
             effectHandler,
             calculateAtomsQueueGen,
-            [ effectHandler, globalContext.stack, [ this ], this.level ],
+            [ effectHandler, globalContext.stack, this.graph ? this.graph.currentTransaction : undefined, [ this ], this.level ],
             null
         )
 

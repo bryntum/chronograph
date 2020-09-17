@@ -1,4 +1,6 @@
 import { AnyConstructor } from "../../class/Mixin.js"
+import { LeveledQueue } from "../../util/LeveledQueue2.js"
+import { Atom } from "../atom/Atom.js"
 import { Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "../data/Immutable.js"
 import { RejectEffect } from "../Effect.js"
@@ -9,6 +11,18 @@ let transactionIdSequence : number = 0
 
 //----------------------------------------------------------------------------------------------------------------------
 export class Transaction extends Owner implements Immutable {
+    propagationStartDate            : number        = 0
+    lastProgressNotificationDate    : number        = 0
+
+    startProgressNotificationsAfterMs : number      = 500
+    emitProgressNotificationsEveryMs  : number      = 200
+
+    // TODO auto-adjust this parameter to match the emitProgressNotificationsEveryMs (to avoid calls to time functions)
+    emitProgressNotificationsEveryCalculations  : number = 100
+
+    plannedTotalIdentifiersToCalculate  : number    = 0
+
+
     name            : string            = `transaction#${transactionIdSequence++}`
 
     rejectedWith    : RejectEffect<unknown> = undefined
@@ -80,6 +94,17 @@ export class Transaction extends Owner implements Immutable {
         this.frozen = true
     }
     //endregion
+
+
+    get graph () : ChronoGraph {
+        return this.owner
+    }
+
+
+    startCommit (stack : LeveledQueue<Atom>) {
+        this.propagationStartDate                   = Date.now()
+        this.plannedTotalIdentifiersToCalculate     = stack.size
+    }
 
 
     getLastIteration () : Iteration {
