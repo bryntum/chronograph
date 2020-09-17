@@ -102,24 +102,24 @@ export class Box<V = unknown> extends Atom<V> {
             this.graph.currentTransaction.immutableForWrite()
         }
 
-        this.stalenessRevision  = getNextRevision()
+        this.userInputRevision          = getNextRevision()
 
         this.propagateStaleDeep(true)
 
         this.immutableForWrite().write(value)
 
-        this.immutable.revision         = this.stalenessRevision
-        this.immutable.valueRevision    = this.stalenessRevision
+        this.immutable.revision         = this.userInputRevision
+        this.immutable.valueRevision    = this.userInputRevision
 
-        this.state              = AtomState.UpToDate
+        this.state                      = AtomState.UpToDate
 
-        // after the `propagateStaleDeep` above, the new `stalenessRevision` has been propagated
-        // then we reset the `stalenessRevision` of the atom that has triggered the write (activeAtom)
+        // after the `propagateStaleDeep` above, the new `userInputRevision` has been propagated
+        // then we reset the `userInputRevision` of the atom that has triggered the write (activeAtom)
         // so that `propagateStaleShallow` won't cause extra recalculations
         // TODO this is a bit vague, even that all tests passes
         // we probably need some proper way of indicating that calculation of some atom is triggered by another
         // (batchId? - currently its `uniqable` inside the calculation cores)
-        if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision
+        if (globalContext.activeAtom) globalContext.activeAtom.userInputRevision = this.userInputRevision
 
         if (this.graph) {
             this.graph.onDataWrite(this)

@@ -27,6 +27,8 @@ export class Quark<V = unknown> extends Node implements Immutable {
     // not propagate staleness
     valueRevision           : number            = MIN_SMI
 
+    batchRevision           : number            = MIN_SMI
+
     iteration               : Iteration         = undefined
 
     state                   : AtomState         = AtomState.Empty

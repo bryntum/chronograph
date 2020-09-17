@@ -189,20 +189,21 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
 
     readProposedInternal () : V {
-        if (this.state === AtomState.UpToDate) {
-            return this.immutable.proposedValue
-        } else {
-            return this.proposedValue
-        }
+        if (this.proposedValue !== undefined) return this.proposedValue
+
+        // `proposedValue` is persisted during the batch
+        if (this.immutable.batchRevision === globalContext.activeBatchRevision) return this.immutable.proposedValue
+
+        return undefined
     }
 
 
     readProposedArgsInternal () : unknown[] {
-        if (this.state === AtomState.UpToDate) {
-            return this.immutable.proposedArgs
-        } else {
-            return this.proposedArgs
-        }
+        if (this.proposedArgs !== undefined) return this.proposedArgs
+
+        if (this.immutable.batchRevision === globalContext.activeBatchRevision) return this.immutable.proposedArgs
+
+        return undefined
     }
 
 
@@ -259,7 +260,9 @@ export class CalculableBox<V = unknown> extends Box<V> {
     updateValue (newValue : V) {
         if (newValue === undefined) newValue = null
 
-        const previous              = this.immutable.readRaw()
+        const immutable             = this.immutableForWrite()
+
+        const previous              = immutable.readRaw()
         const isSameValue           = previous === undefined ? false : this.equality(previous, newValue)
 
         // TODO convince myself this is not a monkey-patching (about `globalContext.activeAtom ? false : true`)
@@ -267,16 +270,18 @@ export class CalculableBox<V = unknown> extends Box<V> {
         // (like dispatchers)
         if (previous !== undefined && !isSameValue) this.propagateStaleShallow(globalContext.activeAtom ? false : true)
 
+        immutable.batchRevision            = globalContext.activeBatchRevision
+
         if (!isSameValue || previous === undefined) {
-            this.immutable.valueRevision = this.immutable.revision
+            immutable.valueRevision        = immutable.revision
         }
 
         // only write the value, revision has been already updated in the `beforeCalculation`
-        this.immutableForWrite().write(newValue)
+        immutable.write(newValue)
 
-        this.immutable.proposedValue            = this.proposedValue
-        this.immutable.proposedArgs             = this.proposedArgs
-        this.immutable.usedProposedOrPrevious   = this.usedProposedOrPrevious
+        immutable.proposedValue            = this.proposedValue
+        immutable.proposedArgs             = this.proposedArgs
+        immutable.usedProposedOrPrevious   = this.usedProposedOrPrevious
 
         this.state                              = AtomState.UpToDate
 
@@ -410,12 +415,12 @@ export class CalculableBox<V = unknown> extends Box<V> {
     writeConfirmedDifferentValue (value : V) {
         this.proposedValue      = value
 
-        this.stalenessRevision  = getNextRevision()
+        this.userInputRevision  = getNextRevision()
 
         this.propagatePossiblyStale(true)
 
         // see the comment in `write` method of the `Box`
-        if (globalContext.activeAtom) globalContext.activeAtom.stalenessRevision = this.stalenessRevision
+        if (globalContext.activeAtom) globalContext.activeAtom.userInputRevision = this.userInputRevision
 
         if (this.graph) {
             this.graph.onDataWrite(this)

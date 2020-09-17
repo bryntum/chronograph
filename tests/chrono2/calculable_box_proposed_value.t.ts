@@ -3,7 +3,7 @@ import { CalculationModeGen, CalculationModeSync } from "../../src/chrono2/Calcu
 import { Box } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
-import { EffectHandler, ProposedOrPrevious } from "../../src/chrono2/Effect.js"
+import { EffectHandler, HasProposedValue, ProposedOrPrevious } from "../../src/chrono2/Effect.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { delay } from "../../src/util/Helpers.js"
 import { GraphGen } from "../util.js"
@@ -446,6 +446,72 @@ StartTest(t => {
             t.isDeeply([ counter1, counter2 ], [ 1, 0 ])
 
             t.is(box2.read(), 101, 'Value did not change')
+        })
+
+
+        t.it(prefix + 'Proposed value should persist during the batch', async t => {
+            let counter1    = 0
+            const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box1',
+                calculation : eval(graphGen.calc(function* (Y) {
+                    counter1++
+
+                    return Y(ProposedOrPrevious)
+                }))
+            })
+
+            let counter2    = 0
+            const box2 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box2',
+                calculation : eval(graphGen.calc(function* (Y) {
+                    counter2++
+
+                    return Y(ProposedOrPrevious)
+                }))
+            })
+
+            let counter3    = 0
+            const box3 : CalculableBox<number>     = graphGen.calculableBox({
+                name        : 'box3',
+                calculation : eval(graphGen.calc(function* (Y) {
+                    counter3++
+
+                    const box1HasProposed   = Y(HasProposedValue(box1))
+                    const box2HasProposed   = Y(HasProposedValue(box2))
+
+                    const box1Value         = (yield box1)
+                    const box2Value         = (yield box2)
+
+                    if (box1Value > 10) box2.write(100)
+
+                    return (box1HasProposed ? 1 : 0) + (box2HasProposed ? 1 : 0)
+                }))
+            })
+
+            box1.write(1)
+            box2.write(1)
+
+            t.is(box3.read(), 2, 'Case #1')
+
+            t.isDeeply([ counter1, counter2, counter3 ], [ 1, 1, 1 ])
+
+            //-------------------------
+            counter1 = counter2 = counter3 = 0
+
+            box1.write(2)
+
+            t.is(box3.read(), 1, 'Case #2')
+
+            t.isDeeply([ counter1, counter2, counter3 ], [ 1, 0, 1 ])
+
+            //-------------------------
+            counter1 = counter2 = counter3 = 0
+
+            box1.write(20)
+
+            t.is(box3.read(), 2, 'Case #3')
+
+            t.isDeeply([ counter1, counter2, counter3 ], [ 1, 1, 2 ])
         })
     }
 

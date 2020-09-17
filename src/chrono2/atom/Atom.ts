@@ -40,7 +40,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     uniqableBox2        : any           = undefined
 
     // TODO find better name, "userInputRevision" ?
-    stalenessRevision   : number        = MIN_SMI
+    userInputRevision   : number        = MIN_SMI
 
     immutable           : Quark         = this.buildDefaultImmutable()
 
@@ -351,7 +351,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
         this.immutable          = quark
 
-        this.stalenessRevision  = quark.revision
+        this.userInputRevision  = quark.revision
     }
 
 
@@ -372,7 +372,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             if (atom.isValueVulnerableToChanges()) {
                 atom.state              = AtomState.PossiblyStale
-                atom.stalenessRevision  = this.stalenessRevision
+                atom.userInputRevision  = this.userInputRevision
 
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
@@ -398,7 +398,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
                 // but reset to stale anyway
                 atom.state              = AtomState.Stale
-                atom.stalenessRevision  = this.stalenessRevision
+                atom.userInputRevision  = this.userInputRevision
             }
         })
 
@@ -424,7 +424,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             if (atom.isValueVulnerableToChanges()) {
                 atom.state              = AtomState.PossiblyStale
-                atom.stalenessRevision  = this.stalenessRevision
+                atom.userInputRevision  = this.userInputRevision
 
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
@@ -456,7 +456,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             // but reset to stale anyway
             atom.state              = AtomState.Stale
-            atom.stalenessRevision  = this.stalenessRevision
+            atom.userInputRevision  = this.userInputRevision
         })
 
         if (!this.immutable.frozen) this.immutable.clearOutgoing()
@@ -478,7 +478,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             if (atom.isValueVulnerableToChanges()) {
                 atom.state              = AtomState.PossiblyStale
-                atom.stalenessRevision  = this.stalenessRevision
+                atom.userInputRevision  = this.userInputRevision
 
                 if (atom.graph && !atom.lazy) {
                     atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
@@ -493,7 +493,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     propagateStaleShallow (includePast : boolean) {
-        const stalenessRevision  = this.stalenessRevision
+        const userInputRevision  = this.userInputRevision
 
         this.immutable.forEachOutgoing(includePast, (quark, atom) => {
             const state     = atom.state
@@ -502,9 +502,9 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
                 atom.graph.addPossiblyStaleStrictAtomToTransaction(atom)
             }
 
-            if (state !== AtomState.Calculating || atom.stalenessRevision < stalenessRevision) {
+            if (state !== AtomState.Calculating || atom.userInputRevision < userInputRevision) {
                 atom.state              = AtomState.Stale
-                atom.stalenessRevision  = stalenessRevision
+                atom.userInputRevision  = userInputRevision
             }
         })
 

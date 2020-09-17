@@ -3,7 +3,7 @@ import { MIN_SMI } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue2.js"
 import { Atom, AtomState } from "./atom/Atom.js"
 import { getNextRevision } from "./atom/Node.js"
-import { Effect, ProposedOrPreviousSymbol } from "./Effect.js"
+import { Effect, HasProposedValueEffect, HasProposedValueSymbol, ProposedOrPreviousSymbol } from "./Effect.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Global context should be just an anonymous instance of ChronoGraph
@@ -47,6 +47,11 @@ export class GlobalContext extends Base {
 
     [ProposedOrPreviousSymbol] (effect : Effect) : unknown {
         return globalContext.activeAtom.readProposedOrPrevious()
+    }
+
+
+    [HasProposedValueSymbol] (effect : HasProposedValueEffect) : any {
+        return effect.atom.readProposed() !== undefined
     }
 
 

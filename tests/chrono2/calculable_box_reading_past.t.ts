@@ -103,6 +103,7 @@ StartTest(t => {
         let result
 
         const listener      = graph.addAtom(new CalculableBox({
+            lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : any {
                 return result = Y(ProposedValueOf(source))
             }
@@ -113,6 +114,7 @@ StartTest(t => {
         const sourceMode    = new Box('proposed')
 
         const source        = graph.addAtom(new CalculableBox({
+            lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = Y(sourceMode)
 
@@ -180,6 +182,7 @@ StartTest(t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
         const listener      = graph.addAtom(new CalculableBox({
+            lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
                 return YIELD(ProposedOrPreviousValueOf(source))
             }
@@ -190,6 +193,7 @@ StartTest(t => {
         const sourceMode    = new Box('proposed')
 
         const source        = graph.addAtom(new CalculableBox({
+            lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = YIELD(sourceMode)
 
@@ -257,6 +261,7 @@ StartTest(t => {
         let result
 
         const listener      = graph.addAtom(new CalculableBox({
+            lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
                 return result = YIELD(ProposedArgumentsOf(source))
             }
@@ -267,6 +272,7 @@ StartTest(t => {
         const sourceMode    = new Box('proposed')
 
         const source        = graph.addAtom(new CalculableBox({
+            lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = YIELD(sourceMode)
 
