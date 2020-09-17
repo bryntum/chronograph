@@ -148,6 +148,10 @@ export class CalculableBox<V = unknown> extends Box<V> {
     // synchronously read the latest available value, either proposed by user or possibly stale from previous iteration
     // (you should know what you are doing)
     readConsistentOrProposedOrPrevious () : V {
+        // for sync atoms can always return consistent using `read()`
+        if (this.sync) return this.read()
+
+        // for async atoms return proposed or previous
         const self          = this.onReadingPast()
 
         if (self.state === AtomState.UpToDate) return self.immutable.read()
