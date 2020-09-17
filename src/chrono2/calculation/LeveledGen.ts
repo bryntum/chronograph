@@ -146,7 +146,7 @@ export const calculateAtomsQueueLevelGen = function* (
                 } else {
                     value.immutableForWrite().addOutgoing(atom.immutable, false)
 
-                    if (value.isCalculationStarted()) {
+                    if (value.isCalculationStarted() && !value.cyclicReadIsBlockedOnPromise()) {
                         atom.onCyclicReadDetected()
                     } else {
                         // value.uniqable2 = uniqable

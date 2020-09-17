@@ -1,7 +1,7 @@
 import { AnyConstructor } from "../../class/Mixin.js"
 import { cycleInfo, OnCycleAction, VisitInfo, WalkContext, WalkDepthC, WalkStep } from "../../graph/WalkDepth.js"
 import { MIN_SMI } from "../../util/Helpers.js"
-import { Uniqable } from "../../util/Uniqable.js"
+import { getUniqable, Uniqable } from "../../util/Uniqable.js"
 import { ComputationCycle, ComputationCycleError } from "../calculation/ComputationCycle.js"
 import { CalculationModeSync } from "../CalculationMode.js"
 import { Owner } from "../data/Immutable.js"
@@ -525,6 +525,27 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             //     warn(exception)
             //     break
         // }
+    }
+
+
+    // go deep and detect if there's a cyclic read situation indeed,
+    // or it is just blocked on awaiting the promise
+    cyclicReadIsBlockedOnPromise () : boolean {
+        const uniqable              = getUniqable()
+
+        let atom                    = this
+
+        while (atom) {
+            if (atom.uniqable2 === uniqable) return false
+
+            atom.uniqable2          = uniqable
+
+            const iterationValue    = atom.iterationResult.value
+
+            if (iterationValue instanceof Promise) return true
+
+            atom                    = iterationValue
+        }
     }
 
 
