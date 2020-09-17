@@ -197,6 +197,11 @@ export class Iteration extends Immutable {
     }
 
 
+    addAtom (atom : Atom) {
+        this.addQuark(atom.immutable)
+    }
+
+
     addQuark (quark : Quark) {
         // TODO setup dev/prod builds
         // <debug>

@@ -88,6 +88,7 @@ export class ChronoGraph extends Base implements Owner {
 
     atomsById               : Map<ChronoReference, Atom>    = new Map()
 
+    isInitialCommit         : boolean           = true
 
     isCommitting            : boolean           = false
 
@@ -116,6 +117,8 @@ export class ChronoGraph extends Base implements Owner {
 
     effectHandlerSync       : EffectHandler<CalculationModeSync>    = null
     effectHandlerAsync      : EffectHandler<CalculationModeGen>     = null
+
+    transactionClass        : typeof Transaction    = Transaction
 
 
 
@@ -169,12 +172,8 @@ export class ChronoGraph extends Base implements Owner {
     get immutable () : Transaction {
         if (this.$immutable !== undefined) return this.$immutable
 
-        const zeroIteration     = Iteration.new({
-            storage : this.historyLimit >= 0 ? new IterationStorageShredding() : new IterationStorage()
-        })
-
         // pass through the setter for the mark/unmark side effect
-        return this.immutable   = Transaction.new({ immutable : zeroIteration })
+        return this.immutable   = this.transactionClass.new()
     }
 
     // this is assignment "within" the undo/redo history, keeps the redo information
@@ -499,6 +498,7 @@ export class ChronoGraph extends Base implements Owner {
 
     afterCommit () {
         this.isCommitting       = false
+        this.isInitialCommit    = false
 
         this.unScheduleAutoCommit()
 
@@ -630,7 +630,7 @@ export class ChronoGraph extends Base implements Owner {
     addAtom<A extends Atom> (atom : A) : A {
         atom.enterGraph(this)
 
-        this.immutableForWrite().addQuark(atom.immutable)
+        this.immutableForWrite().addAtom(atom)
 
         if (!atom.lazy) this.addPossiblyStaleStrictAtomToTransaction(atom)
 

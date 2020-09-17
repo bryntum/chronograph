@@ -5,22 +5,24 @@ import { Quark } from "../atom/Quark.js"
 import { Immutable, Owner } from "../data/Immutable.js"
 import { RejectEffect } from "../Effect.js"
 import { ChronoGraph } from "./Graph.js"
-import { Iteration } from "./Iteration.js"
+import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
 
 let transactionIdSequence : number = 0
 
 //----------------------------------------------------------------------------------------------------------------------
 export class Transaction extends Owner implements Immutable {
-    propagationStartDate            : number        = 0
-    lastProgressNotificationDate    : number        = 0
+    propagationStartDate                : number        = 0
+    lastProgressNotificationDate        : number        = 0
 
-    startProgressNotificationsAfterMs : number      = 500
-    emitProgressNotificationsEveryMs  : number      = 200
+    startProgressNotificationsAfterMs   : number        = 500
+    emitProgressNotificationsEveryMs    : number        = 200
 
     // TODO auto-adjust this parameter to match the emitProgressNotificationsEveryMs (to avoid calls to time functions)
-    emitProgressNotificationsEveryCalculations  : number = 100
+    emitProgressNotificationsEveryCalculations : number = 100
 
-    plannedTotalIdentifiersToCalculate  : number    = 0
+    plannedTotalIdentifiersToCalculate  : number        = 0
+
+    iterationClass      : typeof Iteration              = Iteration
 
 
     name            : string            = `transaction#${transactionIdSequence++}`
@@ -44,7 +46,10 @@ export class Transaction extends Owner implements Immutable {
 
 
     buildImmutable () : Iteration {
-        return this.previous ? this.previous.immutable.createNext(this) : Iteration.new()
+        return this.previous ? this.previous.immutable.createNext(this) : this.iterationClass.new({
+            owner   : this,
+            storage : this.owner.historyLimit >= 0 ? new IterationStorageShredding() : new IterationStorage()
+        })
     }
 
 
@@ -176,6 +181,11 @@ export class Transaction extends Owner implements Immutable {
 
     addQuark (quark : Quark) {
         this.immutableForWrite().addQuark(quark)
+    }
+
+
+    addAtom (atom : Atom) {
+        this.immutableForWrite().addAtom(atom)
     }
 
 
