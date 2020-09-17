@@ -157,7 +157,14 @@ export class ReferenceAtom extends Mixin(
                 }
 
                 if (value instanceof Entity) {
+                    // TODO just the following line ??
+                    // this.getBucket(value).addToBucket(this.self)
+
                     this.getBucket(value).state = AtomState.Stale
+
+                    if (this.graph) {
+                        this.graph.onDataWrite(this.getBucket(value))
+                    }
                 }
             }
 
