@@ -165,9 +165,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
     readProposedOrPrevious () : V {
         const self          = this.onReadingPast()
 
-        const proposedValue = self.readProposedInternal()
+        return self.readProposedOrPreviousInternal()
+    }
 
-        return proposedValue !== undefined ? proposedValue : self.readPreviousInternal()
+
+    readProposedOrPreviousInternal () : V {
+        const proposedValue = this.readProposedInternal()
+
+        return proposedValue !== undefined ? proposedValue : this.readPreviousInternal()
     }
 
 

@@ -1,3 +1,6 @@
+import { Atom } from "../chrono2/atom/Atom.js"
+import { CalculationModeSync } from "../chrono2/CalculationMode.js"
+import { EffectHandler, runGeneratorSyncWithEffect } from "../chrono2/Effect.js"
 import { CommitArguments, CommitResult, CommitZero } from "../chrono2/graph/Graph.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { DEBUG, debug } from "../environment/Debug.js"
@@ -272,20 +275,20 @@ export class Entity extends Mixin(
         // }
 
 
-        // // unfortunately, the better typing:
-        // // run <Name extends AllowedNames<this, AnyFunction>> (methodName : Name, ...args : Parameters<this[ Name ]>)
-        // //     : ReturnType<this[ Name ]> extends CalculationIterator<infer Res> ? Res : ReturnType<this[ Name ]>
-        // // yields "types are exceedingly long and possibly infinite on the application side
-        // // TODO file a TS bug report
-        // run (methodName : keyof this, ...args : any[]) : any {
-        //     const onEffect : SyncEffectHandler = (effect : YieldableValue) => {
-        //         if (effect instanceof Identifier) return this.graph.read(effect)
-        //
-        //         throw new Error("Helper methods can not yield effects during computation")
-        //     }
-        //
-        //     return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as any, args, this)
-        // }
+        // unfortunately, the better typing:
+        // run <Name extends AllowedNames<this, AnyFunction>> (methodName : Name, ...args : Parameters<this[ Name ]>)
+        //     : ReturnType<this[ Name ]> extends CalculationIterator<infer Res> ? Res : ReturnType<this[ Name ]>
+        // yields "types are exceedingly long and possibly infinite on the application side
+        // TODO file a TS bug report
+        run (methodName : keyof this, ...args : any[]) : any {
+            const onEffect : EffectHandler<CalculationModeSync> = (effect : unknown) => {
+                if (effect instanceof Atom) return effect.read()
+
+                throw new Error("Helper methods can not yield effects during computation")
+            }
+
+            return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as any, args, this)
+        }
 
 
         static createPropertyAccessorsFor (field : Field) {
