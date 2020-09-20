@@ -3,7 +3,7 @@ import { AnyConstructor } from "../../src/class/Mixin.js"
 
 const FieldMixin = <B extends AnyConstructor>(nameArg : string, idx : number, base : B) => {
     const name          = String(nameArg)
-    const storageProp   = '$' + name
+    const storageProp   = idx//'$' + name
     const IDX           = idx
 
     // @ts-ignore
@@ -167,35 +167,37 @@ const accessMixed = Benchmark.new({
         for (let i = 0; i < size; i++) {
             const instance = state[ i ]
 
-            // @ts-ignore
-            instance['field0']++
-            // @ts-ignore
-            instance['field1']++
-            // @ts-ignore
-            instance['field2']++
-            // @ts-ignore
-            instance['field3']++
-            // @ts-ignore
-            instance['field4']++
-            // @ts-ignore
-            instance['field5']++
-            // @ts-ignore
-            instance['field6']++
-            // @ts-ignore
-            instance['field7']++
-            // @ts-ignore
-            instance['field8']++
-            // @ts-ignore
-            instance['field9']++
+            for (let k = 0; k < 10; k++) instance[ k ]++
+
+            // // @ts-ignore
+            // instance.field00++
+            // // @ts-ignore
+            // instance.field01++
+            // // @ts-ignore
+            // instance.field02++
+            // // @ts-ignore
+            // instance.field03++
+            // // @ts-ignore
+            // instance.field04++
+            // // @ts-ignore
+            // instance.field05++
+            // // @ts-ignore
+            // instance.field06++
+            // // @ts-ignore
+            // instance.field07++
+            // // @ts-ignore
+            // instance.field08++
+            // // @ts-ignore
+            // instance.field09++
         }
     }
 })
 
 
 const run = async () => {
-    // await instantiatePlain.measureTillMaxTime()
-    // await instantiateMixed.measureTillMaxTime()
-    //
+    await instantiatePlain.measureTillMaxTime()
+    await instantiateMixed.measureTillMaxTime()
+
     await accessPlain.measureTillMaxTime()
     await accessMixed.measureTillMaxTime()
 }

@@ -3,24 +3,34 @@ import { AnyConstructor } from "../../src/class/Mixin.js"
 
 const FieldMixin = <B extends AnyConstructor>(nameArg : string, idx : number, base : B) => {
     const name          = String(nameArg)
-    const storageProp   = '$' + name
+    const storageProp   = `'$${name}'`
     const IDX           = idx
 
     const Class = eval(`(class extends base {
         constructor () {
             super(...arguments)
 
-            this[ '${storageProp}' ] = 0
+            this[ ${storageProp} ] = 0
         }
     })`)
 
     Object.defineProperty(Class.prototype, name, {
         get : eval(`(function () {
-            return this[ '${storageProp}' ]
+            return this[ ${storageProp} ]
         })`),
 
-        set : eval(`(function (value ) {
-            return this[ '${storageProp}' ] = value
+        set : eval(`(function (value) {
+            return this[ ${storageProp} ] = value
+        })`)
+    })
+
+    Object.defineProperty(Class.prototype, idx, {
+        get : eval(`(function () {
+            return this[ ${storageProp} ]
+        })`),
+
+        set : eval(`(function (value) {
+            return this[ ${storageProp} ] = value
         })`)
     })
 
@@ -121,6 +131,44 @@ const instantiateMixed = Benchmark.new({
     }
 })
 
+const fields = [
+    'field00',
+    'field01',
+    'field02',
+    'field03',
+    'field04',
+    'field05',
+    'field06',
+    'field07',
+    'field08',
+    'field09'
+]
+
+const fields2 = [
+    me => me.field00++,
+    me => me.field01++,
+    me => me.field02++,
+    me => me.field03++,
+    me => me.field04++,
+    me => me.field05++,
+    me => me.field06++,
+    me => me.field07++,
+    me => me.field08++,
+    me => me.field09++,
+]
+
+const acc_field00 = me => me.field00++
+const acc_field01 = me => me.field01++
+const acc_field02 = me => me.field02++
+const acc_field03 = me => me.field03++
+const acc_field04 = me => me.field04++
+const acc_field05 = me => me.field05++
+const acc_field06 = me => me.field06++
+const acc_field07 = me => me.field07++
+const acc_field08 = me => me.field08++
+const acc_field09 = me => me.field09++
+
+
 
 const accessPlain = Benchmark.new({
     name        : 'Access plain JS',
@@ -138,16 +186,7 @@ const accessPlain = Benchmark.new({
         for (let i = 0; i < size; i++) {
             const instance = state[ i ]
 
-            instance.field00++
-            instance.field01++
-            instance.field02++
-            instance.field03++
-            instance.field04++
-            instance.field05++
-            instance.field06++
-            instance.field07++
-            instance.field08++
-            instance.field09++
+            for (let k = 0; k < fields.length; k++) instance[ fields[ k ]]++
         }
     }
 })
@@ -168,36 +207,18 @@ const accessMixed = Benchmark.new({
         for (let i = 0; i < size; i++) {
             const instance = state[ i ]
 
-            // @ts-ignore
-            instance.field00++
-            // @ts-ignore
-            instance.field01++
-            // @ts-ignore
-            instance.field02++
-            // @ts-ignore
-            instance.field03++
-            // @ts-ignore
-            instance.field04++
-            // @ts-ignore
-            instance.field05++
-            // @ts-ignore
-            instance.field06++
-            // @ts-ignore
-            instance.field07++
-            // @ts-ignore
-            instance.field08++
-            // @ts-ignore
-            instance.field09++
+            // for (let k = 0; k < 10; k++) instance[ k ]++
+            for (let k = 0; k < fields.length; k++) fields2[ k ](instance)
         }
     }
 })
 
 
 const run = async () => {
-    await instantiatePlain.measureTillMaxTime()
-    await instantiateMixed.measureTillMaxTime()
-
-    await accessPlain.measureTillMaxTime()
+    // await instantiatePlain.measureTillMaxTime()
+    // await instantiateMixed.measureTillMaxTime()
+    //
+    // await accessPlain.measureTillMaxTime()
     await accessMixed.measureTillMaxTime()
 }
 
