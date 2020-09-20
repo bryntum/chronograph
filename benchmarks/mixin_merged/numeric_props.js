@@ -106,24 +106,26 @@ const accessStringProps = Benchmark.new({
         for (let i = 0; i < size; i++) {
             const instance = state[ i ]
 
-            // for (let k = 0; k < fields.length; k++) instance[ fields[ k ]]++
+            // Dynamic lookup
+            for (let k = 0; k < fields.length; k++) instance[ fields[ k ]]++
 
-            instance.field00++
-            instance.field01++
-            instance.field02++
-            instance.field03++
-            instance.field04++
-            instance.field05++
-            instance.field06++
-            instance.field07++
-            instance.field08++
-            instance.field09++
+            // Static lookup
+            // instance.field00++
+            // instance.field01++
+            // instance.field02++
+            // instance.field03++
+            // instance.field04++
+            // instance.field05++
+            // instance.field06++
+            // instance.field07++
+            // instance.field08++
+            // instance.field09++
         }
     }
 })
 
 const accessNumericProps = Benchmark.new({
-    name        : 'Access plain JS',
+    name        : 'Access numeric props',
 
     async setup () {
         const instances = new Array(size)
@@ -135,7 +137,10 @@ const accessNumericProps = Benchmark.new({
         for (let i = 0; i < size; i++) {
             const instance = state[ i ]
 
+            // Dynamic lookup
             for (let k = 0; k < fields.length; k++) instance[ k ]++
+
+            // Static lookup
             // instance[0]++
             // instance[1]++
             // instance[2]++
