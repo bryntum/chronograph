@@ -64,6 +64,9 @@ export const CommitZero : CommitResult = {
 
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner {
+    // for debugging convenience
+    globalContext           : any                   = globalContext
+
     // how many "extra" transactions to keep in memory (except the one currently running)
     // `-1` means no transactioning at all (reject is not supported)
     // `0` means `reject` is supported but no undo
@@ -91,6 +94,8 @@ export class ChronoGraph extends Base implements Owner {
     isInitialCommit         : boolean           = true
 
     isCommitting            : boolean           = false
+
+    ongoing                 : Promise<any>      = Promise.resolve()
 
     //-------------------------------------
     /**
@@ -135,6 +140,8 @@ export class ChronoGraph extends Base implements Owner {
     frozen                  : boolean               = false
 
     enableProgressNotifications     : boolean       = false
+
+    onComputationCycle      : 'throw' | 'warn' | 'reject' = 'throw'
 
 
     initialize<T extends ChronoGraph> (props? : Partial<T>) {
@@ -432,7 +439,20 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    async commitAsync (arg? : CommitArguments) : Promise<CommitResult> {
+    async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
+        if (this.isCommitting) return this.ongoing
+
+        this.isCommitting       = true
+
+        // linearize calls to `commitAsync`
+        return this.ongoing = this.ongoing.then(() => {
+            return this.doCommitAsync(args)
+        }).finally(() => {
+            this.isCommitting           = false
+        })
+    }
+
+    async doCommitAsync (arg? : CommitArguments) : Promise<CommitResult> {
         this.beforeCommit()
 
         const transaction   = this.currentTransaction

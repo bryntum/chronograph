@@ -80,7 +80,7 @@ export const calculateAtomsQueueLevelGen = function* (
     const enableProgressNotifications   = transaction ? transaction.graph.enableProgressNotifications : false
     let counter : number                = 0
 
-    while (level.length && stack.lowestLevelIndex === startedAtLowestLevelIndex) {
+    while (level.length && stack.lowestLevelIndex === startedAtLowestLevelIndex && (!transaction || !transaction.rejectedWith)) {
         if (enableProgressNotifications && !(counter++ % transaction.emitProgressNotificationsEveryCalculations)) {
             const now               = Date.now()
             const elapsed           = now - transaction.propagationStartDate
@@ -175,6 +175,8 @@ export const calculateAtomsQueueLevelGen = function* (
 
                     if (value.isCalculationStarted() && !value.cyclicReadIsBlockedOnPromise()) {
                         atom.onCyclicReadDetected()
+
+                        if (transaction && transaction.rejectedWith) break
                     } else {
                         // value.uniqable2 = uniqable
 

@@ -59,12 +59,18 @@ export class Node implements Uniqable {
     addOutgoing (to : Node, isFromPast : boolean) {
         const toRevision            = to.revision
 
-        if (!isFromPast) {
-            if (this.lastOutgoingTo === to && this.lastOutgoingToRev === toRevision) {
-                this.$outgoingRev[ this.$outgoingRev.length - 1 ] = toRevision
+        if (isFromPast) {
+            const outgoingPast      = this.$outgoingPast
 
+            if (
+                outgoingPast && outgoingPast[ outgoingPast.length - 1 ] === to
+                && this.$outgoingPastRev[ outgoingPast.length - 1 ] === toRevision
+            ) {
                 return
             }
+
+        } else {
+            if (this.lastOutgoingTo === to && this.lastOutgoingToRev === toRevision) return
 
             this.lastOutgoingTo         = to
             this.lastOutgoingToRev      = toRevision

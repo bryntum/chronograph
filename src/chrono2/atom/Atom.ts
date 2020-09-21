@@ -1,4 +1,5 @@
 import { AnyConstructor } from "../../class/Mixin.js"
+import { warn } from "../../environment/Debug.js"
 import { cycleInfo, OnCycleAction, VisitInfo, WalkContext, WalkDepthC, WalkStep } from "../../graph/WalkDepth.js"
 import { MIN_SMI } from "../../util/Helpers.js"
 import { getUniqable, Uniqable } from "../../util/Uniqable.js"
@@ -35,6 +36,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
     uniqable            : number        = MIN_SMI
     uniqable2           : number        = MIN_SMI
+    uniqable3           : number        = MIN_SMI
 
     uniqableBox         : any           = undefined
     uniqableBox2        : any           = undefined
@@ -515,16 +517,16 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     onCyclicReadDetected () {
         const cyclicReadException   = this.getCyclicReadException()
 
-        // switch (this.graph.onComputationCycle) {
-        //     case 'throw' :
+        switch (this.graph.onComputationCycle) {
+            case 'throw' :
                 throw cyclicReadException
-            // case 'reject' :
-            //     this.graph.reject(exception)
-            //     break
-            // case 'warn' :
-            //     warn(exception)
-            //     break
-        // }
+            case 'reject' :
+                this.graph.reject(cyclicReadException)
+                break
+            case 'warn' :
+                warn(cyclicReadException)
+                break
+        }
     }
 
 
