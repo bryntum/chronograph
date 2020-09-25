@@ -83,7 +83,12 @@ export class ReferenceAtom extends Mixin(
 
 
         getBucket (entity : Entity) : ReferenceBucketAtom {
-            return entity.$[ this.field.bucket ]
+            const bucketAtom = entity.$[ this.field.bucket ]
+
+            if (this.graph && this.graph.previous && bucketAtom.graph && bucketAtom.graph !== this.graph)
+                return this.graph.checkout(bucketAtom)
+            else
+                return bucketAtom
         }
 
 
@@ -123,6 +128,9 @@ export class ReferenceAtom extends Mixin(
 
 
         enterGraph (graph : ChronoGraph) {
+            // acquire the reference to graph first
+            super.enterGraph(graph)
+
             if (this.hasBucket()) {
                 const value     = this.proposedValue !== undefined ? this.proposedValue : this.immutable.read()
 
@@ -130,8 +138,6 @@ export class ReferenceAtom extends Mixin(
                     this.getBucket(value).addToBucket(this.self)
                 }
             }
-
-            super.enterGraph(graph)
         }
 
 
@@ -149,7 +155,7 @@ export class ReferenceAtom extends Mixin(
 
 
         writeConfirmedDifferentValue (value : Entity) {
-            if (this.hasBucket()) {
+            if (this.graph && this.hasBucket()) {
                 const previousValue     = this.immutable.read()
 
                 if (previousValue instanceof Entity) {

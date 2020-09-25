@@ -90,6 +90,16 @@ class Replica extends base {
     }
 
 
+    checkoutEntity<T extends Entity> (entity : T) : T {
+        // if (entity.graph === this) return entity
+        //
+        // const cons          = entity.constructor
+        //
+        // const clone         = new cons
+        return
+    }
+
+
     readFieldWithAccessor (fieldAtom : FieldAtom) {
         const readMode  = fieldAtom.graph.readMode
 

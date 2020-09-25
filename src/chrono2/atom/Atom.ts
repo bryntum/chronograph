@@ -145,6 +145,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         clone.id        = this.id
         clone.identity  = this.identity
         clone.name      = this.name
+        clone.$meta     = this.$meta
 
         // TODO the `$state` cache management for branches
         // might need additional tweaks or at least tests
@@ -337,7 +338,16 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         const activeAtom    = globalContext.activeAtom
         const activeGraph   = activeAtom ? activeAtom.graph : undefined
 
-        if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity)
+        if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
+            return activeGraph.checkout(this)
+        else
+            return this
+    }
+
+
+    // TODO unify with `checkoutSelf`
+    checkoutSelfFromActiveGraph (activeGraph : ChronoGraph) : this {
+        if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
             return activeGraph.checkout(this)
         else
             return this
@@ -517,16 +527,19 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     onCyclicReadDetected () {
         const cyclicReadException   = this.getCyclicReadException()
 
-        switch (this.graph.onComputationCycle) {
-            case 'throw' :
-                throw cyclicReadException
-            case 'reject' :
-                this.graph.reject(cyclicReadException)
-                break
-            case 'warn' :
-                warn(cyclicReadException)
-                break
-        }
+        if (this.graph) {
+            switch (this.graph.onComputationCycle) {
+                case 'throw' :
+                    throw cyclicReadException
+                case 'reject' :
+                    this.graph.reject(cyclicReadException)
+                    break
+                case 'warn' :
+                    warn(cyclicReadException)
+                    break
+            }
+        } else
+            throw cyclicReadException
     }
 
 
@@ -541,6 +554,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             if (atom.uniqable2 === uniqable) return false
 
             atom.uniqable2          = uniqable
+
+            if (!atom.iterationResult) return false
 
             const iterationValue    = atom.iterationResult.value
 

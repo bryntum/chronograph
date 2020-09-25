@@ -543,4 +543,40 @@ StartTest(t => {
         t.is(markTwain.$.booksCount.read(), 2, 'Correctly taken new reference into account when reading from individual atom instead of doing `commit`')
     })
 
+
+    t.it('Adding new references in the branch should not affect buckets in the original', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity.mix(Base) {
+            @bucket()
+            books           : Set<Book>
+        }
+
+        @entity
+        class Book extends Entity.mix(Base) {
+            @reference({ bucket : 'books' })
+            writtenBy       : Author
+        }
+
+        const replica1          = Replica.new({ schema : SomeSchema })
+
+        const markTwain         = Author.new()
+        const tomSoyer          = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(markTwain)
+        replica1.addEntity(tomSoyer)
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Correctly filled bucket')
+
+        const replica2          = replica1.branch()
+
+        const tomSoyer2         = Book.new({ writtenBy : markTwain })
+
+        replica2.addEntity(tomSoyer2)
+
+        t.isDeeply(markTwain.books, new Set([ tomSoyer ]), 'Original replica not affected')
+    })
 })

@@ -33,7 +33,7 @@ export const calculateAtomsQueueSync = function (
     // globalContext.enterBatch()
     const uniqable          = getUniqable()
 
-    while (true) {
+    while (!transaction || !transaction.rejectedWith) {
         const levelIndex    = stack.lowestLevelIndex
 
         if (levelOverrideIndex !== -1) {
@@ -124,7 +124,8 @@ export const calculateAtomsQueueLevelSync = function (
 
             if (incoming) {
                 for (let i = 0; i < incoming.length; i++) {
-                    const dependencyAtom    = incoming[ i ].owner
+                    const owner             = incoming[ i ].owner
+                    const dependencyAtom    = atom.graph ? owner.checkoutSelfFromActiveGraph(atom.graph) : owner
 
                     if (dependencyAtom.state !== AtomState.UpToDate) {
                         // TODO should take level into account
@@ -163,41 +164,39 @@ export const calculateAtomsQueueLevelSync = function (
                 break
             }
             else if (value instanceof Atom) {
-                const requestedLevel = value.level
+                const requestedAtom     = atom.graph ? value.checkoutSelfFromActiveGraph(atom.graph) : value
+
+                const requestedLevel = requestedAtom.level
 
                 if (requestedLevel > atom.level) throw new Error("Atom can not read from the higher-level atom")
 
-                if (value.state === AtomState.UpToDate) {
-                    iterationResult = atom.continueCalculation(value.read())
+                if (requestedAtom.state === AtomState.UpToDate) {
+                    iterationResult = atom.continueCalculation(requestedAtom.read())
                 } else {
-                    value.immutableForWrite().addOutgoing(atom.immutable, false)
+                    requestedAtom.immutableForWrite().addOutgoing(atom.immutable, false)
 
-                    if (value.isCalculationStarted() && !value.cyclicReadIsBlockedOnPromise()) {
+                    // the requested atom is still checking dependencies - that probably means it has been requested
+                    // by its dependency itself. Might be a cycle, or, perhaps, the graph layout has changed
+                    // in any case, we just force the requested atom to start the calculation in the next loop iteration
+                    if (requestedAtom.state === AtomState.CheckingDeps) {
+                        requestedAtom.state = AtomState.Stale
+                    }
+
+                    if (requestedAtom.isCalculationStarted() && !requestedAtom.cyclicReadIsBlockedOnPromise()) {
                         atom.onCyclicReadDetected()
 
                         if (transaction && transaction.rejectedWith) break
                     } else {
-                        // value.uniqable2 = uniqable
+                        // requestedAtom.uniqable2 = uniqable
 
                         if (requestedLevel === levelIndex) {
-                            level.push(value)
+                            level.push(requestedAtom)
                             modifyStack && stack.size++
                         } else {
-                            stack.in(value)
+                            stack.in(requestedAtom)
                         }
                         break
                     }
-
-                    // // TODO
-                    // // @ts-ignore
-                    // if (!value.isCalculationStarted()) {
-                    //     // TODO
-                    //     // @ts-ignore
-                    //     stack.push(value)
-                    //     break
-                    // } else {
-                    //     throw new Error('cycle')
-                    // }
                 }
             }
             else if ((value instanceof Effect) && value.internal) {

@@ -69,18 +69,11 @@ export class Box<V = unknown> extends Atom<V> {
 
     read () : V {
         const activeAtom    = globalContext.activeAtom
-        const activeGraph   = activeAtom ? activeAtom.graph : undefined
+        const self          = this.checkoutSelf()
 
-        // TODO what if active graph is some other graph - not a branch of the current one?
-        // probably need `identity` for graphs and check that
-        // needs a test case
-        if (this.graph && activeGraph && activeGraph !== this.graph) {
-            return activeGraph.checkout(this).read()
-        }
+        if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable, false)
 
-        if (activeAtom) this.immutableForWrite().addOutgoing(activeAtom.immutable, false)
-
-        return this.immutable.read()
+        return self.immutable.read()
     }
 
 
