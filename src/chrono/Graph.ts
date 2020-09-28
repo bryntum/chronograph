@@ -128,7 +128,7 @@ export class ChronoGraph extends Base {
 
     ongoing                 : Promise<any>      = Promise.resolve()
 
-    isInitialCommit         : boolean           = true
+    _isInitialCommit        : boolean           = true
 
     //-------------------------------------
     // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
@@ -212,6 +212,16 @@ export class ChronoGraph extends Base {
                 if (!isBetweenTopBottom) counter++
             }
         }
+    }
+
+
+    get isInitialCommit() : boolean {
+        return this._isInitialCommit;
+    }
+
+
+    set isInitialCommit(value : boolean){
+        this._isInitialCommit = value;
     }
 
 
