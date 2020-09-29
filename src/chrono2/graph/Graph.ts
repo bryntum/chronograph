@@ -591,12 +591,15 @@ export class ChronoGraph extends Base implements Owner {
 
 
     branch (config? : Partial<this>) : this {
+        if (this.historyLimit < 0) throw new Error("The `historyLimit` config needs to be at least 0 to use branching")
+
         // we freeze current _iteration_, not the whole _transaction_
         this.currentIteration.freeze()
 
         const self          = this.constructor as AnyConstructor<this, typeof ChronoGraph>
         const branch        = self.new(config)
 
+        branch.historyLimit     = this.historyLimit
         branch.identity         = this.identity
         branch.previous         = this
         // TODO should use copy-on-write?

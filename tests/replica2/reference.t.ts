@@ -561,7 +561,7 @@ StartTest(t => {
             writtenBy       : Author
         }
 
-        const replica1          = Replica.new({ schema : SomeSchema })
+        const replica1          = Replica.new({ schema : SomeSchema, historyLimit : 0 })
 
         const markTwain         = Author.new()
         const tomSoyer          = Book.new({ writtenBy : markTwain })
