@@ -1,6 +1,6 @@
 import { Atom } from "../../src/chrono2/atom/Atom.js"
 import { CalculationModeSync } from "../../src/chrono2/CalculationMode.js"
-import { Box } from "../../src/chrono2/data/Box.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
 import { EffectHandler, HasProposedValue, PreviousValueOf, ProposedArgumentsOf, ProposedOrPrevious } from "../../src/chrono2/Effect.js"
 import { globalContext } from "../../src/chrono2/GlobalContext.js"
 import { Base } from "../../src/class/Base.js"
@@ -224,7 +224,7 @@ StartTest(t => {
         replica = Replica.new()
         event   = Event.new()
 
-        var0    = new Box(0)
+        var0    = new BoxUnbound(0)
 
         replica.addEntity(event)
         replica.addAtom(var0)
@@ -354,7 +354,7 @@ StartTest(t => {
     })
 
 
-    t.iit('Should rebuild edges dynamically', t => {
+    t.it('Should rebuild edges dynamically', t => {
         event.start     = 10
         event.duration  = 5
 
@@ -367,20 +367,20 @@ StartTest(t => {
 
         replica.commit()
 
-        // t.isDeeply(read(), [ 14, 15, 1 ], 'Edges rebuilt correctly')
-        //
-        // //-----------------------
-        // await event.setDuration(3, Instruction.KeepStart)
-        //
-        // replica.commit()
-        //
-        // t.isDeeply(read(), [ 14, 17, 3 ], 'Edges rebuilt correctly')
-        //
-        // //-----------------------
-        // await event.setStart(5, Instruction.KeepDuration)
-        //
-        // replica.commit()
-        //
-        // t.isDeeply(read(), [ 5, 8, 3 ], 'Edges rebuilt correctly')
+        t.isDeeply(read(), [ 14, 15, 1 ], 'Edges rebuilt correctly')
+
+        //-----------------------
+        event.setDuration(3, Instruction.KeepStart)
+
+        replica.commit()
+
+        t.isDeeply(read(), [ 14, 17, 3 ], 'Edges rebuilt correctly')
+
+        //-----------------------
+        event.setStart(5, Instruction.KeepDuration)
+
+        replica.commit()
+
+        t.isDeeply(read(), [ 5, 8, 3 ], 'Edges rebuilt correctly')
     })
 })

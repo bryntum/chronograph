@@ -2,6 +2,7 @@ import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
 import { Base } from "../../src/class/Base.js"
 import { FieldBox } from "../../src/replica2/Atom.js"
 import { calculate, Entity, field, write } from "../../src/replica2/Entity.js"
+import { Replica } from "../../src/replica2/Replica.js"
 import { Schema } from "../../src/schema2/Schema.js"
 import { uppercaseFirst } from "../../src/util/Helpers.js"
 
@@ -13,6 +14,8 @@ StartTest(t => {
         const schema            = Schema.new({ name : 'Cool data schema' })
 
         const entity            = schema.getEntityDecorator()
+
+        const replica1          = Replica.new({ schema : schema })
 
         @entity
         class Author extends Entity.mix(Base) {
@@ -46,6 +49,8 @@ StartTest(t => {
         }
 
         const markTwain         = Author.new({ firstName : 'mark', lastName : 'twain' })
+
+        replica1.addEntity(markTwain)
 
         t.is(markTwain.firstName, 'Mark', 'Correct first name calculated')
         t.is(markTwain.lastName, 'Twain', 'Correct last name calculated')

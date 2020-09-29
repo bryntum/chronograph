@@ -1,6 +1,6 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
+import { CalculableBox, CalculableBoxUnbound } from "../../src/chrono2/data/CalculableBox.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 
 declare const StartTest : any
@@ -12,7 +12,7 @@ StartTest(t => {
     t.it('Undo/redo of the box value', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
-        const box      = new Box(0)
+        const box      = new BoxUnbound(0)
 
         graph.addAtom(box)
 
@@ -42,9 +42,9 @@ StartTest(t => {
     t.it('Undo/redo of the box value - commit after read', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
-        const box1     = new Box(0)
+        const box1     = new BoxUnbound(0)
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             calculation : () => box1.read()  + 1
         })
 
@@ -80,9 +80,9 @@ StartTest(t => {
     t.it('Undo/redo of the box value - commit in random place', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
-        const box1     = new Box(0)
+        const box1     = new BoxUnbound(0)
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             lazy        : false,
             calculation : () => box1.read()  + 1
         })
@@ -119,9 +119,9 @@ StartTest(t => {
     t.xit('Undo/redo of the box value - lazy atoms read', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
-        const box1     = new Box(0)
+        const box1     = new BoxUnbound(0)
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             lazy        : true,
             calculation : () => box1.read()  + 1
         })
@@ -163,9 +163,9 @@ StartTest(t => {
     t.it('Undo all transactions, then redo everything back', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
-        const box1     = new Box(0)
+        const box1     = new BoxUnbound(0)
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             lazy        : false,
             calculation : () => box1.read()  + 1
         })
@@ -200,9 +200,9 @@ StartTest(t => {
     t.it('Undo/redo of the box value - stale lazy atoms', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 2 })
 
-        const box1     = new Box(0, 'box1')
+        const box1     = new BoxUnbound(0, 'box1')
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             name        : 'box2',
             lazy        : true,
             calculation : () => box1.read()  + 1
@@ -252,11 +252,11 @@ StartTest(t => {
     t.it('Should not recalculate atoms after undo/redo ', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 
-        const box1      = new Box(0)
+        const box1      = new BoxUnbound(0)
 
         let counter2    = 0
 
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             lazy    : false,
             calculation : () => {
                 counter2++

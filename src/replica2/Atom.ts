@@ -1,7 +1,7 @@
 import { Atom } from "../chrono2/atom/Atom.js"
-import { Box } from "../chrono2/data/Box.js"
-import { CalculableBox } from "../chrono2/data/CalculableBox.js"
-import { CalculableBoxGen } from "../chrono2/data/CalculableBoxGen.js"
+import { BoxUnbound } from "../chrono2/data/Box.js"
+import { CalculableBoxUnbound } from "../chrono2/data/CalculableBox.js"
+import { CalculableBoxGenUnbound } from "../chrono2/data/CalculableBoxGen.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 import { EntityMeta } from "../schema2/EntityMeta.js"
 import { Field } from "../schema2/Field.js"
@@ -47,9 +47,9 @@ class FieldAtom extends base implements PartOfEntityAtom {
 
 export type FieldAtomConstructor  = typeof FieldAtom
 
-export class FieldBox extends FieldAtom.mix(Box) {}
-export class FieldCalculableBox extends FieldAtom.mix(CalculableBox) {}
-export class FieldCalculableBoxGen extends FieldAtom.mix(CalculableBoxGen) {}
+export class FieldBox extends FieldAtom.mix(BoxUnbound) {}
+export class FieldCalculableBox extends FieldAtom.mix(CalculableBoxUnbound) {}
+export class FieldCalculableBoxGen extends FieldAtom.mix(CalculableBoxGenUnbound) {}
 
 
 
@@ -90,4 +90,4 @@ class EntityAtom extends base implements PartOfEntityAtom {
 }){}
 
 
-export class EntityBox extends EntityAtom.mix(Box) {}
+export class EntityBox extends EntityAtom.mix(BoxUnbound) {}

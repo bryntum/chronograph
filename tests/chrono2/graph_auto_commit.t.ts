@@ -1,7 +1,7 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
+import { CalculableBoxGen, CalculableBoxGenUnbound } from "../../src/chrono2/data/CalculableBoxGen.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { delay } from "../../src/util/Helpers.js"
 
@@ -15,10 +15,10 @@ const randomDelay = () => delay(Math.random() * 100)
 StartTest(t => {
 
     t.it('Should trigger auto-commit', async t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBoxGen({
+        const box2      = new CalculableBoxGenUnbound({
             lazy        : false,
 
             *calculation () : CalculationIterator<number> {
@@ -29,7 +29,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBoxGen({
+        const box3     = new CalculableBoxGenUnbound({
             lazy        : true,
             *calculation () : CalculationIterator<number> {
                 counter3++
@@ -39,7 +39,7 @@ StartTest(t => {
         })
 
         let counter4    = 0
-        const box4     = new CalculableBoxGen({
+        const box4     = new CalculableBoxGenUnbound({
             lazy        : false,
             *calculation () : CalculationIterator<number> {
                 counter4++

@@ -1,7 +1,7 @@
+import { Atom } from "../chrono2/atom/Atom.js"
 import { ChronoGraph } from "../chrono2/graph/Graph.js"
 import { ClassUnion, Mixin } from "../class/Mixin.js"
 import { Schema } from "../schema2/Schema.js"
-import { FieldAtom } from "./Atom.js"
 import { Entity } from "./Entity.js"
 
 export enum ReadMode {
@@ -100,7 +100,11 @@ class Replica extends base {
     }
 
 
-    readFieldWithAccessor (fieldAtom : FieldAtom) {
+    // TODO check if this is fixed in TS 4.x
+    // the type should be `fieldAtom : FieldAtom` of course, however, TS starts behaving weirdly,
+    // because of the presence of `readFieldWithAccessor` in base class ChronoGraph
+    readFieldWithAccessor (fieldAtom : Atom) {
+        // @ts-ignore
         const readMode  = fieldAtom.graph.readMode
 
         if (readMode === ReadMode.Consistent) return fieldAtom.sync ? fieldAtom.read() : fieldAtom.readAsync()

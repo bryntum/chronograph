@@ -15,6 +15,8 @@ StartTest(t => {
 
         const entity            = schema.getEntityDecorator()
 
+        const replica1          = Replica.new({ schema : schema })
+
         @entity
         class Author extends Entity.mix(Base) {
             @field()
@@ -40,6 +42,8 @@ StartTest(t => {
 
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
 
+        replica1.addEntity(markTwain)
+
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 
         markTwain.firstName     = 'MARK'
@@ -52,6 +56,8 @@ StartTest(t => {
         const schema            = Schema.new({ name : 'Cool data schema' })
 
         const entity            = schema.getEntityDecorator()
+
+        const replica1          = Replica.new({ schema : schema })
 
         @entity
         class Author extends Entity.mix(Base) {
@@ -72,6 +78,8 @@ StartTest(t => {
         }
 
         const markTwain         = Author.new({ firstName : 'Mark', lastName : 'Twain' })
+
+        replica1.addEntity(markTwain)
 
         t.is(markTwain.fullName, 'Mark Twain', 'Correct name calculated')
 

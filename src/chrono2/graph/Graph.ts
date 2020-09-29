@@ -1,5 +1,6 @@
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
+import { LeveledQueue } from "../../util/LeveledQueue2.js"
 import { Atom } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
 import { Quark } from "../atom/Quark.js"
@@ -28,7 +29,7 @@ import {
     runGeneratorAsyncWithEffect
 } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
-import { Iteration, IterationStorage, IterationStorageShredding } from "./Iteration.js"
+import { Iteration } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -125,6 +126,19 @@ export class ChronoGraph extends Base implements Owner {
 
     transactionClass        : typeof Transaction    = Transaction
 
+    stack                   : LeveledQueue<Atom>    = new LeveledQueue()
+
+
+    bindAtomConstructor <Cls extends typeof Atom> (cons : Cls) : Cls {
+        const graph         = this
+
+        // @ts-ignore
+        return class extends cons {
+            get boundGraph () : ChronoGraph {
+                return graph
+            }
+        }
+    }
 
 
     //region ChronoGraph as Owner
@@ -406,7 +420,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     get dirty () : boolean {
-        return globalContext.stack.size > 0
+        return this.stack.size > 0
     }
 
 
@@ -456,7 +470,7 @@ export class ChronoGraph extends Base implements Owner {
         this.beforeCommit()
 
         const transaction   = this.currentTransaction
-        const stack         = globalContext.stack
+        const stack         = this.stack
 
         globalContext.enterBatch()
 
@@ -491,7 +505,7 @@ export class ChronoGraph extends Base implements Owner {
         this.beforeCommit()
 
         const transaction   = this.currentTransaction
-        const stack         = globalContext.stack
+        const stack         = this.stack
 
         globalContext.enterBatch()
 
@@ -542,7 +556,7 @@ export class ChronoGraph extends Base implements Owner {
         this.immutable  = this.immutable.previous
 
         // TODO should also "reset" calculations
-        globalContext.stack.clear()
+        this.stack.clear()
     }
 
 
@@ -650,7 +664,7 @@ export class ChronoGraph extends Base implements Owner {
     addAtom<A extends Atom> (atom : A) : A {
         atom.enterGraph(this)
 
-        this.immutableForWrite().addAtom(atom)
+        if (this.historyLimit >= 0) this.immutableForWrite().addAtom(atom)
 
         if (!atom.lazy) this.addPossiblyStaleStrictAtomToTransaction(atom)
 
@@ -680,7 +694,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     addPossiblyStaleStrictAtomToTransaction (atom : Atom) {
-        globalContext.stack.in(atom)
+        this.stack.in(atom)
     }
 
 
@@ -778,4 +792,11 @@ export class ChronoGraph extends Base implements Owner {
     [HasProposedValueSymbol] (effect : HasProposedValueEffect) : any {
         return effect.atom.readProposed() !== undefined
     }
+
+
+    readFieldWithAccessor (atom : Atom) {
+        return atom.sync ? atom.read() : atom.readAsync()
+    }
 }
+
+export const globalGraph = ChronoGraph.new()

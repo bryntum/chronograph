@@ -1,5 +1,5 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
-import { Box } from "../../src/chrono2/data/Box.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { GraphGen } from "../util.js"
 
@@ -123,11 +123,12 @@ StartTest(t => {
         t.it(prefix + 'Should not use stale deep history, with commits', t => {
             const graph1 : ChronoGraph       = ChronoGraph.new()
 
-            const i1            = new Box(0)
-            const i2            = new Box(1)
-            const dispatcher    = new Box(i1)
+            const i1            = new BoxUnbound(0)
+            const i2            = new BoxUnbound(1)
+            const dispatcher    = new BoxUnbound(i1)
 
             const c1            = graphGen.calculableBox({
+                unbound         : true,
                 lazy            : true,
                 calculation : eval(graphGen.calc(function* () {
                     const box = (yield dispatcher)

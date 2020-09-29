@@ -1,11 +1,11 @@
 import { CalculationIterator } from "../../primitives/Calculation.js"
-import { getUniqable } from "../../util/Uniqable.js"
 import { AtomState } from "../atom/Atom.js"
-import { calculateAtomsQueueGen, calculateAtomsQueueLevelGen } from "../calculation/LeveledGen.js"
-import { calculateAtomsQueueLevelSync, calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
+import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
+import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
 import { CalculationModeGen } from "../CalculationMode.js"
 import { EffectHandler, runGeneratorAsyncWithEffect } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
+import { ChronoGraph } from "../graph/Graph.js"
 import { CalculableBox } from "./CalculableBox.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
     doCalculate () {
         const effectHandler = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
 
-        calculateAtomsQueueSync(effectHandler, globalContext.stack, this.graph ? this.graph.currentTransaction : undefined, [ this ], this.level)
+        calculateAtomsQueueSync(effectHandler, this.graph.stack, this.graph ? this.graph.currentTransaction : undefined, [ this ], this.level)
     }
 
 
@@ -98,11 +98,17 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
         await runGeneratorAsyncWithEffect(
             effectHandler,
             calculateAtomsQueueGen,
-            [ effectHandler, globalContext.stack, this.graph ? this.graph.currentTransaction : undefined, [ this ], this.level ],
+            [ effectHandler, this.graph.stack, this.graph ? this.graph.currentTransaction : undefined, [ this ], this.level ],
             null
         )
 
         return this.immutable.read()
     }
+}
 
+
+export class CalculableBoxGenUnbound<V = unknown> extends CalculableBoxGen<V> {
+    get boundGraph () : ChronoGraph {
+        return undefined
+    }
 }

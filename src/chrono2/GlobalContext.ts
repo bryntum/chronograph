@@ -1,6 +1,5 @@
 import { Base } from "../class/Base.js"
 import { MIN_SMI } from "../util/Helpers.js"
-import { LeveledQueue } from "../util/LeveledQueue2.js"
 import { Atom, AtomState } from "./atom/Atom.js"
 import { getNextRevision } from "./atom/Node.js"
 import { Effect, HasProposedValueEffect, HasProposedValueSymbol, ProposedOrPreviousSymbol } from "./Effect.js"
@@ -22,7 +21,7 @@ export class GlobalContext extends Base {
     // instead moved to global context to have shared stack among graph/non-graph atoms
     // this might change in the future -
     // stack should be
-    stack                   : LeveledQueue<Atom>    = new LeveledQueue()
+    // stack                   : LeveledQueue<Atom>    = new LeveledQueue()
 
 
     onEffectSync (effect : Effect) {

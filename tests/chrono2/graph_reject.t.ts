@@ -1,7 +1,7 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
-import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
+import { CalculableBox, CalculableBoxUnbound } from "../../src/chrono2/data/CalculableBox.js"
+import { CalculableBoxGen, CalculableBoxGenUnbound } from "../../src/chrono2/data/CalculableBoxGen.js"
 import { Reject } from "../../src/chrono2/Effect.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 
@@ -12,9 +12,9 @@ setCompactCounter(1)
 StartTest(t => {
 
     t.it('Reject before the 1st commit should nullify the values', t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             calculation : () => {
                 const value1 = box1.read()
 
@@ -34,7 +34,7 @@ StartTest(t => {
             }
         })
 
-        const graph     = ChronoGraph.new()
+        const graph     = ChronoGraph.new({ historyLimit : 0 })
 
         // only adding box1 and box2, box3 is "external"
         graph.addAtoms([ box1, box2 ])
@@ -59,9 +59,9 @@ StartTest(t => {
 
 
     t.it('Reject immediately after commit should do nothing', t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             calculation : () => box1.read() + 1
         })
 
@@ -89,9 +89,9 @@ StartTest(t => {
 
 
     t.it('Reject should reset the state to the previous commit', t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             calculation : () => {
                 const value1 = box1.read()
 
@@ -133,9 +133,9 @@ StartTest(t => {
 
 
     t.it('Reject should reset the state to the previous commit and synchronize external atoms', t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
-        const box2     = new CalculableBox({
+        const box2     = new CalculableBoxUnbound({
             calculation : () => box1.read() + 1
         })
 
@@ -180,11 +180,11 @@ StartTest(t => {
 
 
     t.it('Reject should reset transaction stack', t => {
-        const box0      = new Box(0)
-        const box1      = new Box(10)
+        const box0      = new BoxUnbound(0)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             lazy        : false,
             calculation : () => {
                 counter2++
@@ -193,7 +193,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBox({
+        const box3     = new CalculableBoxUnbound({
             lazy        : false,
             calculation : () => {
                 counter3++
@@ -226,11 +226,11 @@ StartTest(t => {
 
 
     t.it('Reject should reset transaction stack for lazy atoms', t => {
-        const box0      = new Box(0)
-        const box1      = new Box(10)
+        const box0      = new BoxUnbound(0)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             lazy        : true,
             calculation : () => {
                 counter2++
@@ -239,7 +239,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBox({
+        const box3     = new CalculableBoxUnbound({
             lazy        : true,
             calculation : () => {
                 counter3++
@@ -272,11 +272,11 @@ StartTest(t => {
 
 
     t.it('Reject should reset transaction stack for lazy atoms #2', t => {
-        const box0      = new Box(0)
-        const box1      = new Box(10)
+        const box0      = new BoxUnbound(0)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             lazy        : true,
             calculation : () => {
                 counter2++
@@ -285,7 +285,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBox({
+        const box3     = new CalculableBoxUnbound({
             lazy        : true,
             calculation : () => {
                 counter3++
@@ -322,25 +322,25 @@ StartTest(t => {
     t.it('Should be able to reject transaction using graph api', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1        = new Box(0, 'i1')
-        const i2        = new Box(10, 'i2')
-        const i3        = new Box(0, 'i3')
+        const i1        = new BoxUnbound(0, 'i1')
+        const i2        = new BoxUnbound(10, 'i2')
+        const i3        = new BoxUnbound(0, 'i3')
 
-        const c1        = new CalculableBox({
+        const c1        = new CalculableBoxUnbound({
             name    : 'c1',
             calculation () {
                 return i1.read() + i2.read()
             }
         })
 
-        const c2        = new CalculableBox({
+        const c2        = new CalculableBoxUnbound({
             name    : 'c2',
             calculation () {
                 return c1.read() + 1
             }
         })
 
-        const c3        = new CalculableBox({
+        const c3        = new CalculableBoxUnbound({
             name    : 'c3',
             calculation () {
                 return c2.read() + i3.read()
@@ -372,10 +372,10 @@ StartTest(t => {
     t.it('Should be able to reject transaction using effect', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1        = new Box(0, 'i1')
-        const i2        = new Box(10, 'i2')
+        const i1        = new BoxUnbound(0, 'i1')
+        const i2        = new BoxUnbound(10, 'i2')
 
-        const c1        = new CalculableBoxGen({
+        const c1        = new CalculableBoxGenUnbound({
             lazy        : false,
             name : 'c1', calculation : function* () {
                 const sum : number = (yield i1) + (yield i2)

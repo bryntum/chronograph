@@ -1,5 +1,5 @@
-import { Box, BoxImmutable } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { Box, BoxImmutable, BoxUnbound } from "../../src/chrono2/data/Box.js"
+import { CalculableBox, CalculableBoxUnbound } from "../../src/chrono2/data/CalculableBox.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 
 declare const StartTest : any
@@ -9,9 +9,9 @@ StartTest(t => {
     t.it('Should not create transaction history for `historyLimit === 0`', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const box1      = new Box(0)
+        const box1      = new BoxUnbound(0)
 
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             calculation : () => box1.read() + 1
         })
 
@@ -34,9 +34,9 @@ StartTest(t => {
     t.it('Should garbage collect unneeded revisions', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 1 })
 
-        const box1      = new Box(0, 'box1')
+        const box1      = new BoxUnbound(0, 'box1')
 
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             name        : 'box2',
             calculation : () => box1.read() + 1
         })
@@ -107,11 +107,11 @@ StartTest(t => {
     t.it('Garbage collection should keep data dependencies', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 
-        const var0      = new Box(1, 'var0')
+        const var0      = new BoxUnbound(1, 'var0')
 
-        const var1      = new Box(100, 'var1')
+        const var1      = new BoxUnbound(100, 'var1')
 
-        const var2      = new CalculableBox({
+        const var2      = new CalculableBoxUnbound({
             calculation : () => var1.read() + 1
         })
 
@@ -148,11 +148,11 @@ StartTest(t => {
     t.it('Garbage collection should keep deep old data', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 
-        const var0      = new Box(1, 'var0')
+        const var0      = new BoxUnbound(1, 'var0')
 
-        const var1      = new Box(100, 'var1')
+        const var1      = new BoxUnbound(100, 'var1')
 
-        const var2      = new CalculableBox({
+        const var2      = new CalculableBoxUnbound({
             calculation : () => var1.read() + 1
         })
 
@@ -179,9 +179,9 @@ StartTest(t => {
     t.it('Garbage collection should not throw when working with branches', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 
-        const var1      = new Box(100, 'var1')
+        const var1      = new BoxUnbound(100, 'var1')
 
-        const var2      = new CalculableBox({
+        const var2      = new CalculableBoxUnbound({
             name        : 'var2',
             calculation : () => var1.read() + 1
         })
@@ -237,16 +237,16 @@ StartTest(t => {
     t.it('Garbage collection should not preserve the edges from the "same value"`" quarks', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
-        const var0      = new Box(0, 'var0')
-        const var1      = new Box(10, 'var1')
+        const var0      = new BoxUnbound(0, 'var0')
+        const var1      = new BoxUnbound(10, 'var1')
 
-        const var2      = new CalculableBox({
+        const var2      = new CalculableBoxUnbound({
             name        : 'var2',
             lazy        : false,
             calculation : () => var0.read() + var1.read()
         })
 
-        const var3      = new CalculableBox({
+        const var3      = new CalculableBoxUnbound({
             name        : 'var3',
             lazy        : false,
             calculation : () => var2.read() + 1
@@ -301,9 +301,9 @@ StartTest(t => {
     t.xit('Garbage collection should work with branches', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 1 })
 
-        const var1      = new Box(100, 'var1')
+        const var1      = new BoxUnbound(100, 'var1')
 
-        const var2      = new CalculableBox({
+        const var2      = new CalculableBoxUnbound({
             name        : 'var2',
             calculation : () => var1.read() + 1
         })

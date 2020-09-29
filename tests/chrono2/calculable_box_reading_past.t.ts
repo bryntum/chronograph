@@ -1,6 +1,6 @@
 import { CalculationModeSync } from "../../src/chrono2/CalculationMode.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
+import { CalculableBox, CalculableBoxUnbound } from "../../src/chrono2/data/CalculableBox.js"
 import {
     EffectHandler,
     PreviousValueOf,
@@ -21,7 +21,7 @@ StartTest(t => {
 
         let result
 
-        const listener      = graph.addAtom(new CalculableBox({
+        const listener      = graph.addAtom(new CalculableBoxUnbound({
             // lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : any {
                 return result = Y(PreviousValueOf(source))
@@ -32,7 +32,7 @@ StartTest(t => {
 
         const sourceMode    = new Box('proposed')
 
-        const source        = graph.addAtom(new CalculableBox({
+        const source        = graph.addAtom(new CalculableBoxUnbound({
             // lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = Y(sourceMode)
@@ -102,7 +102,7 @@ StartTest(t => {
 
         let result
 
-        const listener      = graph.addAtom(new CalculableBox({
+        const listener      = graph.addAtom(new CalculableBoxUnbound({
             lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : any {
                 return result = Y(ProposedValueOf(source))
@@ -113,7 +113,7 @@ StartTest(t => {
 
         const sourceMode    = new Box('proposed')
 
-        const source        = graph.addAtom(new CalculableBox({
+        const source        = graph.addAtom(new CalculableBoxUnbound({
             lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = Y(sourceMode)
@@ -181,7 +181,7 @@ StartTest(t => {
     t.it('Should be able to read the past of the identifier which is being listened - ProposedOrPreviousValueOf', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
-        const listener      = graph.addAtom(new CalculableBox({
+        const listener      = graph.addAtom(new CalculableBoxUnbound({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
                 return YIELD(ProposedOrPreviousValueOf(source))
@@ -192,7 +192,7 @@ StartTest(t => {
 
         const sourceMode    = new Box('proposed')
 
-        const source        = graph.addAtom(new CalculableBox({
+        const source        = graph.addAtom(new CalculableBoxUnbound({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = YIELD(sourceMode)
@@ -260,7 +260,7 @@ StartTest(t => {
 
         let result
 
-        const listener      = graph.addAtom(new CalculableBox({
+        const listener      = graph.addAtom(new CalculableBoxUnbound({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
                 return result = YIELD(ProposedArgumentsOf(source))
@@ -271,7 +271,7 @@ StartTest(t => {
 
         const sourceMode    = new Box('proposed')
 
-        const source        = graph.addAtom(new CalculableBox({
+        const source        = graph.addAtom(new CalculableBoxUnbound({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = YIELD(sourceMode)
@@ -383,11 +383,11 @@ StartTest(t => {
     t.it('Reading past should not cause cycles and extra computations', async t => {
         const graph         = ChronoGraph.new()
 
-        const var1          = new Box(0, 'var1')
+        const var1          = new BoxUnbound(0, 'var1')
 
         let counter1        = 0
 
-        const dispatcher    = new CalculableBox({
+        const dispatcher    = new CalculableBoxUnbound({
             name    : 'dispatcher',
             lazy    : false,
             calculation () : boolean {
@@ -399,7 +399,7 @@ StartTest(t => {
 
         let counter2        = 0
 
-        const box2          = new CalculableBox({
+        const box2          = new CalculableBoxUnbound({
             name    : 'box2',
             lazy    : false,
             calculation () : number {

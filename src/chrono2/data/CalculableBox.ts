@@ -6,6 +6,7 @@ import { calculateLowerStackLevelsSync } from "../calculation/LeveledSync.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
 import { globalContext } from "../GlobalContext.js"
+import { ChronoGraph } from "../graph/Graph.js"
 import { Box } from "./Box.js"
 
 
@@ -235,7 +236,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         if (self.isCalculationStarted()) self.onCyclicReadDetected()
 
         // inlined `actualize` to save 1 stack level
-        if (self.state !== AtomState.UpToDate) {
+        if (self.state !== AtomState.UpToDate && self.graph) {
             globalContext.enterBatch()
 
             if (self.shouldCalculate())
@@ -373,7 +374,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         const onEffectSync          = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
 
         do {
-            calculateLowerStackLevelsSync(onEffectSync, globalContext.stack, this)
+            calculateLowerStackLevelsSync(onEffectSync, this.graph.stack, this)
 
             this.beforeCalculation()
             this.iterationResult    = calculationStartedConstant
@@ -446,5 +447,12 @@ export class CalculableBox<V = unknown> extends Box<V> {
         clone.$equality     = this.$equality
 
         return clone
+    }
+}
+
+
+export class CalculableBoxUnbound<V = unknown> extends CalculableBox<V> {
+    get boundGraph () : ChronoGraph {
+        return undefined
     }
 }

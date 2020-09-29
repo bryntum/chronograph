@@ -1,5 +1,5 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
-import { Box } from "../../src/chrono2/data/Box.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { GraphGen } from "../util.js"
@@ -113,10 +113,11 @@ StartTest(t => {
         t.it(prefix + 'Dynamic write + subtree elimination', async t => {
             const graph : ChronoGraph   = ChronoGraph.new()
 
-            const var0      = new Box(0, 'var0')
-            const var1      = new Box(0, 'var1')
+            const var0      = new BoxUnbound(0, 'var0')
+            const var1      = new BoxUnbound(0, 'var1')
 
             const iden1     = graphGen.calculableBox({
+                unbound     : true,
                 name        : 'iden1',
                 lazy        : false,
                 calculation : eval(graphGen.calc(function* () {
@@ -125,6 +126,7 @@ StartTest(t => {
             })
 
             const iden2     = graphGen.calculableBox({
+                unbound     : true,
                 name        : 'iden2',
                 lazy        : false,
                 calculation : eval(graphGen.calc(function* () {
@@ -133,6 +135,7 @@ StartTest(t => {
             })
 
             const iden3     = graphGen.calculableBox({
+                unbound     : true,
                 name        : 'iden3',
                 lazy        : false,
                 calculation : eval(graphGen.calc(function* () {

@@ -1,6 +1,6 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { CalculationModeGen, CalculationModeSync } from "../../src/chrono2/CalculationMode.js"
-import { Box } from "../../src/chrono2/data/Box.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
 import { EffectHandler, HasProposedValue, ProposedOrPrevious } from "../../src/chrono2/Effect.js"
@@ -133,9 +133,10 @@ StartTest(t => {
         t.it(prefix + 'Should mark atoms that did not match the "etalon" as stale on next commit', async t => {
             const graph     = ChronoGraph.new()
 
-            const max       = new Box(100)
+            const max       = new BoxUnbound(100)
 
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                unbound : true,
                 lazy : false,
                 calculation : eval(graphGen.calc(function* () {
                     const proposedValue : number    = box1.readProposedOrPrevious()
@@ -373,10 +374,11 @@ StartTest(t => {
         t.it(prefix + 'ProposedOrPrevious - stale after etalon mismatch, using graph commit', async t => {
             const graph     = ChronoGraph.new()
 
-            const max       = new Box(100)
+            const max       = new BoxUnbound(100)
 
             let counter1    = 0
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
+                unbound     : true,
                 name        : 'box1',
                 lazy        : false,
                 calculation : eval(graphGen.calc(function* () {
@@ -392,6 +394,7 @@ StartTest(t => {
 
             let counter2    = 0
             const box2 : CalculableBox<number>     = graphGen.calculableBox({
+                unbound     : true,
                 name        : 'box2',
                 lazy        : false,
                 calculation : eval(graphGen.calc(function* () {
@@ -403,6 +406,7 @@ StartTest(t => {
 
             let counter3    = 0
             const box3 : CalculableBox<number>     = graphGen.calculableBox({
+                unbound     : true,
                 name        : 'box3',
                 lazy        : false,
                 calculation : eval(graphGen.calc(function* () {

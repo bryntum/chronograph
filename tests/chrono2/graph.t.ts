@@ -1,8 +1,8 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
-import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
+import { CalculableBox, CalculableBoxUnbound } from "../../src/chrono2/data/CalculableBox.js"
+import { CalculableBoxGen, CalculableBoxGenUnbound } from "../../src/chrono2/data/CalculableBoxGen.js"
 import { globalContext } from "../../src/chrono2/GlobalContext.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { delay } from "../../src/util/Helpers.js"
@@ -26,10 +26,10 @@ StartTest(t => {
 
 
     t.it('Should support dependency from non-graph atoms', t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             lazy        : false,
             calculation : () => {
                 counter2++
@@ -38,7 +38,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBox({
+        const box3     = new CalculableBoxUnbound({
             lazy        : true,
             calculation : () => {
                 counter3++
@@ -77,10 +77,10 @@ StartTest(t => {
 
 
     t.it('Commit should calculate strict atoms', t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBox({
+        const box2      = new CalculableBoxUnbound({
             lazy        : false,
             calculation : () => {
                 counter2++
@@ -89,7 +89,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBox({
+        const box3     = new CalculableBoxUnbound({
             lazy        : true,
             calculation : () => {
                 counter3++
@@ -127,10 +127,10 @@ StartTest(t => {
 
 
     t.it('Commit async should calculate strict atoms', async t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBoxGen({
+        const box2      = new CalculableBoxGenUnbound({
             lazy        : false,
 
             *calculation () : CalculationIterator<number> {
@@ -143,7 +143,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBoxGen({
+        const box3     = new CalculableBoxGenUnbound({
             lazy        : true,
             *calculation () : CalculationIterator<number> {
                 counter3++
@@ -188,7 +188,7 @@ StartTest(t => {
     t.it('Adding already added identifier should not overwrite the initial proposed value', async t => {
         const graph : ChronoGraph = ChronoGraph.new()
 
-        const iden1     = new CalculableBoxGen({
+        const iden1     = new CalculableBoxGenUnbound({
             *calculation () {
                 return iden1.readProposedOrPrevious()
             }

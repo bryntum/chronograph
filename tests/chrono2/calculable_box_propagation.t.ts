@@ -1,5 +1,5 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
-import { Box } from "../../src/chrono2/data/Box.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
 import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { GraphGen } from "../util.js"
@@ -148,10 +148,11 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should eliminate unchanged subtrees #2', t => {
-            const i1        = new Box(0, 'i1')
-            const i2        = new Box(10, 'i2')
+            const i1        = new BoxUnbound(0, 'i1')
+            const i2        = new BoxUnbound(10, 'i2')
 
             const c1        = graphGen.calculableBox({
+                unbound : true,
                 name : 'c1',
                 calculation : eval(graphGen.calc(function* () {
                     return (yield i1) + (yield i2)
@@ -159,6 +160,7 @@ StartTest(t => {
             })
 
             const c2        = graphGen.calculableBox({
+                unbound : true,
                 name : 'c2',
                 calculation : eval(graphGen.calc(function* () {
                     return (yield c1) + 1
@@ -166,6 +168,7 @@ StartTest(t => {
             })
 
             const c3        = graphGen.calculableBox({
+                unbound : true,
                 name : 'c3',
                 calculation : eval(graphGen.calc(function* () {
                     return (yield c2) + 1
@@ -680,11 +683,12 @@ StartTest(t => {
         t.it(prefix + 'Should not re-entry calculations', t => {
             const graph : ChronoGraph   = ChronoGraph.new()
 
-            const var1      = new Box(1, 'v1')
+            const var1      = new BoxUnbound(1, 'v1')
 
             let count : number = 0
 
             const iden1     = graphGen.calculableBox({
+                unbound : true,
                 lazy    : false,
                 calculation : eval(graphGen.calc(function* () {
                     count++
@@ -694,6 +698,7 @@ StartTest(t => {
             })
 
             const iden2     = graphGen.calculableBox({
+                unbound : true,
                 lazy    : false,
                 calculation : eval(graphGen.calc(function* () {
                     count++
@@ -703,6 +708,7 @@ StartTest(t => {
             })
 
             const iden3     = graphGen.calculableBox({
+                unbound : true,
                 lazy    : false,
                 calculation : eval(graphGen.calc(function* () {
                     count++

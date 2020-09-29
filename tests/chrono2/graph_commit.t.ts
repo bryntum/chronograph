@@ -1,8 +1,8 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
 import { CalculationIterator } from "../../src/chrono2/CalculationMode.js"
-import { Box } from "../../src/chrono2/data/Box.js"
-import { CalculableBox } from "../../src/chrono2/data/CalculableBox.js"
-import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { Box, BoxUnbound } from "../../src/chrono2/data/Box.js"
+import { CalculableBox, CalculableBoxUnbound } from "../../src/chrono2/data/CalculableBox.js"
+import { CalculableBoxGen, CalculableBoxGenUnbound } from "../../src/chrono2/data/CalculableBoxGen.js"
 import { globalContext } from "../../src/chrono2/GlobalContext.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { delay } from "../../src/util/Helpers.js"
@@ -17,10 +17,10 @@ const randomDelay = () => delay(Math.random() * 100)
 StartTest(t => {
 
     t.it('Commit async should "join" ongoing commit', async t => {
-        const box1      = new Box(10)
+        const box1      = new BoxUnbound(10)
 
         let counter2    = 0
-        const box2      = new CalculableBoxGen({
+        const box2      = new CalculableBoxGenUnbound({
             lazy        : false,
 
             *calculation () : CalculationIterator<number> {
@@ -33,7 +33,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBoxGen({
+        const box3     = new CalculableBoxGenUnbound({
             lazy        : true,
             *calculation () : CalculationIterator<number> {
                 counter3++
@@ -89,10 +89,10 @@ StartTest(t => {
 
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const boxes : Box<number>[]     = [ new Box(0) ]
+        const boxes : Box<number>[]     = [ new BoxUnbound(0) ]
 
         for (let i = 0; i < size; i++) {
-            const box   = new CalculableBox({
+            const box   = new CalculableBoxUnbound({
                 lazy        : false,
                 context     : boxes.length,
                 calculation () : number {
@@ -122,10 +122,10 @@ StartTest(t => {
     t.it('Should eliminate unchanged subtrees for generator boxes', t => {
         const graph     = ChronoGraph.new()
 
-        const i1        = new Box(0, 'i1')
-        const i2        = new Box(10, 'i2')
+        const i1        = new BoxUnbound(0, 'i1')
+        const i2        = new BoxUnbound(10, 'i2')
 
-        const c1        = new CalculableBoxGen({
+        const c1        = new CalculableBoxGenUnbound({
             name        : 'c1',
             lazy        : false,
             calculation : function* () : CalculationIterator<number> {
@@ -133,7 +133,7 @@ StartTest(t => {
             }
         })
 
-        const c2        = new CalculableBoxGen({
+        const c2        = new CalculableBoxGenUnbound({
             name        : 'c2',
             lazy        : false,
             calculation : function* () : CalculationIterator<number> {
@@ -141,7 +141,7 @@ StartTest(t => {
             }
         })
 
-        const c3        = new CalculableBoxGen({
+        const c3        = new CalculableBoxGenUnbound({
             name        : 'c3',
             lazy        : false,
             calculation : function* () : CalculationIterator<number> {
@@ -149,7 +149,7 @@ StartTest(t => {
             }
         })
 
-        const c4        = new CalculableBoxGen({
+        const c4        = new CalculableBoxGenUnbound({
             name        : 'c4',
             lazy        : false,
             calculation : function* () : CalculationIterator<number> {
@@ -157,7 +157,7 @@ StartTest(t => {
             }
         })
 
-        const c5        = new CalculableBoxGen({
+        const c5        = new CalculableBoxGenUnbound({
             name        : 'c5',
             lazy        : false,
             calculation : function* () : CalculationIterator<number> {
@@ -165,7 +165,7 @@ StartTest(t => {
             }
         })
 
-        const c6        = new CalculableBoxGen({
+        const c6        = new CalculableBoxGenUnbound({
             name        : 'c6',
             lazy        : false,
             calculation : function* () : CalculationIterator<number> {

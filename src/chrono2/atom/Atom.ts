@@ -41,7 +41,6 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     uniqableBox         : any           = undefined
     uniqableBox2        : any           = undefined
 
-    // TODO find better name, "userInputRevision" ?
     userInputRevision   : number        = MIN_SMI
 
     immutable           : Quark         = this.buildDefaultImmutable()
@@ -68,7 +67,23 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     lazy                : boolean       = true
     sync                : boolean       = true
 
-    $meta               : Meta      = undefined
+    // TODO Atom should "implement Meta" and by default, should be `this.$meta = this`
+    $meta               : Meta          = undefined
+
+
+    constructor () {
+        super()
+
+        const boundGraph    = this.boundGraph
+
+        if (boundGraph) boundGraph.addAtom(this)
+    }
+
+
+    get boundGraph () : ChronoGraph {
+        return undefined
+    }
+
 
     get meta () : Meta {
         if (this.$meta !== undefined) return this.$meta
@@ -115,14 +130,18 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     enterGraph (graph : ChronoGraph) {
-        if (this.graph && this.graph !== graph) throw new Error("Can only belong to a single graph for now")
+        // <debug>
+        if (this.graph && this.graph !== graph) throw new Error("Atom can only belong to a single graph")
+        // </debug>
 
         this.graph                  = graph
     }
 
 
     leaveGraph (graph : ChronoGraph) {
+        // <debug>
         if (this.graph !== graph) throw new Error("Atom not in graph")
+        // </debug>
 
         this.graph      = undefined
     }
