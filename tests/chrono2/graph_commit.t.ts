@@ -57,7 +57,7 @@ StartTest(t => {
         // wait for completion of commit 1
         await promise
 
-        t.is(globalContext.activeAtom, undefined, 'Should clear the `activeAtom` property once all commits are done')
+        t.is(graph.activeAtom, undefined, 'Should clear the `activeAtom` property once all commits are done')
 
         t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
 
@@ -80,7 +80,7 @@ StartTest(t => {
 
         t.isDeeply([ counter2, counter3 ], [ 1, 1 ])
 
-        t.is(globalContext.activeAtom, undefined, 'Should clear the `activeAtom` property once all commits are done')
+        t.is(graph.activeAtom, undefined, 'Should clear the `activeAtom` property once all commits are done')
     })
 
 
@@ -101,9 +101,9 @@ StartTest(t => {
             })
 
             boxes.push(box)
-
-            graph.addAtom(box)
         }
+
+        graph.addAtoms(boxes)
 
         const lastBox       = boxes[ boxes.length - 1 ]
 
@@ -115,7 +115,7 @@ StartTest(t => {
             t.is(lastBox.read(), size + i)
         }
 
-        t.is(globalContext.activeAtom, undefined)
+        t.is(graph.activeAtom, undefined)
     })
 
 

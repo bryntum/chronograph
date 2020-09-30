@@ -26,14 +26,14 @@ StartTest(t => {
 
 
     t.it('Should support dependency from non-graph atoms', t => {
-        const box1      = new BoxUnbound(10)
+        const box1      = new Box(10)
 
         let counter2    = 0
         const box2      = new CalculableBoxUnbound({
             lazy        : false,
             calculation : () => {
                 counter2++
-                return box1.read() + 1
+                return box1.read(graph) + 1
             }
         })
 
@@ -173,7 +173,7 @@ StartTest(t => {
 
         await graph.commitAsync()
 
-        t.is(globalContext.activeAtom, undefined, 'Should clear the `activeAtom` property once the commit is done')
+        t.is(graph.activeAtom, undefined, 'Should clear the `activeAtom` property once the commit is done')
 
         t.isDeeply([ counter2, counter3 ], [ 1, 0 ])
 

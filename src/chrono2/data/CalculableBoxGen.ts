@@ -68,7 +68,7 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 
 
     doCalculate () {
-        const effectHandler = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
+        const effectHandler = this.graph.effectHandlerSync
 
         calculateAtomsQueueSync(effectHandler, this.graph.stack, this.graph ? this.graph.currentTransaction : undefined, [ this ], this.level)
     }
@@ -78,9 +78,10 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
     // of multiple promises if many reads are issued during the same
     // calculation - we re-use the `calculationPromise` in this case
     // otherwise every call to `readAsync` would create a new promise
-    readAsync () : Promise<V> {
-        const activeAtom    = globalContext.activeAtom
-        const self          = this.checkoutSelf()
+    readAsync (graph? : ChronoGraph) : Promise<V> {
+        const effectiveGraph    = graph || this.graph
+        const activeAtom        = effectiveGraph ? effectiveGraph.activeAtom : undefined
+        const self              = this.checkoutSelf()
 
         if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable, false)
 
@@ -93,7 +94,7 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 
 
     async doCalculateAsync () : Promise<V> {
-        const effectHandler = this.graph ? this.graph.effectHandlerAsync : globalContext.onEffectAsync
+        const effectHandler = this.graph.effectHandlerAsync
 
         await runGeneratorAsyncWithEffect(
             effectHandler,

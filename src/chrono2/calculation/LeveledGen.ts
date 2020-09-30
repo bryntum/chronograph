@@ -13,14 +13,14 @@ import { Transaction } from "../graph/Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export const calculateLowerStackLevelsGen = function* (
-    onEffect : EffectHandler<CalculationModeGen>, stack : LeveledQueue<Atom>, atom : Atom
+    onEffect : EffectHandler<CalculationModeGen>, stack : LeveledQueue<Atom>, transaction : Transaction, atom : Atom
 ) {
     const uniqable          = getUniqable()
 
     while (stack.lowestLevelIndex < atom.level) {
         const levelIndex    = stack.lowestLevelIndex
 
-        yield* calculateAtomsQueueLevelGen(onEffect, uniqable, stack, undefined, stack.levels[ levelIndex ], levelIndex, false)
+        yield* calculateAtomsQueueLevelGen(onEffect, uniqable, stack, transaction, stack.levels[ levelIndex ], levelIndex, false)
 
         stack.refreshLowestLevel()
     }
@@ -71,9 +71,11 @@ export const calculateAtomsQueueLevelGen = function* (
     levelIndex  : number,
     isOverride  : boolean
 ) {
-    globalContext.enterBatch()
+    const graph                     = transaction.graph
 
-    let prevActiveAtom              = globalContext.activeAtom
+    graph.enterBatch()
+
+    let prevActiveAtom              = graph.activeAtom
     const startedAtLowestLevelIndex = stack.lowestLevelIndex
     const modifyStack               = !isOverride
 
@@ -125,8 +127,7 @@ export const calculateAtomsQueueLevelGen = function* (
 
             if (incoming) {
                 for (let i = 0; i < incoming.length; i++) {
-                    const owner             = incoming[ i ].owner
-                    const dependencyAtom    = atom.graph ? owner.checkoutSelfFromActiveGraph(atom.graph) : owner
+                    const dependencyAtom    = atom.graph.resolve(incoming[ i ].owner)
 
                     if (dependencyAtom.state !== AtomState.UpToDate) {
                         // TODO should take level into account
@@ -143,7 +144,7 @@ export const calculateAtomsQueueLevelGen = function* (
             }
         }
 
-        globalContext.activeAtom    = atom
+        graph.activeAtom    = atom
 
         let iterationResult : IteratorResult<any> = atom.isCalculationStarted() ? atom.iterationResult : atom.startCalculation(onEffect)
 
@@ -206,16 +207,16 @@ export const calculateAtomsQueueLevelGen = function* (
             else {
                 const startedYieldAt        = atom.iterationNumber
 
-                globalContext.activeAtom    = prevActiveAtom
+                graph.activeAtom    = prevActiveAtom
 
-                globalContext.leaveBatch()
+                graph.leaveBatch()
 
                 // bypass the unrecognized effect to the outer context
                 const res                   = yield value
 
-                globalContext.enterBatch()
+                graph.enterBatch()
 
-                prevActiveAtom              = globalContext.activeAtom
+                prevActiveAtom              = graph.activeAtom
 
                 // TODO
                 // possibly `iterationNumber` should be a global revision tracking counter
@@ -227,7 +228,7 @@ export const calculateAtomsQueueLevelGen = function* (
                 // UPDATE: should just use `revision` I guess
                 // TODO: needs a test case
                 if (atom.iterationNumber === startedYieldAt) {
-                    globalContext.activeAtom    = atom
+                    graph.activeAtom    = atom
 
                     iterationResult             = atom.continueCalculation(res)
                 } else {
@@ -238,7 +239,7 @@ export const calculateAtomsQueueLevelGen = function* (
         }
     }
 
-    globalContext.activeAtom    = prevActiveAtom
+    graph.activeAtom    = prevActiveAtom
 
-    globalContext.leaveBatch()
+    graph.leaveBatch()
 }

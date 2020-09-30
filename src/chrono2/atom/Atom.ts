@@ -227,12 +227,12 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    read () : V {
+    read (graph? : ChronoGraph) : V {
         throw new Error("Abstract method")
     }
 
 
-    async readAsync () : Promise<V> {
+    async readAsync (graph? : ChronoGraph) : Promise<V> {
         return this.read()
     }
 
@@ -354,21 +354,21 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     checkoutSelf () : this {
-        const activeAtom    = globalContext.activeAtom
-        const activeGraph   = activeAtom ? activeAtom.graph : undefined
-
-        if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
-            return activeGraph.checkout(this)
-        else
+        // const activeAtom    = this.graph.activeAtom
+        // const activeGraph   = activeAtom ? activeAtom.graph : undefined
+        //
+        // if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
+        //     return activeGraph.checkout(this)
+        // else
             return this
     }
 
 
     // TODO unify with `checkoutSelf`
     checkoutSelfFromActiveGraph (activeGraph : ChronoGraph) : this {
-        if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
-            return activeGraph.checkout(this)
-        else
+        // if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
+        //     return activeGraph.checkout(this)
+        // else
             return this
     }
 
@@ -539,7 +539,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
             }
         })
 
-        if (!this.immutable.frozen && !globalContext.activeAtom) this.immutable.clearOutgoing()
+        if (!this.immutable.frozen && !this.graph.activeAtom) this.immutable.clearOutgoing()
     }
 
 

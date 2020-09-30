@@ -40,6 +40,16 @@ class FieldAtom extends base implements PartOfEntityAtom {
     graph       : Replica
 
 
+    clone () : this {
+        const clone         = super.clone()
+
+        clone.field         = this.field
+        clone.self          = this.self
+
+        return clone
+    }
+
+
     toString () : string {
         return `Field atom [${this.name}]`
     }
@@ -82,6 +92,15 @@ class EntityAtom extends base implements PartOfEntityAtom {
     // this just means if it's calculation method has been called, it should always
     // assign a new value
     $equality       : (v1 : unknown, v2 : unknown) => boolean   = constFalse
+
+
+    clone () : this {
+        const clone         = super.clone()
+
+        clone.self          = this.self
+
+        return clone
+    }
 
 
     toString () : string {

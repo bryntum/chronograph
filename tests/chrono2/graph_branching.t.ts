@@ -45,10 +45,10 @@ StartTest(t => {
 
         const var1      = new BoxUnbound(0)
         const var2      = new CalculableBoxUnbound({
-            calculation () {
+            calculation (Y) {
                 counter++
 
-                return var1.read() + 1
+                return Y(var1) + 1
             }
         })
 
@@ -114,9 +114,9 @@ StartTest(t => {
 
         const c1            = new CalculableBoxUnbound({
             name        : 'c1',
-            calculation () {
+            calculation (Y) {
                 counter++
-                return dispatcher.read().read() + 1
+                return Y(Y(dispatcher)) + 1
             }
         })
 
@@ -165,9 +165,9 @@ StartTest(t => {
 
         const c1            = new CalculableBoxUnbound({
             name        : 'c1',
-            calculation () {
+            calculation (Y) {
                 counter++
-                return dispatcher.read().read() + 1
+                return Y(Y(dispatcher)) + 1
             }
         })
 
@@ -217,9 +217,9 @@ StartTest(t => {
 
         const c1            = new CalculableBoxUnbound({
             name        : 'c1',
-            calculation () {
+            calculation (Y) {
                 counter++
-                return dispatcher.read().read() + 1
+                return Y(Y(dispatcher)) + 1
             }
         })
 
@@ -259,8 +259,8 @@ StartTest(t => {
 
         const c1            = new CalculableBoxUnbound({
             name        : 'c1',
-            calculation () {
-                return i1.read() + i2.read()
+            calculation (Y) {
+                return Y(i1) + Y(i2)
             }
         })
 
@@ -271,7 +271,7 @@ StartTest(t => {
         t.isDeeply([ i1, i2, c1 ].map(node => node.read()), [ 0, 1, 1 ], "Correct result calculated")
 
         // ----------------
-        const graph2        = graph1.branch()
+        const graph2        = graph1.branch({ historyLimit : 0 })
 
         const i3            = new BoxUnbound(2, 'i3')
 
@@ -307,49 +307,49 @@ StartTest(t => {
 
         const c1        = new CalculableBoxUnbound({
             name        : 'c1',
-            calculation () {
+            calculation (Y) {
                 counter1++
-                return i1.read() + i2.read()
+                return Y(i1) + Y(i2)
             }
         })
 
         const c2        = new CalculableBoxUnbound({
             name        : 'c2',
-            calculation () {
+            calculation (Y) {
                 counter2++
-                return i1.read() + c1.read()
+                return Y(i1) + Y(c1)
             }
         })
 
         const c3        = new CalculableBoxUnbound({
             name        : 'c3',
-            calculation () {
+            calculation (Y) {
                 counter3++
-                return c1.read()
+                return Y(c1)
             }
         })
 
         const c4        = new CalculableBoxUnbound({
             name        : 'c4',
-            calculation () {
+            calculation (Y) {
                 counter4++
-                return c3.read()
+                return Y(c3)
             }
         })
 
         const c5        = new CalculableBoxUnbound({
             name        : 'c5',
-            calculation () {
+            calculation (Y) {
                 counter5++
-                return c3.read()
+                return Y(c3)
             }
         })
 
         const c6        = new CalculableBoxUnbound({
             name        : 'c6',
-            calculation () {
+            calculation (Y) {
                 counter6++
-                return c5.read() + i2.read()
+                return Y(c5) + Y(i2)
             }
         })
 
@@ -412,9 +412,9 @@ StartTest(t => {
 
         const c1            = new CalculableBoxUnbound({
             name        : 'c1',
-            calculation () {
+            calculation (Y) {
                 counter++
-                return dispatcher.read().read() + 1
+                return Y(Y(dispatcher)) + 1
             }
         })
 
@@ -461,9 +461,9 @@ StartTest(t => {
 
         const c1            = new CalculableBoxUnbound({
             name        : 'c1',
-            calculation () {
+            calculation (Y) {
                 counter++
-                return dispatcher.read().read() + 1
+                return Y(Y(dispatcher)) + 1
             }
         })
 

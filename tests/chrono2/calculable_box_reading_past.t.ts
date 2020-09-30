@@ -10,7 +10,6 @@ import {
     ProposedValueOf
 } from "../../src/chrono2/Effect.js"
 import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
-import { takeUntilExcluding } from "../../src/collection/Iterator.js"
 
 declare const StartTest : any
 

@@ -183,7 +183,7 @@ StartTest(t => {
 
         const var2      = new CalculableBoxUnbound({
             name        : 'var2',
-            calculation : () => var1.read() + 1
+            calculation : (Y) => Y(var1) + 1
         })
 
         const nodes         = [ var1, var2 ]

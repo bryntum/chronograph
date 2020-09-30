@@ -1,8 +1,10 @@
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
+import { MIN_SMI } from "../../util/Helpers.js"
 import { LeveledQueue } from "../../util/LeveledQueue2.js"
-import { Atom } from "../atom/Atom.js"
+import { Atom, AtomState } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
+import { getNextRevision } from "../atom/Node.js"
 import { Quark } from "../atom/Quark.js"
 import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
@@ -66,7 +68,7 @@ export const CommitZero : CommitResult = {
 //----------------------------------------------------------------------------------------------------------------------
 export class ChronoGraph extends Base implements Owner {
     // for debugging convenience
-    globalContext           : any                   = globalContext
+    // globalContext           : any                   = globalContext
 
     // how many "extra" transactions to keep in memory (except the one currently running)
     // `-1` means no transactioning at all (reject is not supported)
@@ -430,7 +432,10 @@ export class ChronoGraph extends Base implements Owner {
 
     onEffectAsync (effect : Effect) : Promise<unknown> {
         if (effect instanceof Atom) {
-            return effect.sync ? effect.read() : effect.readAsync()
+            const atom      = this.resolve(effect)
+
+            // @ts-ignore
+            return atom.sync ? atom.read(this) : atom.readAsync(this)
         }
 
         if (effect instanceof Promise) return effect
@@ -439,10 +444,20 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    resolve (atom : Atom) : Atom {
+        if (atom.graph && this !== atom.graph && this.identity === atom.graph.identity && this.previous)
+            return this.checkout(atom)
+        else
+            return atom
+    }
+
+
     // see the comment for the `onEffectSync`
     onEffectSync (effect : Effect) : unknown {
         if (effect instanceof Atom) {
-            return effect.sync ? effect.read() : effect.readAsync()
+            const atom      = this.resolve(effect)
+
+            return atom.sync ? atom.read(this) : atom.readAsync(this)
         }
 
         if (effect instanceof Promise) {
@@ -472,7 +487,7 @@ export class ChronoGraph extends Base implements Owner {
         const transaction   = this.currentTransaction
         const stack         = this.stack
 
-        globalContext.enterBatch()
+        this.enterBatch()
 
         while (stack.size && !transaction.rejectedWith) {
             await runGeneratorAsyncWithEffect(
@@ -493,7 +508,7 @@ export class ChronoGraph extends Base implements Owner {
             this.unScheduleAutoCommit()
         }
 
-        globalContext.leaveBatch()
+        this.leaveBatch()
 
         this.afterCommit()
 
@@ -507,7 +522,7 @@ export class ChronoGraph extends Base implements Owner {
         const transaction   = this.currentTransaction
         const stack         = this.stack
 
-        globalContext.enterBatch()
+        this.enterBatch()
 
         while (stack.size && !transaction.rejectedWith) {
             calculateAtomsQueueSync(this.effectHandlerSync, stack, transaction, null, -1)
@@ -515,7 +530,7 @@ export class ChronoGraph extends Base implements Owner {
             this.finalizeCommit()
         }
 
-        globalContext.leaveBatch()
+        this.leaveBatch()
 
         this.afterCommit()
 
@@ -591,7 +606,9 @@ export class ChronoGraph extends Base implements Owner {
 
 
     branch (config? : Partial<this>) : this {
+        // <debug>
         if (this.historyLimit < 0) throw new Error("The `historyLimit` config needs to be at least 0 to use branching")
+        // </debug>
 
         // we freeze current _iteration_, not the whole _transaction_
         this.currentIteration.freeze()
@@ -599,7 +616,6 @@ export class ChronoGraph extends Base implements Owner {
         const self          = this.constructor as AnyConstructor<this, typeof ChronoGraph>
         const branch        = self.new(config)
 
-        branch.historyLimit     = this.historyLimit
         branch.identity         = this.identity
         branch.previous         = this
         // TODO should use copy-on-write?
@@ -763,12 +779,12 @@ export class ChronoGraph extends Base implements Owner {
 
 
     [RejectSymbol] (effect : RejectEffect<unknown>) : unknown {
-        return globalContext.activeAtom.graph?.reject(effect.reason)
+        return this.activeAtom.graph?.reject(effect.reason)
     }
 
 
     [ProposedOrPreviousSymbol] (effect : Effect) : unknown {
-        return globalContext.activeAtom.readProposedOrPrevious()
+        return this.activeAtom.readProposedOrPrevious()
     }
 
 
@@ -799,6 +815,52 @@ export class ChronoGraph extends Base implements Owner {
 
     readFieldWithAccessor (atom : Atom) {
         return atom.sync ? atom.read() : atom.readAsync()
+    }
+
+
+    staleInNextBatch        : Atom[]                = []
+
+    activeBatchRevision     : number                = MIN_SMI
+    batchDepth              : number                = 0
+
+    activeAtom              : Atom                  = undefined
+
+
+    enterBatch () {
+        this.batchDepth++
+
+        if (this.batchDepth === 1) {
+            this.startBatch()
+        }
+    }
+
+
+    leaveBatch () {
+        this.batchDepth--
+
+        if (this.batchDepth === 0) {
+            this.endBatch()
+        }
+    }
+
+
+    startBatch () {
+        this.activeBatchRevision  = getNextRevision()
+
+        for (let i = 0; i < this.staleInNextBatch.length; i++) {
+            const staleAtom     = this.staleInNextBatch[ i ]
+
+            staleAtom.propagatePossiblyStale(true)
+
+            staleAtom.state     = AtomState.Stale
+        }
+
+        this.staleInNextBatch   = []
+    }
+
+
+    endBatch () {
+        this.activeBatchRevision  = MIN_SMI
     }
 }
 

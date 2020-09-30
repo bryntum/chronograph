@@ -73,9 +73,10 @@ export class Box<V = unknown> extends Atom<V> {
     }
 
 
-    read () : V {
-        const activeAtom    = globalContext.activeAtom
-        const self          = this.checkoutSelf()
+    read (graph? : ChronoGraph) : V {
+        const effectiveGraph    = graph || this.graph
+        const activeAtom        = effectiveGraph ? effectiveGraph.activeAtom : undefined
+        const self              = this.checkoutSelf()
 
         if (activeAtom) self.immutableForWrite().addOutgoing(activeAtom.immutable, false)
 
@@ -112,16 +113,18 @@ export class Box<V = unknown> extends Atom<V> {
 
         this.state                      = AtomState.UpToDate
 
-        // after the `propagateStaleDeep` above, the new `userInputRevision` has been propagated
-        // then we reset the `userInputRevision` of the atom that has triggered the write (activeAtom)
-        // so that `propagateStaleShallow` won't cause extra recalculations
-        // TODO this is a bit vague, even that all tests passes
-        // we probably need some proper way of indicating that calculation of some atom is triggered by another
-        // (batchId? - currently its `uniqable` inside the calculation cores)
-        if (globalContext.activeAtom) globalContext.activeAtom.userInputRevision = this.userInputRevision
+        const graph                     = this.graph
 
-        if (this.graph) {
-            this.graph.onDataWrite(this)
+        if (graph) {
+            // after the `propagateStaleDeep` above, the new `userInputRevision` has been propagated
+            // then we reset the `userInputRevision` of the atom that has triggered the write (activeAtom)
+            // so that `propagateStaleShallow` won't cause extra recalculations
+            // TODO this is a bit vague, even that all tests passes
+            // we probably need some proper way of indicating that calculation of some atom is triggered by another
+            // (batchId? - currently its `uniqable` inside the calculation cores)
+            if (graph.activeAtom) graph.activeAtom.userInputRevision = this.userInputRevision
+
+            graph.onDataWrite(this)
         }
     }
 

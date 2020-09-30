@@ -42,9 +42,11 @@ export class CalculableBox<V = unknown> extends Box<V> {
             this.calculation    = config.calculation
             this.calculationEtalon = config.calculationEtalon
             this.equality       = config.equality
-            this.lazy           = config.lazy !== undefined ? config.lazy : true
+
+            if (config.lazy !== undefined) this.lazy = config.lazy
+
             // TODO not needed explicitly (can defined based on the type of the `calculation` function?
-            this.sync           = config.sync
+            if (config.sync !== undefined) this.sync = config.sync
         }
     }
 
@@ -132,7 +134,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
 
     onReadingPast () : this {
-        const activeAtom    = globalContext.activeAtom
+        const activeAtom    = this.graph.activeAtom
         const self          = this.checkoutSelf()
 
         if (activeAtom) {
@@ -202,7 +204,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         if (this.proposedValue !== undefined) return this.proposedValue
 
         // `proposedValue` is persisted during the batch
-        if (this.immutable.batchRevision === globalContext.activeBatchRevision) return this.immutable.proposedValue
+        if (this.immutable.batchRevision === this.graph.activeBatchRevision) return this.immutable.proposedValue
 
         return undefined
     }
@@ -211,7 +213,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
     readProposedArgsInternal () : unknown[] {
         if (this.proposedArgs !== undefined) return this.proposedArgs
 
-        if (this.immutable.batchRevision === globalContext.activeBatchRevision) return this.immutable.proposedArgs
+        if (this.immutable.batchRevision === this.graph.activeBatchRevision) return this.immutable.proposedArgs
 
         return undefined
     }
@@ -225,9 +227,10 @@ export class CalculableBox<V = unknown> extends Box<V> {
     }
 
 
-    read () : V {
-        const activeAtom    = globalContext.activeAtom
-        const self          = this.checkoutSelf()
+    read (graph? : ChronoGraph) : V {
+        const effectiveGraph    = graph || this.graph
+        const activeAtom        = effectiveGraph ? effectiveGraph.activeAtom : undefined
+        const self              = this.checkoutSelf()
 
         if (self.immutable.isTombstone) return self.immutable.read()
 
@@ -237,14 +240,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         // inlined `actualize` to save 1 stack level
         if (self.state !== AtomState.UpToDate && self.graph) {
-            globalContext.enterBatch()
+            self.graph.enterBatch()
 
             if (self.shouldCalculate())
                 self.doCalculate()
             else
                 self.state = AtomState.UpToDate
 
-            globalContext.leaveBatch()
+            self.graph.leaveBatch()
         }
         // eof inlined `actualize`
 
@@ -275,12 +278,14 @@ export class CalculableBox<V = unknown> extends Box<V> {
         const previous              = immutable.readRaw()
         const isSameValue           = previous === undefined ? false : this.equality(previous, newValue)
 
+        const graph                 = this.graph
+
         // TODO convince myself this is not a monkey-patching (about `globalContext.activeAtom ? false : true`)
         // idea is that we should not reset to stale atoms, that has already used this atom in "past" context
         // (like dispatchers)
-        if (previous !== undefined && !isSameValue) this.propagateStaleShallow(globalContext.activeAtom ? false : true)
+        if (previous !== undefined && !isSameValue) this.propagateStaleShallow(graph.activeAtom ? false : true)
 
-        immutable.batchRevision            = globalContext.activeBatchRevision
+        immutable.batchRevision            = graph.activeBatchRevision
 
         if (!isSameValue || previous === undefined) {
             immutable.valueRevision        = immutable.revision
@@ -296,23 +301,23 @@ export class CalculableBox<V = unknown> extends Box<V> {
         this.state                              = AtomState.UpToDate
 
         if (this.calculationEtalon !== undefined) {
-            const onEffectSync          = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
+            const onEffectSync          = this.graph ? this.graph.effectHandlerSync : graph.onEffectSync
 
-            const prevActiveAtom        = globalContext.activeAtom
+            const prevActiveAtom        = graph.activeAtom
 
-            globalContext.activeAtom    = this
+            graph.activeAtom    = this
 
             const etalon                = this.calculationEtalon.call(this.context, onEffectSync)
 
-            globalContext.activeAtom    = prevActiveAtom
+            graph.activeAtom    = prevActiveAtom
 
             if (etalon !== undefined && !this.equality(newValue, etalon)) {
-                globalContext.staleInNextBatch.push(this)
+                graph.staleInNextBatch.push(this)
             }
         } else
             if (this.usedProposedOrPrevious) {
                 if (this.proposedValue !== undefined && !this.equality(newValue, this.proposedValue)) {
-                    globalContext.staleInNextBatch.push(this)
+                    graph.staleInNextBatch.push(this)
                 }
             }
 
@@ -365,16 +370,18 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
 
     doCalculate () {
-        const prevActiveAtom        = globalContext.activeAtom
+        const graph                 = this.graph
 
-        globalContext.activeAtom    = this
+        const prevActiveAtom        = graph.activeAtom
+
+        graph.activeAtom            = this
 
         let newValue : V            = undefined
 
-        const onEffectSync          = this.graph ? this.graph.effectHandlerSync : globalContext.onEffectSync
+        const onEffectSync          = graph.effectHandlerSync
 
         do {
-            calculateLowerStackLevelsSync(onEffectSync, this.graph.stack, this)
+            calculateLowerStackLevelsSync(onEffectSync, graph.stack, graph.currentTransaction, this)
 
             this.beforeCalculation()
             this.iterationResult    = calculationStartedConstant
@@ -396,7 +403,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         // before this assignment (IIRC some benchmark was throwing exception)
         // need to find this benchmark again, create a test case from it
         // and figure out a proper fix
-        globalContext.activeAtom    = prevActiveAtom
+        graph.activeAtom            = prevActiveAtom
 
         this.updateValue(newValue)
         // END
@@ -429,11 +436,13 @@ export class CalculableBox<V = unknown> extends Box<V> {
 
         this.propagatePossiblyStale(true)
 
-        // see the comment in `write` method of the `Box`
-        if (globalContext.activeAtom) globalContext.activeAtom.userInputRevision = this.userInputRevision
+        const graph             = this.graph
 
-        if (this.graph) {
-            this.graph.onDataWrite(this)
+        if (graph) {
+            // see the comment in `write` method of the `Box`
+            if (graph.activeAtom) graph.activeAtom.userInputRevision = this.userInputRevision
+
+            graph.onDataWrite(this)
         }
     }
 

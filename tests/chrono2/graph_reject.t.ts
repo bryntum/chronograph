@@ -26,7 +26,7 @@ StartTest(t => {
 
         const externalBox3     = new CalculableBox({
             calculation : () => {
-                const value2 = box2.read()
+                const value2 = box2.read(externalBox3.graph)
 
                 if (value2 === null) return null
 
@@ -66,7 +66,7 @@ StartTest(t => {
         })
 
         const externalBox3     = new CalculableBox({
-            calculation : () => box2.read() + 1
+            calculation : () => box2.read(externalBox3.graph) + 1
         })
 
         const graph     = ChronoGraph.new()
@@ -140,7 +140,7 @@ StartTest(t => {
         })
 
         const externalBox3     = new CalculableBox({
-            calculation : () => box2.read() + 1
+            calculation : () => box2.read(externalBox3.graph) + 1
         })
 
         const graph     = ChronoGraph.new({ historyLimit : 0 })

@@ -45,8 +45,13 @@ export class Node implements Uniqable {
         // seems to be faster to just assign `undefined` instead of setting length to 0
         this.$outgoing          = undefined
         this.$outgoingRev       = undefined
+
+        this.$outgoingPast      = undefined
+        this.$outgoingPastRev   = undefined
+
         // this.outgoingCompacted  = false
         this.addCounter         = 0
+
         this.lastOutgoingTo     = undefined
         this.lastOutgoingToRev  = MIN_SMI
     }
