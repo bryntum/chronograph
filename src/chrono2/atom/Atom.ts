@@ -282,7 +282,9 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
         nextQuark.freeze()
 
-        this.stateIteration.forceAddQuark(nextQuark)
+        const stateIteration    = this.stateIteration.mergedInto || this.stateIteration
+
+        stateIteration.forceAddQuark(nextQuark)
     }
 
 

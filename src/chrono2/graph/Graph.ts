@@ -324,6 +324,7 @@ export class ChronoGraph extends Base implements Owner {
 
         // move the storage
         nextAfterCollapsible.storage        = lastIteration.storage
+        lastIteration.mergedInto            = nextAfterCollapsible
 
         // truncate the history
         nextAfterCollapsible.previous       = undefined
@@ -332,11 +333,12 @@ export class ChronoGraph extends Base implements Owner {
         iteration                           = collapseStartingFrom
 
         while (iteration) {
-            const previous  = iteration.previous
+            const previous                  = iteration.previous
 
             iteration.destroy()
+            iteration.mergedInto            = nextAfterCollapsible
 
-            iteration       = previous
+            iteration                       = previous
         }
     }
 

@@ -104,6 +104,8 @@ export class Iteration extends Immutable {
 
     isRejected      : boolean           = false
 
+    mergedInto      : Iteration         = undefined
+
 
     get size () : number {
         return this.storage.size
