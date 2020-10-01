@@ -96,6 +96,9 @@ export class Quark<V = unknown> extends Node implements Immutable {
         next.revision       = this.revision
         next.valueRevision  = this.valueRevision
         next.state          = this.state
+        // need to thread the `usedProposedOrPrevious` further for the `shouldCheckDependencies` method
+        // to work correctly
+        next.usedProposedOrPrevious = this.usedProposedOrPrevious
 
         // TODO should possibly empty the cached atom's `$state` here
 
