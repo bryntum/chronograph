@@ -107,6 +107,19 @@ export class Iteration extends Immutable {
     mergedInto      : Iteration         = undefined
 
 
+    getMergedIntoRecursive () : Iteration {
+        let res : Iteration         = undefined
+        let iteration : Iteration   = this
+
+        while (iteration.mergedInto) {
+            res             = iteration.mergedInto
+            iteration       = iteration.mergedInto
+        }
+
+        return res
+    }
+
+
     get size () : number {
         return this.storage.size
     }
