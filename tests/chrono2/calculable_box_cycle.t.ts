@@ -1,5 +1,6 @@
 import { setCompactCounter } from "../../src/chrono2/atom/Node.js"
-import { CalculableBoxGen } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { CalculableBoxGen, CalculableBoxGenUnbound } from "../../src/chrono2/data/CalculableBoxGen.js"
+import { ChronoGraph } from "../../src/chrono2/graph/Graph.js"
 import { delay } from "../../src/util/Helpers.js"
 import { GraphGen } from "../util.js"
 
@@ -68,6 +69,36 @@ StartTest(t => {
     })
 
 
+    t.it('Should show the detailed information about the cyclic async computation', async t => {
+        const graph1        = ChronoGraph.new({ historyLimit : 0 })
+
+        const iden1     = new CalculableBoxGenUnbound({
+            name : 'iden1',
+            calculation : function* () {
+                return (yield iden2)
+            }
+        })
+
+        const iden2     = new CalculableBoxGenUnbound({
+            name : 'iden2',
+            calculation : function* () {
+                return (yield iden1)
+            }
+        })
+
+        graph1.addAtoms([ iden1, iden2 ])
+
+        const branch        = graph1.branch({ onComputationCycle : 'throw' })
+
+        //----------------
+        try {
+            await branch.checkout(iden1).read()
+
+            t.fail('Should not reach this line')
+        } catch (e) {
+            t.like(e + '', /iden1.*iden2/s, 'Include identifier name in the cycle info')
+        }
+    })
 
     // t.it('Should show the detailed information about the cyclic computation, which involves edges from the past', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()

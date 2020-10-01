@@ -166,6 +166,9 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         clone.name      = this.name
         clone.$meta     = this.$meta
 
+        clone.lazy      = this.lazy
+        clone.sync      = this.sync
+
         // TODO the `$state` cache management for branches
         // might need additional tweaks or at least tests
         clone.$state            = this.$state
@@ -366,9 +369,9 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
     // TODO unify with `checkoutSelf`
     checkoutSelfFromActiveGraph (activeGraph : ChronoGraph) : this {
-        // if (this.graph && activeGraph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
-        //     return activeGraph.checkout(this)
-        // else
+        if (this.graph && activeGraph !== this.graph && activeGraph.identity === this.graph.identity && activeGraph.previous)
+            return activeGraph.checkout(this)
+        else
             return this
     }
 

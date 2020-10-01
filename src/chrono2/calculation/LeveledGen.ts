@@ -173,7 +173,7 @@ export const calculateAtomsQueueLevelGen = function* (
                 if (requestedLevel > atom.level) throw new Error("Atom can not read from the higher-level atom")
 
                 if (requestedAtom.state === AtomState.UpToDate) {
-                    iterationResult = atom.continueCalculation(requestedAtom.read())
+                    iterationResult = atom.continueCalculation(requestedAtom.read(graph))
                 } else {
                     requestedAtom.immutableForWrite().addOutgoing(atom.immutable, false)
 

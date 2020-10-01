@@ -30,7 +30,6 @@ import {
     RejectSymbol,
     runGeneratorAsyncWithEffect
 } from "../Effect.js"
-import { globalContext } from "../GlobalContext.js"
 import { Iteration } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
 
@@ -388,7 +387,7 @@ export class ChronoGraph extends Base implements Owner {
 
 
     onDataWrite<V> (writtenTo : Atom<V>) {
-        if (this.autoCommit) this.scheduleAutoCommit()
+        if (this.autoCommit && this.autoCommitTimeoutId === null) this.scheduleAutoCommit()
 
         if (!writtenTo.lazy) {
             this.addPossiblyStaleStrictAtomToTransaction(writtenTo)
@@ -634,6 +633,8 @@ export class ChronoGraph extends Base implements Owner {
         // increase the `nextCounter`
         // this.currentTransaction.immutable = this.currentIteration.createNext()
 
+        branch.staleInNextBatch = this.staleInNextBatch.map(atom => branch.checkout(atom))
+
         return branch
     }
 
@@ -667,6 +668,8 @@ export class ChronoGraph extends Base implements Owner {
         // if ((immutable as BoxImmutable).readRaw() !== undefined) clone.state = AtomState.UpToDate
 
         this.atomsById.set(clone.id, clone)
+
+        if (clone.state !== AtomState.UpToDate && !clone.lazy) this.addPossiblyStaleStrictAtomToTransaction(clone)
 
         return clone
     }

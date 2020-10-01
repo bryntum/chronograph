@@ -79,7 +79,11 @@ class ReferenceBucketQuark extends base {
     // }
 }){}
 
+const zeroBucketQuark = new ReferenceBucketQuark(undefined)
 
+zeroBucketQuark.freeze()
+
+ReferenceBucketQuark.zero = zeroBucketQuark
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketAtom extends Mixin(
@@ -99,7 +103,7 @@ export class ReferenceBucketAtom extends Mixin(
         buildDefaultImmutable () : ReferenceBucketQuark {
             const defaultBoxImmutable       = new ReferenceBucketQuark(this)
 
-            defaultBoxImmutable.previous    = BoxImmutable.zero as any
+            defaultBoxImmutable.previous    = zeroBucketQuark as any
 
             return defaultBoxImmutable
         }
