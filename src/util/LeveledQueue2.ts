@@ -90,7 +90,7 @@ export class LeveledQueue<T extends { level : number }> {
     }
 
 
-    * [Symbol.iterator] () : Iterable<T> {
+    * [Symbol.iterator] () : IterableIterator<T> {
         for (let i = 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
