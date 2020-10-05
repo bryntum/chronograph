@@ -133,6 +133,17 @@ export class CalculableBox<V = unknown> extends Box<V> {
     usedProposedOrPrevious      : boolean       = false
 
 
+    hasProposedValue () : boolean {
+        if (this.proposedValue !== undefined) return true
+
+        // `proposedValue` is persisted during the batch
+        if (this.immutable.batchRevision === this.graph.activeBatchRevision) return this.immutable.hasProposedValue()
+
+        return false
+    }
+
+
+    // TODO should accept `graph` argument, or, probably, `transaction`
     onReadingPast () : this {
         const activeAtom    = this.graph.activeAtom
         const self          = this.checkoutSelf()

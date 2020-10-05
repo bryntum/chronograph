@@ -10,6 +10,7 @@ import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
 import { CalculationModeGen, CalculationModeSync } from "../CalculationMode.js"
 import { ZeroBox } from "../data/Box.js"
+import { CalculableBox, CalculableBoxUnbound } from "../data/CalculableBox.js"
 import { Owner } from "../data/Immutable.js"
 import {
     Effect,
@@ -814,7 +815,11 @@ export class ChronoGraph extends Base implements Owner {
 
 
     [HasProposedValueSymbol] (effect : HasProposedValueEffect) : any {
-        return effect.atom.readProposed() !== undefined
+        const calculableBox = effect.atom as CalculableBoxUnbound
+
+        const self          = calculableBox.onReadingPast()
+
+        return self.hasProposedValue()
     }
 
 

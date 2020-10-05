@@ -71,12 +71,10 @@ export class ReferenceBucketQuark extends Mixin(
 class ReferenceBucketQuark extends base {
     mutations           : BucketMutation[]  = []
 
-    // previousValue       : Set<Entity>   = undefined
 
-
-    // hasProposedValueInner () : boolean {
-    //     return this.mutations.length > 0
-    // }
+    hasProposedValue () : boolean {
+        return this.mutations.length > 0
+    }
 }){}
 
 const zeroBucketQuark = new ReferenceBucketQuark(undefined)
@@ -98,6 +96,11 @@ export class ReferenceBucketAtom extends Mixin(
         field               : ReferenceBucketField          = undefined
 
         lazy                : boolean                       = false
+
+
+        hasProposedValue () : boolean {
+            return this.immutable.hasProposedValue()
+        }
 
 
         buildDefaultImmutable () : ReferenceBucketQuark {

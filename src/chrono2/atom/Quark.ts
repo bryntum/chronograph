@@ -47,6 +47,11 @@ export class Quark<V = unknown> extends Node implements Immutable {
     }
 
 
+    hasProposedValue () : boolean {
+        return this.proposedValue !== undefined
+    }
+
+
     read () : any {
         let box : this = this
 
