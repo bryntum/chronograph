@@ -425,13 +425,16 @@ export class CalculableBox<V = unknown> extends Box<V> {
         if (value === undefined) value = null
 
         if (this.proposedValue === undefined) {
+            // TODO should take `proposedArgs` into account somehow?
+            //  in general `proposedArgs` just messes things up,
+            // need to get rid of this concept
+            // ignore the write of the same value? what about `keepIfPossible` => `pin`
+            if (this.equality(this.immutable.read(), value)) return
+
             // still update the `proposedValue` to indicate the user input?
             this.proposedValue  = value
 
             if (args.length) this.proposedArgs = args
-
-            // ignore the write of the same value? what about `keepIfPossible` => `pin`
-            if (this.equality(this.immutable.read(), value)) return
         } else {
             if (this.equality(this.proposedValue, value)) return
         }
