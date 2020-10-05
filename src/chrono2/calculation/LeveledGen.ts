@@ -129,6 +129,10 @@ export const calculateAtomsQueueLevelGen = function* (
                     const dependencyAtom    = atom.graph.resolve(incoming[ i ].owner)
 
                     if (dependencyAtom.state !== AtomState.UpToDate) {
+                        if (dependencyAtom.state === AtomState.CheckingDeps) {
+                            dependencyAtom.state = AtomState.Stale
+                        }
+
                         // TODO should take level into account
                         level.push(dependencyAtom)
                         modifyStack && stack.size++
