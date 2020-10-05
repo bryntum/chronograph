@@ -92,6 +92,11 @@ export class ReferenceAtom extends Mixin(
         }
 
 
+        shouldCalculate () : boolean {
+            return true
+        }
+
+
         get context () : unknown {
             return this
         }
