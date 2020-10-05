@@ -695,6 +695,9 @@ export class ChronoGraph extends Base implements Owner {
 
         if (this.autoCommit && this.autoCommitTimeoutId === null) this.scheduleAutoCommit()
 
+        // TODO should check for frozen status?
+        atom.immutable.isTombstone = false
+
         return atom
     }
 

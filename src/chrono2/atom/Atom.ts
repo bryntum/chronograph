@@ -320,7 +320,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
         // TODO should be: immutable.frozen && "not a zero quark"
         // OR, remove the concept of zero quark, then: `immutable && immutable.frozen`
-        if (immutable.frozen && immutable.previous) {
+        if (immutable.frozen && immutable.previous && this.graph) {
             if (this.$state !== undefined) {
                 if (this.isNextOf(immutable)) {
                     this.$state             = state

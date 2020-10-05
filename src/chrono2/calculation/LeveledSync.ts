@@ -3,7 +3,6 @@ import { getUniqable } from "../../util/Uniqable.js"
 import { Atom, AtomState } from "../atom/Atom.js"
 import { CalculationModeGen } from "../CalculationMode.js"
 import { Effect, EffectHandler } from "../Effect.js"
-import { globalContext } from "../GlobalContext.js"
 import { Transaction } from "../graph/Transaction.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -113,7 +112,7 @@ export const calculateAtomsQueueLevelSync = function (
             continue
         }
 
-        if (state === AtomState.UpToDate || atom.immutable.isTombstone) {
+        if (state === AtomState.UpToDate || atom.immutable.isTombstone || !atom.graph) {
             level.pop()
             modifyStack && stack.size--
             continue
@@ -172,7 +171,7 @@ export const calculateAtomsQueueLevelSync = function (
                 if (requestedLevel > atom.level) throw new Error("Atom can not read from the higher-level atom")
 
                 if (requestedAtom.state === AtomState.UpToDate) {
-                    iterationResult = atom.continueCalculation(requestedAtom.read())
+                    iterationResult = atom.continueCalculation(requestedAtom.read(graph))
                 } else {
                     requestedAtom.immutableForWrite().addOutgoing(atom.immutable, false)
 
