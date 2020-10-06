@@ -204,7 +204,11 @@ export const calculateAtomsQueueLevelSync = function (
                 }
             }
             else if ((value instanceof Effect) && value.internal) {
-                iterationResult             = atom.continueCalculation(onEffect(value))
+                const resolution            = onEffect(value)
+
+                if (transaction.rejectedWith) break
+
+                iterationResult             = atom.continueCalculation(resolution)
             }
             else {
                 const startedYieldAt        = atom.iterationNumber

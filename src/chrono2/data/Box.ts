@@ -68,6 +68,10 @@ export class Box<V = unknown> extends Atom<V> {
     }
 
 
+    resetCalculation (keepProposed : boolean) {
+    }
+
+
     readConsistentOrProposedOrPrevious () : V {
         return this.immutable.read()
     }

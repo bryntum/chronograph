@@ -486,7 +486,8 @@ export class ChronoGraph extends Base implements Owner {
     async doCommitAsync (arg? : CommitArguments) : Promise<CommitResult> {
         this.beforeCommit()
 
-        const transaction   = this.currentTransaction
+        // start the new transaction if needed
+        const transaction   = this.immutableForWrite()
         const stack         = this.stack
 
         this.enterBatch()
@@ -521,7 +522,7 @@ export class ChronoGraph extends Base implements Owner {
     commit (arg? : CommitArguments) : CommitResult {
         this.beforeCommit()
 
-        const transaction   = this.currentTransaction
+        const transaction   = this.immutableForWrite()
         const stack         = this.stack
 
         this.enterBatch()
@@ -572,7 +573,12 @@ export class ChronoGraph extends Base implements Owner {
 
         this.immutable  = this.immutable.previous
 
-        // TODO should also "reset" calculations
+        // TODO should also reset the calculations of the atoms
+        // in the rejected iteration
+        for (const atom of this.stack) {
+            atom.resetCalculation(false)
+        }
+
         this.stack.clear()
     }
 
