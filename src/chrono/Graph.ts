@@ -149,7 +149,7 @@ export class ChronoGraph extends Base {
 
     onWriteDuringCommit     : 'throw' | 'warn' | 'ignore' = 'throw'
 
-    onComputationCycle      : 'throw' | 'warn' | 'reject' = 'throw'
+    onComputationCycle      : 'throw' | 'warn' | 'reject' | 'ignore' = 'throw'
 
     transactionClass        : typeof Transaction    = Transaction
 

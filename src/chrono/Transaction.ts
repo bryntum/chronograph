@@ -812,6 +812,11 @@ export class Transaction extends Base {
                 // cycle - the requested quark has started calculation (means it was encountered in the calculation loop before)
                 // but the calculation did not complete yet (even that requested quark is calculated before the current)
 
+                // if we ignore the cycle we just continue the calculation with the best possible value
+                if (this.graph.onComputationCycle === 'ignore') {
+                    return activeEntry.continueCalculation(requestedEntry.proposedValue !== undefined ? requestedEntry.proposedValue : requestedEntry.value)
+                }
+
                 let cycle : ComputationCycle
 
                 const walkContext = TransactionCycleDetectionWalkContext.new({
