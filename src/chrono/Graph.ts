@@ -29,9 +29,10 @@ import {
     WriteSymbol
 } from "./Effect.js"
 import { CalculatedValueGen, CalculatedValueGenC, CalculatedValueSyncC, Identifier, Variable, VariableC } from "./Identifier.js"
-import { TombStone } from "./Quark.js"
+import { TombStone, Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { EdgeTypePast, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
+import { ComputationCycle } from "./TransactionCycleDetectionWalkContext.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -543,6 +544,27 @@ export class ChronoGraph extends Base {
     async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
+    onComputationCycleHandler(activeEntry : Quark, requestedEntry : Quark, cycle : ComputationCycle) {
+        const exception = new Error("Computation cycle:\n" + cycle)
+
+        //@ts-ignore
+        exception.cycle = cycle
+
+        switch (this.onComputationCycle) {
+            case 'ignore' :
+                console.log(exception.message)
+                // if we ignore the cycle we just continue the calculation with the best possible value
+                return activeEntry.continueCalculation(requestedEntry.proposedValue !== undefined ? requestedEntry.proposedValue : requestedEntry.value)
+            case 'throw' :
+                throw exception
+            case 'reject' :
+                this.reject(exception)
+                break
+            case 'warn' :
+                warn(exception)
+                break
+        }
+    }
 
     scheduleAutoCommit () {
         if (this.autoCommitTimeoutId === null) {

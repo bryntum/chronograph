@@ -9,22 +9,35 @@ export class ComputationCycle extends Base {
     cycle           : Identifier[]
 
     toString () : string {
+        const cycleIdentifiers   = []
+        const cycleEvents        = []
 
-        return this.cycle.map(identifier => {
-            return identifier.name
+        this.cycle.forEach(({ name, context }) => {
+            cycleIdentifiers.push(name)
 
-            // //@ts-ignore
-            // const sourcePoint : SourceLinePoint      = identifier.SOURCE_POINT
-            //
-            // if (!sourcePoint) return identifier.name
-            //
-            // const firstEntry       = sourcePoint.stackEntries[ 0 ]
-            //
-            // if (firstEntry) {
-            //     return `${identifier}\n    yielded at ${firstEntry.sourceFile}:${firstEntry.sourceLine}:${firstEntry.sourceCharPos || ''}`
-            // } else
-            //     return identifier.name
-        }).join('\n')
+            if (cycleEvents[cycleEvents.length - 1] !== context) cycleEvents.push(context)
+        })
+
+        return 'events: \n' +
+            cycleEvents.map(event => '#' + event.id).join(' => ') +
+            '\n\nidentifiers: \n' +
+            cycleIdentifiers.join('\n')
+
+        // return this.cycle.map(identifier => {
+        //     return identifier.name
+
+        //     // //@ts-ignore
+        //     // const sourcePoint : SourceLinePoint      = identifier.SOURCE_POINT
+        //     //
+        //     // if (!sourcePoint) return identifier.name
+        //     //
+        //     // const firstEntry       = sourcePoint.stackEntries[ 0 ]
+        //     //
+        //     // if (firstEntry) {
+        //     //     return `${identifier}\n    yielded at ${firstEntry.sourceFile}:${firstEntry.sourceLine}:${firstEntry.sourceCharPos || ''}`
+        //     // } else
+        //     //     return identifier.name
+        // }).join(' => \n')
     }
 }
 
