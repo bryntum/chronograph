@@ -186,8 +186,8 @@ export const calculateAtomsQueueLevelSync = function (
                         requestedAtom.state = AtomState.Stale
                     }
 
-                    if (requestedAtom.isCalculationStarted() && !requestedAtom.cyclicReadIsBlockedOnPromise()) {
-                        atom.onCyclicReadDetected()
+                    if (requestedAtom.isCalculationStarted() && !requestedAtom.cyclicReadIsBlockedOnPromiseOrCheckDeps()) {
+                        requestedAtom.onCyclicReadDetected()
 
                         if (transaction && transaction.rejectedWith) break
                     } else {

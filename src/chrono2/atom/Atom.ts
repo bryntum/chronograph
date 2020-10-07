@@ -318,6 +318,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     set state (state : AtomState) {
         const immutable             = this.immutable
 
+        // TODO (!!)
+        // need a proper mechanism of ignoring the state shift from `Calculating` to `Stale`
+        // if its a part of the same batch, caused by the calculation re-ordering
+        // if (this.state == AtomState.Calculating && state === AtomState.Stale) return
+
         // TODO should be: immutable.frozen && "not a zero quark"
         // OR, remove the concept of zero quark, then: `immutable && immutable.frozen`
         if (immutable.frozen && immutable.previous && this.graph) {
@@ -569,7 +574,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
     // go deep and detect if there's a cyclic read situation indeed,
     // or it is just blocked on awaiting the promise
-    cyclicReadIsBlockedOnPromise () : boolean {
+    cyclicReadIsBlockedOnPromiseOrCheckDeps () : boolean {
         const uniqable              = getUniqable()
 
         let atom                    = this
@@ -583,7 +588,15 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
             const iterationValue    = atom.iterationResult.value
 
+            // encountered an atom, blocked on promise - possibly not a cycle, need to await the promise resolution
             if (iterationValue instanceof Promise) return true
+
+            // encountered an atom, in `CheckingDeps` or `Stale` state - possibly not a cycle, need to start calculation
+            // of that atom
+            if ((iterationValue instanceof Atom) && (iterationValue.state === AtomState.CheckingDeps || iterationValue.state === AtomState.Stale)) {
+                iterationValue.state = AtomState.Stale
+                return true
+            }
 
             atom                    = iterationValue
         }
@@ -593,7 +606,9 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     getWalkDepthContext (cycleRef : { cycle : ComputationCycle }) : WalkContext<Atom> {
         return WalkDepthC({
             collectNext (node : Atom, toVisit : WalkStep<Atom>[], visitInfo : VisitInfo) {
-                node.immutable.forEachOutgoing(false, (quark, resolvedAtom) => toVisit.push({ node : resolvedAtom, from : node, label : null }))
+                const incoming = node.immutable.getIncomingDeep()
+
+                incoming && incoming.forEach((quark) => toVisit.push({ node : quark.owner, from : node, label : null }))
             },
             onCycle (node : Atom, stack : WalkStep<Atom>[]) : OnCycleAction {
                 cycleRef.cycle = ComputationCycle.new({ cycle : cycleInfo(stack) })

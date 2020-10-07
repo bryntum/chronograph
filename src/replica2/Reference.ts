@@ -75,6 +75,7 @@ export class ReferenceAtom extends Mixin(
         field           : ReferenceField                = undefined
 
         lazy            : boolean                       = false
+        sync            : boolean                       = true
 
 
         hasBucket () : boolean {
