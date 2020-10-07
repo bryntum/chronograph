@@ -111,6 +111,11 @@ export class Quark<V = unknown> extends Node implements Immutable {
     }
 
 
+    isShadow () : boolean {
+        return this.value === undefined
+    }
+
+
     $incoming           : Quark[]
     $outgoing           : Quark[]
     $outgoingPast       : Quark[]

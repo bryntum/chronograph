@@ -130,6 +130,11 @@ export class Iteration extends Immutable {
     }
 
 
+    get transaction () : Transaction {
+        return this.owner
+    }
+
+
     // createNext (owner? : Owner) : this {
     //     const next      = super.createNext(owner)
     //
@@ -244,6 +249,8 @@ export class Iteration extends Immutable {
 
 
     freeze () {
+        if (this.frozen) return
+
         this.storage.freeze()
 
         super.freeze()

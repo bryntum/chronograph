@@ -253,9 +253,16 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    // TODO
+    // TODO review
     clear () {
+        this.unScheduleAutoCommit()
 
+        this.stack.clear()
+        this.$immutable         = undefined
+
+        this.nextTransaction    = []
+        this.previous           = undefined
+        this.atomsById          = new Map()
     }
 
 
@@ -365,27 +372,31 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
-    // TODO decide on the name - `current/active`
+    // TODO remove
     get activeTransaction () : Transaction {
         return this.immutable
     }
 
 
+    // TODO rename to just `transaction`
     get currentTransaction () : Transaction {
         return this.immutable
     }
 
 
+    // TODO rename to just `iteration`
     get currentIteration () : Iteration {
         return this.immutable.immutable
     }
 
 
-    finalizeCommit () {
+    // TODO rename to `finalizeIteration`??
+    finalizeCommit (iteration : Iteration) {
     }
 
 
-    async finalizeCommitAsync () {
+    // TODO rename to `finalizeIterationAsync`??
+    async finalizeCommitAsync (iteration : Iteration) {
     }
 
 
@@ -500,13 +511,17 @@ export class ChronoGraph extends Base implements Owner {
                 null
             )
 
-            this.finalizeCommit()
+            const iteration     = transaction.immutable
+
+            iteration.freeze()
+
+            this.finalizeCommit(iteration)
 
             // the "finalizeCommit" & "finalizeCommitAsync" may schedule a new auto-commit
             // so unscheduling again here
             this.unScheduleAutoCommit()
 
-            await this.finalizeCommitAsync()
+            await this.finalizeCommitAsync(iteration)
 
             this.unScheduleAutoCommit()
         }
@@ -530,7 +545,11 @@ export class ChronoGraph extends Base implements Owner {
         while (stack.size && !transaction.rejectedWith) {
             calculateAtomsQueueSync(this.effectHandlerSync, stack, transaction, null, -1)
 
-            this.finalizeCommit()
+            const iteration     = transaction.immutable
+
+            iteration.freeze()
+
+            this.finalizeCommit(iteration)
         }
 
         this.leaveBatch()

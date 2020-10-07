@@ -106,6 +106,11 @@ export class Transaction extends Owner implements Immutable {
     }
 
 
+    get iteration () : Iteration {
+        return this.immutable
+    }
+
+
     startCommit (stack : LeveledQueue<Atom>) {
         this.propagationStartDate                   = Date.now()
         this.plannedTotalIdentifiersToCalculate     = stack.size
