@@ -157,7 +157,7 @@ export class ChronoGraph extends Base implements Owner {
 
     enableProgressNotifications     : boolean       = false
 
-    onComputationCycle      : 'throw' | 'warn' | 'reject' = 'throw'
+    onComputationCycle      : 'throw' | 'warn' | 'reject' | 'ignore' = 'throw'
 
 
     initialize<T extends ChronoGraph> (props? : Partial<T>) {
