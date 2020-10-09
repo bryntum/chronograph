@@ -263,6 +263,8 @@ export class Quark<V = unknown> extends Node implements Immutable {
         const collapsedOutgoing     = []
         const collapsedOutgoingRev  = []
 
+        let collapsedOutgoingPast       = undefined
+        let collapsedOutgoingPastRev    = undefined
 
         let valueConsumed : boolean         = false
         let incomingsConsumed : boolean     = false
@@ -280,8 +282,8 @@ export class Quark<V = unknown> extends Node implements Immutable {
                 incomingsConsumed   = true
 
                 // TODO make a config option? see a comment for `this.$outgoing` below
-                this.$incoming      = quark.$incoming
-                // this.$incoming      = quark.$incoming.slice()
+                // this.$incoming      = quark.$incoming
+                this.$incoming      = quark.$incoming.slice()
                 // this.$incoming      = copyArray(quark.$incoming)
             }
 
@@ -289,8 +291,8 @@ export class Quark<V = unknown> extends Node implements Immutable {
                 incomingsPastConsumed   = true
 
                 // TODO make a config option? see a comment for `this.$outgoing` below
-                this.$incomingPast      = quark.$incomingPast
-                // this.$incoming      = quark.$incoming.slice()
+                // this.$incomingPast      = quark.$incomingPast
+                this.$incomingPast      = quark.$incomingPast.slice()
                 // this.$incoming      = copyArray(quark.$incoming)
             }
 
@@ -323,25 +325,65 @@ export class Quark<V = unknown> extends Node implements Immutable {
                         }
                     }
                 }
+            }
 
-                if (quark.value !== undefined && quark.revision === quark.valueRevision) {
-                    outgoingsConsumed   = true
+            if (!outgoingsPastConsumed) {
+                const outgoingPast          = quark.$outgoingPast
+                const outgoingPastRev       = quark.$outgoingPastRev
 
-                    // TODO make a config option?
-                    // the trick with `[ ... ] / copyArray` creates a new array with the exact size for its elements
-                    // it seems, normally, arrays allocates a little more memory, avoid allocation on every "push"
-                    // the difference might be, like: for array of 20 elements, exact size is 80 bytes,
-                    // extra size - 180 bytes! for many small arrays (exactly the chrono case) total difference might be
-                    // significant: for 100k boxes with 4 backward deps each - from 69.7MB to 54.1MB
-                    // there is a small performance penalty: from 435ms to 455ms (`benchmarks/chrono2/graphful/commit_gen`)
-                    // it seems Array.from() is slower than manual `copyArray`... because of iterators protocol?
-                    this.$outgoing      = collapsedOutgoing
-                    this.$outgoingRev   = collapsedOutgoingRev
-                    // this.$outgoing      = collapsedOutgoing.slice()
-                    // this.$outgoingRev   = collapsedOutgoingRev.slice()
-                    // this.$outgoing      = copyArray(collapsedOutgoing)
-                    // this.$outgoingRev   = copyArray(collapsedOutgoingRev)
+                if (outgoingPast) {
+                    for (let i = outgoingPast.length - 1; i >= 0; i--) {
+                        const outgoingPastRevision  = outgoingPastRev[ i ]
+                        const outgoingPastQuark     = outgoingPast[ i ] as Quark
+
+                        const identity          = outgoingPastQuark.owner.identity
+
+                        // should use `uniqable2` here (or may be even `uniqable3`) because `uniqable`
+                        // at this point is already being used by `forEveryFirstQuarkTill` in the `graph.sweep()`
+                        if (identity.uniqable3 !== uniqable) {
+                            identity.uniqable3   = uniqable
+
+                            // TODO requires extra attention
+                            // remove this if the "shallow state" optimization for Atom will be removed
+                            // `identity.uniqableBox === undefined` means that outgoingPast edge is actually going to the quark in the "shredding"
+                            // iteration - thats why it is not set up in the `graph.sweep()`
+                            // we do want to keep such edges, reproducible in `graph_garbage_collection.t.js`
+                            if (!identity.uniqableBox || outgoingPastRevision === (identity.uniqableBox as Quark).revision) {
+                                identity.uniqableBox    = undefined
+
+                                if (collapsedOutgoingPast === undefined) { collapsedOutgoingPast = []; collapsedOutgoingPastRev = [] }
+
+                                collapsedOutgoingPast.push(outgoingPastQuark)
+                                collapsedOutgoingPastRev.push(outgoingPastRevision)
+                            }
+                        }
+                    }
                 }
+            }
+
+            if (quark.value !== undefined && quark.revision === quark.valueRevision) {
+                outgoingsConsumed       = true
+                outgoingsPastConsumed   = true
+
+                // TODO make a config option?
+                // the trick with `slice / [ ... ] / copyArray` creates a new array with the exact size for its elements
+                // it seems, normally, arrays allocates a little more memory, avoiding allocation on every "push"
+                // the difference might be, like: for array of 20 elements, exact size is 80 bytes,
+                // extra size - 180 bytes! for many small arrays (exactly the chrono case) total difference might be
+                // significant: for 100k boxes with 4 backward deps each - from 69.7MB to 54.1MB
+                // there is a small performance penalty: from 435ms to 455ms (`benchmarks/chrono2/graphful/commit_gen`)
+                // it seems Array.from() is slower than manual `copyArray`... because of iterators protocol?
+                // this.$outgoing      = collapsedOutgoing
+                // this.$outgoingRev   = collapsedOutgoingRev
+                this.$outgoing      = collapsedOutgoing.slice()
+                this.$outgoingRev   = collapsedOutgoingRev.slice()
+
+                if (collapsedOutgoingPast) {
+                    this.$outgoingPast      = collapsedOutgoingPast.slice()
+                    this.$outgoingPastRev   = collapsedOutgoingPastRev.slice()
+                }
+                // this.$outgoing      = copyArray(collapsedOutgoing)
+                // this.$outgoingRev   = copyArray(collapsedOutgoingRev)
             }
 
             // consume the top-most value, even if its the `sameValue`
