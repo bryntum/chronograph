@@ -82,6 +82,11 @@ export class IterationStorage {
             }
         }
     }
+
+
+    clear () {
+        this.quarks     = []
+    }
 }
 
 
@@ -263,6 +268,8 @@ export class Iteration extends Immutable {
 
 
     destroy () {
+        this.storage.clear()
+
         this.storage    = undefined
         this.previous   = undefined
     }
@@ -340,6 +347,11 @@ export class IterationStorageShredding extends IterationStorage {
 
     addQuark (quark : Quark) {
         this.quarksMap.set(quark.owner.id, quark)
+    }
+
+
+    clear () {
+        this.quarksMap      = new Map()
     }
 }
 

@@ -258,6 +258,11 @@ export class ChronoGraph extends Base implements Owner {
         this.unScheduleAutoCommit()
 
         this.stack.clear()
+
+        if (this.$immutable) {
+            this.$immutable.iteration.destroy()
+        }
+
         this.$immutable         = undefined
 
         this.nextTransaction    = []
