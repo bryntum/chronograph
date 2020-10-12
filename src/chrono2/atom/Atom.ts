@@ -60,6 +60,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
     graph               : ChronoGraph   = undefined
 
+    context             : any           = undefined
+
     //region meta
     name                : string        = undefined
 
