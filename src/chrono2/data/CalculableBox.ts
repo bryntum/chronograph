@@ -5,9 +5,8 @@ import { Quark } from "../atom/Quark.js"
 import { calculateLowerStackLevelsSync } from "../calculation/LeveledSync.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
-import { globalContext } from "../GlobalContext.js"
-import { ChronoGraph } from "../graph/Graph.js"
-import { Box } from "./Box.js"
+import { ChronoGraph, globalGraph } from "../graph/Graph.js"
+import { BoxUnbound } from "./Box.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -16,7 +15,7 @@ export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStar
 const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> =
     { done : false, value : SynchronousCalculationStarted }
 
-export class CalculableBox<V = unknown> extends Box<V> {
+export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
     level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnSelfKind
 
     $calculationEtalon  : CalculationFunction<V, CalculationModeSync>        = undefined
@@ -30,7 +29,7 @@ export class CalculableBox<V = unknown> extends Box<V> {
         this.$calculationEtalon = value
     }
 
-    constructor (config? : Partial<CalculableBox<V>>) {
+    constructor (config? : Partial<CalculableBoxUnbound<V>>) {
         super()
 
         if (config) {
@@ -39,9 +38,9 @@ export class CalculableBox<V = unknown> extends Box<V> {
             this.name           = config.name
             this.context        = config.context !== undefined ? config.context : this
 
-            this.calculation    = config.calculation
-            this.calculationEtalon = config.calculationEtalon
-            this.equality       = config.equality
+            this.$calculation       = config.calculation
+            this.$calculationEtalon = config.calculationEtalon
+            this.$equality          = config.equality
 
             if (config.lazy !== undefined) this.lazy = config.lazy
 
@@ -474,8 +473,8 @@ export class CalculableBox<V = unknown> extends Box<V> {
 }
 
 
-export class CalculableBoxUnbound<V = unknown> extends CalculableBox<V> {
+export class CalculableBox<V = unknown> extends CalculableBoxUnbound<V> {
     get boundGraph () : ChronoGraph {
-        return undefined
+        return globalGraph
     }
 }

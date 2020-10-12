@@ -4,12 +4,11 @@ import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
 import { CalculationModeGen } from "../CalculationMode.js"
 import { EffectHandler, runGeneratorAsyncWithEffect } from "../Effect.js"
-import { globalContext } from "../GlobalContext.js"
-import { ChronoGraph } from "../graph/Graph.js"
-import { CalculableBox } from "./CalculableBox.js"
+import { ChronoGraph, globalGraph } from "../graph/Graph.js"
+import { CalculableBoxUnbound } from "./CalculableBox.js"
 
 //---------------------------------------------------------------------------------------------------------------------
-export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
+export class CalculableBoxGenUnbound<V = unknown> extends CalculableBoxUnbound<V> {
 
     iterator            : CalculationIterator<V>    = undefined
 
@@ -108,8 +107,8 @@ export class CalculableBoxGen<V = unknown> extends CalculableBox<V> {
 }
 
 
-export class CalculableBoxGenUnbound<V = unknown> extends CalculableBoxGen<V> {
+export class CalculableBoxGen<V = unknown> extends CalculableBoxGenUnbound<V> {
     get boundGraph () : ChronoGraph {
-        return undefined
+        return globalGraph
     }
 }

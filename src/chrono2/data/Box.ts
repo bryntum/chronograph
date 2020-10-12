@@ -1,8 +1,7 @@
-import { Atom, AtomState} from "../atom/Atom.js"
+import { Atom, AtomState } from "../atom/Atom.js"
 import { DefaultMetaBox, Meta } from "../atom/Meta.js"
 import { getNextRevision } from "../atom/Node.js"
 import { Quark } from "../atom/Quark.js"
-import { globalContext } from "../GlobalContext.js"
 import { ChronoGraph, globalGraph } from "../graph/Graph.js"
 
 
@@ -31,7 +30,7 @@ BoxImmutable.zero.freeze()
 
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
-export class Box<V = unknown> extends Atom<V> {
+export class BoxUnbound<V = unknown> extends Atom<V> {
 
     constructor (value? : V, name? : string) {
         super()
@@ -39,11 +38,6 @@ export class Box<V = unknown> extends Atom<V> {
         this.write(value)
 
         this.name   = name
-    }
-
-
-    get boundGraph () : ChronoGraph {
-        return globalGraph
     }
 
 
@@ -135,9 +129,9 @@ export class Box<V = unknown> extends Atom<V> {
 }
 
 
-export class BoxUnbound<V = unknown> extends Box<V> {
+export class Box<V = unknown> extends BoxUnbound<V> {
     get boundGraph () : ChronoGraph {
-        return undefined
+        return globalGraph
     }
 }
 
