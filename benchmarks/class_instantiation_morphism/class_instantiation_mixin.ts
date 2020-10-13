@@ -1,4 +1,5 @@
-import { Benchmark, BenchmarkC } from "../../src/benchmark/Benchmark.js"
+import { BenchmarkC } from "../../src/benchmark/Benchmark.js"
+import { AnyConstructor, Mixin } from "../../src/class/Mixin.js"
 
 class T0 {
     prap00      : number = 0
@@ -35,7 +36,8 @@ class T0 {
     prop09      : number = 0
 }
 
-class T1 extends T0 {
+const AddProp1 = <Base extends AnyConstructor<T0>>(base : Base) =>
+class AddProp1 extends base {
     prop10      : number = 0
     prop11      : string = 'abc'
     prop12      : object = undefined
@@ -47,8 +49,10 @@ class T1 extends T0 {
     prop18      : boolean = false
     prop19      : number = 0
 }
+export type AddProp1 = Mixin<typeof AddProp1>
 
-class T2 extends T1 {
+const AddProp2 = <Base extends AnyConstructor<T0>>(base : Base) =>
+class AddProp2 extends base {
     prop20      : number = 0
     prop21      : string = 'abc'
     prop22      : object = undefined
@@ -60,85 +64,38 @@ class T2 extends T1 {
     prop28      : string = 'abc'
     prop29      : string = 'abc'
 }
+export type AddProp2 = Mixin<typeof AddProp2>
 
-class T3 extends T0 {
-    prop25      : boolean = false
-    prop26      : string = 'abc'
-    prop27      : object = undefined
-    prop28      : boolean = false
-    prop29      : number = 0
-
-    prop20      : string = 'abc'
-    prop21      : object = undefined
-    prop22      : boolean = false
-    prop23      : string = 'abc'
-    prop24      : object = undefined
+const AddProp3 = <Base extends AnyConstructor<T0>>(base : Base) =>
+class AddProp3 extends base {
+    prop30      : number = 0
+    prop31      : string = 'abc'
+    prop32      : object = undefined
+    prop33      : boolean = false
+    prop34      : string = 'abc'
+    prop35      : object = undefined
+    prop36      : boolean = false
+    prop37      : number = 0
+    prop38      : string = 'abc'
+    prop39      : string = 'abc'
 }
+export type AddProp3 = Mixin<typeof AddProp3>
 
-class T4 extends T3 {
-    prop15      : string = 'abc'
-    prop16      : object = undefined
-    prop17      : boolean = false
-    prop18      : number = 0
-    prop19      : string = 'abc'
 
-    prop10      : string = 'abc'
-    prop11      : object = undefined
-    prop12      : string = 'abc'
-    prop13      : object = undefined
-    prop14      : boolean = false
-}
+class T1 extends AddProp1(AddProp2(AddProp3(T0))) {}
+class T2 extends AddProp1(AddProp3(AddProp2(T0))) {}
 
-class T5 extends T0 {
-    prop13      : string = 'abc'
-    prop14      : object = undefined
-    prop15      : boolean = false
-    prop16      : string = 'abc'
+class T3 extends AddProp2(AddProp1(AddProp3(T0))) {}
+class T4 extends AddProp2(AddProp3(AddProp1(T0))) {}
 
-    prop10      : number = 0
-    prop11      : number = 0
-    prop12      : string = 'abc'
+class T5 extends AddProp3(AddProp1(AddProp2(T0))) {}
+class T6 extends AddProp3(AddProp2(AddProp1(T0))) {}
 
-    prop17      : number = 0
-    prop18      : number = 0
-    prop19      : string = 'abc'
-
-    prop24      : number = 0
-    prop25      : number = 0
-
-    prop22      : number = 0
-    prop27      : object = undefined
-
-    prop23      : string = 'abc'
-    prop26      : number = 0
-}
-
-class T6 extends T5 {
-    prop28      : number = 0
-    prop29      : object = undefined
-
-    prop20      : number = 0
-    prop21      : string = 'abc'
-
-}
-
-class T7 extends T6 {
-    prop70      : number = 0
-    prop71      : number = 0
-    prop72      : number = 0
-    prop73      : number = 0
-    prop74      : number = 0
-    prop75      : number = 0
-    prop76      : number = 0
-    prop77      : number = 0
-    prop78      : number = 0
-    prop79      : number = 0
-}
 
 const size = 50000
 
 const instantiateMany = BenchmarkC<{ instances : any[] }>({
-    // profile     : true,
+    profile     : true,
 
     name        : 'Instantiate many classes',
 
@@ -157,7 +114,7 @@ const instantiateMany = BenchmarkC<{ instances : any[] }>({
             instances.push(new T4())
             instances.push(new T5())
             instances.push(new T6())
-            instances.push(new T7())
+            // instances.push(new T7())
 
         } while (instances.length < size)
     }
