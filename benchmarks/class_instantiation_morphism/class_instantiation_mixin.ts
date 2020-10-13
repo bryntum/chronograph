@@ -3,35 +3,35 @@ import { AnyConstructor, Mixin } from "../../src/class/Mixin.js"
 
 class T0 {
     prap00      : number = 0
-    prap01      : number = 0
-    prap02      : number = 0
+    prap01      : boolean = false
+    prap02      : object = null
     prap03      : number = 0
-    prap04      : number = 0
+    prap04      : string = 'z'
     prap05      : number = 0
     prap06      : number = 0
-    prap07      : number = 0
+    prap07      : object = undefined
     prap08      : number = 0
     prap09      : number = 0
 
     prip00      : number = 0
-    prip01      : number = 0
-    prip02      : number = 0
+    prip01      : boolean = false
+    prip02      : object = null
     prip03      : number = 0
-    prip04      : number = 0
+    prip04      : string = 'z'
     prip05      : number = 0
     prip06      : number = 0
-    prip07      : number = 0
+    prip07      : object = undefined
     prip08      : number = 0
     prip09      : number = 0
 
     prop00      : number = 0
-    prop01      : number = 0
-    prop02      : number = 0
+    prop01      : boolean = false
+    prop02      : object = null
     prop03      : number = 0
-    prop04      : number = 0
+    prop04      : string = 'z'
     prop05      : number = 0
     prop06      : number = 0
-    prop07      : number = 0
+    prop07      : object = undefined
     prop08      : number = 0
     prop09      : number = 0
 }
@@ -108,12 +108,12 @@ const instantiateMany = BenchmarkC<{ instances : any[] }>({
 
         do {
             instances.push(new T0())
-            instances.push(new T1())
-            instances.push(new T2())
-            instances.push(new T3())
-            instances.push(new T4())
-            instances.push(new T5())
-            instances.push(new T6())
+            // instances.push(new T1())
+            // instances.push(new T2())
+            // instances.push(new T3())
+            // instances.push(new T4())
+            // instances.push(new T5())
+            // instances.push(new T6())
             // instances.push(new T7())
 
         } while (instances.length < size)
