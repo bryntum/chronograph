@@ -590,30 +590,4 @@ StartTest(t => {
             ])
         )
     })
-
-
-    t.iit('Should keep partial data - end', t => {
-        input.addProposedValueFlag(StartDateVar)
-        input.addProposedValueFlag(EndDateVar)
-        input.addProposedValueFlag(DurationVar)
-        input.addProposedValueFlag(EffortVar)
-
-        input.addPreviousValueFlag(UnitsVar)
-
-        input.addKeepIfPossibleFlag(EffortVar)
-
-        const resolution    = input.resolution
-
-        t.isDeeply(
-            resolution,
-            new Map([
-                [ StartDateVar, CalculateProposed ],
-                [ EndDateVar, endDateByEffortFormula.formulaId ],
-                [ DurationVar, durationFormula.formulaId ],
-                [ EffortVar, CalculateProposed ],
-                [ UnitsVar, CalculateProposed ]
-            ])
-        )
-    })
-
 })
