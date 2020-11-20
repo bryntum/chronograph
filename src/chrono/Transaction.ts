@@ -106,7 +106,7 @@ export class Transaction extends Base {
         // since `read` is the most used effect anyway, we bind `onEffectSync` to `read` and
         // instead inside of `read` delegate to `yieldSync` for non-identifiers
         this.onEffectSync   = /*this.onEffectAsync =*/ this.read.bind(this)
-        this.onEffectAsync  = this.readAsync.bind(this)
+        this.onEffectAsync  = this.read.bind(this)
     }
 
 
