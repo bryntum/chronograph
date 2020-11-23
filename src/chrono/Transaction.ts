@@ -169,7 +169,7 @@ export class Transaction extends Base {
 
 
     // this seems to be an optimistic version
-    async readAsync<T> (identifier : Identifier<T>) : Promise<T> {
+    readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldAsync(identifier as Effect)
 
@@ -199,16 +199,18 @@ export class Transaction extends Base {
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
-        //----------------------
-        while (this.stackGen.lowestLevel < identifier.level) {
-            await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, this.stackGen.takeLowestLevel() ], this)
-        }
-
-        this.markSelfDependent()
-
         return this.ongoing = entry.promise = this.ongoing.then(() => {
-            // entry might be already calculated (in the `ongoing` promise), so no need to calculate it
-            if (entry.getValue() === undefined) return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+            return (async () => {
+                //----------------------
+                while (this.stackGen.lowestLevel < identifier.level) {
+                    await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, this.stackGen.takeLowestLevel() ], this)
+                }
+
+                this.markSelfDependent()
+
+                // entry might be already calculated (in the `ongoing` promise), so no need to calculate it
+                if (entry.getValue() === undefined) return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitionsStackGen, [ this.onEffectAsync, [ entry ] ], this)
+            })()
         }).then(() => {
             if (this.rejectedWith) throw new Error(`Transaction rejected: ${String(this.rejectedWith.reason)}`)
 
@@ -413,7 +415,7 @@ export class Transaction extends Base {
 
         const value         = previousEntry.getValue()
 
-        return value !== TombStone ? (value !== undefined ? value : this.read(identifier)) : undefined
+        return value !== TombStone ? value : undefined
     }
 
 
