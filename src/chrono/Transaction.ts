@@ -415,7 +415,7 @@ export class Transaction extends Base {
 
         const value         = previousEntry.getValue()
 
-        return value !== TombStone ? value : undefined
+        return value !== TombStone ? (value === undefined && identifier.lazy ? this.read(identifier) : value) : undefined
     }
 
 
