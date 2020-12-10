@@ -30,7 +30,7 @@ const person            = Person.new({ firstName : 'Mark', lastName : 'Twain' })
 
 const replica           = Replica.new()
 
-replica.addEntity(markTwain)
+replica.addEntity(person)
 
 console.log(person.fullName) // "Mark Twain"
 ```
