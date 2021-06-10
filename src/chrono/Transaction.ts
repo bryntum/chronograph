@@ -633,13 +633,17 @@ export class Transaction extends Base {
     reject (rejection : RejectEffect<unknown> = RejectEffect.new()) {
         this.rejectedWith           = rejection
 
+        this.walkContext            = undefined
+    }
+
+
+    clearRejected () {
         for (const quark of this.entries.values()) {
             quark.cleanup()
             // quark.clearOutgoing()
         }
 
         this.entries.clear()
-        this.walkContext            = undefined
     }
 
 
