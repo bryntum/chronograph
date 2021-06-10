@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>&quot;src/guides/AdvancedFeatures&quot; | @bryntum/chronograph</title>
-	<meta name="description" content="">
+	<meta name="description" content="Documentation for @bryntum/chronograph">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -13,7 +13,7 @@
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -267,7 +267,7 @@ graph4.write(max, <span class="hljs-number">50</span>)
 								<h2>Entity/Relation framework</h2>
 							</a>
 							<p>The identifiers graph from above is a low-level interface for the ChronoGraph. In the <a href="_src_guides_basicfeatures_.html#basicfeaturesguide">Basic features</a> guide we&#39;ve already introduced a more convenient view on it, as on set of <a href="../classes/_src_replica_entity_.entity.html">entities</a> with <a href="../classes/_src_schema_field_.field.html">fields</a>. We naturally chose to represent entities with TypeScript classes and fields - with their properties.</p>
-							<p>To turn some JS class into entity, one need to mix the <a href="../classes/_src_replica_entity_.entity.html">Entity</a> <a href="_src_class_bettermixin_.html#mixin">mixin</a> into it. And to turn a property into a field - decorate it with
+							<p>To turn some JS class into entity, one need to mix the <a href="../classes/_src_replica_entity_.entity.html">Entity</a> <a href="_src_class_mixin_.html#mixin">mixin</a> into it. And to turn a property into a field - decorate it with
 							<a href="_src_replica_entity_.html#field">field</a> decorator. </p>
 							<p>To specify the calculation function for the identifier of some field - write it as a method of the entity class and decorate with <a href="_src_replica_entity_.html#calculate">calculate</a> (this mapped method will be set as the <a href="../classes/_src_chrono_identifier_.identifier.html#calculation">calculation</a> config of the corresponding identifier).</p>
 							<p>Under the hood, its an a bit enhanced version of the same graph, which can be instantiated with <a href="../classes/_src_replica_replica_.replica.html">Replica</a> constructor.  </p>
@@ -336,7 +336,7 @@ branch2.write(variable13, <span class="hljs-number">10</span>)
 							<p>This can be achieved by writing every feature as a mixin. Mixins is a well-known pattern in the imperative programming, which, in this context,
 							means a combination of class inheritance and lambda function. Lambda functions composes well, so do mixins. This solves a well-known problem of re-using functionality across the whole inheritance diagram.</p>
 							<p>This pattern encourages every mixin to describe a very granular addition of logic, over already defined set of mixins (requirements that are assumed to be already maintained). This allows to model the requirements precisely, one by one. Naturally, the number of classes on the diagram increases (it took roughly 30 mixins, for example, to model the requirements of the Gantt chart), but modern tooling (TypeScript&#39;s typechecker), allows us to keep the things under control, and prevent &quot;feature leak&quot; - well known effect, when the logic of some feature is spread across many source files.</p>
-							<p>For example, we can define a <code>Person</code> as something that can concatenate its <code>firstName</code> and <code>lastName</code>, derived as ChronoGraph <a href="../classes/_src_replica_entity_.entity.html">Entity</a>, from the base class <a href="../classes/_src_class_bettermixin_.base.html">Base</a>.  </p>
+							<p>For example, we can define a <code>Person</code> as something that can concatenate its <code>firstName</code> and <code>lastName</code>, derived as ChronoGraph <a href="../classes/_src_replica_entity_.entity.html">Entity</a>, from the base class <a href="../classes/_src_class_base_.base.html">Base</a>.  </p>
 							<pre><code class="language-ts"><span class="hljs-keyword">class</span> Person <span class="hljs-keyword">extends</span> Mixin(
     [ Entity, Base ], 
     <span class="hljs-function">(<span class="hljs-params">base : ClassUnion&lt;<span class="hljs-keyword">typeof</span> Entity, <span class="hljs-keyword">typeof</span> Base&gt;</span>) =&gt;</span> {
@@ -385,7 +385,7 @@ branch2.write(variable13, <span class="hljs-number">10</span>)
     [ Employee ], 
     <span class="hljs-function">(<span class="hljs-params">base : ClassUnion&lt;<span class="hljs-keyword">typeof</span> Employee&gt;</span>) =&gt;</span> {
 
-    <span class="hljs-keyword">class</span> Employee <span class="hljs-keyword">extends</span> base
+    <span class="hljs-keyword">class</span> ExcludeFreeDaysFromSalary <span class="hljs-keyword">extends</span> base
         <span class="hljs-meta">@field</span>()
         freeDays            : FreeDay[] <span class="hljs-comment">// whatever that means</span>
 
@@ -401,14 +401,14 @@ branch2.write(variable13, <span class="hljs-number">10</span>)
         }
     }
 
-    <span class="hljs-keyword">return</span> Employee
+    <span class="hljs-keyword">return</span> ExcludeFreeDaysFromSalary
 }){}</code></pre>
 							<p>Another business requirement could be - if employee completes some plan, s/he gets a bonus.</p>
 							<pre><code class="language-ts"><span class="hljs-keyword">class</span> BonusForGoodWork <span class="hljs-keyword">extends</span> Mixin(
     [ Employee ], 
     <span class="hljs-function">(<span class="hljs-params">base : ClassUnion&lt;<span class="hljs-keyword">typeof</span> Employee&gt;</span>) =&gt;</span> {
 
-    <span class="hljs-keyword">class</span> Employee <span class="hljs-keyword">extends</span> base
+    <span class="hljs-keyword">class</span> BonusForGoodWork <span class="hljs-keyword">extends</span> base
         <span class="hljs-meta">@field</span>()
         wokrPlan            : <span class="hljs-built_in">number</span>
         <span class="hljs-meta">@field</span>()
@@ -426,7 +426,7 @@ branch2.write(variable13, <span class="hljs-number">10</span>)
         }
     }
 
-    <span class="hljs-keyword">return</span> Employee
+    <span class="hljs-keyword">return</span> BonusForGoodWork
 }){}</code></pre>
 							<p>Again, <code>BonusForGoodWork</code> is isolated from the other features.</p>
 							<p>Finally we compose everything together:</p>
@@ -449,7 +449,7 @@ branch2.write(variable13, <span class="hljs-number">10</span>)
     Person.mix(
         Base
     ))))</code></pre>
-							<p>See the <a href="_src_class_bettermixin_.html#mixin">Mixin</a> helper for more details about the mixins implementation. </p>
+							<p>See the <a href="_src_class_mixin_.html#mixin">Mixin</a> helper for more details about the mixins implementation. </p>
 							<p>Using mixins, of course, is orthogonal to the ChronoGraph itself - you can choose any class organization.</p>
 							<a href="#copyright-and-license" id="copyright-and-license" style="color: inherit; text-decoration: none;">
 								<h2>COPYRIGHT AND LICENSE</h2>
@@ -483,7 +483,13 @@ branch2.write(variable13, <span class="hljs-number">10</span>)
 						<a href="_src_chrono_transaction_.html">&quot;src/chrono/<wbr>Transaction&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
+						<a href="_src_class_base_.html">&quot;src/class/<wbr>Base&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
 						<a href="_src_class_bettermixin_.html">&quot;src/class/<wbr>Better<wbr>Mixin&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="_src_class_mixin_.html">&quot;src/class/<wbr>Mixin&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="_src_collection_iterator_.html">&quot;src/collection/<wbr>Iterator&quot;</a>
@@ -547,57 +553,19 @@ branch2.write(variable13, <span class="hljs-number">10</span>)
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
 				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
 				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
 				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
 				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
 				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
 				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
 				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
 				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
 			</ul>
 		</div>
 	</div>

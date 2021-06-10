@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>&quot;src/guides/BasicFeatures&quot; | @bryntum/chronograph</title>
-	<meta name="description" content="">
+	<meta name="description" content="Documentation for @bryntum/chronograph">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -13,7 +13,7 @@
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -120,13 +120,13 @@
 
 <span class="hljs-keyword">const</span> replica           = Replica.new()
 
-replica.addEntity(markTwain)
+replica.addEntity(person)
 
 <span class="hljs-built_in">console</span>.log(person.fullName) <span class="hljs-comment">// "Mark Twain"</span></code></pre>
-							<p>Here, we&#39;ve defined a <code>Person</code> class, as an <a href="../classes/_src_replica_entity_.entity.html">Entity</a> <a href="_src_class_bettermixin_.html#mixin">mixin</a>, applied to the <a href="../classes/_src_class_bettermixin_.base.html">Base</a> class.</p>
+							<p>Here, we&#39;ve defined a <code>Person</code> class, as an <a href="../classes/_src_replica_entity_.entity.html">Entity</a> <a href="_src_class_mixin_.html#mixin">mixin</a>, applied to the <a href="../classes/_src_class_base_.base.html">Base</a> class.</p>
 							<p>The <code>Person</code> class has 3 fields - <code>firstName</code>, <code>lastName</code> and <code>fullName</code>, distinct from other properties with the <a href="_src_replica_entity_.html#field">@field()</a> decorator.</p>
 							<p>One more decorator <a href="_src_replica_entity_.html#calculate">@calculate()</a> specifies, that the value of the field <code>fullName</code> is calculated in the method <code>calculateFullName</code>, based on the values of <code>firstName</code> and <code>lastName</code>.</p>
-							<p>The <code>Person</code> class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method <a href="../classes/_src_class_bettermixin_.base.html#new">new</a>, provided by the <a href="../classes/_src_class_bettermixin_.base.html">Base</a> class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the <a href="../classes/_src_class_bettermixin_.base.html">Base</a> class and its type-safe static constructor is optional, any JS class can be used instead. </p>
+							<p>The <code>Person</code> class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method <a href="../classes/_src_class_base_.base.html#new">new</a>, provided by the <a href="../classes/_src_class_base_.base.html">Base</a> class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the <a href="../classes/_src_class_base_.base.html">Base</a> class and its type-safe static constructor is optional, any JS class can be used instead. </p>
 							<p>All data is stored in the <a href="../classes/_src_replica_replica_.replica.html">replica</a>, which is initially empty. You can populate it with data using the <a href="../classes/_src_replica_replica_.replica.html#addentity">Replica.addEntity</a> call. Once the entity &quot;enters&quot; the replica, the reactivity contract starts holding. It is that, whenever the value of <code>firstName</code> or <code>lastName</code> changes, the value of <code>fullName</code> is updated automatically.</p>
 							<p>This simple idea relieves the programmer of burden of updating the outdated data - all data automatically becomes &quot;fresh&quot; and consistent, according to the specified calculation rules.  </p>
 							<a href="#purity-immutability" id="purity-immutability" style="color: inherit; text-decoration: none;">
@@ -374,7 +374,13 @@ instance.expensiveToCompute <span class="hljs-comment">// computation happens on
 						<a href="_src_chrono_transaction_.html">&quot;src/chrono/<wbr>Transaction&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
+						<a href="_src_class_base_.html">&quot;src/class/<wbr>Base&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
 						<a href="_src_class_bettermixin_.html">&quot;src/class/<wbr>Better<wbr>Mixin&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="_src_class_mixin_.html">&quot;src/class/<wbr>Mixin&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="_src_collection_iterator_.html">&quot;src/collection/<wbr>Iterator&quot;</a>
@@ -438,57 +444,19 @@ instance.expensiveToCompute <span class="hljs-comment">// computation happens on
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
 				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
 				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
 				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
 				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
 				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
 				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
 				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
 				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
 			</ul>
 		</div>
 	</div>
