@@ -1,10 +1,8 @@
 import { Benchmark } from "../../../src/benchmark/Benchmark.js"
 import { AnyConstructor } from "../../../src/class/Mixin.js"
-import { Replica as Replica1 } from "../../../src/replica/Replica.js"
 import { Replica as Replica2 } from "../../../src/replica2/Replica.js"
 import { launchIfStandaloneProcess } from "../graphless/data_generators.js"
-import { TestEntity5 as Chrono1TestEntity5, TestEntity1 as Chrono1TestEntity1 } from "./test_replica_chrono_1.js"
-import { TestEntity5 as Chrono2TestEntity5, TestEntity1 as Chrono2TestEntity1 } from "./test_replica_chrono_2.js"
+import { TestEntity1 as Chrono2TestEntity1, TestEntity5 as Chrono2TestEntity5 } from "./test_replica_chrono_2.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -64,18 +62,18 @@ const runFor = async (entityCount : number = 1000) => {
         replica         : Replica2.new({ historyLimit : 0, autoCommit : false })
     })
 
-    const chronoGraph1 = ReplicaPopulationBenchmark.new({
-        profile         : true,
-        // keepLastResult  : true,
-        name            : `Replica population, entities: ${entityCount}, entity class: ${Chrono1TestEntity5} - ChronoGraph1`,
-        entityCount     : entityCount,
-        entityClass     : Chrono1TestEntity5,
-        entityClass2    : Chrono1TestEntity1,
-        replica         : Replica1.new({ autoCommit : false })
-    })
+    // const chronoGraph1 = ReplicaPopulationBenchmark.new({
+    //     profile         : true,
+    //     // keepLastResult  : true,
+    //     name            : `Replica population, entities: ${entityCount}, entity class: ${Chrono1TestEntity5} - ChronoGraph1`,
+    //     entityCount     : entityCount,
+    //     entityClass     : Chrono1TestEntity5,
+    //     entityClass2    : Chrono1TestEntity1,
+    //     replica         : Replica1.new({ autoCommit : false })
+    // })
 
     const runInfoChronoGraph2WithGraph  = await chronoGraph2.measureTillMaxTime()
-    const runInfoChronoGraph1           = await chronoGraph1.measureTillMaxTime()
+    // const runInfoChronoGraph1           = await chronoGraph1.measureTillMaxTime()
 }
 
 

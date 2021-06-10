@@ -1,6 +1,6 @@
 import { Base } from "../../src/class/Base.js"
-import { Entity } from "../../src/replica/Entity.js"
-import { entity } from "../../src/schema/Schema.js"
+import { Entity } from "../../src/replica2/Entity.js"
+import { entity } from "../../src/schema2/Schema.js"
 
 declare const StartTest : any
 
