@@ -1,7 +1,6 @@
 import { BoxAbstract, launchIfStandaloneProcess, ReactiveDataBenchmark } from "../graphless/data_generators.js"
 import {
     ReactiveDataGenerationResultWithGraph,
-    ReactiveDataGeneratorChronoGraph1,
     ReactiveDataGeneratorChronoGraph2WithGraph,
     ReactiveDataGeneratorWithGraph
 } from "./data_generators.js"
@@ -66,24 +65,24 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
         graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
-    const chronoGraph1 = RejectBenchmark.new({
-        name        : `Reject in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
-        atomNum     : atomNum,
-        depCount    : depCount,
-        graphGen    : new ReactiveDataGeneratorChronoGraph1()
-    })
+    // const chronoGraph1 = RejectBenchmark.new({
+    //     name        : `Reject in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
+    //     atomNum     : atomNum,
+    //     depCount    : depCount,
+    //     graphGen    : new ReactiveDataGeneratorChronoGraph1()
+    // })
 
     const runInfoChronoGraph2WithGraph  = await chronoGraph2WithGraph.measureTillMaxTime()
-    const runInfoChronoGraph1           = await chronoGraph1.measureFixed(
-        runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
-    )
+    // const runInfoChronoGraph1           = await chronoGraph1.measureFixed(
+    //     runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
+    // )
 
     const chrono2Boxes      = runInfoChronoGraph2WithGraph.finalState.boxes
-    const chrono1Boxes      = runInfoChronoGraph1.finalState.boxes
+    // const chrono1Boxes      = runInfoChronoGraph1.finalState.boxes
 
     for (let i = 0; i < depCount; i++) {
         if (chrono2Boxes[ i ].READ() !== 1) throw new Error("Invalid value in graph, ChronoGraph2")
-        if (chrono1Boxes[ i ].READ() !== 1) throw new Error("Invalid value in graph, ChronoGraph1")
+        // if (chrono1Boxes[ i ].READ() !== 1) throw new Error("Invalid value in graph, ChronoGraph1")
     }
 }
 

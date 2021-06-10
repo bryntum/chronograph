@@ -1,12 +1,10 @@
 import { BoxAbstract, launchIfStandaloneProcess, ReactiveDataBenchmark } from "../graphless/data_generators.js"
 import {
     ReactiveDataGenerationResultWithGraph,
-    ReactiveDataGeneratorChronoGraph1,
     ReactiveDataGeneratorChronoGraph2WithGraph,
     ReactiveDataGeneratorWithGraph
 } from "./data_generators.js"
 
-import { ChronoGraph as ChronoGraph1 } from "../../../src/chrono/Graph.js"
 import { ChronoGraph as ChronoGraph2 } from "../../../src/chrono2/graph/Graph.js"
 
 
@@ -87,25 +85,25 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1, historyLim
         graphGen        : ReactiveDataGeneratorChronoGraph2WithGraph.new({ graph : ChronoGraph2.new({ historyLimit : 1 }) })
     })
 
-    // actually undo/redo implementation in ChronoGraph1 is not comparable to ChronoGraph2
-    // because it does not propagate the changes outside of the graph (which requires
-    // iterating over all changed quarks and their outgoing edges)
-    // so comparison is rather useless, except controlling the result in last box
-    const chronoGraph1 = UndoBenchmark.new({
-        // profile         : true,
-        name            : `Undo in graph, history: ${historyLimit}, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
-        atomNum         : atomNum,
-        depCount        : depCount,
-        historyLimit    : historyLimit,
-        graphGen        : ReactiveDataGeneratorChronoGraph1.new({ graph : ChronoGraph1.new({ historyLimit : 1 }) })
-    })
+    // // actually undo/redo implementation in ChronoGraph1 is not comparable to ChronoGraph2
+    // // because it does not propagate the changes outside of the graph (which requires
+    // // iterating over all changed quarks and their outgoing edges)
+    // // so comparison is rather useless, except controlling the result in last box
+    // const chronoGraph1 = UndoBenchmark.new({
+    //     // profile         : true,
+    //     name            : `Undo in graph, history: ${historyLimit}, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
+    //     atomNum         : atomNum,
+    //     depCount        : depCount,
+    //     historyLimit    : historyLimit,
+    //     graphGen        : ReactiveDataGeneratorChronoGraph1.new({ graph : ChronoGraph1.new({ historyLimit : 1 }) })
+    // })
 
     const runInfoChronoGraph2WithGraph  = await chronoGraph2WithGraph.measureTillMaxTime()
-    const runInfoChronoGraph1           = await chronoGraph1.measureFixed(
-        runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
-    )
+    // const runInfoChronoGraph1           = await chronoGraph1.measureFixed(
+    //     runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
+    // )
 
-    if (runInfoChronoGraph2WithGraph.info.result !== runInfoChronoGraph1.info.result) throw new Error("Results in last box differ")
+    // if (runInfoChronoGraph2WithGraph.info.result !== runInfoChronoGraph1.info.result) throw new Error("Results in last box differ")
 }
 
 

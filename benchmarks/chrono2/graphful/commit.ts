@@ -1,9 +1,7 @@
-import { ChronoGraph as ChronoGraph1 } from "../../../src/chrono/Graph.js"
 import { ChronoGraph as ChronoGraph2 } from "../../../src/chrono2/graph/Graph.js"
 import { BoxAbstract, launchIfStandaloneProcess, ReactiveDataBenchmark } from "../graphless/data_generators.js"
 import {
     ReactiveDataGenerationResultWithGraph,
-    ReactiveDataGeneratorChronoGraph1,
     ReactiveDataGeneratorChronoGraph2WithGraph,
     ReactiveDataGeneratorWithGraph
 } from "./data_generators.js"
@@ -68,21 +66,21 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
         graphGen        : ReactiveDataGeneratorChronoGraph2WithGraph.new({ graph : ChronoGraph2.new({ historyLimit : 0 }) })
     })
 
-    const chronoGraph1 = CommitBenchmark.new({
-        // profile         : true,
-        // keepLastResult  : true,
-        name            : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
-        atomNum         : atomNum,
-        depCount        : depCount,
-        graphGen        : ReactiveDataGeneratorChronoGraph1.new({ graph : ChronoGraph1.new({ historyLimit : 0 }) })
-    })
+    // const chronoGraph1 = CommitBenchmark.new({
+    //     // profile         : true,
+    //     // keepLastResult  : true,
+    //     name            : `Commit in graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
+    //     atomNum         : atomNum,
+    //     depCount        : depCount,
+    //     graphGen        : ReactiveDataGeneratorChronoGraph1.new({ graph : ChronoGraph1.new({ historyLimit : 0 }) })
+    // })
 
     const runInfoChronoGraph2WithGraph  = await chronoGraph2WithGraph.measureTillMaxTime()
-    const runInfoChronoGraph1           = await chronoGraph1.measureFixed(
-        runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
-    )
+    // const runInfoChronoGraph1           = await chronoGraph1.measureFixed(
+    //     runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length
+    // )
 
-    if (runInfoChronoGraph2WithGraph.info.result !== runInfoChronoGraph1.info.result) throw new Error("Results in last box differ")
+    // if (runInfoChronoGraph2WithGraph.info.result !== runInfoChronoGraph1.info.result) throw new Error("Results in last box differ")
 }
 
 

@@ -1,12 +1,12 @@
-import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
+import { ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
+    launchIfStandaloneProcess,
+    ReactiveDataBenchmark,
     ReactiveDataGenerationResult,
     ReactiveDataGenerator,
     reactiveDataGeneratorChronoGraph2,
-    reactiveDataGeneratorMobx,
-    ReactiveDataBenchmark,
-    launchIfStandaloneProcess
+    reactiveDataGeneratorMobx
 } from "./data_generators.js"
 
 
@@ -80,17 +80,17 @@ const runFor = async (atomNum : number = 1000, depCount : number = 1) => {
         graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
-    const chronoGraph1 = StableGraphBenchmark.new({
-        name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
-        atomNum     : atomNum,
-        depCount    : depCount,
-        graphGen    : new ReactiveDataGeneratorChronoGraph1()
-    })
+    // const chronoGraph1 = StableGraphBenchmark.new({
+    //     name        : `Stable graph, atoms: ${atomNum}, deps depth: ${depCount} - ChronoGraph1`,
+    //     atomNum     : atomNum,
+    //     depCount    : depCount,
+    //     graphGen    : new ReactiveDataGeneratorChronoGraph1()
+    // })
 
     const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()
     const runInfoMobx           = await mobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
     const runInfoChronoGraph2WithGraph = await chronoGraph2WithGraph.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph1 = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    // const runInfoChronoGraph1 = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
     if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
     if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")

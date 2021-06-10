@@ -1,6 +1,6 @@
 import { Benchmark } from "../../../src/benchmark/Benchmark.js"
-import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
-import { ReactiveDataGenerator, reactiveDataGeneratorChronoGraph2, reactiveDataGeneratorMobx, launchIfStandaloneProcess } from "./data_generators.js"
+import { ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
+import { launchIfStandaloneProcess, ReactiveDataGenerator, reactiveDataGeneratorChronoGraph2, reactiveDataGeneratorMobx } from "./data_generators.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -50,17 +50,17 @@ const runFor = async (atomNum : number = 100000, depCount : number = 1) => {
         graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
-    const chronoGraph1 = AllocationBenchmark.new({
-        name        : `Data allocation, boxes: ${depCount}, computeds: ${atomNum - depCount} - ChronoGraph1`,
-        atomNum     : atomNum,
-        depCount    : depCount,
-        graphGen    : new ReactiveDataGeneratorChronoGraph1()
-    })
+    // const chronoGraph1 = AllocationBenchmark.new({
+    //     name        : `Data allocation, boxes: ${depCount}, computeds: ${atomNum - depCount} - ChronoGraph1`,
+    //     atomNum     : atomNum,
+    //     depCount    : depCount,
+    //     graphGen    : new ReactiveDataGeneratorChronoGraph1()
+    // })
 
     await chronoGraph2.measureTillMaxTime()
     await mobx.measureTillMaxTime()
     await chronoGraph2WithGraph.measureTillMaxTime()
-    await chronoGraph1.measureTillMaxTime()
+    // await chronoGraph1.measureTillMaxTime()
 }
 
 

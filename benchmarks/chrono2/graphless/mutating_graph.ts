@@ -1,12 +1,12 @@
-import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
+import { ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
+    launchIfStandaloneProcess,
+    ReactiveDataBenchmark,
     ReactiveDataGenerationResult,
     ReactiveDataGenerator,
     reactiveDataGeneratorChronoGraph2,
-    reactiveDataGeneratorMobx,
-    ReactiveDataBenchmark,
-    launchIfStandaloneProcess
+    reactiveDataGeneratorMobx
 } from "./data_generators.js"
 
 
@@ -87,18 +87,18 @@ const chronoGraph2WithGraph = MutatingGraphBenchmark.new({
     graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
 })
 
-const chronoGraph1 = MutatingGraphBenchmark.new({
-    name        : 'Mutating graph - ChronoGraph1',
-    atomNum     : 1000,
-    depCount    : 50,
-    graphGen    : new ReactiveDataGeneratorChronoGraph1()
-})
+// const chronoGraph1 = MutatingGraphBenchmark.new({
+//     name        : 'Mutating graph - ChronoGraph1',
+//     atomNum     : 1000,
+//     depCount    : 50,
+//     graphGen    : new ReactiveDataGeneratorChronoGraph1()
+// })
 
 export const run = async () => {
     const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()
     const runInfoMobx           = await mobx.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
     const runInfoChronoGraph2Graphful = await chronoGraph2WithGraph.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
-    const runInfoChronoGraph1   = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
+    // const runInfoChronoGraph1   = await chronoGraph1.measureFixed(runInfoChronoGraph2.cyclesCount, runInfoChronoGraph2.samples.length)
 
     if (runInfoMobx.info.result !== runInfoChronoGraph2.info.result) throw new Error("Results in last box differ")
     if (runInfoMobx.info.totalCount !== runInfoChronoGraph2.info.totalCount) throw new Error("Total number of calculations differ")

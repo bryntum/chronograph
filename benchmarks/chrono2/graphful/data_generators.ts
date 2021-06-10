@@ -1,5 +1,3 @@
-import { ChronoGraph as ChronoGraph1 } from "../../../src/chrono/Graph.js"
-import { CalculatedValueGen, CalculatedValueSync, Identifier, VariableC } from "../../../src/chrono/Identifier.js"
 import { Box, BoxUnbound } from "../../../src/chrono2/data/Box.js"
 import { CalculableBox, CalculableBoxUnbound } from "../../../src/chrono2/data/CalculableBox.js"
 import { CalculableBoxGen, CalculableBoxGenUnbound } from "../../../src/chrono2/data/CalculableBoxGen.js"
@@ -23,27 +21,6 @@ export interface AbstractGraph {
     undo ()
 
     redo ()
-}
-
-
-//---------------------------------------------------------------------------------------------------------------------
-export class BoxChronoGraph1<V> extends BoxAbstract<V> {
-    box             : Identifier<V>     = undefined
-    graph           : ChronoGraph1      = undefined
-
-    constructor (identifier, graph) {
-        super()
-
-        this.box        = identifier
-        this.graph      = graph
-    }
-
-    READ () : V {
-        return this.graph.read(this.box)
-    }
-    WRITE (value : V) {
-        return this.graph.write(this.box, value)
-    }
 }
 
 
@@ -105,62 +82,6 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
 }
 
 
-//---------------------------------------------------------------------------------------------------------------------
-export class ReactiveDataGeneratorChronoGraph1 extends Base implements ReactiveDataGeneratorWithGenerators<Identifier> {
-    graph           : ChronoGraph1  = ChronoGraph1.new()
-
-    // used to measure the allocation performance
-    rawBox<V> (initialValue : V, name? : string) : Identifier {
-        const box = VariableC({ name })
-
-        this.graph.addIdentifier(box, initialValue)
-
-        return box
-    }
-
-    box<V> (initialValue : V, name? : string) : BoxChronoGraph1<V> {
-        const box = VariableC({ name })
-
-        this.graph.addIdentifier(box, initialValue)
-
-        return new BoxChronoGraph1(box, this.graph)
-    }
-
-
-    // used to measure the allocation performance
-    rawComputed<V> (func : AnyFunction<V>, context? : any, name? : string) : Identifier {
-        const box = CalculatedValueSync.new({ calculation : func, context : context, name : name })
-
-        this.graph.addIdentifier(box)
-
-        return box
-    }
-
-    computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph1<V> {
-        const box   = CalculatedValueSync.new({ calculation : func, context : context, name : name })
-
-        this.graph.addIdentifier(box)
-
-        return new BoxChronoGraph1(box, this.graph)
-    }
-
-    computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph1<V> {
-        const box   = CalculatedValueSync.new({ calculation : func, context : context, name : name })
-
-        this.graph.addIdentifier(box)
-
-        return new BoxChronoGraph1(box, this.graph)
-    }
-
-
-    computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxChronoGraph1<V> {
-        const box   = CalculatedValueGen.new({ calculation : func as any, context : context, name : name })
-
-        this.graph.addIdentifier(box)
-
-        return new BoxChronoGraph1(box, this.graph)
-    }
-}
 
 //---------------------------------------------------------------------------------------------------------------------
 export type ReactiveDataGenerationResultWithGraph = { boxes : BoxAbstract<unknown>[], counter : number, graph : AbstractGraph }

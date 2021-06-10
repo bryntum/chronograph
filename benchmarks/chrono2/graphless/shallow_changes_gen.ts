@@ -1,5 +1,5 @@
 import { CalculationIterator } from "../../../src/chrono2/CalculationMode.js"
-import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
+import { ReactiveDataGeneratorChronoGraph2WithGraph } from "../graphful/data_generators.js"
 import {
     BoxAbstract,
     launchIfStandaloneProcess,
@@ -92,12 +92,12 @@ const runFor = async (atomNum : number = 1000, depCount : number = 2) => {
         graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
-    const chronoGraph1 = ShallowChangesGenBenchmark.new({
-        name        : `Shallow changes, generators, atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph1`,
-        atomNum     : atomNum,
-        depCount    : depCount,
-        graphGen    : new ReactiveDataGeneratorChronoGraph1()
-    })
+    // const chronoGraph1 = ShallowChangesGenBenchmark.new({
+    //     name        : `Shallow changes, generators, atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph1`,
+    //     atomNum     : atomNum,
+    //     depCount    : depCount,
+    //     graphGen    : new ReactiveDataGeneratorChronoGraph1()
+    // })
 
     const runInfoChronoGraph2   = await chronoGraph2.measureTillMaxTime()
     const runInfoChronoGraph2WithGraph = await chronoGraph2WithGraph.measureFixed(

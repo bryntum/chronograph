@@ -6,7 +6,7 @@ import {
     ReactiveDataGenerationResult,
     ReactiveDataGeneratorWithGenerators
 } from "../graphless/data_generators.js"
-import { ReactiveDataGeneratorChronoGraph1, ReactiveDataGeneratorChronoGraph2WithGraph, ReactiveDataGeneratorWithGraph } from "./data_generators.js"
+import { ReactiveDataGeneratorChronoGraph2WithGraph, ReactiveDataGeneratorWithGraph } from "./data_generators.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ShallowChangesGenBenchmark extends ReactiveDataBenchmark {
@@ -85,17 +85,17 @@ const runFor = async (atomNum : number = 1000, depCount : number = 2) => {
         graphGen    : new ReactiveDataGeneratorChronoGraph2WithGraph()
     })
 
-    const chronoGraph1 = ShallowChangesGenBenchmark.new({
-        // showSamples     : true,
-        // keepLastResult  : true,
-        name        : `Shallow changes, generators, atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph1`,
-        atomNum     : atomNum,
-        depCount    : depCount,
-        graphGen    : new ReactiveDataGeneratorChronoGraph1()
-    })
+    // const chronoGraph1 = ShallowChangesGenBenchmark.new({
+    //     // showSamples     : true,
+    //     // keepLastResult  : true,
+    //     name        : `Shallow changes, generators, atoms: ${atomNum}, boxes: ${depCount} - ChronoGraph1`,
+    //     atomNum     : atomNum,
+    //     depCount    : depCount,
+    //     graphGen    : new ReactiveDataGeneratorChronoGraph1()
+    // })
 
     const runInfoChronoGraph2WithGraph = await chronoGraph2WithGraph.measureTillMaxTime()
-    const runInfoChronoGraph1 = await chronoGraph1.measureFixed(runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length)
+    // const runInfoChronoGraph1 = await chronoGraph1.measureFixed(runInfoChronoGraph2WithGraph.cyclesCount, runInfoChronoGraph2WithGraph.samples.length)
 
     // if (
     //     // (runInfoChronoGraph2.info.result !== runInfoChronoGraph1.info.result)
