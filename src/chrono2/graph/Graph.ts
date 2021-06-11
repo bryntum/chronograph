@@ -163,9 +163,7 @@ export class ChronoGraph extends Base implements Owner {
     initialize<T extends ChronoGraph> (props? : Partial<T>) {
         super.initialize(props)
 
-        if (this.autoCommit) {
-            this.autoCommitHandler = this.autoCommitMode === 'sync' ? arg => this.commit(arg) : async arg => this.commitAsync(arg)
-        }
+        this.autoCommitHandler      = this.autoCommitMode === 'sync' ? arg => this.commit(arg) : async arg => this.commitAsync(arg)
 
         this.effectHandlerSync      = this.onEffectSync.bind(this)
         this.effectHandlerAsync     = this.onEffectAsync.bind(this)
