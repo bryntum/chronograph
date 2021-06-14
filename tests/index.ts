@@ -65,6 +65,7 @@ project.start(
             'chrono2/graph_undo_redo.t.js',
             'chrono2/graph_branching.t.js',
             'chrono2/graph_garbage_collection.t.js',
+            'chrono2/graph_cleanup.t.js',
             'chrono2/record.t.js',
         ]
     },
