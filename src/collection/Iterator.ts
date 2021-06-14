@@ -407,6 +407,7 @@ export class MemoizedIteratorClass<T> extends ChainedIteratorClass<T> {
     $iterable       : Iterable<T>
     $iterator       : Iterator<T>   = undefined
 
+    // @ts-ignore
     set iterable (iterable : Iterable<T>) {
         this.$iterable  = iterable
     }

@@ -98,6 +98,7 @@ export class ReferenceAtom extends Mixin(
         }
 
 
+        // @ts-ignore
         get context () : unknown {
             return this
         }

@@ -143,6 +143,7 @@ export class ReferenceBucketAtom extends Mixin(
         }
 
 
+        // @ts-ignore
         get context () : unknown {
             return this
         }
