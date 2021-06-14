@@ -32,6 +32,7 @@ export class Transaction extends Owner implements Immutable {
     //region Transaction as Owner
     $immutable      : Iteration         = undefined
 
+    // @ts-ignore
     get immutable () : Iteration {
         if (this.$immutable !== undefined) return this.$immutable
 
