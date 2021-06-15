@@ -1,3 +1,4 @@
+import { AnyFunction } from "../../class/Mixin.js"
 import { AtomState } from "../atom/Atom.js"
 import { AtomCalculationPriorityLevel } from "../atom/Meta.js"
 import { getNextRevision } from "../atom/Node.js"
@@ -18,6 +19,8 @@ const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationS
 export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
     level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnSelfKind
 
+    cleanup         : AnyFunction           = undefined
+
     $calculationEtalon  : CalculationFunction<V, CalculationModeSync>        = undefined
 
     get calculationEtalon () : CalculationFunction<V, CalculationMode> {
@@ -35,14 +38,16 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
         if (config) {
             if (config.meta !== undefined) this.meta = config.meta
 
-            this.name           = config.name
-            this.context        = config.context !== undefined ? config.context : this
+            this.name               = config.name
+            this.context            = config.context !== undefined ? config.context : this
 
             this.$calculation       = config.calculation
             this.$calculationEtalon = config.calculationEtalon
             this.$equality          = config.equality
+            this.cleanup            = config.cleanup
 
             if (config.lazy !== undefined) this.lazy = config.lazy
+            if (config.persistent !== undefined) this.persistent = config.persistent
 
             // TODO not needed explicitly (can defined based on the type of the `calculation` function?
             if (config.sync !== undefined) this.sync = config.sync
@@ -469,6 +474,13 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
         clone.$equality     = this.$equality
 
         return clone
+    }
+
+
+    doCleanup () {
+        if (this.cleanup) this.cleanup(this)
+
+        super.doCleanup()
     }
 }
 

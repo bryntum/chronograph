@@ -404,157 +404,161 @@ export class Quark<V = unknown> extends Node implements Immutable {
             quark           = previous
 
         } while (quark)
+
+        if (!this.$outgoing || this.$outgoing.length === 0) this.owner.doCleanup()
     }
 
 
-    collectGarbageInternal (uniqable : number, collapsed) {
-        const zero                  = (this.constructor as AnyConstructor<this, typeof Quark>).getZero()
-
-        const collapsedOutgoing     = []
-        const collapsedOutgoingRev  = []
-
-        let collapsedOutgoingPast       = undefined
-        let collapsedOutgoingPastRev    = undefined
-
-        let valueConsumed : boolean         = false
-        let incomingsConsumed : boolean     = false
-        let outgoingsConsumed : boolean     = false
-        let incomingsPastConsumed : boolean     = false
-        let outgoingsPastConsumed : boolean     = false
-
-        let quark : this            = this
-
-        do {
-            // capture early, since we reset the `previous` on value consumption
-            const previous          = quark.previous
-
-            if (!incomingsConsumed && quark.$incoming !== undefined) {
-                incomingsConsumed   = true
-
-                // TODO make a config option? see a comment for `this.$outgoing` below
-                this.$incoming      = quark.$incoming
-                // this.$incoming      = quark.$incoming.slice()
-                // this.$incoming      = copyArray(quark.$incoming)
-            }
-
-            if (!incomingsPastConsumed && quark.$incomingPast !== undefined) {
-                incomingsPastConsumed   = true
-
-                // TODO make a config option? see a comment for `this.$outgoing` below
-                this.$incomingPast      = quark.$incomingPast
-                // this.$incoming      = quark.$incoming.slice()
-                // this.$incoming      = copyArray(quark.$incoming)
-            }
-
-            if (!outgoingsConsumed) {
-                const outgoing          = quark.$outgoing
-                const outgoingRev       = quark.$outgoingRev
-
-                if (outgoing) {
-                    for (let i = outgoing.length - 1; i >= 0; i--) {
-                        const outgoingRevision  = outgoingRev[ i ]
-                        const outgoingQuark     = outgoing[ i ] as Quark
-
-                        const identity          = outgoingQuark.owner.identity
-
-                        // should use `uniqable2` here (or may be even `uniqable3`) because `uniqable`
-                        // at this point is already being used by `forEveryFirstQuarkTill` in the `graph.sweep()`
-                        if (identity.uniqable2 !== uniqable) {
-                            identity.uniqable2   = uniqable
-
-                            // TODO requires extra attention
-                            // remove this if the "shallow state" optimization for Atom will be removed
-                            // `identity.uniqableBox === undefined` means that outgoing edge is actually going to the quark in the "shredding"
-                            // iteration - thats why it is not set up in the `graph.sweep()`
-                            // we do want to keep such edges, reproducible in `graph_garbage_collection.t.js`
-                            if (!identity.uniqableBox || outgoingRevision === (identity.uniqableBox as Quark).revision) {
-                                identity.uniqableBox    = undefined
-                                collapsedOutgoing.push(outgoingQuark)
-                                collapsedOutgoingRev.push(outgoingRevision)
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!outgoingsPastConsumed) {
-                const outgoingPast          = quark.$outgoingPast
-                const outgoingPastRev       = quark.$outgoingPastRev
-
-                if (outgoingPast) {
-                    for (let i = outgoingPast.length - 1; i >= 0; i--) {
-                        const outgoingPastRevision  = outgoingPastRev[ i ]
-                        const outgoingPastQuark     = outgoingPast[ i ] as Quark
-
-                        const identity          = outgoingPastQuark.owner.identity
-
-                        // should use `uniqable2` here (or may be even `uniqable3`) because `uniqable`
-                        // at this point is already being used by `forEveryFirstQuarkTill` in the `graph.sweep()`
-                        if (identity.uniqable3 !== uniqable) {
-                            identity.uniqable3   = uniqable
-
-                            // TODO requires extra attention
-                            // remove this if the "shallow state" optimization for Atom will be removed
-                            // `identity.uniqableBox === undefined` means that outgoingPast edge is actually going to the quark in the "shredding"
-                            // iteration - thats why it is not set up in the `graph.sweep()`
-                            // we do want to keep such edges, reproducible in `graph_garbage_collection.t.js`
-                            if (!identity.uniqableBox || outgoingPastRevision === (identity.uniqableBox as Quark).revision) {
-                                identity.uniqableBox    = undefined
-
-                                if (collapsedOutgoingPast === undefined) { collapsedOutgoingPast = []; collapsedOutgoingPastRev = [] }
-
-                                collapsedOutgoingPast.push(outgoingPastQuark)
-                                collapsedOutgoingPastRev.push(outgoingPastRevision)
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (quark.value !== undefined && quark.revision === quark.valueRevision) {
-                outgoingsConsumed   = true
-
-                // TODO make a config option?
-                // the trick with `[ ... ] / copyArray` creates a new array with the exact size for its elements
-                // it seems, normally, arrays allocates a little more memory, avoid allocation on every "push"
-                // the difference might be, like: for array of 20 elements, exact size is 80 bytes,
-                // extra size - 180 bytes! for many small arrays (exactly the chrono case) total difference might be
-                // significant: for 100k boxes with 4 backward deps each - from 69.7MB to 54.1MB
-                // there is a small performance penalty: from 435ms to 455ms (`benchmarks/chrono2/graphful/commit_gen`)
-                // it seems Array.from() is slower than manual `copyArray`... because of iterators protocol?
-                this.$outgoing      = collapsedOutgoing
-                this.$outgoingRev   = collapsedOutgoingRev
-
-                this.$outgoingPast      = collapsedOutgoingPast
-                this.$outgoingPastRev   = collapsedOutgoingPastRev
-
-                // this.$outgoing      = collapsedOutgoing.slice()
-                // this.$outgoingRev   = collapsedOutgoingRev.slice()
-                // this.$outgoing      = copyArray(collapsedOutgoing)
-                // this.$outgoingRev   = copyArray(collapsedOutgoingRev)
-            }
-
-
-
-            // consume the top-most value, even if its the `sameValue`
-            // reasoning is that even that `equality` check has passed
-            // user may have some side effects that expects the value
-            // to always be the result of latest `calculation` call
-            if (!valueConsumed && quark.value !== undefined) {
-                valueConsumed       = true
-
-                if (quark !== this) this.copyValueFrom(quark)
-
-                this.previous       = zero
-                this.valueRevision  = this.revision
-            }
-
-            if (quark !== this) quark.destroy()
-
-            quark           = previous
-
-        } while (quark)
-    }
+    // collectGarbageInternal (uniqable : number, collapsed) {
+    //     const zero                  = (this.constructor as AnyConstructor<this, typeof Quark>).getZero()
+    //
+    //     const collapsedOutgoing     = []
+    //     const collapsedOutgoingRev  = []
+    //
+    //     let collapsedOutgoingPast       = undefined
+    //     let collapsedOutgoingPastRev    = undefined
+    //
+    //     let valueConsumed : boolean         = false
+    //     let incomingsConsumed : boolean     = false
+    //     let outgoingsConsumed : boolean     = false
+    //     let incomingsPastConsumed : boolean     = false
+    //     let outgoingsPastConsumed : boolean     = false
+    //
+    //     let quark : this            = this
+    //
+    //     do {
+    //         // capture early, since we reset the `previous` on value consumption
+    //         const previous          = quark.previous
+    //
+    //         if (!incomingsConsumed && quark.$incoming !== undefined) {
+    //             incomingsConsumed   = true
+    //
+    //             // TODO make a config option? see a comment for `this.$outgoing` below
+    //             this.$incoming      = quark.$incoming
+    //             // this.$incoming      = quark.$incoming.slice()
+    //             // this.$incoming      = copyArray(quark.$incoming)
+    //         }
+    //
+    //         if (!incomingsPastConsumed && quark.$incomingPast !== undefined) {
+    //             incomingsPastConsumed   = true
+    //
+    //             // TODO make a config option? see a comment for `this.$outgoing` below
+    //             this.$incomingPast      = quark.$incomingPast
+    //             // this.$incoming      = quark.$incoming.slice()
+    //             // this.$incoming      = copyArray(quark.$incoming)
+    //         }
+    //
+    //         if (!outgoingsConsumed) {
+    //             const outgoing          = quark.$outgoing
+    //             const outgoingRev       = quark.$outgoingRev
+    //
+    //             if (outgoing) {
+    //                 for (let i = outgoing.length - 1; i >= 0; i--) {
+    //                     const outgoingRevision  = outgoingRev[ i ]
+    //                     const outgoingQuark     = outgoing[ i ] as Quark
+    //
+    //                     const identity          = outgoingQuark.owner.identity
+    //
+    //                     // should use `uniqable2` here (or may be even `uniqable3`) because `uniqable`
+    //                     // at this point is already being used by `forEveryFirstQuarkTill` in the `graph.sweep()`
+    //                     if (identity.uniqable2 !== uniqable) {
+    //                         identity.uniqable2   = uniqable
+    //
+    //                         // TODO requires extra attention
+    //                         // remove this if the "shallow state" optimization for Atom will be removed
+    //                         // `identity.uniqableBox === undefined` means that outgoing edge is actually going to the quark in the "shredding"
+    //                         // iteration - thats why it is not set up in the `graph.sweep()`
+    //                         // we do want to keep such edges, reproducible in `graph_garbage_collection.t.js`
+    //                         if (!identity.uniqableBox || outgoingRevision === (identity.uniqableBox as Quark).revision) {
+    //                             identity.uniqableBox    = undefined
+    //                             collapsedOutgoing.push(outgoingQuark)
+    //                             collapsedOutgoingRev.push(outgoingRevision)
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //
+    //         if (!outgoingsPastConsumed) {
+    //             const outgoingPast          = quark.$outgoingPast
+    //             const outgoingPastRev       = quark.$outgoingPastRev
+    //
+    //             if (outgoingPast) {
+    //                 for (let i = outgoingPast.length - 1; i >= 0; i--) {
+    //                     const outgoingPastRevision  = outgoingPastRev[ i ]
+    //                     const outgoingPastQuark     = outgoingPast[ i ] as Quark
+    //
+    //                     const identity          = outgoingPastQuark.owner.identity
+    //
+    //                     // should use `uniqable2` here (or may be even `uniqable3`) because `uniqable`
+    //                     // at this point is already being used by `forEveryFirstQuarkTill` in the `graph.sweep()`
+    //                     if (identity.uniqable3 !== uniqable) {
+    //                         identity.uniqable3   = uniqable
+    //
+    //                         // TODO requires extra attention
+    //                         // remove this if the "shallow state" optimization for Atom will be removed
+    //                         // `identity.uniqableBox === undefined` means that outgoingPast edge is actually going to the quark in the "shredding"
+    //                         // iteration - thats why it is not set up in the `graph.sweep()`
+    //                         // we do want to keep such edges, reproducible in `graph_garbage_collection.t.js`
+    //                         if (!identity.uniqableBox || outgoingPastRevision === (identity.uniqableBox as Quark).revision) {
+    //                             identity.uniqableBox    = undefined
+    //
+    //                             if (collapsedOutgoingPast === undefined) { collapsedOutgoingPast = []; collapsedOutgoingPastRev = [] }
+    //
+    //                             collapsedOutgoingPast.push(outgoingPastQuark)
+    //                             collapsedOutgoingPastRev.push(outgoingPastRevision)
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //
+    //         if (quark.value !== undefined && quark.revision === quark.valueRevision) {
+    //             outgoingsConsumed   = true
+    //
+    //             // TODO make a config option?
+    //             // the trick with `[ ... ] / copyArray` creates a new array with the exact size for its elements
+    //             // it seems, normally, arrays allocates a little more memory, avoid allocation on every "push"
+    //             // the difference might be, like: for array of 20 elements, exact size is 80 bytes,
+    //             // extra size - 180 bytes! for many small arrays (exactly the chrono case) total difference might be
+    //             // significant: for 100k boxes with 4 backward deps each - from 69.7MB to 54.1MB
+    //             // there is a small performance penalty: from 435ms to 455ms (`benchmarks/chrono2/graphful/commit_gen`)
+    //             // it seems Array.from() is slower than manual `copyArray`... because of iterators protocol?
+    //             this.$outgoing      = collapsedOutgoing
+    //             this.$outgoingRev   = collapsedOutgoingRev
+    //
+    //             this.$outgoingPast      = collapsedOutgoingPast
+    //             this.$outgoingPastRev   = collapsedOutgoingPastRev
+    //
+    //             // this.$outgoing      = collapsedOutgoing.slice()
+    //             // this.$outgoingRev   = collapsedOutgoingRev.slice()
+    //             // this.$outgoing      = copyArray(collapsedOutgoing)
+    //             // this.$outgoingRev   = copyArray(collapsedOutgoingRev)
+    //         }
+    //
+    //
+    //
+    //         // consume the top-most value, even if its the `sameValue`
+    //         // reasoning is that even that `equality` check has passed
+    //         // user may have some side effects that expects the value
+    //         // to always be the result of latest `calculation` call
+    //         if (!valueConsumed && quark.value !== undefined) {
+    //             valueConsumed       = true
+    //
+    //             if (quark !== this) this.copyValueFrom(quark)
+    //
+    //             this.previous       = zero
+    //             this.valueRevision  = this.revision
+    //         }
+    //
+    //         if (quark !== this) quark.destroy()
+    //
+    //         quark           = previous
+    //
+    //     } while (quark)
+    //
+    //     if (this.$outgoing.length === 0) this.owner.doCleanup()
+    // }
 
 
     destroy () {

@@ -10,7 +10,7 @@ import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
 import { CalculationModeGen, CalculationModeSync } from "../CalculationMode.js"
 import { ZeroBox } from "../data/Box.js"
-import { CalculableBox, CalculableBoxUnbound } from "../data/CalculableBox.js"
+import { CalculableBoxUnbound } from "../data/CalculableBox.js"
 import { Owner } from "../data/Immutable.js"
 import {
     Effect,
@@ -31,7 +31,7 @@ import {
     RejectSymbol,
     runGeneratorAsyncWithEffect
 } from "../Effect.js"
-import { Iteration } from "./Iteration.js"
+import { Iteration, IterationStorageShredding } from "./Iteration.js"
 import { Transaction } from "./Transaction.js"
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -193,8 +193,20 @@ export class ChronoGraph extends Base implements Owner {
     get immutable () : Transaction {
         if (this.$immutable !== undefined) return this.$immutable
 
-        // pass through the setter for the mark/unmark side effect
-        return this.immutable   = this.transactionClass.new()
+        if (this.historyLimit >= 0) {
+            const shreddingTransaction          = this.transactionClass.new()
+
+            shreddingTransaction.$immutable     = shreddingTransaction.iterationClass.new({
+                owner       : shreddingTransaction,
+                storage     : new IterationStorageShredding()
+            })
+
+            // pass through the setter for the mark/unmark side effect
+            return this.immutable   = this.transactionClass.new({ previous : shreddingTransaction })
+        } else {
+            // pass through the setter for the mark/unmark side effect
+            return this.immutable   = this.transactionClass.new()
+        }
     }
 
     // this is assignment "within" the undo/redo history, keeps the redo information
@@ -318,7 +330,7 @@ export class ChronoGraph extends Base implements Owner {
 
             lastIterationStorage.addQuark(quark)
 
-            quark.iteration = undefined
+            quark.iteration                 = undefined
 
             // set the magic data
             owner.identity.uniqableBox      = quark
@@ -903,6 +915,41 @@ export class ChronoGraph extends Base implements Owner {
     endBatch () {
         this.activeBatchRevision  = MIN_SMI
     }
+
+
+    untracked<R> (func : AnyFunction<R>) : R {
+        const prevActiveAtom    = this.activeAtom
+
+        this.activeAtom         = undefined
+
+        const res               = func()
+
+        this.activeAtom         = prevActiveAtom
+
+        return res
+    }
+
+    // the idea of this method is that we can bind an Atom's constructor to a certain graph instance
+    // and all instances of that Atom class will be inserted in the graph automatically
+    // does not work in practice, because of the initialization in sub-classes happens
+    // _after_ the `graph.addAtom()` call in the base Atom class..
+    // probably need to use static constructor everywhere
+    // bindAtomClass<C extends typeof Atom> (cls : C, meta? : Meta) : C {
+    //     const graph     = this
+    //
+    //     // @ts-ignore
+    //     const klass     = class extends cls {
+    //         get boundGraph () : ChronoGraph {
+    //             return graph
+    //         }
+    //     }
+    //
+    //     if (meta) klass.meta = meta
+    //
+    //     return klass
+    // }
 }
 
 export const globalGraph = ChronoGraph.new()
+
+

@@ -47,9 +47,14 @@ export class Transaction extends Owner implements Immutable {
 
 
     buildImmutable () : Iteration {
-        return this.previous ? this.previous.immutable.createNext(this) : this.iterationClass.new({
-            owner   : this,
-            storage : this.owner.historyLimit >= 0 ? new IterationStorageShredding() : new IterationStorage()
+        // return this.previous ? this.previous.immutable.createNext(this) : this.iterationClass.new({
+        //     owner   : this,
+        //     storage : this.owner.historyLimit >= 0 ? new IterationStorageShredding() : new IterationStorage()
+        // })
+
+        return this.iterationClass.new({
+            owner       : this,
+            previous    : this.previous ? this.previous.immutable : undefined
         })
     }
 

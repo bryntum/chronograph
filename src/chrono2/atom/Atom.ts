@@ -7,7 +7,6 @@ import { ComputationCycle, ComputationCycleError } from "../calculation/Computat
 import { CalculationModeSync } from "../CalculationMode.js"
 import { Owner } from "../data/Immutable.js"
 import { EffectHandler } from "../Effect.js"
-import { globalContext } from "../GlobalContext.js"
 import { ChronoGraph } from "../graph/Graph.js"
 import { Iteration } from "../graph/Iteration.js"
 import { chronoReference, ChronoReference, Identifiable } from "./Identifiable.js"
@@ -44,6 +43,10 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     userInputRevision   : number        = MIN_SMI
 
     immutable           : Quark         = this.buildDefaultImmutable()
+
+    // set to `false` to remove this atom from the graph, when it has no outgoing edges
+    // (its value is not used in any other atoms)
+    persistent          : boolean       = true
 
     // this is a cache for a state of the new, "virtual" quark
     // such quark appears when we write new state to the frozen quark, like "possibly stale"
@@ -116,6 +119,15 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     set equality (value : (v1 : unknown, v2 : unknown) => boolean) {
         this.$equality = value
     }
+
+    // get lazy () : boolean {
+    //     if (this.$lazy !== undefined) return this.$lazy
+    //
+    //     return this.$lazy = this.meta.lazy
+    // }
+    // set lazy (value : boolean) {
+    //     this.$lazy = value
+    // }
     //endregion
 
 
@@ -635,5 +647,10 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         } else {
             return undefined
         }
+    }
+
+
+    doCleanup () {
+        if (!this.persistent && this.graph) this.graph.removeAtom(this)
     }
 }

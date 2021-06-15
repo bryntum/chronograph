@@ -102,8 +102,10 @@ export class Iteration extends Immutable {
 
     // incremented by any owning graph, at any depth
     refCount        : number            = 0
+
     // incremented by any owning graph, at the depth of its `historyLimit`
     reachCount      : number            = 0
+
     // incremented by any following iteration
     // nextCount       : number            = 0
 
