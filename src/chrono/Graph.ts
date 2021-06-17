@@ -493,10 +493,10 @@ export class ChronoGraph extends Base {
         if (activeTransaction.rejectedWith) activeTransaction.clearRejected()
 
         if (this.activeTransaction.dirty) {
-            return await this.doCommitAsync(args)
-        } else {
-            return result
+            await this.doCommitAsync(args)
         }
+
+        return result
     }
 
 
