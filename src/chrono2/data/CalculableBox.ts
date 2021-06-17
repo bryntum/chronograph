@@ -401,7 +401,7 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
             this.beforeCalculation()
             this.iterationResult    = calculationStartedConstant
 
-            newValue                = this.calculation.call(this.context, onEffectSync)
+            newValue                = (this.calculation as CalculationFunction<V, CalculationModeSync>).call(this.context, onEffectSync)
 
             // the calculation starts in the `Calculating` state and should end up in the same, otherwise
             // if for example it is "PossiblyStale" or "Stale" - that means

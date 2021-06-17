@@ -54,7 +54,7 @@ export function runGeneratorSyncWithEffect<ResultT, YieldT, ArgsT extends any[]>
     func        : (...args : ArgsT) => Generator<YieldT, ResultT, any>,
     args        : ArgsT,
     scope?      : any
-) : Promise<ResultT>
+) : ResultT
 {
     const gen       = func.apply(scope, args)
 

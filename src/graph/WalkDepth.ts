@@ -26,7 +26,7 @@ export type VisitInfo = {
 export class WalkContext<Walkable, Label = any> extends Base {
     visited         : Map<Walkable, VisitInfo>      = new Map()
 
-    toVisit         : WalkStep<Walkable>[]          = []
+    toVisit         : WalkStep<Walkable, Label>[]   = []
 
     currentEpoch    : number                        = 0
 
@@ -37,7 +37,9 @@ export class WalkContext<Walkable, Label = any> extends Base {
 
 
     continueFrom (sourceNodes : Walkable[]) {
-        this.toVisit.push.apply(this.toVisit, sourceNodes.map(node => { return { node : node, from : WalkSource, label : undefined } }))
+        this.toVisit.push.apply(this.toVisit, sourceNodes.map(node => {
+            return { node : node, from : WalkSource, label : undefined } as WalkStep<Walkable, Label>
+        }))
 
         this.walkDepth()
     }
