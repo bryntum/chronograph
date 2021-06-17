@@ -348,7 +348,10 @@ export class IterationStorageShredding extends IterationStorage {
 
 
     addQuark (quark : Quark) {
-        this.quarksMap.set(quark.owner.id, quark)
+        if (quark.isTombstone)
+            this.quarksMap.delete(quark.owner.id)
+        else
+            this.quarksMap.set(quark.owner.id, quark)
     }
 
 

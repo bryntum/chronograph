@@ -61,6 +61,13 @@ StartTest(t => {
         t.is(box2CleanedUp, false)
         t.is(box3CleanedUp, true)
 
+        box3CleanedUp = false
+
+        graph.commit()
+
+        t.is(box2CleanedUp, false)
+        t.is(box3CleanedUp, false)
+
         t.is(box3.graph, undefined)
     })
 })

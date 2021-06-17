@@ -478,9 +478,20 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
 
 
     doCleanup () {
-        if (this.cleanup) this.cleanup(this)
+        const cleanup = this.cleanup
 
-        super.doCleanup()
+        if (cleanup) {
+            this.cleanup    = undefined
+
+            cleanup.call(this, this)
+        }
+    }
+
+
+    onUnused () {
+        this.doCleanup()
+
+        super.onUnused()
     }
 }
 

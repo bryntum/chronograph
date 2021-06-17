@@ -405,7 +405,7 @@ export class Quark<V = unknown> extends Node implements Immutable {
 
         } while (quark)
 
-        if (!this.$outgoing || this.$outgoing.length === 0) this.owner.doCleanup()
+        if (!this.$outgoing || this.$outgoing.length === 0) this.owner.onUnused()
     }
 
 

@@ -157,6 +157,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         if (this.graph !== graph) throw new Error("Atom not in graph")
         // </debug>
 
+        this.doCleanup()
+
         this.graph      = undefined
     }
 
@@ -651,6 +653,10 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
 
     doCleanup () {
+    }
+
+
+    onUnused () {
         if (!this.persistent && this.graph) this.graph.removeAtom(this)
     }
 }
