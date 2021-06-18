@@ -3,7 +3,7 @@
         "experimentalDecorators"    : true,
 
         "noImplicitThis"            : true,
-//        "strictBindCallApply"       : true,
+        "strictBindCallApply"       : true,
 
         "target"                    : "es2017",
 

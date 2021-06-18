@@ -2,7 +2,7 @@ import { CalculationIterator } from "../../primitives/Calculation.js"
 import { AtomState } from "../atom/Atom.js"
 import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
 import { calculateAtomsQueueSync } from "../calculation/LeveledSync.js"
-import { CalculationModeGen } from "../CalculationMode.js"
+import { CalculationFunction, CalculationMode, CalculationModeGen } from "../CalculationMode.js"
 import { EffectHandler, runGeneratorAsyncWithEffect } from "../Effect.js"
 import { ChronoGraph, globalGraph } from "../graph/Graph.js"
 import { CalculableBoxUnbound } from "./CalculableBox.js"
@@ -35,7 +35,7 @@ export class CalculableBoxGenUnbound<V = unknown> extends CalculableBoxUnbound<V
 
         this.iterationNumber        = 0
 
-        const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.context, onEffect)
+        const iterator : this[ 'iterator' ] = this.iterator = (this.calculation as CalculationFunction<V, CalculationModeGen>).call(this.context, onEffect)
 
         return this.iterationResult = iterator.next()
     }
