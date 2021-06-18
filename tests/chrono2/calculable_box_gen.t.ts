@@ -17,7 +17,7 @@ StartTest(t => {
         for (let i = 0; i < stackSize; i++) {
             boxes.push(new CalculableBoxGen({
                 context     : boxes.length,
-                * calculation () : CalculationIterator<number> {
+                * calculation (this : number) : CalculationIterator<number> {
                     return (yield boxes[ this - 1 ]) + 1
                 }
             }))

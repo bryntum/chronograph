@@ -26,7 +26,7 @@ export class CommitBenchmark extends ReactiveDataBenchmark<ReactiveDataGeneratio
         }
 
         for (let i = this.depCount; i < this.atomNum; i++) {
-            boxes.push(this.graphGen.computedStrict(function () {
+            boxes.push(this.graphGen.computedStrict(function (this : number) {
                 res.counter++
 
                 let sum = 0

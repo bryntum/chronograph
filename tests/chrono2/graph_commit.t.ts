@@ -95,7 +95,7 @@ StartTest(t => {
             const box   = new CalculableBoxUnbound({
                 lazy        : false,
                 context     : boxes.length,
-                calculation () : number {
+                calculation (this : number) : number {
                     return boxes[ this - 1 ].read() + 1
                 }
             })

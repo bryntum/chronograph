@@ -16,7 +16,7 @@ StartTest(t => {
         for (let i = 0; i < stackSize; i++) {
             boxes.push(new CalculableBox({
                 context     : boxes.length,
-                calculation () : number {
+                calculation (this : number) : number {
                     return boxes[ this - 1 ].read() + 1
                 }
             }))

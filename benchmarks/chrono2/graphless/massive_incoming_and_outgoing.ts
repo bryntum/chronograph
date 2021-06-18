@@ -24,7 +24,7 @@ export class MassiveIncomingAndOutgoingBenchmark extends ReactiveDataBenchmark {
         let outgoing : BoxAbstract<number>[]    = []
 
         for (let i = 0; i < this.atomNum; i++) {
-            outgoing.push(this.graphGen.computed(function () {
+            outgoing.push(this.graphGen.computed(function (this : number) {
                 res.counter++
 
                 return source.READ() * this

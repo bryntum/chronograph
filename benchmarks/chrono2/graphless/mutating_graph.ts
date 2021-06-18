@@ -31,7 +31,7 @@ export class MutatingGraphBenchmark extends ReactiveDataBenchmark {
 
         for (let i = this.depCount; i < this.atomNum; i++) {
             const box = this.graphGen.computed(
-                function () {
+                function (this : number) {
                     res.counter++
 
                     let sum = 0

@@ -109,7 +109,7 @@ StartTest(t => {
                 name        : 'box' + i,
                 sync        : false,
 
-                *calculation () : CalculationIterator<number> {
+                *calculation (this : number) : CalculationIterator<number> {
                     count++
 
                     yield randomDelay()

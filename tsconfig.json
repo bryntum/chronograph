@@ -1,22 +1,24 @@
 {
     "compilerOptions" : {
-//        "importHelpers"             : true,
         "experimentalDecorators"    : true,
 
-        "target"                : "es2017",
-//        "strictNullChecks"      : true,
+        "noImplicitThis"            : true,
+//        "strictBindCallApply"       : true,
 
-        "sourceMap"             : false,
-        "lib"                   : [
+        "target"                    : "es2017",
+
+        "sourceMap"                 : false,
+        "lib"                       : [
             "esnext"
         ],
-        "module"                : "esnext",
-        "moduleResolution"      : "Node"
+        "module"                    : "esnext",
+        "moduleResolution"          : "Node"
     },
 
     "include" : [
         "main.ts",
         "src/**/*.ts",
+        "src3/**/*.ts",
         "tests/**/*.ts",
         "benchmarks/**/*.ts",
         "examples/**/*.ts"

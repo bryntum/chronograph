@@ -29,7 +29,7 @@ export class StableGraphBenchmark extends ReactiveDataBenchmark {
         }
 
         for (let i = this.depCount; i < this.atomNum; i++) {
-            boxes.push(this.graphGen.computed(function () {
+            boxes.push(this.graphGen.computed(function (this : number) {
                 res.counter++
 
                 let sum = 0

@@ -15,7 +15,7 @@ StartTest(t => {
             const context = {}
 
             const box     = graphGen.calculableBox({
-                calculation : eval(graphGen.calc(function* () {
+                calculation : eval(graphGen.calc(function* (this : {}) {
                     t.is(this, context, 'Correct context')
                     return 11
                 })),
