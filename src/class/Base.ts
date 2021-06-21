@@ -44,11 +44,11 @@ export class Base {
      * @param props
      */
     static new<T extends typeof Base> (this : T, props? : Partial<InstanceType<T>>) : InstanceType<T> {
-        const instance      = new this()
+        const instance      = new this() as InstanceType<T>
 
         instance.initialize<InstanceType<T>>(props)
 
-        return instance as InstanceType<T>
+        return instance
     }
 }
 
