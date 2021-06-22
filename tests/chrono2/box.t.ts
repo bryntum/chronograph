@@ -8,21 +8,21 @@ setCompactCounter(1)
 StartTest(t => {
 
     t.it('Newly created Box should return `null` on read', t => {
-        const box     = new Box()
+        const box     = Box.new()
 
         t.isStrict(box.read(), null)
     })
 
 
     t.it('Should be possible to provide value as constructor argument', t => {
-        const box     = new Box(10)
+        const box     = Box.new(10)
 
         t.isStrict(box.read(), 10)
     })
 
 
     t.it('Should read your own writes', t => {
-        const box     = new Box()
+        const box     = Box.new()
 
         box.write(10)
 
@@ -36,7 +36,7 @@ StartTest(t => {
 
 
     t.it('Writing `undefined` should be converted to `null`', t => {
-        const box     = new Box()
+        const box     = Box.new()
 
         box.write(10)
 

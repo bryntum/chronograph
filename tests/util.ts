@@ -7,17 +7,19 @@ import { AnyFunction } from "../src/class/Mixin.js"
 export class GraphGen extends Base {
     sync            : boolean       = false
 
-    calculableBox <V> (config : Partial<CalculableBox<V>> & { unbound? : boolean }) : CalculableBox<V> {
+    calculableBox<V> (config : Partial<CalculableBoxUnbound<V>> & { unbound? : boolean }) : CalculableBox<V> {
         if (config.unbound) {
             if (this.sync)
-                return new CalculableBoxUnbound<V>(config)
+                return CalculableBoxUnbound.new<V>(config)
             else
-                return new CalculableBoxGenUnbound<V>(config)
+                // @ts-ignore
+                return CalculableBoxGenUnbound.new<V>(config)
         } else {
             if (this.sync)
-                return new CalculableBox<V>(config)
+                return CalculableBox.new<V>(config)
             else
-                return new CalculableBoxGen<V>(config)
+                // @ts-ignore
+                return CalculableBoxGen.new<V>(config)
         }
     }
 

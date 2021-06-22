@@ -17,7 +17,7 @@ StartTest(t => {
 
         let box2CleanedUp       = false
 
-        const box2      = new CalculableBoxUnbound({
+        const box2      = CalculableBoxUnbound.new({
             lazy        : false,
             name        : 'box2',
 
@@ -31,7 +31,7 @@ StartTest(t => {
 
         let box3CleanedUp       = false
 
-        const box3      = new CalculableBoxUnbound({
+        const box3      = CalculableBoxUnbound.new({
             lazy        : false,
             name        : 'box3',
             persistent  : false,
@@ -43,9 +43,9 @@ StartTest(t => {
             cleanup () { debugger; box3CleanedUp = true }
         })
 
-        const ref       = new BoxUnbound(box2, 'refBox')
+        const ref       = BoxUnbound.new(box2, 'refBox')
 
-        const box4      = new CalculableBoxUnbound({
+        const box4      = CalculableBoxUnbound.new({
             lazy        : false,
             name        : 'box4',
 

@@ -14,10 +14,10 @@ StartTest(t => {
         const prefix    = graphGen.sync ? 'SYNC: ' : 'GEN: '
 
         t.it(prefix + "Should be possible to write to another box during calculation", t => {
-            const var0      = new Box(0, 'var0')
-            const var1      = new Box(0, 'var1')
+            const var0      = Box.new(0, 'var0')
+            const var1      = Box.new(0, 'var1')
 
-            const varMax    = new Box(10, 'varMax')
+            const varMax    = Box.new(10, 'varMax')
 
             const idenSum   = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -56,8 +56,8 @@ StartTest(t => {
 
 
         t.it(prefix + "Should be possible to write to another box during calculation with distant dependencies", t => {
-            const box0      = new Box(1, 'box0')
-            // const box00     = new Box(0, 'box00')
+            const box0      = Box.new(1, 'box0')
+            // const box00     = Box.new(0, 'box00')
 
             const box1   = graphGen.calculableBox({
                 name        : 'box1',
@@ -113,8 +113,8 @@ StartTest(t => {
         t.it(prefix + 'Dynamic write + subtree elimination', async t => {
             const graph : ChronoGraph   = ChronoGraph.new()
 
-            const var0      = new BoxUnbound(0, 'var0')
-            const var1      = new BoxUnbound(0, 'var1')
+            const var0      = BoxUnbound.new(0, 'var0')
+            const var1      = BoxUnbound.new(0, 'var1')
 
             const iden1     = graphGen.calculableBox({
                 unbound     : true,
@@ -192,8 +192,8 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should not perform extra computations on graph mutation', t => {
-            const box0      = new Box(0, 'box0')
-            const box00     = new Box(0, 'box00')
+            const box0      = Box.new(0, 'box0')
+            const box00     = Box.new(0, 'box00')
 
             let count1      = 0
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
@@ -213,7 +213,7 @@ StartTest(t => {
                 }))
             })
 
-            const dispatcher : Box<CalculableBox<number>> = new Box(box1, 'dispatcher')
+            const dispatcher : Box<CalculableBox<number>> = Box.new(box1, 'dispatcher')
 
             let count2      = 0
             const box2      = graphGen.calculableBox({
@@ -262,8 +262,8 @@ StartTest(t => {
         // so the change of dependencies structure should be reflect in dependency from some atom
         // TODO document this somewhere, include this test as an example and remove it from here
         t.xit(prefix + 'Should not perform extra computations on graph mutation (magical deps change)', t => {
-            const box0      = new Box(0, 'box0')
-            const box00     = new Box(0, 'box00')
+            const box0      = Box.new(0, 'box0')
+            const box00     = Box.new(0, 'box00')
 
             let count1      = 0
             const box1 : CalculableBox<number>     = graphGen.calculableBox({

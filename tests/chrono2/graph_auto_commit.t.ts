@@ -15,10 +15,10 @@ const randomDelay = () => delay(Math.random() * 100)
 StartTest(t => {
 
     t.it('Should trigger auto-commit', async t => {
-        const box1      = new BoxUnbound(10)
+        const box1      = BoxUnbound.new(10)
 
         let counter2    = 0
-        const box2      = new CalculableBoxGenUnbound({
+        const box2      = CalculableBoxGenUnbound.new({
             lazy        : false,
 
             *calculation () : CalculationIterator<number> {
@@ -29,7 +29,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBoxGenUnbound({
+        const box3     = CalculableBoxGenUnbound.new({
             lazy        : true,
             *calculation () : CalculationIterator<number> {
                 counter3++
@@ -39,7 +39,7 @@ StartTest(t => {
         })
 
         let counter4    = 0
-        const box4     = new CalculableBoxGenUnbound({
+        const box4     = CalculableBoxGenUnbound.new({
             lazy        : false,
             *calculation () : CalculationIterator<number> {
                 counter4++

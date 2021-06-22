@@ -7,7 +7,7 @@ import { calculateLowerStackLevelsSync } from "../calculation/LeveledSync.js"
 import { CalculationFunction, CalculationMode, CalculationModeSync } from "../CalculationMode.js"
 import { EffectHandler } from "../Effect.js"
 import { ChronoGraph, globalGraph } from "../graph/Graph.js"
-import { BoxUnbound } from "./Box.js"
+import { BoxUnbound, BoxUnboundPre } from "./Box.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -16,7 +16,7 @@ export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStar
 const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> =
     { done : false, value : SynchronousCalculationStarted }
 
-export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
+export class CalculableBoxUnbound<V = unknown> extends BoxUnboundPre<V> {
     level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnSelfKind
 
     cleanup         : AnyFunction           = undefined
@@ -32,26 +32,31 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
         this.$calculationEtalon = value
     }
 
-    constructor (config? : Partial<CalculableBoxUnbound<V>>) {
-        super()
+
+    static new<V> (this : typeof CalculableBoxUnbound, config? : Partial<CalculableBoxUnbound<V>>) : CalculableBoxUnbound<V> {
+        const instance      = new this() as CalculableBoxUnbound<V>
 
         if (config) {
-            if (config.meta !== undefined) this.meta = config.meta
+            if (config.meta !== undefined) instance.meta = config.meta
 
-            this.name               = config.name
-            this.context            = config.context !== undefined ? config.context : this
+            instance.name               = config.name
+            instance.context            = config.context !== undefined ? config.context : instance
 
-            this.$calculation       = config.calculation
-            this.$calculationEtalon = config.calculationEtalon
-            this.$equality          = config.equality
-            this.cleanup            = config.cleanup
+            instance.$calculation       = config.calculation
+            instance.$calculationEtalon = config.calculationEtalon
+            instance.$equality          = config.equality
+            instance.cleanup            = config.cleanup
 
-            if (config.lazy !== undefined) this.lazy = config.lazy
-            if (config.persistent !== undefined) this.persistent = config.persistent
+            if (config.lazy !== undefined) instance.lazy = config.lazy
+            if (config.persistent !== undefined) instance.persistent = config.persistent
 
             // TODO not needed explicitly (can defined based on the type of the `calculation` function?
-            if (config.sync !== undefined) this.sync = config.sync
+            if (config.sync !== undefined) instance.sync = config.sync
         }
+
+        instance.initialize()
+
+        return instance
     }
 
 
@@ -254,15 +259,15 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnbound<V> {
         if (self.isCalculationStarted()) self.onCyclicReadDetected()
 
         // inlined `actualize` to save 1 stack level
-        if (self.state !== AtomState.UpToDate && self.graph) {
-            self.graph.enterBatch()
+        if (self.state !== AtomState.UpToDate) {
+            self.graph && self.graph.enterBatch()
 
             if (self.shouldCalculate())
                 self.doCalculate()
             else
                 self.state = AtomState.UpToDate
 
-            self.graph.leaveBatch()
+            self.graph && self.graph.leaveBatch()
         }
         // eof inlined `actualize`
 

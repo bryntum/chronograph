@@ -20,7 +20,7 @@ StartTest(t => {
         const prefix    = graphGen.sync ? 'SYNC: ' : 'GEN: '
 
         t.it(prefix + '`ProposedOrPrevious` effect', async t => {
-            const max       = new Box(100)
+            const max       = Box.new(100)
 
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -59,7 +59,7 @@ StartTest(t => {
 
 
         t.it(prefix + 'ProposedOrPrevious - invalidation', async t => {
-            const max       = new Box(100)
+            const max       = Box.new(100)
 
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -133,7 +133,7 @@ StartTest(t => {
         t.it(prefix + 'Should mark atoms that did not match the "etalon" as stale on next commit', async t => {
             const graph     = ChronoGraph.new()
 
-            const max       = new BoxUnbound(100)
+            const max       = BoxUnbound.new(100)
 
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
                 unbound : true,
@@ -233,9 +233,9 @@ StartTest(t => {
 
 
         t.it(prefix + 'Lazily calculated impure identifier', async t => {
-            const var0      = new Box(1, 'var0')
+            const var0      = Box.new(1, 'var0')
 
-            const max       = new Box(100, 'max')
+            const max       = Box.new(100, 'max')
 
             const var1 : CalculableBox<number>     = graphGen.calculableBox({
                 name    : 'var1',
@@ -300,7 +300,7 @@ StartTest(t => {
 
 
         t.it(prefix + 'ProposedOrPrevious - stale after etalon mismatch', async t => {
-            const max       = new Box(100)
+            const max       = Box.new(100)
 
             let counter1    = 0
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
@@ -374,7 +374,7 @@ StartTest(t => {
         t.it(prefix + 'ProposedOrPrevious - stale after etalon mismatch, using graph commit', async t => {
             const graph     = ChronoGraph.new()
 
-            const max       = new BoxUnbound(100)
+            const max       = BoxUnbound.new(100)
 
             let counter1    = 0
             const box1 : CalculableBox<number>     = graphGen.calculableBox({
@@ -525,7 +525,7 @@ StartTest(t => {
 
     // TODO deprecate and remove effect handler as 1st argument
     t.it('SYNC: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', async t => {
-        const var1 : CalculableBox<number>     = new CalculableBox({
+        const var1 : CalculableBox<number>     = CalculableBox.new({
             name    : 'var1',
             lazy    : false,
             calculation : function (Y : EffectHandler<CalculationModeSync>) {
@@ -556,7 +556,7 @@ StartTest(t => {
 
     // TODO deprecate and remove effect handler as 1st argument
     t.it('GEN: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', t => {
-        const var1 : CalculableBox<number>     = new CalculableBoxGen({
+        const var1 : CalculableBox<number>     = CalculableBoxGen.new({
             name    : 'var1',
             lazy    : false,
             calculation : function* (Y : EffectHandler<CalculationModeGen>) {
@@ -587,7 +587,7 @@ StartTest(t => {
 
     // TODO deprecate and remove effect handler as 1st argument
     t.it('GEN+ASYNC: Should support yielding `ProposedOrPrevious` symbol instead of `readProposedOrPrevious` call', async t => {
-        const var1 : CalculableBox<number>     = new CalculableBoxGen({
+        const var1 : CalculableBox<number>     = CalculableBoxGen.new({
             name    : 'var1',
             lazy    : false,
             calculation : function* (Y : EffectHandler<CalculationModeGen>) {

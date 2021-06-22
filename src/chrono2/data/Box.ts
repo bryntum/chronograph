@@ -30,16 +30,7 @@ BoxImmutable.zero.freeze()
 
 //---------------------------------------------------------------------------------------------------------------------
 // TODO Box should extend both Atom & BoxImmutable as CombinedOwnerAndImmutable
-export class BoxUnbound<V = unknown> extends Atom<V> {
-
-    constructor (value? : V, name? : string) {
-        super()
-
-        this.write(value)
-
-        this.name   = name
-    }
-
+export class BoxUnboundPre<V = unknown> extends Atom<V> {
 
     static meta : Meta     = DefaultMetaBox
 
@@ -129,7 +120,26 @@ export class BoxUnbound<V = unknown> extends Atom<V> {
 }
 
 
+export class BoxUnbound<V = unknown> extends BoxUnboundPre<V> {
+
+    static new<V> (this : typeof BoxUnbound, value? : V, name? : string) : BoxUnbound<V> {
+        const instance      = new this() as BoxUnbound<V>
+
+        instance.write(value)
+        instance.name       = name
+
+        instance.initialize()
+
+        return instance
+    }
+}
+
 export class Box<V = unknown> extends BoxUnbound<V> {
+
+    static new<T extends typeof Box, V> (this : T, value? : V, name? : string) : Box<V> {
+        return super.new(value, name)
+    }
+
     get boundGraph () : ChronoGraph {
         return globalGraph
     }

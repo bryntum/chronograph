@@ -224,7 +224,7 @@ StartTest(t => {
         replica = Replica.new()
         event   = Event.new()
 
-        var0    = new BoxUnbound(0)
+        var0    = BoxUnbound.new(0)
 
         replica.addEntity(event)
         replica.addAtom(var0)

@@ -130,29 +130,29 @@ export class ReactiveDataGeneratorChronoGraph2 extends Base implements ReactiveD
 
     // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : Box<unknown> {
-        return new Box(initialValue, name)
+        return Box.new(initialValue, name)
     }
 
     box<V> (initialValue : V, name? : string) : BoxChronoGraph2<V> {
-        return new BoxChronoGraph2(new Box(initialValue, name))
+        return new BoxChronoGraph2(Box.new(initialValue, name))
     }
 
 
     // used to measure the allocation performance
     rawComputed<V> (func : AnyFunction<V>, context? : any, name? : string) : Box<unknown> {
-        return new CalculableBox({ calculation : func, context : context, name : name })
+        return CalculableBox.new({ calculation : func, context : context, name : name })
     }
 
     computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        return new BoxChronoGraph2(new CalculableBox({ calculation : func, context : context, name : name }))
+        return new BoxChronoGraph2(CalculableBox.new({ calculation : func, context : context, name : name }))
     }
 
     computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        return new BoxChronoGraph2(new CalculableBox({ calculation : func, context : context, name : name, lazy : false }))
+        return new BoxChronoGraph2(CalculableBox.new({ calculation : func, context : context, name : name, lazy : false }))
     }
 
     computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        return new BoxChronoGraph2(new CalculableBoxGen({ calculation : func, context : context, name : name, lazy : false }))
+        return new BoxChronoGraph2(CalculableBoxGen.new({ calculation : func, context : context, name : name, lazy : false }))
     }
 }
 

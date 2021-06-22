@@ -12,7 +12,7 @@ StartTest(t => {
     t.it('Graph branching', async t => {
         const graph1 : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
-        const var1      = new BoxUnbound(0)
+        const var1      = BoxUnbound.new(0)
 
         graph1.addAtom(var1)
 
@@ -43,8 +43,8 @@ StartTest(t => {
 
         let counter : number = 0
 
-        const var1      = new BoxUnbound(0)
-        const var2      = new CalculableBoxUnbound({
+        const var1      = BoxUnbound.new(0)
+        const var2      = CalculableBoxUnbound.new({
             calculation (Y) {
                 counter++
 
@@ -106,13 +106,13 @@ StartTest(t => {
     t.it('Should not recalculate nodes from previous branch', t => {
         const graph1 : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1            = new BoxUnbound(0, 'i1')
-        const i2            = new BoxUnbound(1, 'i2')
-        const dispatcher    = new BoxUnbound(i1, 'dispatcher')
+        const i1            = BoxUnbound.new(0, 'i1')
+        const i2            = BoxUnbound.new(1, 'i2')
+        const dispatcher    = BoxUnbound.new(i1, 'dispatcher')
 
         let counter         = 0
 
-        const c1            = new CalculableBoxUnbound({
+        const c1            = CalculableBoxUnbound.new({
             name        : 'c1',
             calculation (Y) {
                 counter++
@@ -157,13 +157,13 @@ StartTest(t => {
     t.it('Should not recalculate nodes from alternative branch', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1            = new BoxUnbound(0, 'i1')
-        const i2            = new BoxUnbound(1, 'i2')
-        const dispatcher    = new BoxUnbound(i1, 'dispatcher')
+        const i1            = BoxUnbound.new(0, 'i1')
+        const i2            = BoxUnbound.new(1, 'i2')
+        const dispatcher    = BoxUnbound.new(i1, 'dispatcher')
 
         let counter         = 0
 
-        const c1            = new CalculableBoxUnbound({
+        const c1            = CalculableBoxUnbound.new({
             name        : 'c1',
             calculation (Y) {
                 counter++
@@ -209,13 +209,13 @@ StartTest(t => {
     t.it('Should not use stale deep history', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1            = new BoxUnbound(0, 'i1')
-        const i2            = new BoxUnbound(1, 'i2')
-        const dispatcher    = new BoxUnbound(i1, 'dispatcher')
+        const i1            = BoxUnbound.new(0, 'i1')
+        const i2            = BoxUnbound.new(1, 'i2')
+        const dispatcher    = BoxUnbound.new(i1, 'dispatcher')
 
         let counter         = 0
 
-        const c1            = new CalculableBoxUnbound({
+        const c1            = CalculableBoxUnbound.new({
             name        : 'c1',
             calculation (Y) {
                 counter++
@@ -254,10 +254,10 @@ StartTest(t => {
     t.it('Should recalculate nodes, changed in deep history', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1            = new BoxUnbound(0, 'i1')
-        const i2            = new BoxUnbound(1, 'i2')
+        const i1            = BoxUnbound.new(0, 'i1')
+        const i2            = BoxUnbound.new(1, 'i2')
 
-        const c1            = new CalculableBoxUnbound({
+        const c1            = CalculableBoxUnbound.new({
             name        : 'c1',
             calculation (Y) {
                 return Y(i1) + Y(i2)
@@ -273,7 +273,7 @@ StartTest(t => {
         // ----------------
         const graph2        = graph1.branch({ historyLimit : 0 })
 
-        const i3            = new BoxUnbound(2, 'i3')
+        const i3            = BoxUnbound.new(2, 'i3')
 
         graph2.addAtoms([ i3 ])
 
@@ -295,8 +295,8 @@ StartTest(t => {
     t.it('Should eliminate unchanged trees, in cross-branch case', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1        = new BoxUnbound(0, 'i1')
-        const i2        = new BoxUnbound(10, 'i2')
+        const i1        = BoxUnbound.new(0, 'i1')
+        const i2        = BoxUnbound.new(10, 'i2')
 
         let counter1    = 0
         let counter2    = 0
@@ -305,7 +305,7 @@ StartTest(t => {
         let counter5    = 0
         let counter6    = 0
 
-        const c1        = new CalculableBoxUnbound({
+        const c1        = CalculableBoxUnbound.new({
             name        : 'c1',
             calculation (Y) {
                 counter1++
@@ -313,7 +313,7 @@ StartTest(t => {
             }
         })
 
-        const c2        = new CalculableBoxUnbound({
+        const c2        = CalculableBoxUnbound.new({
             name        : 'c2',
             calculation (Y) {
                 counter2++
@@ -321,7 +321,7 @@ StartTest(t => {
             }
         })
 
-        const c3        = new CalculableBoxUnbound({
+        const c3        = CalculableBoxUnbound.new({
             name        : 'c3',
             calculation (Y) {
                 counter3++
@@ -329,7 +329,7 @@ StartTest(t => {
             }
         })
 
-        const c4        = new CalculableBoxUnbound({
+        const c4        = CalculableBoxUnbound.new({
             name        : 'c4',
             calculation (Y) {
                 counter4++
@@ -337,7 +337,7 @@ StartTest(t => {
             }
         })
 
-        const c5        = new CalculableBoxUnbound({
+        const c5        = CalculableBoxUnbound.new({
             name        : 'c5',
             calculation (Y) {
                 counter5++
@@ -345,7 +345,7 @@ StartTest(t => {
             }
         })
 
-        const c6        = new CalculableBoxUnbound({
+        const c6        = CalculableBoxUnbound.new({
             name        : 'c6',
             calculation (Y) {
                 counter6++
@@ -404,13 +404,13 @@ StartTest(t => {
     t.it('Should not use history from another branch', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1            = new BoxUnbound(0, 'i1')
-        const i2            = new BoxUnbound(1, 'i2')
-        const dispatcher    = new BoxUnbound(i1, 'dispatcher')
+        const i1            = BoxUnbound.new(0, 'i1')
+        const i2            = BoxUnbound.new(1, 'i2')
+        const dispatcher    = BoxUnbound.new(i1, 'dispatcher')
 
         let counter         = 0
 
-        const c1            = new CalculableBoxUnbound({
+        const c1            = CalculableBoxUnbound.new({
             name        : 'c1',
             calculation (Y) {
                 counter++
@@ -453,13 +453,13 @@ StartTest(t => {
     t.it('Undo/redo should work in the branch', async t => {
         const graph1 : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1            = new BoxUnbound(0, 'i1')
-        const i2            = new BoxUnbound(1, 'i2')
-        const dispatcher    = new BoxUnbound(i1, 'dispatcher')
+        const i1            = BoxUnbound.new(0, 'i1')
+        const i2            = BoxUnbound.new(1, 'i2')
+        const dispatcher    = BoxUnbound.new(i1, 'dispatcher')
 
         let counter         = 0
 
-        const c1            = new CalculableBoxUnbound({
+        const c1            = CalculableBoxUnbound.new({
             name        : 'c1',
             calculation (Y) {
                 counter++

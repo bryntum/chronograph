@@ -90,31 +90,6 @@ project.start(
         ]
     },
     {
-        group       : 'ChronoGraph',
-
-        items       : [
-            'chrono/010_identifier_variable.t.js',
-            'chrono/011_lazy_identifier.t.js',
-            'chrono/012_impure_calculated_value.t.js',
-            'chrono/013_sync_calculation.t.js',
-            'chrono/013_async_calculation.t.js',
-            'chrono/015_listeners.t.js',
-            'chrono/016_recursion.t.js',
-            'chrono/017_identifier_listener.t.js',
-            'chrono/020_graph_branching.t.js',
-            'chrono/030_propagation.t.js',
-            'chrono/030_propagation_2.t.js',
-            'chrono/030_transaction_reject.t.js',
-            'chrono/030_iteration.t.js',
-            'chrono/031_garbage_collection.t.js',
-            'chrono/032_propagation_options.t.js',
-            'chrono/032_commit_async.t.js',
-            'chrono/033_cycle_info.t.js',
-            'chrono/040_add_remove.t.js',
-            'chrono/050_undo_redo.t.js',
-        ]
-    },
-    {
         group       : 'Cycle resolver',
 
         items       : [
@@ -130,27 +105,6 @@ project.start(
         group       : 'chrono-userland',
 
         items       : [
-        ]
-    },
-    {
-        group       : 'Replica',
-
-        items       : [
-            'replica/001_entity.t.js',
-            'replica/002_fields.t.js',
-            'replica/010_replica.t.js',
-            'replica/020_reference.t.js',
-            'replica/025_tree_node.t.js',
-            'replica/030_cycle_dispatcher_example.t.js',
-            'replica/033_cycle_info.t.js',
-            'replica/040_calculate_only.t.js'
-        ]
-    },
-    {
-        group       : 'Schema',
-
-        items       : [
-            'schema/010_schema.t.js',
         ]
     },
     {

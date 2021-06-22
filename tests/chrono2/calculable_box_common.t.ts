@@ -27,7 +27,7 @@ StartTest(t => {
 
 
         t.it(prefix + "Should be possible to observe the value of the box in calculable box", t => {
-            const box1     = new Box(10)
+            const box1     = Box.new(10)
 
             const box2     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -44,7 +44,7 @@ StartTest(t => {
 
 
         t.it(prefix + "Should be possible to observe the value of the calculable box in another calculable box", t => {
-            const box1     = new Box(10)
+            const box1     = Box.new(10)
 
             const box2     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -86,8 +86,8 @@ StartTest(t => {
 
 
         t.it(prefix + "Should track dependencies correctly", t => {
-            const box0      = new Box(0)
-            const box00     = new Box(0)
+            const box0      = Box.new(0)
+            const box00     = Box.new(0)
 
             const box1 = graphGen.calculableBox({
                 name        : 'box1',

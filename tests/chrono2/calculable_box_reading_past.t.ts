@@ -20,18 +20,18 @@ StartTest(t => {
 
         let result
 
-        const listener      = graph.addAtom(new CalculableBoxUnbound({
+        const listener      = graph.addAtom(CalculableBoxUnbound.new({
             // lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : any {
                 return result = Y(PreviousValueOf(source))
             }
         }))
 
-        const var1          = new Box(0)
+        const var1          = Box.new(0)
 
-        const sourceMode    = new Box('proposed')
+        const sourceMode    = Box.new('proposed')
 
-        const source        = graph.addAtom(new CalculableBoxUnbound({
+        const source        = graph.addAtom(CalculableBoxUnbound.new({
             // lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = Y(sourceMode)
@@ -101,18 +101,18 @@ StartTest(t => {
 
         let result
 
-        const listener      = graph.addAtom(new CalculableBoxUnbound({
+        const listener      = graph.addAtom(CalculableBoxUnbound.new({
             lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : any {
                 return result = Y(ProposedValueOf(source))
             }
         }))
 
-        const var1          = new Box(0)
+        const var1          = Box.new(0)
 
-        const sourceMode    = new Box('proposed')
+        const sourceMode    = Box.new('proposed')
 
-        const source        = graph.addAtom(new CalculableBoxUnbound({
+        const source        = graph.addAtom(CalculableBoxUnbound.new({
             lazy : false,
             calculation (Y : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = Y(sourceMode)
@@ -180,18 +180,18 @@ StartTest(t => {
     t.it('Should be able to read the past of the identifier which is being listened - ProposedOrPreviousValueOf', async t => {
         const graph : ChronoGraph   = ChronoGraph.new({ historyLimit : 0 })
 
-        const listener      = graph.addAtom(new CalculableBoxUnbound({
+        const listener      = graph.addAtom(CalculableBoxUnbound.new({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
                 return YIELD(ProposedOrPreviousValueOf(source))
             }
         }))
 
-        const var1          = new Box(0)
+        const var1          = Box.new(0)
 
-        const sourceMode    = new Box('proposed')
+        const sourceMode    = Box.new('proposed')
 
-        const source        = graph.addAtom(new CalculableBoxUnbound({
+        const source        = graph.addAtom(CalculableBoxUnbound.new({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = YIELD(sourceMode)
@@ -259,18 +259,18 @@ StartTest(t => {
 
         let result
 
-        const listener      = graph.addAtom(new CalculableBoxUnbound({
+        const listener      = graph.addAtom(CalculableBoxUnbound.new({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : any {
                 return result = YIELD(ProposedArgumentsOf(source))
             }
         }))
 
-        const var1          = new Box(0)
+        const var1          = Box.new(0)
 
-        const sourceMode    = new Box('proposed')
+        const sourceMode    = Box.new('proposed')
 
-        const source        = graph.addAtom(new CalculableBoxUnbound({
+        const source        = graph.addAtom(CalculableBoxUnbound.new({
             lazy        : false,
             calculation (YIELD : EffectHandler<CalculationModeSync>) : number {
                 const mode : string     = YIELD(sourceMode)
@@ -348,16 +348,16 @@ StartTest(t => {
 
 
     t.it('Reading past should not cause cycles', async t => {
-        const var1          = new Box(0, 'var1')
+        const var1          = Box.new(0, 'var1')
 
-        const dispatcher    = new CalculableBox({
+        const dispatcher    = CalculableBox.new({
             name : 'dispatcher',
             calculation () : boolean {
                 return box2.readProposed() !== undefined
             }
         })
 
-        const box2          = new CalculableBox({
+        const box2          = CalculableBox.new({
             name : 'box2',
             calculation () : number {
                 const dispatcherValue    = dispatcher.read()
@@ -382,11 +382,11 @@ StartTest(t => {
     t.it('Reading past should not cause cycles and extra computations', async t => {
         const graph         = ChronoGraph.new()
 
-        const var1          = new BoxUnbound(0, 'var1')
+        const var1          = BoxUnbound.new(0, 'var1')
 
         let counter1        = 0
 
-        const dispatcher    = new CalculableBoxUnbound({
+        const dispatcher    = CalculableBoxUnbound.new({
             name    : 'dispatcher',
             lazy    : false,
             calculation () : boolean {
@@ -398,7 +398,7 @@ StartTest(t => {
 
         let counter2        = 0
 
-        const box2          = new CalculableBoxUnbound({
+        const box2          = CalculableBoxUnbound.new({
             name    : 'box2',
             lazy    : false,
             calculation () : number {

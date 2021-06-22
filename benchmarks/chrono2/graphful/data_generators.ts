@@ -1,16 +1,9 @@
 import { Box, BoxUnbound } from "../../../src/chrono2/data/Box.js"
 import { CalculableBox, CalculableBoxUnbound } from "../../../src/chrono2/data/CalculableBox.js"
-import { CalculableBoxGen, CalculableBoxGenUnbound } from "../../../src/chrono2/data/CalculableBoxGen.js"
+import { CalculableBoxGenUnbound } from "../../../src/chrono2/data/CalculableBoxGen.js"
 import { ChronoGraph as ChronoGraph2 } from "../../../src/chrono2/graph/Graph.js"
-import { Base } from "../../../src/class/Base.js"
 import { AnyFunction } from "../../../src/class/Mixin.js"
-import {
-    BoxAbstract,
-    BoxChronoGraph2,
-    ReactiveDataGenerator,
-    ReactiveDataGeneratorChronoGraph2,
-    ReactiveDataGeneratorWithGenerators
-} from "../graphless/data_generators.js"
+import { BoxAbstract, BoxChronoGraph2, ReactiveDataGenerator, ReactiveDataGeneratorChronoGraph2 } from "../graphless/data_generators.js"
 
 
 export interface AbstractGraph {
@@ -30,7 +23,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
 
     // used to measure the allocation performance
     rawBox<V> (initialValue : V, name? : string) : Box<unknown> {
-        const box = new BoxUnbound(initialValue, name)
+        const box = BoxUnbound.new(initialValue, name)
 
         this.graph.addAtom(box)
 
@@ -38,7 +31,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
     }
 
     box<V> (initialValue : V, name? : string) : BoxChronoGraph2<V> {
-        const box = new BoxChronoGraph2<V>(new BoxUnbound<V>(initialValue, name))
+        const box = new BoxChronoGraph2<V>(BoxUnbound.new<V>(initialValue, name))
 
         this.graph.addAtom(box.box)
 
@@ -47,7 +40,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
 
     // used to measure the allocation performance
     rawComputed<V> (func : AnyFunction<V>, context? : any, name? : string) : Box<unknown> {
-        const box = new CalculableBoxUnbound<V>({ calculation : func, context : context, name : name })
+        const box = CalculableBoxUnbound.new<V>({ calculation : func, context : context, name : name })
 
         this.graph.addAtom(box)
 
@@ -55,7 +48,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
     }
 
     computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        const box = new BoxChronoGraph2<V>(new CalculableBox<V>({ calculation : func, context : context, name : name }))
+        const box = new BoxChronoGraph2<V>(CalculableBox.new<V>({ calculation : func, context : context, name : name }))
 
         this.graph.addAtom(box.box)
 
@@ -64,7 +57,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
 
 
     computedStrict<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        const box = new BoxChronoGraph2<V>(new CalculableBoxUnbound<V>({ calculation : func, context : context, name : name, lazy : false }))
+        const box = new BoxChronoGraph2<V>(CalculableBoxUnbound.new<V>({ calculation : func, context : context, name : name, lazy : false }))
 
         this.graph.addAtom(box.box)
 
@@ -73,7 +66,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
 
 
     computedGen<V> (func : AnyFunction<Generator<any, V>>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        const box = new BoxChronoGraph2<V>(new CalculableBoxGenUnbound<V>({ calculation : func, context : context, name : name, lazy : false }))
+        const box = new BoxChronoGraph2<V>(CalculableBoxGenUnbound.new<V>({ calculation : func, context : context, name : name, lazy : false }))
 
         this.graph.addAtom(box.box)
 

@@ -39,7 +39,7 @@ StartTest(t => {
     doTest(t, GraphGen.new({ sync : false }))
 
     t.it('Should show the detailed information about the cyclic async computation', async t => {
-        const iden1     = new CalculableBoxGen({
+        const iden1     = CalculableBoxGen.new({
             name : 'iden1',
             calculation : function* () {
                 yield randomDelay()
@@ -48,7 +48,7 @@ StartTest(t => {
             }
         })
 
-        const iden2     = new CalculableBoxGen({
+        const iden2     = CalculableBoxGen.new({
             name : 'iden2',
             calculation : function* () {
                 yield randomDelay()
@@ -72,14 +72,14 @@ StartTest(t => {
     t.it('Should show the detailed information about the cyclic async computation', async t => {
         const graph1        = ChronoGraph.new({ historyLimit : 0 })
 
-        const iden1     = new CalculableBoxGenUnbound({
+        const iden1     = CalculableBoxGenUnbound.new({
             name : 'iden1',
             calculation : function* () {
                 return (yield iden2)
             }
         })
 
-        const iden2     = new CalculableBoxGenUnbound({
+        const iden2     = CalculableBoxGenUnbound.new({
             name : 'iden2',
             calculation : function* () {
                 return (yield iden1)
@@ -103,7 +103,7 @@ StartTest(t => {
     // t.it('Should show the detailed information about the cyclic computation, which involves edges from the past', async t => {
     //     const graph : ChronoGraph       = ChronoGraph.new()
     //
-    //     const dispatcher    = new CalculableBox({
+    //     const dispatcher    = CalculableBox.new({
     //         name : 'dispatcher',
     //         calculation : () => {
     //             const iden1HasProposed  = yield HasProposedValue(iden1)
@@ -113,7 +113,7 @@ StartTest(t => {
     //         }
     //     })
     //
-    //     const iden1         = new CalculableBox({
+    //     const iden1         = CalculableBox.new({
     //         name : 'iden1',
     //         calculation : () => {
     //             const disp          = yield dispatcher
@@ -122,7 +122,7 @@ StartTest(t => {
     //         }
     //     })
     //
-    //     const iden2         = new CalculableBox({
+    //     const iden2         = CalculableBox.new({
     //         name : 'iden2',
     //         calculation : () => {
     //             const disp          = yield dispatcher

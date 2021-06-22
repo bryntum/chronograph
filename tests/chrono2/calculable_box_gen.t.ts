@@ -12,10 +12,10 @@ StartTest(t => {
     t.it('Should support the synchronous "reactive" stack depth of 20000 (meaning virtually unlimited)', t => {
         const stackSize = 20000
 
-        const boxes : Box<number>[]      = [ new Box(0) ]
+        const boxes : Box<number>[]      = [ Box.new(0) ]
 
         for (let i = 0; i < stackSize; i++) {
-            boxes.push(new CalculableBoxGen({
+            boxes.push(CalculableBoxGen.new({
                 context     : boxes.length,
                 * calculation (this : number) : CalculationIterator<number> {
                     return (yield boxes[ this - 1 ]) + 1

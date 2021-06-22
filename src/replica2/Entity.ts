@@ -121,7 +121,7 @@ export class Entity extends Mixin(
          * A graph identifier, that represents the whole entity.
          */
         get $$ () : EntityAtom {
-            const entityBox     = new EntityBox(this, this.$entityName)
+            const entityBox     = EntityBox.new(this, this.$entityName)
 
             entityBox.entity    = this.$entity
 

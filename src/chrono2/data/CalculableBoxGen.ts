@@ -20,6 +20,11 @@ export class CalculableBoxGenUnbound<V = unknown> extends CalculableBoxUnbound<V
     calculationPromise  : Promise<V>                = undefined
 
 
+    static new<V> (this : typeof CalculableBoxGenUnbound, config? : Partial<CalculableBoxGenUnbound<V>>) : CalculableBoxGenUnbound<V> {
+        return super.new(config) as CalculableBoxGenUnbound<V>
+    }
+
+
     isCalculationStarted () : boolean {
         return Boolean(this.iterator || this.iterationResult)
     }

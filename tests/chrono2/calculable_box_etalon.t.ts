@@ -20,7 +20,7 @@ StartTest(t => {
         const prefix    = graphGen.sync ? 'SYNC: ' : 'GEN: '
 
         t.it(prefix + 'Should converge to etalon value', async t => {
-            const etalonBox       = new Box(100)
+            const etalonBox       = Box.new(100)
 
             const dummyBox : CalculableBox<number>     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {

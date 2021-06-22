@@ -14,8 +14,8 @@ StartTest(t => {
         const prefix    = graphGen.sync ? 'SYNC: ' : 'GEN: '
 
         t.it(prefix + 'Should not recalculate nodes outside of affected scope', t => {
-            const box1      = new Box(0)
-            const box2      = new Box(0)
+            const box1      = Box.new(0)
+            const box2      = Box.new(0)
 
             const box1p2    = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -23,7 +23,7 @@ StartTest(t => {
                 }))
             })
 
-            const box3      = new Box(1)
+            const box3      = Box.new(1)
 
             const res       = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -79,8 +79,8 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should eliminate unchanged subtrees', t => {
-            const i1        = new Box(0, 'i1')
-            const i2        = new Box(10, 'i2')
+            const i1        = Box.new(0, 'i1')
+            const i2        = Box.new(10, 'i2')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -148,8 +148,8 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should eliminate unchanged subtrees #2', t => {
-            const i1        = new BoxUnbound(0, 'i1')
-            const i2        = new BoxUnbound(10, 'i2')
+            const i1        = BoxUnbound.new(0, 'i1')
+            const i2        = BoxUnbound.new(10, 'i2')
 
             const c1        = graphGen.calculableBox({
                 unbound : true,
@@ -222,7 +222,7 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should determine all potentially changed nodes', t => {
-            const atom0     = new Box(0, 'atom0')
+            const atom0     = Box.new(0, 'atom0')
 
             const atom1     = graphGen.calculableBox({
                 name    : 'atom1',
@@ -258,8 +258,8 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should preserve dependencies from eliminated subtrees #1', t => {
-            const i1        = new Box(0, 'i1')
-            const i2        = new Box(10, 'i2')
+            const i1        = Box.new(0, 'i1')
+            const i2        = Box.new(10, 'i2')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -324,11 +324,11 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should preserve dependencies from eliminated subtrees #2', t => {
-            const i1        = new Box(0, 'i1')
-            const i2        = new Box(10, 'i2')
-            const i3        = new Box(20, 'i3')
+            const i1        = Box.new(0, 'i1')
+            const i2        = Box.new(10, 'i2')
+            const i3        = Box.new(20, 'i3')
 
-            const dispatcher = new Box(i3, 'dispatcher')
+            const dispatcher = Box.new(i3, 'dispatcher')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -386,9 +386,9 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should preserve dependencies from shadowed entries #1', t => {
-            const i1        = new Box(1, 'i1')
-            const i2        = new Box(2, 'i2')
-            const i3        = new Box(3, 'i3')
+            const i1        = Box.new(1, 'i1')
+            const i2        = Box.new(2, 'i2')
+            const i3        = Box.new(3, 'i3')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -434,11 +434,11 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should preserve dependencies from shadowed entries #2', t => {
-            const i1        = new Box(1, 'i1')
-            const i2        = new Box(2, 'i2')
-            const i3        = new Box(3, 'i3')
+            const i1        = Box.new(1, 'i1')
+            const i2        = Box.new(2, 'i2')
+            const i3        = Box.new(3, 'i3')
 
-            const dispatcher = new Box(i3, 'dispatcher')
+            const dispatcher = Box.new(i3, 'dispatcher')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -495,8 +495,8 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should preserve dependencies from shadowed entries #3', t => {
-            const i1        = new Box(0, 'i1')
-            const i2        = new Box(1, 'i2')
+            const i1        = Box.new(0, 'i1')
+            const i2        = Box.new(1, 'i2')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -550,9 +550,9 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should be smart about counting incoming edges from different walk epoch', t => {
-            const i1        = new Box(0, 'i1')
-            const i2        = new Box(10, 'i2')
-            const i3        = new Box(0, 'i3')
+            const i1        = Box.new(0, 'i1')
+            const i2        = Box.new(10, 'i2')
+            const i3        = Box.new(0, 'i3')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -593,9 +593,9 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should ignore eliminated quarks from previous calculations, which still remains in stack', t => {
-            const i1        = new Box(0, 'i1')
-            const i2        = new Box(10, 'i2')
-            const i3        = new Box(0, 'i3')
+            const i1        = Box.new(0, 'i1')
+            const i2        = Box.new(10, 'i2')
+            const i3        = Box.new(0, 'i3')
 
             const c1        = graphGen.calculableBox({
                 name : 'c1',
@@ -642,8 +642,8 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should be able to only calculate the specified nodes', t => {
-            const box1      = new Box(1)
-            const box2      = new Box(2)
+            const box1      = Box.new(1)
+            const box2      = Box.new(2)
 
             const iden1     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -651,7 +651,7 @@ StartTest(t => {
                 }))
             })
 
-            const box3      = new Box(3)
+            const box3      = Box.new(3)
 
             const iden2     = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -683,7 +683,7 @@ StartTest(t => {
         t.it(prefix + 'Should not re-entry calculations', t => {
             const graph : ChronoGraph   = ChronoGraph.new()
 
-            const var1      = new BoxUnbound(1, 'v1')
+            const var1      = BoxUnbound.new(1, 'v1')
 
             let count : number = 0
 

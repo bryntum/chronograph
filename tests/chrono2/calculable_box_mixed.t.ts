@@ -10,27 +10,27 @@ setCompactCounter(1)
 StartTest(t => {
 
     t.it('Should support mixed calculation', async t => {
-        const box1     = new Box(10)
+        const box1     = Box.new(10)
 
-        const box2     = new CalculableBoxGen<number>({
+        const box2     = CalculableBoxGen.new<number>({
             * calculation () {
                 return (yield box1) + 1
             }
         })
 
-        const box3     = new CalculableBox({
+        const box3     = CalculableBox.new({
             calculation () {
                 return box2.read() + 1
             }
         })
 
-        const box4     = new CalculableBoxGen<number>({
+        const box4     = CalculableBoxGen.new<number>({
             * calculation () {
                 return (yield box3) + 1
             }
         })
 
-        const box5     = new CalculableBox({
+        const box5     = CalculableBox.new({
             calculation () {
                 return box4.read() + 1
             }

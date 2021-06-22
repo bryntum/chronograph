@@ -12,9 +12,9 @@ setCompactCounter(1)
 StartTest(t => {
 
     t.it('Reject before the 1st commit should nullify the values', t => {
-        const box1      = new BoxUnbound(10)
+        const box1      = BoxUnbound.new(10)
 
-        const box2      = new CalculableBoxUnbound({
+        const box2      = CalculableBoxUnbound.new({
             calculation : () => {
                 const value1 = box1.read()
 
@@ -24,7 +24,7 @@ StartTest(t => {
             }
         })
 
-        const externalBox3     = new CalculableBox({
+        const externalBox3     = CalculableBox.new({
             calculation : () => {
                 const value2 = box2.read(externalBox3.graph)
 
@@ -59,13 +59,13 @@ StartTest(t => {
 
 
     t.it('Reject immediately after commit should do nothing', t => {
-        const box1      = new BoxUnbound(10)
+        const box1      = BoxUnbound.new(10)
 
-        const box2     = new CalculableBoxUnbound({
+        const box2     = CalculableBoxUnbound.new({
             calculation : () => box1.read() + 1
         })
 
-        const externalBox3     = new CalculableBox({
+        const externalBox3     = CalculableBox.new({
             calculation : () => box2.read(externalBox3.graph) + 1
         })
 
@@ -89,9 +89,9 @@ StartTest(t => {
 
 
     t.it('Reject should reset the state to the previous commit', t => {
-        const box1      = new BoxUnbound(10)
+        const box1      = BoxUnbound.new(10)
 
-        const box2     = new CalculableBoxUnbound({
+        const box2     = CalculableBoxUnbound.new({
             calculation : () => {
                 const value1 = box1.read()
 
@@ -133,13 +133,13 @@ StartTest(t => {
 
 
     t.it('Reject should reset the state to the previous commit and synchronize external atoms', t => {
-        const box1      = new BoxUnbound(10)
+        const box1      = BoxUnbound.new(10)
 
-        const box2     = new CalculableBoxUnbound({
+        const box2     = CalculableBoxUnbound.new({
             calculation : () => box1.read() + 1
         })
 
-        const externalBox3     = new CalculableBox({
+        const externalBox3     = CalculableBox.new({
             calculation : () => box2.read(externalBox3.graph) + 1
         })
 
@@ -180,11 +180,11 @@ StartTest(t => {
 
 
     t.it('Reject should reset transaction stack', t => {
-        const box0      = new BoxUnbound(0)
-        const box1      = new BoxUnbound(10)
+        const box0      = BoxUnbound.new(0)
+        const box1      = BoxUnbound.new(10)
 
         let counter2    = 0
-        const box2      = new CalculableBoxUnbound({
+        const box2      = CalculableBoxUnbound.new({
             lazy        : false,
             calculation : () => {
                 counter2++
@@ -193,7 +193,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBoxUnbound({
+        const box3     = CalculableBoxUnbound.new({
             lazy        : false,
             calculation : () => {
                 counter3++
@@ -226,11 +226,11 @@ StartTest(t => {
 
 
     t.it('Reject should reset transaction stack for lazy atoms', t => {
-        const box0      = new BoxUnbound(0)
-        const box1      = new BoxUnbound(10)
+        const box0      = BoxUnbound.new(0)
+        const box1      = BoxUnbound.new(10)
 
         let counter2    = 0
-        const box2      = new CalculableBoxUnbound({
+        const box2      = CalculableBoxUnbound.new({
             lazy        : true,
             calculation : () => {
                 counter2++
@@ -239,7 +239,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBoxUnbound({
+        const box3     = CalculableBoxUnbound.new({
             lazy        : true,
             calculation : () => {
                 counter3++
@@ -272,11 +272,11 @@ StartTest(t => {
 
 
     t.it('Reject should reset transaction stack for lazy atoms #2', t => {
-        const box0      = new BoxUnbound(0)
-        const box1      = new BoxUnbound(10)
+        const box0      = BoxUnbound.new(0)
+        const box1      = BoxUnbound.new(10)
 
         let counter2    = 0
-        const box2      = new CalculableBoxUnbound({
+        const box2      = CalculableBoxUnbound.new({
             lazy        : true,
             calculation : () => {
                 counter2++
@@ -285,7 +285,7 @@ StartTest(t => {
         })
 
         let counter3    = 0
-        const box3     = new CalculableBoxUnbound({
+        const box3     = CalculableBoxUnbound.new({
             lazy        : true,
             calculation : () => {
                 counter3++
@@ -322,25 +322,25 @@ StartTest(t => {
     t.it('Should be able to reject transaction using graph api', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1        = new BoxUnbound(0, 'i1')
-        const i2        = new BoxUnbound(10, 'i2')
-        const i3        = new BoxUnbound(0, 'i3')
+        const i1        = BoxUnbound.new(0, 'i1')
+        const i2        = BoxUnbound.new(10, 'i2')
+        const i3        = BoxUnbound.new(0, 'i3')
 
-        const c1        = new CalculableBoxUnbound({
+        const c1        = CalculableBoxUnbound.new({
             name    : 'c1',
             calculation () {
                 return i1.read() + i2.read()
             }
         })
 
-        const c2        = new CalculableBoxUnbound({
+        const c2        = CalculableBoxUnbound.new({
             name    : 'c2',
             calculation () {
                 return c1.read() + 1
             }
         })
 
-        const c3        = new CalculableBoxUnbound({
+        const c3        = CalculableBoxUnbound.new({
             name    : 'c3',
             calculation () {
                 return c2.read() + i3.read()
@@ -372,10 +372,10 @@ StartTest(t => {
     t.it('Should be able to reject transaction using effect', async t => {
         const graph : ChronoGraph       = ChronoGraph.new({ historyLimit : 0 })
 
-        const i1        = new BoxUnbound(0, 'i1')
-        const i2        = new BoxUnbound(10, 'i2')
+        const i1        = BoxUnbound.new(0, 'i1')
+        const i2        = BoxUnbound.new(10, 'i2')
 
-        const c1        = new CalculableBoxGenUnbound({
+        const c1        = CalculableBoxGenUnbound.new({
             lazy        : false,
             name : 'c1', calculation : function* () {
                 const sum : number = (yield i1) + (yield i2)

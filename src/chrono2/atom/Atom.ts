@@ -76,9 +76,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     $meta               : Meta          = undefined
 
 
-    constructor () {
-        super()
-
+    initialize () {
         const boundGraph    = this.boundGraph
 
         if (boundGraph) boundGraph.addAtom(this)

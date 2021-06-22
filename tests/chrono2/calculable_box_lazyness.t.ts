@@ -13,9 +13,9 @@ StartTest(t => {
         const prefix    = graphGen.sync ? 'SYNC: ' : 'GEN: '
 
         t.it(prefix + 'Lazy identifier', t => {
-            const var1                  = new Box(0)
+            const var1                  = Box.new(0)
 
-            const var2                  = new Box(1)
+            const var2                  = Box.new(1)
 
             const ident1                = graphGen.calculableBox({
                 lazy            : true,
@@ -78,9 +78,9 @@ StartTest(t => {
 
 
         t.it(prefix + 'Should not use stale deep history', t => {
-            const i1            = new Box(0)
-            const i2            = new Box(1)
-            const dispatcher    = new Box(i1)
+            const i1            = Box.new(0)
+            const i2            = Box.new(1)
+            const dispatcher    = Box.new(i1)
 
             const c1            = graphGen.calculableBox({
                 lazy            : true,
@@ -123,9 +123,9 @@ StartTest(t => {
         t.it(prefix + 'Should not use stale deep history, with commits', t => {
             const graph1 : ChronoGraph       = ChronoGraph.new()
 
-            const i1            = new BoxUnbound(0)
-            const i2            = new BoxUnbound(1)
-            const dispatcher    = new BoxUnbound(i1)
+            const i1            = BoxUnbound.new(0)
+            const i2            = BoxUnbound.new(1)
+            const dispatcher    = BoxUnbound.new(i1)
 
             const c1            = graphGen.calculableBox({
                 unbound         : true,
@@ -174,10 +174,10 @@ StartTest(t => {
         t.it(prefix + 'Should be able to calculate lazy identifier that uses `ProposedOrPrevious` - sync', t => {
             const graph1 : ChronoGraph       = ChronoGraph.new()
 
-            const i1            = new Box(0)
-            const i2            = new Box(1)
+            const i1            = Box.new(0)
+            const i2            = Box.new(1)
 
-            const dispatcher    = new Box('pure')
+            const dispatcher    = Box.new('pure')
 
             const c1            = graphGen.calculableBox({
                 calculation : eval(graphGen.calc(function* () {
@@ -223,10 +223,10 @@ StartTest(t => {
         t.it(prefix + 'Should be able to calculate lazy identifier that uses `ProposedOrPrevious` - sync, with commits', t => {
             const graph1 : ChronoGraph       = ChronoGraph.new()
 
-            const i1            = new Box(0)
-            const i2            = new Box(1)
+            const i1            = Box.new(0)
+            const i2            = Box.new(1)
 
-            const dispatcher    = new Box('pure')
+            const dispatcher    = Box.new('pure')
 
             const c1            = graphGen.calculableBox({
                 lazy            : true,

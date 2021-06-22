@@ -109,4 +109,9 @@ class EntityAtom extends base implements PartOfEntityAtom {
 }){}
 
 
-export class EntityBox extends EntityAtom.mix(BoxUnbound) {}
+// @ts-ignore
+export class EntityBox extends EntityAtom.mix(BoxUnbound) {
+    static new<V> (this : typeof EntityBox, value? : V, name? : string) : EntityBox {
+        return super.new(value, name) as EntityBox
+    }
+}

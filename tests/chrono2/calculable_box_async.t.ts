@@ -13,11 +13,11 @@ const randomDelay = () => delay(Math.random() * 100)
 StartTest(t => {
 
     t.it('Should not re-entry async read', async t => {
-        const var1      = new Box(1, 'v1')
+        const var1      = Box.new(1, 'v1')
 
         let count       = 0
 
-        const iden1     = new CalculableBoxGen({
+        const iden1     = CalculableBoxGen.new({
             sync        : false,
 
             *calculation () : CalculationIterator<number> {
@@ -42,11 +42,11 @@ StartTest(t => {
 
 
     t.it('Should not re-entry async gen calculations that has been partially read already, random timings', async t => {
-        const box0      = new Box(1, 'box0')
+        const box0      = Box.new(1, 'box0')
 
         let count : number = 0
 
-        const box1      = new CalculableBoxGen({
+        const box1      = CalculableBoxGen.new({
             name        : 'box1',
             sync        : false,
 
@@ -59,7 +59,7 @@ StartTest(t => {
             }
         })
 
-        const box2     = new CalculableBoxGen({
+        const box2     = CalculableBoxGen.new({
             name        : 'box2',
             sync        : false,
 
@@ -72,7 +72,7 @@ StartTest(t => {
             }
         })
 
-        const box3     = new CalculableBoxGen({
+        const box3     = CalculableBoxGen.new({
             name        : 'box3',
             sync        : false,
 
@@ -98,14 +98,14 @@ StartTest(t => {
 
 
     t.it('Should not re-entry async gen calculations that has been partially read already, random timings, stressed', async t => {
-        const boxes : CalculableBoxGen<number>[] = [ new Box(0, 'box0') as any ]
+        const boxes : CalculableBoxGen<number>[] = [ Box.new(0, 'box0') as any ]
 
         const size      = 20
 
         let count : number = 0
 
         for (let i = 1; i <= size; i++) {
-            boxes.push(new CalculableBoxGen({
+            boxes.push(CalculableBoxGen.new({
                 name        : 'box' + i,
                 sync        : false,
 
