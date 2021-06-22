@@ -143,7 +143,8 @@ export class Entity extends Mixin(
             // if (!skeleton[ name ]) skeleton[ name ] = constructor.getIdentifierTemplateClass(this, field)
 
             const atomCls               = field.getAtomClass()
-            const atom                  = new atomCls()
+            // @ts-ignore
+            const atom                  = atomCls.new()
 
             atom.field                  = field
             atom.meta                   = field
