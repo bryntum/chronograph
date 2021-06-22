@@ -783,7 +783,7 @@ export class Transaction extends Base {
     }
 
 
-    onReadIdentifier (identifierRead : Identifier, activeEntry : Quark, stack : Quark[]) : IteratorResult<any> | undefined {
+    onReadIdentifier (identifierRead : Identifier, activeEntry : Quark, stack : Quark[]) : IteratorResult<any> | undefined | ComputationCycle {
         const requestedEntry            = this.addEdge(identifierRead, activeEntry, EdgeTypeNormal)
 
         // this is a workaround for references with failed resolution problem in gantt
@@ -823,7 +823,11 @@ export class Transaction extends Base {
                 const walkContext = TransactionCycleDetectionWalkContext.new({
                     transaction         : this,
                     onCycle (node : Identifier, stack : WalkStep<Identifier>[]) : OnCycleAction {
-                        cycle       = ComputationCycle.new({ cycle : cycleInfo(stack) })
+                        cycle       = ComputationCycle.new({
+                            cycle : cycleInfo(stack),
+                            requestedEntry,
+                            activeEntry,
+                        })
 
                         return OnCycleAction.Cancel
                     }
@@ -831,8 +835,7 @@ export class Transaction extends Base {
 
                 walkContext.startFrom([ requestedEntry.identifier ])
 
-                // handle the cycle
-                this.graph.onComputationCycleHandler(activeEntry, requestedEntry, cycle)
+                return cycle
             }
         }
     }
@@ -970,7 +973,15 @@ export class Transaction extends Base {
                     break
                 }
                 else if (value instanceof Identifier) {
-                    iterationResult     = this.onReadIdentifier(value, entry, stack)
+                    const onReadIdentifierResult = this.onReadIdentifier(value, entry, stack)
+
+                    // handle the cycle
+                    if (onReadIdentifierResult instanceof ComputationCycle) {
+                        iterationResult     = yield* this.graph.onComputationCycleHandler(onReadIdentifierResult)
+                    }
+                    else {
+                        iterationResult     = onReadIdentifierResult
+                    }
                 }
                 else if (value === SynchronousCalculationStarted) {
                     // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:
@@ -1093,7 +1104,17 @@ export class Transaction extends Base {
                     break
                 }
                 else if (value instanceof Identifier) {
-                    iterationResult     = this.onReadIdentifier(value, entry, stack)
+                    const onReadIdentifierResult = this.onReadIdentifier(value, entry, stack)
+
+                    // handle the cycle
+                    if (onReadIdentifierResult instanceof ComputationCycle) {
+                        this.graph.onComputationCycleHandler(onReadIdentifierResult)
+
+                        iterationResult = undefined
+                    }
+                    else {
+                        iterationResult = onReadIdentifierResult
+                    }
                 }
                 else if (value === SynchronousCalculationStarted) {
                     // the fact, that we've encountered `SynchronousCalculationStarted` constant can mean 2 things:

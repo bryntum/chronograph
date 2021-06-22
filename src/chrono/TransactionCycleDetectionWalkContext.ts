@@ -2,11 +2,16 @@ import { Base } from "../class/Base.js"
 import { NOT_VISITED, OnCycleAction, VisitInfo, WalkContext, WalkStep } from "../graph/WalkDepth.js"
 import { Identifier } from "./Identifier.js"
 import { Transaction } from "./Transaction.js"
+import { Quark } from "./Quark.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class ComputationCycle extends Base {
     cycle           : Identifier[]
+
+    activeEntry     : Quark
+
+    requestedEntry  : Quark
 
     toString () : string {
         const cycleIdentifiers   = []

@@ -150,7 +150,7 @@ export class ChronoGraph extends Base {
 
     onWriteDuringCommit     : 'throw' | 'warn' | 'ignore' = 'throw'
 
-    onComputationCycle      : 'throw' | 'warn' | 'reject' | 'ignore' = 'throw'
+    onComputationCycle      : 'throw' | 'warn' | 'reject' | 'ignore' | 'effect' = 'throw'
 
     transactionClass        : typeof Transaction    = Transaction
 
@@ -546,7 +546,7 @@ export class ChronoGraph extends Base {
     async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
-    onComputationCycleHandler(activeEntry : Quark, requestedEntry : Quark, cycle : ComputationCycle) {
+    * onComputationCycleHandler(cycle : ComputationCycle) : Generator<any, IteratorResult<any>> {
         const exception = new Error("Computation cycle:\n" + cycle)
 
         //@ts-ignore
@@ -555,6 +555,7 @@ export class ChronoGraph extends Base {
         switch (this.onComputationCycle) {
             case 'ignore' :
                 console.log(exception.message)
+                const { requestedEntry, activeEntry } = cycle
                 // if we ignore the cycle we just continue the calculation with the best possible value
                 return activeEntry.continueCalculation(requestedEntry.proposedValue !== undefined ? requestedEntry.proposedValue : requestedEntry.value)
             case 'throw' :
