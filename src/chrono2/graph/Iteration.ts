@@ -187,7 +187,7 @@ export class Iteration extends Immutable {
 
         let iteration           = this
 
-        while (true) {
+        while (iteration) {
             if (iteration === stopAt) break
 
             iteration.storage.forEveryQuarkTillLocal(uniqable, onAtomOccurrence)
@@ -202,7 +202,7 @@ export class Iteration extends Immutable {
 
         let iteration           = this
 
-        while (true) {
+        while (iteration) {
             if (iteration === stopAt) break
 
             iteration.storage.forEveryFirstQuarkTillLocal(uniqable, onFirstAtomOccurrence)
