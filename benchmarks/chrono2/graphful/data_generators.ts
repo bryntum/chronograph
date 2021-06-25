@@ -48,7 +48,7 @@ export class ReactiveDataGeneratorChronoGraph2WithGraph extends ReactiveDataGene
     }
 
     computed<V> (func : AnyFunction<V>, context? : any, name? : string) : BoxChronoGraph2<V> {
-        const box = new BoxChronoGraph2<V>(CalculableBox.new<V>({ calculation : func, context : context, name : name }))
+        const box = new BoxChronoGraph2<V>(CalculableBoxUnbound.new<V>({ calculation : func, context : context, name : name }))
 
         this.graph.addAtom(box.box)
 
