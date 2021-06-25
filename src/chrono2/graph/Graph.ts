@@ -771,6 +771,20 @@ export class ChronoGraph extends Base implements Owner {
     }
 
 
+    forEveryAtom (func : (atom : Atom) => any) {
+        this.currentIteration.forEveryFirstQuarkTill(undefined, quark => func(quark.owner))
+    }
+
+
+    get atomCount () : number {
+        let res     = 0
+
+        this.forEveryAtom(() => res++)
+
+        return res
+    }
+
+
     // TODO remove the `sourceTransaction` argument
     undoTo (sourceTransaction : Transaction, tillTransaction : Transaction) {
         const atoms : Atom[]    = []
