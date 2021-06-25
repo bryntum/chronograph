@@ -1,4 +1,7 @@
 //---------------------------------------------------------------------------------------------------------------------
+export type FalseAsEarlyExit = false | void
+
+//---------------------------------------------------------------------------------------------------------------------
 /**
  * Given a single `Iterable`, returns an array of 2 iterables, mirroring the original one (which should not be used anymore).
  *
@@ -76,8 +79,64 @@ export function split<Element> (iterable : Iterable<Element>) : [ Iterable<Eleme
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export function zip2<Element1, Element2> (
+    iterable1 : Iterable<Element1>, iterable2 : Iterable<Element2>
+)
+    : Iterable<[ Element1, Element2 ]>
+{
+    return (function * () : Generator<[ Element1, Element2 ]> {
+        const iterator1     = iterable1[ Symbol.iterator ]()
+        const iterator2     = iterable2[ Symbol.iterator ]()
+
+        while (true) {
+            const { value : value1, done : done1 }      = iterator1.next()
+            const { value : value2, done : done2 }      = iterator2.next()
+
+            const allDone       = done1 && done2
+            const someDone      = done1 || done2
+
+            if (someDone && !allDone) throw new Error("Zip with iterators of different length")
+
+            if (allDone) break
+
+            yield [ value1, value2 ]
+        }
+    })()
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+export function zip3<Element1, Element2, Element3> (
+    iterable1 : Iterable<Element1>, iterable2 : Iterable<Element2>, iterable3 : Iterable<Element3>
+)
+    : Iterable<[ Element1, Element2, Element3 ]>
+{
+    return (function * () : Generator<[ Element1, Element2, Element3 ]> {
+        const iterator1     = iterable1[ Symbol.iterator ]()
+        const iterator2     = iterable2[ Symbol.iterator ]()
+        const iterator3     = iterable3[ Symbol.iterator ]()
+
+        while (true) {
+            const { value : value1, done : done1 }      = iterator1.next()
+            const { value : value2, done : done2 }      = iterator2.next()
+            const { value : value3, done : done3 }      = iterator3.next()
+
+            const allDone       = done1 && done2 && done3
+            const someDone      = done1 || done2 || done3
+
+            if (someDone && !allDone) throw new Error("Zip with iterators of different length")
+
+            if (allDone) break
+
+            yield [ value1, value2, value3 ]
+        }
+    })()
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export function* inBatchesBySize<Element> (iterator : Iterable<Element>, batchSize : number) : Iterable<Element[]> {
-    if (batchSize < 0) throw new Error("Batch size needs to a natural number")
+    if (batchSize < 1) throw new Error("Batch size needs to a natural number")
     batchSize   = batchSize | 0
 
     const runningBatch : Element[]  = []
@@ -149,6 +208,14 @@ export function* map<Element, Result> (iterator : Iterable<Element>, func : (el 
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export function forEach<Element> (iterator : Iterable<Element>, func : (el : Element, index : number) => FalseAsEarlyExit) : FalseAsEarlyExit {
+    let i   = 0
+
+    for (const el of iterator) if (func(el, i++) === false) return false
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export function reduce<Element, Result> (iterator : Iterable<Element>, func : (acc : Result, el : Element, index : number) => Result, initialAcc : Result) : Result {
     let i   = 0
 
@@ -163,16 +230,18 @@ export function reduce<Element, Result> (iterator : Iterable<Element>, func : (a
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export function size<Element> (iterator : Iterable<Element>) : number {
+    let i   = 0
+
+    for (const el of iterator) i++
+
+    return i
+}
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export function* uniqueOnly<Element> (iterator : Iterable<Element>) : Iterable<Element> {
-    const seen      = new Set<Element>()
-
-    for (const el of iterator) {
-        if (!seen.has(el)) {
-            seen.add(el)
-
-            yield el
-        }
-    }
+    yield* uniqueOnlyBy(iterator, i => i)
 }
 
 
@@ -303,6 +372,11 @@ export class ChainedIteratorClass<T> {
     }
 
 
+    forEach (func : (el : T, index? : number) => FalseAsEarlyExit) : FalseAsEarlyExit {
+        return forEach(this.iterable, func)
+    }
+
+
     map<Result> (func : (el : T, index : number) => Result) : ChainedIteratorClass<Result> {
         return this.derive(map(this.iterable, func))
     }
@@ -310,6 +384,11 @@ export class ChainedIteratorClass<T> {
 
     reduce<Result> (func : (acc : Result, el : T, index : number) => Result, initialAcc : Result) : Result {
         return reduce(this, func, initialAcc)
+    }
+
+
+    get size () : number {
+        return size(this)
     }
 
 
@@ -344,6 +423,11 @@ export class ChainedIteratorClass<T> {
     }
 
 
+    take (howMany : number) : T[] {
+        return Array.from(takeWhile(this, (el, index) => index < howMany))
+    }
+
+
     * [Symbol.iterator] () : IterableIterator<T> {
         let iterable    = this.iterable
 
@@ -359,13 +443,18 @@ export class ChainedIteratorClass<T> {
     }
 
 
-    toArray () : T[] {
-        return Array.from(this)
+    sort (order : (v1 : T, v2 : T) => number) : T[] {
+        return Array.from(this).sort(order)
     }
 
 
-    sort (order : (v1 : T, v2 : T) => number) : T[] {
-        return Array.from(this).sort(order)
+    sorted (order : (v1 : T, v2 : T) => number) : ChainedIteratorClass<T> {
+        return this.derive(this.sort(order))
+    }
+
+
+    toArray () : T[] {
+        return Array.from(this)
     }
 
 
@@ -374,14 +463,10 @@ export class ChainedIteratorClass<T> {
     }
 
 
-    toMap () : T extends [ infer K, infer V ] ? Map<K, V> : never  {
+    toMap () : T extends [ infer K, infer V ] ? Map<K, V> : never {
         //@ts-ignore
         return new Map(this)
     }
-
-    // toMap<K, V> () : T extends [ K, V ] ? Map<K, V> : never  {
-    //     return new Map<K, V>(this.iterable as (T extends [ K, V ] ? Iterable<T> : never)) as (T extends [ K, V ] ? Map<K, V> : never)
-    // }
 
 
     flush () {
@@ -407,13 +492,14 @@ export class MemoizedIteratorClass<T> extends ChainedIteratorClass<T> {
     $iterable       : Iterable<T>
     $iterator       : Iterator<T>   = undefined
 
-    // @ts-ignore
-    set iterable (iterable : Iterable<T>) {
-        this.$iterable  = iterable
-    }
-
+    //@ts-ignore
     get iterable () : Iterable<T> {
         return this
+    }
+
+    //@ts-ignore
+    set iterable (iterable : Iterable<T>) {
+        this.$iterable  = iterable
     }
 
 
