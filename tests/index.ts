@@ -45,6 +45,13 @@ project.start(
         group       : 'ChronoGraph2',
 
         items       : [
+            {
+                group       : 'Data',
+
+                items   : [
+                    'chrono2/data/array.t.js'
+                ]
+            },
             'chrono2/box.t.js',
             'chrono2/calculable_box_common.t.js',
             'chrono2/calculable_box_gen.t.js',

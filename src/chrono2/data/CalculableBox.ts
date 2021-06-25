@@ -33,7 +33,7 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnboundPre<V> {
     }
 
 
-    static new<V> (this : typeof CalculableBoxUnbound, config? : Partial<CalculableBoxUnbound<V>>) : CalculableBoxUnbound<V> {
+    static new<V> (config? : Partial<CalculableBoxUnbound<V>>) : CalculableBoxUnbound<V> {
         const instance      = new this() as CalculableBoxUnbound<V>
 
         if (config) {

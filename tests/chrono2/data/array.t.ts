@@ -1,0 +1,59 @@
+import { MappedReactiveArrayAtom, ReactiveArrayAtom } from "../../../src/chrono2/data/Array.js"
+import { globalGraph } from "../../../src/chrono2/graph/Graph.js"
+
+declare const StartTest : any
+
+StartTest(t => {
+
+    t.it('Reactive array should work', async t => {
+        const array      = ReactiveArrayAtom.new()
+
+        globalGraph.addAtom(array)
+
+        array.push(1, 2, 3)
+
+        t.is(array.item(0), 1)
+        t.is(array.item(1), 2)
+        t.is(array.item(2), 3)
+
+        array.push(4)
+
+        t.is(array.item(0), 1)
+        t.is(array.item(1), 2)
+        t.is(array.item(2), 3)
+        t.is(array.item(3), 4)
+    })
+
+
+    t.it('Mapped reactive array should work', async t => {
+        const array     = ReactiveArrayAtom.new()
+
+        globalGraph.addAtom(array)
+
+        array.push(1, 2, 3)
+
+        const mapped : MappedReactiveArrayAtom = array.map(el => el * 2)
+        const mapped2 : MappedReactiveArrayAtom = mapped.map(el => el * 2)
+
+        t.is(mapped.item(0), 2)
+        t.is(mapped.item(1), 4)
+        t.is(mapped.item(2), 6)
+
+        t.is(mapped2.item(0), 4)
+        t.is(mapped2.item(1), 8)
+        t.is(mapped2.item(2), 12)
+
+        array.push(4)
+
+        t.is(mapped.item(0), 2)
+        t.is(mapped.item(1), 4)
+        t.is(mapped.item(2), 6)
+        t.is(mapped.item(3), 8)
+
+        t.is(mapped2.item(0), 4)
+        t.is(mapped2.item(1), 8)
+        t.is(mapped2.item(2), 12)
+        t.is(mapped2.item(3), 16)
+    })
+
+})

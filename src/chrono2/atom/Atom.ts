@@ -253,6 +253,11 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
+    [Symbol.toPrimitive] () : V {
+        return this.read()
+    }
+
+
     async readAsync (graph? : ChronoGraph) : Promise<V> {
         return this.read()
     }
