@@ -115,6 +115,8 @@ export class BoxUnboundPre<V = unknown> extends Atom<V> {
 
             graph.onDataWrite(this)
         }
+
+        if (this.onCommitValueOptimistic) this.onCommitValueOptimistic(value)
     }
 
 }

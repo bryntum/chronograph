@@ -65,6 +65,10 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
 
     context             : any           = undefined
 
+    // TODO replace to hook
+    onCommitValueOptimistic     : (value : V) => any
+
+
     //region meta
     name                : string        = undefined
 
@@ -407,6 +411,8 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         this.immutable          = quark
 
         this.userInputRevision  = quark.revision
+
+        if (this.onCommitValueOptimistic) this.onCommitValueOptimistic(newValue)
     }
 
 
