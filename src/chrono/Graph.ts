@@ -216,13 +216,13 @@ export class ChronoGraph extends Base {
     }
 
 
-    get isInitialCommit() : boolean {
-        return this._isInitialCommit;
+    get isInitialCommit () : boolean {
+        return this._isInitialCommit
     }
 
 
-    set isInitialCommit(value : boolean){
-        this._isInitialCommit = value;
+    set isInitialCommit (value : boolean) {
+        this._isInitialCommit = value
     }
 
 
@@ -546,7 +546,7 @@ export class ChronoGraph extends Base {
     async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
-    * onComputationCycleHandler(cycle : ComputationCycle) : Generator<any, IteratorResult<any>> {
+    * onComputationCycleHandler (cycle : ComputationCycle) : Generator<any, IteratorResult<any>> {
         const exception = new Error("Computation cycle:\n" + cycle)
 
         //@ts-ignore
@@ -568,6 +568,31 @@ export class ChronoGraph extends Base {
                 break
         }
     }
+
+
+    onComputationCycleHandlerSync (cycle : ComputationCycle) {
+        const exception = new Error("Computation cycle:\n" + cycle)
+
+        //@ts-ignore
+        exception.cycle = cycle
+
+        switch (this.onComputationCycle) {
+            case 'ignore' :
+                console.log(exception.message)
+                const { requestedEntry, activeEntry } = cycle
+                // if we ignore the cycle we just continue the calculation with the best possible value
+                return activeEntry.continueCalculation(requestedEntry.proposedValue !== undefined ? requestedEntry.proposedValue : requestedEntry.value)
+            case 'throw' :
+                throw exception
+            case 'reject' :
+                this.reject(exception)
+                break
+            case 'warn' :
+                warn(exception)
+                break
+        }
+    }
+
 
     scheduleAutoCommit () {
         if (this.autoCommitTimeoutId === null) {

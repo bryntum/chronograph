@@ -977,7 +977,13 @@ export class Transaction extends Base {
 
                     // handle the cycle
                     if (onReadIdentifierResult instanceof ComputationCycle) {
-                        iterationResult     = yield* this.graph.onComputationCycleHandler(onReadIdentifierResult)
+                        this.walkContext.startNewEpoch()
+
+                        yield* this.graph.onComputationCycleHandler(onReadIdentifierResult)
+
+                        entry.cleanupCalculation()
+
+                        iterationResult     = undefined
                     }
                     else {
                         iterationResult     = onReadIdentifierResult
@@ -1108,9 +1114,13 @@ export class Transaction extends Base {
 
                     // handle the cycle
                     if (onReadIdentifierResult instanceof ComputationCycle) {
-                        this.graph.onComputationCycleHandler(onReadIdentifierResult)
+                        this.walkContext.startNewEpoch()
 
-                        iterationResult = undefined
+                        this.graph.onComputationCycleHandlerSync(onReadIdentifierResult)
+
+                        entry.cleanupCalculation()
+
+                        iterationResult     = undefined
                     }
                     else {
                         iterationResult = onReadIdentifierResult
