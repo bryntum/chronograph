@@ -252,10 +252,10 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
         throw new Error("Abstract method")
     }
 
-
-    [Symbol.toPrimitive] () : V {
-        return this.read()
-    }
+    // this breaks the `isNumber()` typeguard on Atom instance
+    // [Symbol.toPrimitive] () : V {
+    //     return this.read()
+    // }
 
 
     async readAsync (graph? : ChronoGraph) : Promise<V> {
