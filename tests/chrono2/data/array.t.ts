@@ -25,7 +25,20 @@ StartTest(t => {
     })
 
 
-    t.it('Mapped reactive array should work', async t => {
+    t.it('Reactive array should work', async t => {
+        const array      = ReactiveArrayAtom.new()
+
+        globalGraph.addAtom(array)
+
+        array.write([ 1, 2, 3 ])
+
+        t.is(array.item(0), 1)
+        t.is(array.item(1), 2)
+        t.is(array.item(2), 3)
+    })
+
+
+    t.it('Mapped reactive array should work #1', async t => {
         const array     = ReactiveArrayAtom.new()
 
         globalGraph.addAtom(array)
@@ -56,4 +69,28 @@ StartTest(t => {
         t.is(mapped2.item(3), 16)
     })
 
+    t.it('Mapped reactive array should work #2', async t => {
+        const array     = ReactiveArrayAtom.new()
+
+        globalGraph.addAtom(array)
+
+        array.write([ 1, 2, 3 ])
+
+        const mapped : MappedReactiveArrayAtom = array.map(el => el * 2)
+        const mapped2 : MappedReactiveArrayAtom = mapped.map(el => el * 2)
+
+        t.is(mapped.item(0), 2)
+        t.is(mapped.item(1), 4)
+        t.is(mapped.item(2), 6)
+
+        t.is(mapped2.item(0), 4)
+        t.is(mapped2.item(1), 8)
+        t.is(mapped2.item(2), 12)
+
+        array.write([ 4 ])
+
+        t.is(mapped.item(0), 8)
+
+        t.is(mapped2.item(0), 16)
+    })
 })
