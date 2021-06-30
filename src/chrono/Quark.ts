@@ -104,7 +104,13 @@ class Quark extends base {
         // (which indicates that the value has been used somewhere else)
         // but there might be outgoing "past" edges, created if `HasProposedValue`
         // or similar effect has been used on the identifier
-        if (this.value !== undefined) this.clearOutgoing()
+        // if (this.value !== undefined) this.clearOutgoing()
+
+        // the `this.value !== undefined` condition above smells very "monkey-patching"
+        // it was probably solving some specific problem in Gantt/SchedulerPro
+        // (engine tests seems to pass w/o it)
+        // in general, should always clear the outgoing edges on new epoch
+        this.clearOutgoing()
 
         this.promise                        = undefined
 
