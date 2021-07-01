@@ -33,7 +33,7 @@ fi
 # bump version in distribution - won't be refelected in main repo, since "make_dist" removes the ".git"
 npm version $V
 
-node -e "require(\"./scripts/changelog.js\").updateVersion()"
+node -e "require(\"./scripts/changelog.cjs\").updateVersion()"
 
 echo "" > .npmignore
 
@@ -45,7 +45,7 @@ cd "$DIR/.."
 # bump version in main repo
 npm version $V
 
-node -e "require(\"./scripts/changelog.js\").updateVersionAndStartNew()"
+node -e "require(\"./scripts/changelog.cjs\").updateVersionAndStartNew()"
 
 git add CHANGELOG.md
 git commit -m "Updated changelog"
