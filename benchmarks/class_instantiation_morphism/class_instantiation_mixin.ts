@@ -1,5 +1,5 @@
 import { BenchmarkC } from "../../src/benchmark/Benchmark.js"
-import { AnyConstructor, Mixin } from "../../src/class/Mixin.js"
+import { AnyConstructor, Mixin, MixinType } from "../../src/class/Mixin.js"
 
 class T0 {
     prap00      : number = 0
@@ -49,7 +49,7 @@ class AddProp1 extends base {
     prop18      : boolean = false
     prop19      : number = 0
 }
-export type AddProp1 = Mixin<typeof AddProp1>
+export type AddProp1 = MixinType<typeof AddProp1>
 
 const AddProp2 = <Base extends AnyConstructor<T0>>(base : Base) =>
 class AddProp2 extends base {
@@ -64,7 +64,7 @@ class AddProp2 extends base {
     prop28      : string = 'abc'
     prop29      : string = 'abc'
 }
-export type AddProp2 = Mixin<typeof AddProp2>
+export type AddProp2 = MixinType<typeof AddProp2>
 
 const AddProp3 = <Base extends AnyConstructor<T0>>(base : Base) =>
 class AddProp3 extends base {
@@ -79,7 +79,7 @@ class AddProp3 extends base {
     prop38      : string = 'abc'
     prop39      : string = 'abc'
 }
-export type AddProp3 = Mixin<typeof AddProp3>
+export type AddProp3 = MixinType<typeof AddProp3>
 
 
 class T1 extends AddProp1(AddProp2(AddProp3(T0))) {}

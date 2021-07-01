@@ -209,6 +209,14 @@ export class ReactiveArrayAtom<V extends unknown[] = unknown[]> extends Mixin(
         write (value : V) {
             this.addMutation({ kind : 'set', elements : value })
         }
+
+
+        updateValue (newValue : V) {
+            super.updateValue(newValue)
+
+            // freeze the immutable so that new mutation will create a new quark
+            this.immutable.freeze()
+        }
     }
 
     return ReactiveArrayAtom

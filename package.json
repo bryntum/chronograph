@@ -24,7 +24,12 @@
   "license": "MIT",
   "dependencies": {
     "esm": "^3.2.25",
-    "tslib": "^1.9.3"
+    "tslib": "^1.9.3",
+    "chained-iterator": "^0.0.2"
+  },
+  "peerDependencies": {
+    "typescript-mixin-class": "^0.0.1",
+    "typescript-serializable-mixin": "^0.0.1"
   },
   "devDependencies": {
     "cytoscape": "^3.14.1",
