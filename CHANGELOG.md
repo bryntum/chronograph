@@ -2,6 +2,8 @@
 
 ## {{ $NEXT }}
 
+2.0.1        2021-07-01 16:19
+
 #### FEATURES / ENHANCEMENTS
 
 - None
