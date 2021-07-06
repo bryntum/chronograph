@@ -27,6 +27,8 @@ export class ReactiveArrayQuark extends Mixin(
     class ReactiveArrayQuark extends base {
         mutations           : ArrayMutation[]   = []
 
+        appliedMutations    : number            = 0
+
         value               : BoxUnbound[]      = undefined
 
 
@@ -158,10 +160,9 @@ export class ReactiveArray<V> extends Mixin(
             const prevValue                 = this.immutable.read()
             let newValue : BoxUnbound[]     = prevValue ? prevValue.slice() : []
 
-            // TODO should clear mutations?
             const mutations     = this.immutable.mutations
 
-            for (let i = 0; i < mutations.length; i++) {
+            for (let i = this.immutable.appliedMutations; i < mutations.length; i++) {
                 const mutation  = mutations[ i ]
 
                 switch (mutation.kind) {
@@ -191,8 +192,9 @@ export class ReactiveArray<V> extends Mixin(
                     default:
                         const a : never = mutation
                 }
-
             }
+
+            this.immutable.appliedMutations = mutations.length
 
             return newValue
         }
@@ -204,17 +206,7 @@ export class ReactiveArray<V> extends Mixin(
 
 
         readValues () : this[ 'OwnV' ][] {
-            const boxes     = super.read()
-
-            return boxes.map(box => box.read())
-        }
-
-
-        updateValue (newValue : V) {
-            super.updateValue(newValue)
-
-            // freeze the immutable so that new mutation will create a new quark
-            this.immutable.freeze()
+            return this.read().map(box => box.read())
         }
     }
 
@@ -240,6 +232,8 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
         source      : ReactiveArray<V>              = undefined
         sourceQuark : ReactiveArrayQuark            = undefined
 
+        sourceQuarkAppliedMutations : number        = 0
+
         func        : AnyFunction                   = undefined
 
         override persistent  : boolean              = true
@@ -256,6 +250,7 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
                     calculation : () => {
                         let value       = el
 
+                        // should only read 1 level
                         while (value instanceof BoxUnboundPre) value = value.read()
 
                         return this.func(value)
@@ -320,30 +315,23 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
                 let newValue : BoxUnbound[]     = this.immutable.read().slice()
 
                 for (let i = pendingSourceQuarks.length - 1; i >= 0; i--) {
-                    const mutations             = pendingSourceQuarks[ i ].mutations
+                    const pendingSourceQuark    = pendingSourceQuarks[ i ]
+                    const mutations             = pendingSourceQuark.mutations
+                    const startAt               = pendingSourceQuark === this.sourceQuark ? this.sourceQuarkAppliedMutations : 0
 
-                    for (let i = 0; i < mutations.length; i++) newValue = this.applyMutation(newValue, mutations[ i ])
+                    for (let i = startAt; i < mutations.length; i++) newValue = this.applyMutation(newValue, mutations[ i ])
                 }
 
-                this.sourceQuark                = this.source.immutable
+                this.sourceQuark                    = this.source.immutable
+                this.sourceQuarkAppliedMutations    = this.source.immutable.appliedMutations
 
                 return newValue
             } else {
-                this.sourceQuark                = this.source.immutable
+                this.sourceQuark                    = this.source.immutable
+                this.sourceQuarkAppliedMutations    = this.source.immutable.appliedMutations
 
                 return this.mapElements(sourceValue)
             }
-
-            // const prevValue                     = this.immutable.read()
-            // let newValue : BoxUnbound[]         = prevValue ? prevValue.slice() : this.mapElements(sourceValue)
-            //
-            // const mutations                     = this.source.immutable.mutations
-            //
-            // for (let i = 0; i < mutations.length; i++) {
-            //     this.applyMutation(newValue, mutations[ i ])
-            // }
-            //
-            // return newValue
         }
     }
 
