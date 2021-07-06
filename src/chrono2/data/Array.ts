@@ -210,12 +210,12 @@ export class ReactiveArray<V> extends Mixin(
         }
 
 
-        // updateValue (newValue : V) {
-        //     super.updateValue(newValue)
-        //
-        //     // freeze the immutable so that new mutation will create a new quark
-        //     this.immutable.freeze()
-        // }
+        updateValue (newValue : V) {
+            super.updateValue(newValue)
+
+            // freeze the immutable so that new mutation will create a new quark
+            this.immutable.freeze()
+        }
     }
 
     return ReactiveArray
@@ -237,10 +237,12 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
         // @ts-ignore
         declare static new<V> (config? : Partial<MappedReactiveArrayAtom<V>>) : MappedReactiveArrayAtom<V>
 
-        source      : ReactiveArray<V>          = undefined
+        source      : ReactiveArray<V>              = undefined
+        sourceQuark : ReactiveArrayQuark            = undefined
+
         func        : AnyFunction                   = undefined
 
-        override persistent  : boolean                   = true
+        override persistent  : boolean              = true
 
 
         addMutation (mutation : ArrayMutation) {
@@ -267,47 +269,81 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
         }
 
 
-        calculate () : BoxUnbound[] {
-            const sourceValue                   = this.source.read()
+        applyMutation (newValue : BoxUnbound[], mutation : ArrayMutation) : BoxUnbound[] {
+            switch (mutation.kind) {
+                case 'splice':
+                    const newBoxes        = this.mapElements(mutation.newElements)
 
-            const prevValue                     = this.immutable.read()
-            let newValue : BoxUnbound[]         = prevValue ? prevValue.slice() : this.mapElements(sourceValue)
+                    newValue.splice(mutation.at, mutation.removeCount, ...newBoxes)
 
-            // TODO should clear mutations?
-            const mutations     = this.source.immutable.mutations
+                    this.immutable.mutations.push({
+                        kind            : 'splice',
+                        at              : mutation.at,
+                        removeCount     : mutation.removeCount,
+                        newElements     : newBoxes
+                    })
+                break
 
-            for (let i = 0; i < mutations.length; i++) {
-                const mutation  = mutations[ i ]
+                case 'set':
+                    newValue        = this.mapElements(mutation.elements)
 
-                switch (mutation.kind) {
-                    case 'splice':
-                        const newBoxes        = this.mapElements(mutation.newElements)
+                    this.immutable.mutations.push({
+                        kind            : 'set',
+                        elements        : newValue
+                    })
+                break
 
-                        newValue.splice(mutation.at, mutation.removeCount, ...newBoxes)
-
-                        this.immutable.mutations.push({
-                            kind            : 'splice',
-                            at              : mutation.at,
-                            removeCount     : mutation.removeCount,
-                            newElements     : newBoxes
-                        })
-                    break
-
-                    case 'set':
-                        newValue        = this.mapElements(mutation.elements)
-
-                        this.immutable.mutations.push({
-                            kind            : 'set',
-                            elements        : newValue
-                        })
-                    break
-
-                    default:
-                        const a : never = mutation
-                }
+                default:
+                    const a : never = mutation
             }
 
             return newValue
+        }
+
+
+        calculate () : BoxUnbound[] {
+            const sourceValue                   = this.source.read()
+
+            if (this.sourceQuark) {
+                const pendingSourceQuarks : ReactiveArrayQuark[]       = []
+
+                let quark : ReactiveArrayQuark  = this.source.immutable
+
+                while (quark) {
+                    pendingSourceQuarks.push(quark)
+
+                    if (quark === this.sourceQuark) break
+
+                    quark                       = quark.previous
+                }
+
+                let newValue : BoxUnbound[]     = this.immutable.read().slice()
+
+                for (let i = pendingSourceQuarks.length - 1; i >= 0; i--) {
+                    const mutations             = pendingSourceQuarks[ i ].mutations
+
+                    for (let i = 0; i < mutations.length; i++) newValue = this.applyMutation(newValue, mutations[ i ])
+                }
+
+                this.sourceQuark                = this.source.immutable
+
+                return newValue
+            } else {
+                this.sourceQuark                = this.source.immutable
+
+                return this.mapElements(sourceValue)
+            }
+
+            // const prevValue                     = this.immutable.read()
+            // let newValue : BoxUnbound[]         = prevValue ? prevValue.slice() : this.mapElements(sourceValue)
+            //
+            // const mutations                     = this.source.immutable.mutations
+            //
+            // for (let i = 0; i < mutations.length; i++) {
+            //     this.applyMutation(newValue, mutations[ i ])
+            // }
+            //
+            // return newValue
         }
     }
 
