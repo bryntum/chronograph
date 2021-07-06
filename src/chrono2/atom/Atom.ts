@@ -1,3 +1,4 @@
+import { Serializable } from "typescript-serializable-mixin/index.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { warn } from "../../environment/Debug.js"
 import { cycleInfo, OnCycleAction, VisitInfo, WalkContext, WalkDepthC, WalkStep } from "../../graph/WalkDepth.js"
@@ -28,7 +29,9 @@ export enum AtomState {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
+export class Atom<V = unknown> extends Serializable.mix(Owner) implements Identifiable, Uniqable {
+    V                   : V
+
     id                  : ChronoReference      = chronoReference()
     // same value for all branches
     identity            : this          = this
@@ -248,7 +251,7 @@ export class Atom<V = unknown> extends Owner implements Identifiable, Uniqable {
     }
 
 
-    read (graph? : ChronoGraph) : V {
+    read (graph? : ChronoGraph) : this[ 'V' ] {
         throw new Error("Abstract method")
     }
 

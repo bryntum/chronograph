@@ -1,3 +1,4 @@
+import { serializable } from "typescript-serializable-mixin/index.js"
 import { CalculationIterator } from "../../primitives/Calculation.js"
 import { AtomState } from "../atom/Atom.js"
 import { calculateAtomsQueueGen } from "../calculation/LeveledGen.js"
@@ -8,6 +9,7 @@ import { ChronoGraph, globalGraph } from "../graph/Graph.js"
 import { CalculableBoxUnbound } from "./CalculableBox.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+@serializable({ id : 'CalculableBoxGenUnbound' })
 export class CalculableBoxGenUnbound<V = unknown> extends CalculableBoxUnbound<V> {
 
     iterator            : CalculationIterator<V>    = undefined
@@ -112,6 +114,7 @@ export class CalculableBoxGenUnbound<V = unknown> extends CalculableBoxUnbound<V
 }
 
 
+@serializable({ id : 'CalculableBoxGen' })
 export class CalculableBoxGen<V = unknown> extends CalculableBoxGenUnbound<V> {
     get boundGraph () : ChronoGraph {
         return globalGraph

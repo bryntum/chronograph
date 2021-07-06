@@ -1,3 +1,4 @@
+import { serializable } from "typescript-serializable-mixin/index.js"
 import { Atom, AtomState } from "../atom/Atom.js"
 import { DefaultMetaBox, Meta } from "../atom/Meta.js"
 import { getNextRevision } from "../atom/Node.js"
@@ -6,6 +7,7 @@ import { ChronoGraph, globalGraph } from "../graph/Graph.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
+@serializable({ id : 'BoxImmutable' })
 export class BoxImmutable<V> extends Quark<V> {
 
     constructor (owner : Atom<V>) {
@@ -62,7 +64,7 @@ export class BoxUnboundPre<V = unknown> extends Atom<V> {
     }
 
 
-    read (graph? : ChronoGraph) : V {
+    read (graph? : ChronoGraph) : this[ 'V' ] {
         const effectiveGraph    = graph || this.graph
         const activeAtom        = effectiveGraph ? effectiveGraph.activeAtom : undefined
         const self              = this.checkoutSelf()
@@ -122,6 +124,7 @@ export class BoxUnboundPre<V = unknown> extends Atom<V> {
 }
 
 
+@serializable({ id : 'BoxUnbound' })
 export class BoxUnbound<V = unknown> extends BoxUnboundPre<V> {
 
     static new<V> (this : typeof BoxUnbound, value? : V, name? : string) : BoxUnbound<V> {
@@ -136,6 +139,7 @@ export class BoxUnbound<V = unknown> extends BoxUnboundPre<V> {
     }
 }
 
+@serializable({ id : 'Box' })
 export class Box<V = unknown> extends BoxUnbound<V> {
 
     static new<T extends typeof Box, V> (this : T, value? : V, name? : string) : Box<V> {

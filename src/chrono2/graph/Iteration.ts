@@ -1,3 +1,4 @@
+import { Serializable, serializable } from "typescript-serializable-mixin/index.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { Atom } from "../atom/Atom.js"
@@ -8,7 +9,8 @@ import { Transaction } from "./Transaction.js"
 
 
 //----------------------------------------------------------------------------------------------------------------------
-export class IterationStorage {
+@serializable({ id : 'IterationStorage' })
+export class IterationStorage extends Serializable {
 
     quarks          : Quark[]           = []
 
@@ -93,7 +95,8 @@ export class IterationStorage {
 let iterationIdSequence : number = 0
 
 //----------------------------------------------------------------------------------------------------------------------
-export class Iteration extends Immutable {
+@serializable({ id : 'Iteration' })
+export class Iteration extends Serializable.mix(Immutable) {
     name            : string            = `iteration#${iterationIdSequence++}`
 
     owner           : Transaction
@@ -288,6 +291,7 @@ export class Iteration extends Immutable {
 
 
 //----------------------------------------------------------------------------------------------------------------------
+@serializable({ id : 'IterationStorageShredding' })
 export class IterationStorageShredding extends IterationStorage {
 
     quarksMap       : Map<ChronoReference, Quark>   = new Map()

@@ -1,12 +1,13 @@
-import { MappedReactiveArrayAtom, ReactiveArrayAtom } from "../../../src/chrono2/data/Array.js"
-import { globalGraph } from "../../../src/chrono2/graph/Graph.js"
+import { MappedReactiveArrayAtom, ReactiveArray } from "../../../src/chrono2/data/Array.js"
+import { ChronoGraph, globalGraph } from "../../../src/chrono2/graph/Graph.js"
+import { delay } from "../../../src/util/Helpers.js"
 
 declare const StartTest : any
 
 StartTest(t => {
 
     t.it('Reactive array should work', async t => {
-        const array      = ReactiveArrayAtom.new()
+        const array      = ReactiveArray.new()
 
         globalGraph.addAtom(array)
 
@@ -26,7 +27,7 @@ StartTest(t => {
 
 
     t.it('Reactive array should work', async t => {
-        const array      = ReactiveArrayAtom.new()
+        const array      = ReactiveArray.new()
 
         globalGraph.addAtom(array)
 
@@ -39,7 +40,7 @@ StartTest(t => {
 
 
     t.it('Mapped reactive array should work #1', async t => {
-        const array     = ReactiveArrayAtom.new()
+        const array     = ReactiveArray.new()
 
         globalGraph.addAtom(array)
 
@@ -69,8 +70,9 @@ StartTest(t => {
         t.is(mapped2.item(3), 16)
     })
 
+
     t.it('Mapped reactive array should work #2', async t => {
-        const array     = ReactiveArrayAtom.new()
+        const array     = ReactiveArray.new()
 
         globalGraph.addAtom(array)
 
@@ -93,4 +95,30 @@ StartTest(t => {
 
         t.is(mapped2.item(0), 16)
     })
+
+
+    t.it('Mapped reactive array should work #3', async t => {
+        const array     = ReactiveArray.new()
+
+        const graph     = ChronoGraph.new({ autoCommit : false, historyLimit : 0 })
+
+        graph.addAtom(array)
+
+        const mapped : MappedReactiveArrayAtom = array.map(el => el * 2)
+
+        array.push(1, 2, 3)
+
+        graph.commit()
+
+        const mapped2 : MappedReactiveArrayAtom = mapped.map(el => el * 2)
+
+        t.is(mapped.item(0), 2)
+        t.is(mapped.item(1), 4)
+        t.is(mapped.item(2), 6)
+
+        t.is(mapped2.item(0), 4)
+        t.is(mapped2.item(1), 8)
+        t.is(mapped2.item(2), 12)
+    })
+
 })

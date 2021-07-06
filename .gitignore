@@ -31,4 +31,5 @@
 # misc local files
 /misc
 /tests/chrono2/todo/**/*
+/*.tgz
 

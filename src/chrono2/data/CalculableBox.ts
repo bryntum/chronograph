@@ -1,3 +1,4 @@
+import { serializable } from "typescript-serializable-mixin/index.js"
 import { AnyFunction } from "../../class/Mixin.js"
 import { AtomState } from "../atom/Atom.js"
 import { AtomCalculationPriorityLevel } from "../atom/Meta.js"
@@ -16,6 +17,7 @@ export const SynchronousCalculationStarted  = Symbol('SynchronousCalculationStar
 const calculationStartedConstant : IteratorResult<typeof SynchronousCalculationStarted> =
     { done : false, value : SynchronousCalculationStarted }
 
+@serializable({ id : 'CalculableBoxUnbound' })
 export class CalculableBoxUnbound<V = unknown> extends BoxUnboundPre<V> {
     level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnSelfKind
 
@@ -247,7 +249,7 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnboundPre<V> {
     }
 
 
-    read (graph? : ChronoGraph) : V {
+    read (graph? : ChronoGraph) : this[ 'V' ] {
         const effectiveGraph    = graph || this.graph
         const activeAtom        = effectiveGraph ? effectiveGraph.activeAtom : undefined
         const self              = this.checkoutSelf()
@@ -503,6 +505,7 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnboundPre<V> {
 }
 
 
+@serializable({ id : 'CalculableBox' })
 export class CalculableBox<V = unknown> extends CalculableBoxUnbound<V> {
     get boundGraph () : ChronoGraph {
         return globalGraph

@@ -137,5 +137,12 @@ project.start(
         items       : [
             'event/events.t.js'
         ]
+    },
+    {
+        group       : 'Remote',
+
+        items       : [
+            'remote/remote_chronograph.t.js'
+        ]
     }
 )

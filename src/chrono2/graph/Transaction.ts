@@ -1,3 +1,4 @@
+import { serializable, exclude, Serializable } from "typescript-serializable-mixin/index.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { LeveledQueue } from "../../util/LeveledQueue2.js"
 import { Atom } from "../atom/Atom.js"
@@ -10,7 +11,8 @@ import { Iteration, IterationStorage, IterationStorageShredding } from "./Iterat
 let transactionIdSequence : number = 0
 
 //----------------------------------------------------------------------------------------------------------------------
-export class Transaction extends Owner implements Immutable {
+@serializable({ id : 'Transaction', mode : 'optOut' })
+export class Transaction extends Serializable.mix(Owner) implements Immutable {
     propagationStartDate                : number        = 0
     lastProgressNotificationDate        : number        = 0
 
@@ -22,6 +24,7 @@ export class Transaction extends Owner implements Immutable {
 
     plannedTotalIdentifiersToCalculate  : number        = 0
 
+    @exclude()
     iterationClass      : typeof Iteration              = Iteration
 
 

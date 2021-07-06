@@ -1,7 +1,7 @@
+import { serializable, Serializable } from "typescript-serializable-mixin/index.js"
 import { AnyFunction, ClassUnion, Mixin } from "../../class/Mixin.js"
 import { FieldAtom } from "../../replica2/Atom.js"
 import { AtomState } from "../atom/Atom.js"
-import { AtomCalculationPriorityLevel } from "../atom/Meta.js"
 import { CalculationFunction, CalculationModeSync } from "../CalculationMode.js"
 import { BoxImmutable, BoxUnbound, BoxUnboundPre } from "./Box.js"
 import { CalculableBoxUnbound } from "./CalculableBox.js"
@@ -19,6 +19,7 @@ type ArrayMutation = {
 }
 
 //---------------------------------------------------------------------------------------------------------------------
+@serializable({ id : 'ReactiveArrayQuark' })
 export class ReactiveArrayQuark extends Mixin(
     [ BoxImmutable ],
     (base : ClassUnion<typeof BoxImmutable>) =>
@@ -43,21 +44,27 @@ ReactiveArrayQuark.zero = zeroArrayQuark
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class ReactiveArrayAtom<V extends unknown[] = unknown[]> extends Mixin(
+@serializable({ id : 'ReactiveArrayAtom' })
+export class ReactiveArray<V> extends Mixin(
     [ FieldAtom, CalculableBoxUnbound ],
     (base : ClassUnion<typeof CalculableBoxUnbound, typeof FieldAtom>) => {
 
     // @ts-ignore
-    class ReactiveArrayAtom<V extends unknown[] = unknown[]> extends base {
+    class ReactiveArray<V> extends base {
         // @ts-ignore
-        declare static new<V extends unknown[]> (config? : Partial<ReactiveArrayAtom<V>>) : ReactiveArrayAtom<V>
+        declare static new<V> (config? : Partial<ReactiveArray<V>>) : ReactiveArray<V>
+
+        V                   : BoxUnbound<V>[]
+        OwnV                : V
 
         immutable           : ReactiveArrayQuark
 
-        level               : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnlyOnDependsOnlyOnUserInput
+        // level               : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnlyOnDependsOnlyOnUserInput
 
         lazy                : boolean                       = false
         sync                : boolean                       = true
+
+        override persistent  : boolean                   = true
 
 
         hasProposedValue () : boolean {
@@ -134,21 +141,6 @@ export class ReactiveArrayAtom<V extends unknown[] = unknown[]> extends Mixin(
         }
 
 
-        // set (at : number, newValue : unknown) {
-        //     this.propagateStaleDeep(true)
-        //
-        //     const quark         = this.immutableForWrite()
-        //
-        //     quark.mutations.push({ kind : 'set', at, newValue })
-        //
-        //     this.state              = AtomState.Stale
-        //
-        //     if (this.graph) {
-        //         this.graph.onDataWrite(this)
-        //     }
-        // }
-
-
         // @ts-ignore
         get context () : unknown {
             return this
@@ -206,57 +198,80 @@ export class ReactiveArrayAtom<V extends unknown[] = unknown[]> extends Mixin(
         }
 
 
-        write (value : V) {
+        write (value : V[]) {
             this.addMutation({ kind : 'set', elements : value })
         }
 
 
-        updateValue (newValue : V) {
-            super.updateValue(newValue)
+        readValues () : this[ 'OwnV' ][] {
+            const boxes     = super.read()
 
-            // freeze the immutable so that new mutation will create a new quark
-            this.immutable.freeze()
+            return boxes.map(box => box.read())
         }
+
+
+        // updateValue (newValue : V) {
+        //     super.updateValue(newValue)
+        //
+        //     // freeze the immutable so that new mutation will create a new quark
+        //     this.immutable.freeze()
+        // }
     }
 
-    return ReactiveArrayAtom
+    return ReactiveArray
 }){}
 
+export interface ReactiveArray<V> {
+    OwnV                : V
+    V                   : BoxUnbound<V>[]
+}
 
 //---------------------------------------------------------------------------------------------------------------------
+@serializable({ id : 'MappedReactiveArrayAtom' })
 export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
-    [ ReactiveArrayAtom ],
-    (base : ClassUnion<typeof ReactiveArrayAtom>) => {
+    [ ReactiveArray, Serializable ],
+    (base : ClassUnion<typeof ReactiveArray, typeof Serializable>) => {
 
     // @ts-ignore
     class MappedReactiveArrayAtom<V = unknown> extends base {
         // @ts-ignore
         declare static new<V> (config? : Partial<MappedReactiveArrayAtom<V>>) : MappedReactiveArrayAtom<V>
 
-        source      : ReactiveArrayAtom         = undefined
+        source      : ReactiveArray<V>          = undefined
+        func        : AnyFunction                   = undefined
 
-        // get rootSource () : ReactiveArrayAtom {
-        //     let root        = this.source
-        //
-        //     while (root instanceof MappedReactiveArrayAtom) root = root.source
-        //
-        //     return root
-        // }
-
-        func        : AnyFunction               = undefined
+        override persistent  : boolean                   = true
 
 
-        splice (at : number, removeCount : number, ...newElements : unknown[]) {
+        addMutation (mutation : ArrayMutation) {
             throw new Error("Mapped array is not mutable")
         }
 
 
+        mapElements (elements : unknown[]) : CalculableBoxUnbound[] {
+            return elements.map(el => {
+                const newBox        = CalculableBoxUnbound.new({
+                    calculation : () => {
+                        let value       = el
+
+                        while (value instanceof BoxUnboundPre) value = value.read()
+
+                        return this.func(value)
+                    }
+                })
+
+                this.graph.addAtom(newBox)
+
+                return newBox
+            })
+        }
+
+
         calculate () : BoxUnbound[] {
-            this.source.read()
-            // this.rootSource.read()
+            const sourceValue                   = this.source.read()
 
             const prevValue                     = this.immutable.read()
-            let newValue : BoxUnbound[]         = prevValue ? prevValue.slice() : []
+            let newValue : BoxUnbound[]         = prevValue ? prevValue.slice() : this.mapElements(sourceValue)
 
             // TODO should clear mutations?
             const mutations     = this.source.immutable.mutations
@@ -266,21 +281,7 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
 
                 switch (mutation.kind) {
                     case 'splice':
-                        const newBoxes        = mutation.newElements.map(el => {
-                            const newBox        = CalculableBoxUnbound.new({
-                                calculation : () => {
-                                    let value       = el
-
-                                    while (value instanceof BoxUnboundPre) value = value.read()
-
-                                    return this.func(value)
-                                }
-                            })
-
-                            this.graph.addAtom(newBox)
-
-                            return newBox
-                        })
+                        const newBoxes        = this.mapElements(mutation.newElements)
 
                         newValue.splice(mutation.at, mutation.removeCount, ...newBoxes)
 
@@ -293,21 +294,7 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
                     break
 
                     case 'set':
-                        newValue        = mutation.elements.map(el => {
-                            const newBox        = CalculableBoxUnbound.new({
-                                calculation : () => {
-                                    let value       = el
-
-                                    while (value instanceof BoxUnboundPre) value = value.read()
-
-                                    return this.func(value)
-                                }
-                            })
-
-                            this.graph.addAtom(newBox)
-
-                            return newBox
-                        })
+                        newValue        = this.mapElements(mutation.elements)
 
                         this.immutable.mutations.push({
                             kind            : 'set',

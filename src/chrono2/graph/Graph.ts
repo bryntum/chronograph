@@ -1,3 +1,4 @@
+import { exclude, Serializable, serializable } from "typescript-serializable-mixin/index.js"
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
 import { MIN_SMI } from "../../util/Helpers.js"
@@ -66,7 +67,8 @@ export const CommitZero : CommitResult = {
 
 
 //----------------------------------------------------------------------------------------------------------------------
-export class ChronoGraph extends Base implements Owner {
+@serializable({ id : 'ChronoGraph', mode : 'optOut' })
+export class ChronoGraph extends Serializable.mix(Base) implements Owner {
     // for debugging convenience
     // globalContext           : any                   = globalContext
 
@@ -98,6 +100,7 @@ export class ChronoGraph extends Base implements Owner {
 
     isCommitting            : boolean           = false
 
+    @exclude()
     ongoing                 : Promise<any>      = Promise.resolve()
 
     //-------------------------------------
@@ -117,17 +120,23 @@ export class ChronoGraph extends Base implements Owner {
      */
     autoCommitMode          : 'sync' | 'async'  = 'sync'
 
+    @exclude()
     autoCommitHandler       : AnyFunction       = null
 
     // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
+    // UPDATE: which does not work with declaration files - the type is inlined and adds a dependency on
+    // `@types/node`
     autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
 
-
+    @exclude()
     effectHandlerSync       : EffectHandler<CalculationModeSync>    = null
+    @exclude()
     effectHandlerAsync      : EffectHandler<CalculationModeGen>     = null
 
+    @exclude()
     transactionClass        : typeof Transaction    = Transaction
 
+    @exclude()
     stack                   : LeveledQueue<Atom>    = new LeveledQueue()
 
 
