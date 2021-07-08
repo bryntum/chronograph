@@ -71,7 +71,7 @@ export class Atom<V = unknown> extends Serializable.mix(Owner) implements Identi
 
     $commitValueOptimisticHook : Hook<[ this, V, V ]>       = undefined
 
-    get commitValueOptimistic () : Hook<[ this, V, V ]> {
+    get commitValueOptimisticHook () : Hook<[ this, V, V ]> {
         if (this.$commitValueOptimisticHook !== undefined) return this.$commitValueOptimisticHook
 
         return this.$commitValueOptimisticHook = new Hook()
