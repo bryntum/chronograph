@@ -87,6 +87,8 @@ export class BoxUnboundPre<V = unknown> extends Atom<V> {
 
 
     writeConfirmedDifferentValue (value : V, ...args : any[]) {
+        const prevRaw       = this.immutable.readRaw()
+
         if (this.graph) {
             this.graph.frozen = false
             // start new iteration right away
@@ -118,7 +120,7 @@ export class BoxUnboundPre<V = unknown> extends Atom<V> {
             graph.onDataWrite(this)
         }
 
-        if (this.onCommitValueOptimistic) this.onCommitValueOptimistic(value)
+        if (this.$commitValueOptimisticHook) this.$commitValueOptimisticHook.trigger(this, value, prevRaw)
     }
 
 }

@@ -316,7 +316,7 @@ export class CalculableBoxUnbound<V = unknown> extends BoxUnboundPre<V> {
         // only write the value, revision has been already updated in the `beforeCalculation`
         immutable.write(newValue)
 
-        if (this.onCommitValueOptimistic) this.onCommitValueOptimistic(newValue)
+        if (this.$commitValueOptimisticHook) this.$commitValueOptimisticHook.trigger(this, newValue, previous)
 
         immutable.proposedValue            = this.proposedValue
         immutable.proposedArgs             = this.proposedArgs

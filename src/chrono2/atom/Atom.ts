@@ -1,6 +1,7 @@
 import { Serializable } from "typescript-serializable-mixin/index.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { warn } from "../../environment/Debug.js"
+import { Hook } from "../../event/Hook.js"
 import { cycleInfo, OnCycleAction, VisitInfo, WalkContext, WalkDepthC, WalkStep } from "../../graph/WalkDepth.js"
 import { MIN_SMI } from "../../util/Helpers.js"
 import { getUniqable, Uniqable } from "../../util/Uniqable.js"
@@ -68,8 +69,13 @@ export class Atom<V = unknown> extends Serializable.mix(Owner) implements Identi
 
     context             : any           = undefined
 
-    // TODO replace to hook
-    onCommitValueOptimistic     : (value : V) => any
+    $commitValueOptimisticHook : Hook<[ this, V, V ]>       = undefined
+
+    get commitValueOptimistic () : Hook<[ this, V, V ]> {
+        if (this.$commitValueOptimisticHook !== undefined) return this.$commitValueOptimisticHook
+
+        return this.$commitValueOptimisticHook = new Hook()
+    }
 
 
     //region meta
@@ -420,7 +426,7 @@ export class Atom<V = unknown> extends Serializable.mix(Owner) implements Identi
 
         this.userInputRevision  = quark.revision
 
-        if (this.onCommitValueOptimistic) this.onCommitValueOptimistic(newValue)
+        if (this.$commitValueOptimisticHook) this.$commitValueOptimisticHook.trigger(this, newValue, oldValue)
     }
 
 
