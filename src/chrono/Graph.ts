@@ -595,7 +595,7 @@ export class ChronoGraph extends Base {
 
 
     scheduleAutoCommit () {
-        if (this.autoCommitTimeoutId === null && !this.isCommiting) {
+        if (this.autoCommitTimeoutId === null && !this.isCommitting) {
             this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, 10)
         }
     }
