@@ -1,7 +1,7 @@
 import { exclude, Serializable, serializable } from "typescript-serializable-mixin/index.js"
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
-import { MIN_SMI } from "../../util/Helpers.js"
+import { clearImmediateHelper, MIN_SMI, setImmediateHelper, SetImmediateHelperDesc } from "../../util/Helpers.js"
 import { LeveledQueue } from "../../util/LeveledQueue2.js"
 import { Atom, AtomState } from "../atom/Atom.js"
 import { ChronoReference } from "../atom/Identifiable.js"
@@ -126,7 +126,7 @@ export class ChronoGraph extends Serializable.mix(Base) implements Owner {
     // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
     // UPDATE: which does not work with declaration files - the type is inlined and adds a dependency on
     // `@types/node`
-    autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
+    autoCommitTimeoutId     : SetImmediateHelperDesc                = null
 
     @exclude()
     effectHandlerSync       : EffectHandler<CalculationModeSync>    = null
@@ -437,14 +437,14 @@ export class ChronoGraph extends Serializable.mix(Base) implements Owner {
 
     scheduleAutoCommit () {
         if (this.autoCommitTimeoutId === null) {
-            this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, this.autoCommitTimeout)
+            this.autoCommitTimeoutId    = setImmediateHelper(this.autoCommitHandler)
         }
     }
 
 
     unScheduleAutoCommit () {
         if (this.autoCommitTimeoutId !== null) {
-            clearTimeout(this.autoCommitTimeoutId)
+            clearImmediateHelper(this.autoCommitTimeoutId)
             this.autoCommitTimeoutId    = null
         }
     }

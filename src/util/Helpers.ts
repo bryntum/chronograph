@@ -109,3 +109,19 @@ export const isGeneratorFunction = function (func : any) : boolean {
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export type SetImmediateHelperDesc = {
+    cleared     : boolean
+}
+
+export const setImmediateHelper = (func : Function) : SetImmediateHelperDesc => {
+    const desc : SetImmediateHelperDesc = { cleared : false }
+
+    Promise.resolve().then(() => !desc.cleared && func())
+
+    return desc
+}
+
+export const clearImmediateHelper = (desc : SetImmediateHelperDesc) => {
+    desc.cleared = true
+}

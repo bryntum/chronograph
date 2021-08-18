@@ -25,15 +25,15 @@
   "dependencies": {
     "esm": "^3.2.25",
     "tslib": "^1.9.3",
-    "chained-iterator": "^0.0.2"
+    "chained-iterator": "^0.0.2",
+    "typescript-mixin-class": "^0.0.1",
+    "typescript-serializable-mixin": "^0.0.1"
   },
   "peerDependencies": {
     "typescript-mixin-class": "^0.0.1",
     "typescript-serializable-mixin": "^0.0.1"
   },
   "devDependencies": {
-    "typescript-mixin-class": "^0.0.1",
-    "typescript-serializable-mixin": "^0.0.1",
     "@bryntum/siesta": "^6.0.0-alpha-3",
     "@types/node": "^12.7.2",
     "@web/dev-server": "^0.1.17",
