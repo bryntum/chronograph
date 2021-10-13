@@ -4,7 +4,7 @@ import { calculate, Entity, field } from "../../../src/replica2/Entity.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin1 extends Mixin(
-    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) =>
 
     class Mixin1 extends base {
         @field()
@@ -37,13 +37,11 @@ export class Mixin1 extends Mixin(
         @calculate('field15')
         calculateField15 () {}
     }
-
-    return Mixin1
-}){}
+){}
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin2 extends Mixin(
-    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) =>
 
     class Mixin2 extends base {
         @field()
@@ -76,13 +74,11 @@ export class Mixin2 extends Mixin(
         @calculate('field25')
         calculateField25 () {}
     }
-
-    return Mixin2
-}){}
+){}
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin3 extends Mixin(
-    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) =>
 
     class Mixin3 extends base {
         @field()
@@ -115,14 +111,12 @@ export class Mixin3 extends Mixin(
         @calculate('field35')
         calculateField35 () {}
     }
-
-    return Mixin3
-}){}
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin4 extends Mixin(
-    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) => {
+    [ Entity ], (base : AnyConstructor<Entity, typeof Entity>) =>
 
     class Mixin4 extends base {
         @field()
@@ -155,14 +149,12 @@ export class Mixin4 extends Mixin(
         @calculate('field45')
         calculateField45 () {}
     }
-
-    return Mixin4
-}){}
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export class Mixin5 extends Mixin(
-    [ Entity ], (base : ClassUnion<typeof Entity>) => {
+    [ Entity ], (base : ClassUnion<typeof Entity>) =>
 
     class Mixin5 extends base {
         @field()
@@ -195,9 +187,7 @@ export class Mixin5 extends Mixin(
         @calculate('field55')
         calculateField55 () {}
     }
-
-    return Mixin5
-}){}
+){}
 
 
 //---------------------------------------------------------------------------------------------------------------------

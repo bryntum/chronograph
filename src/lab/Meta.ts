@@ -89,7 +89,7 @@ export const MetaClassC = <Konstructor extends ManagedConstructor>(config : Part
 //---------------------------------------------------------------------------------------------------------------------
 export class BaseManaged extends Mixin(
     [],
-    (base : AnyConstructor) => {
+    (base : AnyConstructor) =>
 
     class BaseManaged extends base {
         $meta               : any
@@ -124,6 +124,4 @@ export class BaseManaged extends Mixin(
             return proto.$meta = metaClass.new({ konstructor : this })
         }
     }
-
-    return BaseManaged
-}){}
+){}

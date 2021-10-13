@@ -67,7 +67,7 @@ export const reference : FieldDecorator<typeof ReferenceField> =
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceAtom extends Mixin(
     [ FieldCalculableBox ],
-    (base : AnyConstructor<FieldCalculableBox, typeof FieldCalculableBox>) => {
+    (base : AnyConstructor<FieldCalculableBox, typeof FieldCalculableBox>) =>
 
     class ReferenceAtom extends base {
         level           : AtomCalculationPriorityLevel  = AtomCalculationPriorityLevel.DependsOnlyOnUserInput
@@ -184,6 +184,4 @@ export class ReferenceAtom extends Mixin(
             super.writeConfirmedDifferentValue(value)
         }
     }
-
-    return ReferenceAtom
-}){}
+){}

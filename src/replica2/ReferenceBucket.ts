@@ -86,7 +86,7 @@ ReferenceBucketQuark.zero = zeroBucketQuark
 //---------------------------------------------------------------------------------------------------------------------
 export class ReferenceBucketAtom extends Mixin(
     [ FieldCalculableBox ],
-    (base : ClassUnion<typeof FieldCalculableBox>) => {
+    (base : ClassUnion<typeof FieldCalculableBox>) =>
 
     class ReferenceBucketAtom extends base {
         immutable           : ReferenceBucketQuark
@@ -175,6 +175,4 @@ export class ReferenceBucketAtom extends Mixin(
             return newValue
         }
     }
-
-    return ReferenceBucketAtom
-}){}
+){}

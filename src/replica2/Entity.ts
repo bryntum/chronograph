@@ -10,9 +10,6 @@ import { defineProperty, uppercaseFirst } from "../util/Helpers.js"
 import { EntityAtom, EntityBox, FieldAtom, FieldBox, FieldCalculableBox } from "./Atom.js"
 import { ReadMode, Replica } from "./Replica.js"
 
-
-const isEntityMarker      = Symbol('isEntity')
-
 //---------------------------------------------------------------------------------------------------------------------
 /**
  * Entity [[Mixin|mixin]]. When applied to some base class (recommended one is [[Base]]), turns it into entity.
@@ -43,14 +40,15 @@ const isEntityMarker      = Symbol('isEntity')
  */
 export class Entity extends Mixin(
     [],
-    (base : AnyConstructor) => {
+    (base : AnyConstructor) =>
 
     class Entity extends base {
         // marker in the prototype to identify whether the parent class is Entity mixin itself
         // it is not used for `instanceof` purposes and not be confused with the [MixinInstanceOfProperty]
         // (though it is possible to use MixinInstanceOfProperty for this purpose, that would require to
         // make it public
-        [isEntityMarker] () {}
+        // this used to be a Symbol, but changed to plain string due to dts files generation
+        __isEntityMarker () {}
 
         // $calculations   : { [s in keyof this] : string }
         // $writes         : { [s in keyof this] : string }
@@ -368,11 +366,8 @@ export class Entity extends Mixin(
                 }
             }
         }
-
     }
-
-    return Entity
-}){}
+){}
 
 export type EntityConstructor = typeof Entity
 
@@ -385,7 +380,7 @@ export const createEntityOnPrototype = (proto : any) : EntityMeta => {
     // if the parent is `Entity` mixin, then this is a top-level entity
     return defineProperty(proto, '$entity', EntityMeta.new({
         proto,
-        parentEntity    : parent.hasOwnProperty(isEntityMarker) ? null : parent.$entity,
+        parentEntity    : parent.hasOwnProperty('__isEntityMarker') ? null : parent.$entity,
         name            : proto.constructor.name
     }))
 }

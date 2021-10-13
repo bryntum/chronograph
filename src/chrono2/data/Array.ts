@@ -49,7 +49,7 @@ ReactiveArrayQuark.zero = zeroArrayQuark
 @serializable({ id : 'ReactiveArrayAtom' })
 export class ReactiveArray<V> extends Mixin(
     [ FieldAtom, CalculableBoxUnbound ],
-    (base : ClassUnion<typeof CalculableBoxUnbound, typeof FieldAtom>) => {
+    (base : ClassUnion<typeof CalculableBoxUnbound, typeof FieldAtom>) =>
 
     // @ts-ignore
     class ReactiveArray<V> extends base {
@@ -209,9 +209,7 @@ export class ReactiveArray<V> extends Mixin(
             return this.read().map(box => box.read())
         }
     }
-
-    return ReactiveArray
-}){}
+){}
 
 export interface ReactiveArray<V> {
     OwnV                : V
@@ -222,7 +220,7 @@ export interface ReactiveArray<V> {
 @serializable({ id : 'MappedReactiveArrayAtom' })
 export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
     [ ReactiveArray, Serializable ],
-    (base : ClassUnion<typeof ReactiveArray, typeof Serializable>) => {
+    (base : ClassUnion<typeof ReactiveArray, typeof Serializable>) =>
 
     // @ts-ignore
     class MappedReactiveArrayAtom<V = unknown> extends base {
@@ -334,6 +332,4 @@ export class MappedReactiveArrayAtom<V = unknown> extends Mixin(
             }
         }
     }
-
-    return MappedReactiveArrayAtom
-}){}
+){}
