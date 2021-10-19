@@ -1,4 +1,5 @@
 import { Base } from "../class/Base.js"
+import { CI } from "../collection/Iterator.js"
 import { DEBUG, warn } from "../environment/Debug.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
 import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
@@ -112,6 +113,11 @@ export class Transaction extends Base {
 
     get dirty () : boolean {
         return this.entries.size > 0
+    }
+
+
+    get dirtyProposed () : boolean {
+        return CI(this.entries.values()).some(quark => quark.hasProposedValue())
     }
 
 
