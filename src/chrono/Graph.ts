@@ -181,6 +181,11 @@ export class ChronoGraph extends Base {
     }
 
 
+    get dirtyProposed () : boolean {
+        return this.activeTransaction.dirtyProposed
+    }
+
+
     clear () {
         this.reject()
 
@@ -595,7 +600,10 @@ export class ChronoGraph extends Base {
 
 
     scheduleAutoCommit () {
-        if (this.autoCommitTimeoutId === null && !this.isCommitting) {
+        // the `&& !this.isCommitting` part was added for the conflicts branch
+        // however, it seems to fail several tests
+        // commenting for now, to be reviewed later
+        if (this.autoCommitTimeoutId === null /*&& !this.isCommitting*/) {
             this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, 10)
         }
     }
