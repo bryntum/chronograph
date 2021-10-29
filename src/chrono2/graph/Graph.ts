@@ -1,4 +1,4 @@
-import { exclude, Serializable, serializable } from "typescript-serializable-mixin/index.js"
+import { exclude, SerializableCustom as Serializable, serializable } from "typescript-serializable-mixin/index.js"
 import { Base } from "../../class/Base.js"
 import { AnyConstructor, AnyFunction } from "../../class/Mixin.js"
 import { clearImmediateHelper, MIN_SMI, setImmediateHelper, SetImmediateHelperDesc } from "../../util/Helpers.js"
@@ -68,7 +68,7 @@ export const CommitZero : CommitResult = {
 
 //----------------------------------------------------------------------------------------------------------------------
 @serializable({ id : 'ChronoGraph', mode : 'optOut' })
-export class ChronoGraph extends Serializable.mix(Base) implements Owner {
+export class ChronoGraph extends Serializable.derive(Base) implements Owner {
     // for debugging convenience
     // globalContext           : any                   = globalContext
 

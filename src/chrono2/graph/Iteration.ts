@@ -1,4 +1,4 @@
-import { Serializable, serializable } from "typescript-serializable-mixin/index.js"
+import { SerializableCustom as Serializable, serializable } from "typescript-serializable-mixin/index.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { getUniqable } from "../../util/Uniqable.js"
 import { Atom } from "../atom/Atom.js"
@@ -96,7 +96,7 @@ let iterationIdSequence : number = 0
 
 //----------------------------------------------------------------------------------------------------------------------
 @serializable({ id : 'Iteration' })
-export class Iteration extends Serializable.mix(Immutable) {
+export class Iteration extends Serializable.derive(Immutable) {
     name            : string            = `iteration#${iterationIdSequence++}`
 
     owner           : Transaction

@@ -1,4 +1,4 @@
-import { Serializable } from "typescript-serializable-mixin/index.js"
+import { SerializableCustom as Serializable } from "typescript-serializable-mixin/index.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { warn } from "../../environment/Debug.js"
 import { Hook } from "../../event/Hook.js"
@@ -30,7 +30,7 @@ export enum AtomState {
 
 
 //---------------------------------------------------------------------------------------------------------------------
-export class Atom<V = unknown> extends Serializable.mix(Owner) implements Identifiable, Uniqable {
+export class Atom<V = unknown> extends Serializable.derive(Owner) implements Identifiable, Uniqable {
     V                   : V
 
     id                  : ChronoReference      = chronoReference()

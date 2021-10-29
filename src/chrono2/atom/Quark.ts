@@ -1,4 +1,4 @@
-import { Serializable } from "typescript-serializable-mixin/index.js"
+import { SerializableCustom as Serializable } from "typescript-serializable-mixin/index.js"
 import { AnyConstructor } from "../../class/Mixin.js"
 import { copyArray, MIN_SMI } from "../../util/Helpers.js"
 import { getUniqable } from "../../util/Uniqable.js"
@@ -9,7 +9,7 @@ import { Atom, AtomState } from "./Atom.js"
 import { Node } from "./Node.js"
 
 
-export class Quark<V = unknown> extends Serializable.mix(Node) implements Immutable {
+export class Quark<V = unknown> extends Serializable.derive(Node) implements Immutable {
     owner                   : Atom<V>           = undefined
 
     previous                : this              = undefined
