@@ -480,6 +480,11 @@ export class Transaction extends Base {
         // this.onNewWrite()
 
         identifier.write.call(identifier.context || identifier, identifier, this, null, /*this.getWriteTarget(identifier),*/ proposedValue, ...args)
+
+        const entry                     = this.entries.get(identifier)
+
+        this._hasVariableEntry          = this._hasVariableEntry || (!entry.isShadow() && identifier.level === Levels.UserInput)
+        this._hasEntryWithProposedValue = this._hasEntryWithProposedValue || entry.hasProposedValue()
     }
 
 
@@ -489,12 +494,7 @@ export class Transaction extends Base {
 
 
     getWriteTarget<T extends Identifier> (identifier : T) : InstanceType<T[ 'quarkClass' ]> {
-        const entry : InstanceType<T[ 'quarkClass' ]>       = this.touch(identifier).startOrigin() as InstanceType<T[ 'quarkClass' ]>
-
-        this._hasVariableEntry           = this._hasVariableEntry || (!entry.isShadow() && identifier.level === Levels.UserInput)
-        this._hasEntryWithProposedValue  = this._hasEntryWithProposedValue || entry.hasProposedValue()
-
-        return entry
+        return this.touch(identifier).startOrigin() as InstanceType<T[ 'quarkClass' ]>
     }
 
 
@@ -587,10 +587,6 @@ export class Transaction extends Base {
         identifier.leaveGraph(this.graph)
 
         const entry                 = this.touch(identifier).startOrigin()
-
-        // reset cached flags
-        this._hasVariableEntry           = undefined
-        this._hasEntryWithProposedValue  = undefined
 
         entry.setValue(TombStone)
     }
