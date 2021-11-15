@@ -181,11 +181,6 @@ export class ChronoGraph extends Base {
     }
 
 
-    get dirtyProposed () : boolean {
-        return this.activeTransaction.dirtyProposed
-    }
-
-
     clear () {
         this.reject()
 
