@@ -86,9 +86,9 @@ export class Transaction extends Base {
 
     rejectedWith            : RejectEffect<unknown> = undefined
 
-    _hasEntryWithProposedValue : boolean             = false
+    hasEntryWithProposedValue : boolean             = false
 
-    _hasVariableEntry          : boolean             = false
+    hasVariableEntry          : boolean             = false
 
 
     initialize (...args) {
@@ -112,18 +112,6 @@ export class Transaction extends Base {
         // instead inside of `read` delegate to `yieldSync` for non-identifiers
         this.onEffectSync   = /*this.onEffectAsync =*/ this.read.bind(this)
         this.onEffectAsync  = this.readAsync.bind(this)
-    }
-
-
-    get hasVariableEntry () : boolean {
-        // dirty if there is a proposed value or a variable
-        return typeof this._hasVariableEntry === 'boolean' ? this._hasVariableEntry : CI(this.entries.values()).some(quark => !quark.isShadow() && quark.identifier.level === Levels.UserInput)
-    }
-
-
-    get hasEntryWithProposedValue () : boolean {
-        // dirty if there is a proposed value or a variable
-        return typeof this._hasEntryWithProposedValue === 'boolean' ? this._hasEntryWithProposedValue : CI(this.entries.values()).some(quark => quark.hasProposedValue())
     }
 
 
@@ -483,8 +471,8 @@ export class Transaction extends Base {
 
         const entry                     = this.entries.get(identifier)
 
-        this._hasVariableEntry          = this._hasVariableEntry || (!entry.isShadow() && identifier.level === Levels.UserInput)
-        this._hasEntryWithProposedValue = this._hasEntryWithProposedValue || entry.hasProposedValue()
+        this.hasVariableEntry          = this.hasVariableEntry || (!entry.isShadow() && identifier.level === Levels.UserInput)
+        this.hasEntryWithProposedValue = this.hasEntryWithProposedValue || entry.hasProposedValue()
     }
 
 
@@ -564,8 +552,8 @@ export class Transaction extends Base {
             this.entries.set(identifier, entry)
             if (!identifier.lazy && !isVariable) this.stackGen.push(entry)
 
-            this._hasVariableEntry           = this._hasVariableEntry || (!entry.isShadow() && isVariable)
-            this._hasEntryWithProposedValue  = this._hasEntryWithProposedValue || entry.hasProposedValue()
+            this.hasVariableEntry           = this.hasVariableEntry || (!entry.isShadow() && isVariable)
+            this.hasEntryWithProposedValue  = this.hasEntryWithProposedValue || entry.hasProposedValue()
         }
 
         if (proposedValue !== undefined || isVariable) {
