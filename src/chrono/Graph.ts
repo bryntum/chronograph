@@ -598,7 +598,7 @@ export class ChronoGraph extends Base {
         // the `&& !this.isCommitting` part was added for the conflicts branch
         // however, it seems to fail several tests
         // commenting for now, to be reviewed later
-        if (this.autoCommitTimeoutId === null /*&& !this.isCommitting*/) {
+        if (this.autoCommitTimeoutId === null && !this.isCommitting) {
             this.autoCommitTimeoutId    = setTimeout(this.autoCommitHandler, 10)
         }
     }
