@@ -138,8 +138,7 @@ export class ReferenceIdentifier extends Mixin(
             super.leaveGraph(graph)
         }
 
-
-        write (me : this, transaction : Transaction, q : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ]) {
+        write (me : this, transaction : Transaction, q : InstanceType<this[ 'quarkClass' ]>, proposedValue : this[ 'ValueT' ], ...args : this[ 'ArgsT' ]) {
             const quark           = q || transaction.acquireQuarkIfExists(me)
 
             if (me.hasBucket()) {
