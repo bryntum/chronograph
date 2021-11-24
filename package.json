@@ -4,6 +4,7 @@
   "description": "Open-source reactive computational engine, implemented in TypeScript and developed by Bryntum",
   "main": "index.js",
   "module": "main.js",
+  "type": "module",
   "scripts": {
     "test": "npx siesta ./tests",
     "docs": "scripts/build_docs.sh"
