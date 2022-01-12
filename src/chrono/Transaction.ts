@@ -905,7 +905,7 @@ export class Transaction extends Base {
 
                         this.graph.onPropagationProgressNotification({
                             total       : this.plannedTotalIdentifiersToCalculate,
-                            remaining   : stack.length,
+                            remaining   : this.stackGen.length + stack.length,
                             phase       : 'propagating'
                         })
 
