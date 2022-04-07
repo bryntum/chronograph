@@ -311,7 +311,17 @@ export class Entity extends Mixin(
                 throw new Error("Helper methods can not yield effects during computation")
             }
 
-            return runGeneratorSyncWithEffect(onEffect, this[ methodName ] as any, args, this)
+            const transaction           = this.graph.activeTransaction
+
+            const prevActiveStack       = transaction.activeStack
+
+            transaction.activeStack     = []
+
+            const res                   = runGeneratorSyncWithEffect(onEffect, this[ methodName ] as any, args, this)
+
+            transaction.activeStack     = prevActiveStack
+
+            return res
         }
 
 
