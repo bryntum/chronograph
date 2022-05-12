@@ -1,3 +1,4 @@
+import { HasProposedValue, ProposedOrPrevious } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 
 declare const StartTest : any
@@ -93,4 +94,47 @@ StartTest(t => {
         t.isDeeply(nodes.map(node => graph.read(node)), [ 5, 4, 1, 9, 10, 11 ], "Correct result calculated #2")
     })
 
+
+    // TODO this should "just work" causes troubles in edge cases in engine
+    t.xit('Should recalculate atoms, depending on the presence of the proposed value', async t => {
+        const graph : ChronoGraph       = ChronoGraph.new()
+
+        const i1        = graph.variableNamed('i1', 0)
+        const i2        = graph.variableNamed('i2', 10)
+
+        const c1        = graph.identifierNamed('c1', function* () {
+            return yield ProposedOrPrevious
+        })
+
+        graph.write(c1, 11)
+
+        let counter     = 0
+
+        const c2        = graph.identifierNamed('c2', function* () {
+            counter++
+
+            const has = yield HasProposedValue(c1)
+
+            return has ? 1 : yield i2
+        })
+
+        graph.commit()
+
+        // ----------------
+        const nodes             = [ i1, i2, c1, c2 ]
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 10, 11, 1 ], "Correct result calculated #1")
+
+        t.is(counter, 1)
+
+        // // ----------------
+        graph.write(i2, 20)
+        counter = 0
+
+        graph.commit()
+
+        t.is(counter, 1)
+
+        t.isDeeply(nodes.map(node => graph.read(node)), [ 0, 20, 11, 20 ], "Correct result calculated #1")
+    })
 })
