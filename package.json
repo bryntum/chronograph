@@ -39,8 +39,8 @@
     "regenerator-runtime": "^0.13.1",
     "siesta-lite": "^5.5.0",
     "tslint": "^5.16.0",
-    "typedoc": "git://github.com/bryntum/typedoc.git#custom",
-    "typedoc-default-themes": "git://github.com/bryntum/typedoc-default-themes.git",
+    "typedoc": "https://github.com/bryntum/typedoc.git#custom",
+    "typedoc-default-themes": "https://github.com/bryntum/typedoc-default-themes.git",
     "typescript": "3.8.3"
   }
 }

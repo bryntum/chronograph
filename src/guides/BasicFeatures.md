@@ -37,7 +37,7 @@ console.log(person.fullName) // "Mark Twain"
 
 Here, we've defined a `Person` class, as an [[Entity]] [[Mixin|mixin]], applied to the [[Base]] class.
 
-The `Person` class has 3 fields - `firstName`, `lastName` and `fullName`, distinct from other properties with the [["src/replica/Entity".field|@field()]] decorator.
+The `Person` class has 3 fields - `firstName`, `lastName` and `fullName`, distinct from other properties with the [[field|@field()]] decorator.
 
 One more decorator [[calculate|@calculate()]] specifies, that the value of the field `fullName` is calculated in the method `calculateFullName`, based on the values of `firstName` and `lastName`.
 

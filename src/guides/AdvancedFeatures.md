@@ -241,7 +241,7 @@ Entity/Relation framework
 The identifiers graph from above is a low-level interface for the ChronoGraph. In the [[BasicFeaturesGuide|Basic features]] guide we've already introduced a more convenient view on it, as on set of [[Entity|entities]] with [[Field|fields]]. We naturally chose to represent entities with TypeScript classes and fields - with their properties.
 
 To turn some JS class into entity, one need to mix the [[Entity]] [[Mixin|mixin]] into it. And to turn a property into a field - decorate it with 
-[["src/replica/Entity".field|field]] decorator. 
+[[field|@field()] decorator. 
 
 To specify the calculation function for the identifier of some field - write it as a method of the entity class and decorate with [[calculate]] (this mapped method will be set as the [[Identifier.calculation|calculation]] config of the corresponding identifier).
 
@@ -286,7 +286,7 @@ For the outside world, entities behave very similar to regular TypeScript classe
 Takeaways:
 
 - Modeling complex data domains is easier, when data graph is represented as the set of [[Entity|entities]] with [[Field|fields]], which are mapped to plain TypeScript classes
-- Fields of entities are regular TypeScript class properties with [["src/replica/Entity".field|field]] decorator. They creates corresponding identifiers in the new type of the data scope, called [[Replica|replica]]. One can assign a calculation function for the field using the [[calculate]] decorator for class method.
+- Fields of entities are regular TypeScript class properties with [[field|@field()]] decorator. They creates corresponding identifiers in the new type of the data scope, called [[Replica|replica]]. One can assign a calculation function for the field using the [[calculate]] decorator for class method.
 
 
 Data branching.
