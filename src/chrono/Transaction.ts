@@ -1,8 +1,11 @@
 import { Base } from "../class/Base.js"
-import { CI } from "../collection/Iterator.js"
-import { DEBUG, warn } from "../environment/Debug.js"
+import { DEBUG } from "../environment/Debug.js"
 import { cycleInfo, OnCycleAction, WalkStep } from "../graph/WalkDepth.js"
-import { CalculationContext, runGeneratorAsyncWithEffect, SynchronousCalculationStarted } from "../primitives/Calculation.js"
+import {
+    CalculationContext,
+    runGeneratorAsyncWithEffect,
+    SynchronousCalculationStarted
+} from "../primitives/Calculation.js"
 import { delay, MAX_SMI } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
 import { BreakCurrentStackExecution, Effect, RejectEffect } from "./Effect.js"
@@ -85,6 +88,7 @@ export class Transaction extends Base {
     selfDependedMarked      : boolean               = false
 
     rejectedWith            : RejectEffect<unknown> = undefined
+    stopped                 : boolean               = false
 
     hasEntryWithProposedValue : boolean             = false
 
@@ -650,6 +654,12 @@ export class Transaction extends Base {
     }
 
 
+    // stops the calculations, but does not reject
+    stop () {
+        this.stopped                = true
+    }
+
+
     clearRejected () {
         for (const quark of this.entries.values()) {
             quark.cleanup()
@@ -877,7 +887,7 @@ export class Transaction extends Base {
     // this method is not decomposed into smaller ones intentionally, as that makes benchmarks worse
     // it seems that overhead of calling few more functions in such tight loop as this outweighs the optimization
     * calculateTransitionsStackGen (context : CalculationContext<any>, stack : Quark[]) : Generator<any, void, unknown> {
-        if (this.rejectedWith) return
+        if (this.rejectedWith || this.stopped) return
 
         this.walkContext.startNewEpoch()
 
@@ -892,7 +902,7 @@ export class Transaction extends Base {
 
         this.activeStack = stack
 
-        while (stack.length && !this.rejectedWith) {
+        while (stack.length && !this.rejectedWith && !this.stopped) {
             if (enableProgressNotifications && !(counter++ % this.emitProgressNotificationsEveryCalculations)) {
                 const now               = Date.now()
                 const elapsed           = now - propagationStartDate
@@ -913,6 +923,8 @@ export class Transaction extends Base {
                     }
                 }
             }
+
+            if (this.rejectedWith || this.stopped) break
 
             const entry             = stack[ stack.length - 1 ]
             const identifier        = entry.identifier
@@ -974,7 +986,7 @@ export class Transaction extends Base {
 
             let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
 
-            while (iterationResult) {
+            while (iterationResult && !this.rejectedWith && !this.stopped) {
                 const value         = iterationResult.value === undefined ? null : iterationResult.value
 
                 if (entry.isCalculationCompleted()) {
@@ -1016,7 +1028,7 @@ export class Transaction extends Base {
                     const effectResult          = yield value
 
                     // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
-                    // in such case we can not continue calculation and jare ust exit the inner loop
+                    // in such case we can not continue calculation and just exit the inner loop
                     if (effectResult === BreakCurrentStackExecution) break
 
                     // // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
@@ -1040,7 +1052,7 @@ export class Transaction extends Base {
 
     // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, stack : Quark[]) {
-        if (this.rejectedWith) return
+        if (this.rejectedWith || this.stopped) return
 
         this.walkContext.startNewEpoch()
 
@@ -1050,7 +1062,7 @@ export class Transaction extends Base {
 
         this.activeStack = stack
 
-        while (stack.length && !this.rejectedWith) {
+        while (stack.length && !this.rejectedWith && !this.stopped) {
             const entry             = stack[ stack.length - 1 ]
             const identifier        = entry.identifier
 
@@ -1111,7 +1123,7 @@ export class Transaction extends Base {
 
             let iterationResult : IteratorResult<any>   = entry.isCalculationStarted() ? entry.iterationResult : entry.startCalculation(this.onEffectSync)
 
-            while (iterationResult) {
+            while (iterationResult && !this.rejectedWith && !this.stopped) {
                 const value         = iterationResult.value === undefined ? null : iterationResult.value
 
                 if (entry.isCalculationCompleted()) {
