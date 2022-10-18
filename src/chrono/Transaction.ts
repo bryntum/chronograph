@@ -699,7 +699,7 @@ export class Transaction extends Base {
     getLatestEntryFor (identifier : Identifier) : Quark {
         let entry : Quark             = this.entries.get(identifier) || this.baseRevision.getLatestEntryFor(identifier)
 
-        if (entry.getValue() === TombStone) return undefined
+        if (entry && entry.getValue() === TombStone) return undefined
 
         return entry
     }
