@@ -568,6 +568,7 @@ export class Transaction extends Base {
 
         // if we are re-adding the same identifier in the same transaction, clear the TombStone flag
         if (entry.getValue() === TombStone) entry.value = undefined
+        if (entry.proposedValue === TombStone) entry.proposedValue = undefined
 
         identifier.enterGraph(this.graph)
 
