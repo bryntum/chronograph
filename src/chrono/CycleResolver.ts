@@ -1,7 +1,7 @@
 import { CycleResolutionInput, Variable } from "../cycle_resolver/CycleResolver.js"
-import { HasProposedValue, PreviousValueOf } from "./Effect.js"
+import { GetTransaction, HasProposedValue, PreviousValueOf } from "./Effect.js"
 import { Identifier } from "./Identifier.js"
-import { SyncEffectHandler } from "./Transaction.js"
+import { SyncEffectHandler, Transaction } from "./Transaction.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -21,6 +21,8 @@ export class CycleResolutionInputChrono extends CycleResolutionInput {
     collectInfo (Y : SyncEffectHandler, identifier : Identifier, symbol : Variable) {
         if (Y(PreviousValueOf(identifier)) != null) this.addPreviousValueFlag(symbol)
 
-        if (Y(HasProposedValue(identifier))) this.addProposedValueFlag(symbol)
+        const transaction   = Y(GetTransaction) as Transaction
+
+        if (Y(HasProposedValue(identifier)) && !transaction.graph.isWritingPreviousData) this.addProposedValueFlag(symbol)
     }
 }
