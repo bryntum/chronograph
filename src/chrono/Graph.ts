@@ -6,7 +6,9 @@ import { CalculationContext, CalculationFunction, CalculationIterator, Context }
 import { copySetInto, isGeneratorFunction } from "../util/Helpers.js"
 import {
     BreakCurrentStackExecution,
-    Effect,
+    Effect, HasProposedNotPreviousValueEffect,
+    HasProposedNotPreviousValueSymbol,
+    HasProposedValueEffect,
     HasProposedValueSymbol,
     OwnIdentifierSymbol,
     OwnQuarkSymbol,
@@ -28,8 +30,15 @@ import {
     WriteSeveralSymbol,
     WriteSymbol
 } from "./Effect.js"
-import { CalculatedValueGen, CalculatedValueGenC, CalculatedValueSyncC, Identifier, Variable, VariableC } from "./Identifier.js"
-import { TombStone, Quark } from "./Quark.js"
+import {
+    CalculatedValueGen,
+    CalculatedValueGenC,
+    CalculatedValueSyncC,
+    Identifier,
+    Variable,
+    VariableC
+} from "./Identifier.js"
+import { TombStone } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { EdgeTypePast, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 import { ComputationCycle } from "./TransactionCycleDetectionWalkContext.js"
@@ -1056,7 +1065,7 @@ export class ChronoGraph extends Base {
     }
 
 
-    [HasProposedValueSymbol] (effect : ProposedValueOfEffect, transaction : Transaction) : any {
+    [HasProposedValueSymbol] (effect : HasProposedValueEffect, transaction : Transaction) : any {
         const activeEntry   = transaction.getActiveEntry()
         const source        = effect.identifier
 
@@ -1065,6 +1074,18 @@ export class ChronoGraph extends Base {
         const quark     = transaction.entries.get(source)
 
         return quark ? quark.hasProposedValue() : false
+    }
+
+
+    [HasProposedNotPreviousValueSymbol] (effect : HasProposedNotPreviousValueEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark     = transaction.entries.get(source)
+
+        return quark ? quark.hasProposedValue() && !quark.proposedIsPrevious : false
     }
 
 

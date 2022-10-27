@@ -197,6 +197,18 @@ export const HasProposedValue = (identifier : Identifier) : HasProposedValueEffe
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const HasProposedNotPreviousValueSymbol    = Symbol('HasProposedNotPreviousValueSymbol')
+
+export class HasProposedNotPreviousValueEffect extends Effect {
+    handler         : symbol    = HasProposedNotPreviousValueSymbol
+
+    identifier      : Identifier
+}
+
+export const HasProposedNotPreviousValue = (identifier : Identifier) : HasProposedNotPreviousValueEffect => HasProposedNotPreviousValueEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export const ProposedOrPreviousValueOfSymbol    = Symbol('ProposedOrPreviousValueOfSymbol')
 
 export class ProposedOrPreviousValueOfEffect extends Effect {

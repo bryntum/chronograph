@@ -42,8 +42,9 @@ class Quark extends base {
     // quark state
     value                   : any       = undefined
     proposedValue           : any       = undefined
+    proposedIsPrevious      : boolean   = false
     proposedArguments       : any[]     = undefined
-    usedProposedOrPrevious   : boolean   = false
+    usedProposedOrPrevious  : boolean   = false
     // eof quark state
 
     previous        : Quark             = undefined
