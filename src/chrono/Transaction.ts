@@ -237,7 +237,7 @@ export class Transaction extends Base {
     // `ignoreActiveEntry` should be used when the atom needs to be read outside the currently ongoing transaction context
     // in such case we still might need to calculate the atom, but should ignore any currently active
     // calculation of the another atom
-    get<T> (identifier : Identifier<T>, ignoreActiveEntry : boolean = false) : T | Promise<T> {
+    get<T> (identifier : Identifier<T>) : T | Promise<T> {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
 
@@ -245,7 +245,7 @@ export class Transaction extends Base {
 
         const activeEntry   = this.getActiveEntry()
 
-        if (activeEntry && !ignoreActiveEntry) {
+        if (activeEntry) {
             entry           = this.addEdge(identifier, activeEntry, EdgeTypeNormal)
         } else {
             entry           = this.entries.get(identifier)
@@ -923,7 +923,14 @@ export class Transaction extends Base {
                             phase       : 'propagating'
                         })
 
+                        // need to "exit" the context of the current transaction for the time of the following `delay()`
+                        // otherwise, any reads from graph during that time will be recorded as the dependencies
+                        // of the currently active atom
+                        this.activeStack = prevActiveStack
+
                         yield delay(0)
+
+                        this.activeStack = stack
                     }
                 }
             }

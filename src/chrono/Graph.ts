@@ -819,7 +819,7 @@ export class ChronoGraph extends Base {
      * @param identifier
      */
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
-        return this.activeTransaction.get(identifier, true)
+        return this.activeTransaction.get(identifier)
     }
 
     // // read the identifier value, return the proposed value if no "current" value is calculated yet
