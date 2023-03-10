@@ -568,6 +568,7 @@ export class WalkState extends Base {
     }
 
 
+    // in general the semantic of this method is very similar to `formulaIsApplicable`
     formulaIsInsignificant (formula : Formula) : boolean {
         const outputVariableAlreadyCalculated   = this.activatedFormulas.formulasByOutput.has(formula.output)
         const outputVariableHasPreviousValue    = this.input.hasPreviousValue(formula.output)
@@ -575,9 +576,10 @@ export class WalkState extends Base {
         return outputVariableAlreadyCalculated
             || outputVariableHasPreviousValue && Array.from(formula.inputs).some(
                 variable => {
-                    // there is an input w/o value provided
+                    // so we should ignore the formula, if some of its inputs
+                    // does not have value provided (neither previous nor proposed)
                     return !this.input.hasPreviousValue(variable) && !this.input.hasProposedValue(variable)
-                        // ..and it's not going to be calculated
+                        // ..and we haven't planned calculation of that input via another formula
                         && !this.activatedFormulas.formulasByOutput.has(variable)
                 }
             )
