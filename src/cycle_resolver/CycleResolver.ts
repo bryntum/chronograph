@@ -574,7 +574,12 @@ export class WalkState extends Base {
 
         return outputVariableAlreadyCalculated
             || outputVariableHasPreviousValue && Array.from(formula.inputs).some(
-                variable => !this.input.hasPreviousValue(variable) && !this.input.hasProposedValue(variable)
+                variable => {
+                    // there is an input w/o value provided
+                    return !this.input.hasPreviousValue(variable) && !this.input.hasProposedValue(variable)
+                        // ..and it's not going to be calculated
+                        && !this.activatedFormulas.formulasByOutput.has(variable)
+                }
             )
     }
 
