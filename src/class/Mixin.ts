@@ -111,6 +111,9 @@ type MixinHash       = string
 let MIXIN_ID : MixinId      = 1
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * @hidden
+ */
 export const identity              = a => class extends a {}
 
 // export type IdentityMixin<Base extends object>         = < T extends AnyConstructor<Base>>(base : T) => T
@@ -118,6 +121,9 @@ export const identity              = a => class extends a {}
 // export const IdentityMixin             = <Base extends object>() : IdentityMixin<Base> => identity
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * @hidden
+ */
 export class ZeroBaseClass {}
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -811,5 +817,7 @@ export const Mixin : MixinHelperFunc0 & MixinHelperFunc1 & MixinHelperFunc2 & Mi
  */
 export const MixinAny : MixinHelperFuncAny = mixin as any
 
-
+/**
+ * @hidden
+ */
 export type PrototypeOf<A> = A
