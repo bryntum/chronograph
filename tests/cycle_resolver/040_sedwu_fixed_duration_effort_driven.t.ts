@@ -107,4 +107,30 @@ StartTest(t => {
         )
     })
 
+
+    t.it('Should resolve to calculate end date and units', t => {
+        input.addPreviousValueFlag(StartDateVar)
+        input.addPreviousValueFlag(DurationVar)
+        input.addPreviousValueFlag(EffortVar)
+        input.addPreviousValueFlag(UnitsVar)
+
+        input.addProposedValueFlag(StartDateVar)
+        input.addProposedValueFlag(DurationVar)
+        input.addProposedValueFlag(EffortVar)
+        input.addProposedValueFlag(UnitsVar)
+
+        const resolution    = input.resolution
+
+        t.isDeeply(
+            resolution,
+            new Map([
+                [ StartDateVar, CalculateProposed ],
+                [ EndDateVar, endDateFormula.formulaId ],
+                [ DurationVar, CalculateProposed ],
+                [ EffortVar, CalculateProposed ],
+                [ UnitsVar, unitsFormula.formulaId ]
+            ])
+        )
+    })
+
 })
