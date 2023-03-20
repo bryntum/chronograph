@@ -498,12 +498,12 @@ export class ChronoGraph extends Base {
 
         const transactionResult = await activeTransaction.commitAsync(args)
 
-        this.baseRevisionTentative  = activeTransaction.candidate
+        if (!activeTransaction.rejectedWith) this.baseRevisionTentative  = activeTransaction.candidate
         this.$activeTransaction     = undefined
 
-        const result            = this.finalizeCommit(transactionResult)
-
         await this.finalizeCommitAsync(transactionResult)
+
+        const result            = this.finalizeCommit(transactionResult)
 
         if (activeTransaction.rejectedWith) activeTransaction.clearRejected()
 
