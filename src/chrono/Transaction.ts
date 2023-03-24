@@ -743,7 +743,7 @@ export class Transaction extends Base {
 
             entry               = identifierRead.newQuark(this.baseRevision)
 
-            previousEntry.origin && entry.setOrigin(previousEntry.origin)
+            entry.setOrigin(previousEntry)
             entry.previous      = previousEntry
 
             this.entries.set(identifierRead, entry)

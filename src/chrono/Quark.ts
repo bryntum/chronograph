@@ -191,9 +191,7 @@ class Quark extends base {
         this.origin                 = this
 
         // some help for garbage collector
-        // it seems we can't/shouldn't clear the properties of the garbage-collected quark, because
-        // it still might be an origin of its successors
-        // origin.clearProperties()
+        origin.clearProperties()
         origin.clear()
     }
 
@@ -279,7 +277,13 @@ class Quark extends base {
 
 
     getValue () : any {
-        return this.origin ? this.origin.value : undefined
+        const origin = this.origin
+
+        return origin === this
+            ? this.value
+            : origin
+                ? origin.getValue()
+                : undefined
     }
 
 
