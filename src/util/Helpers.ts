@@ -86,3 +86,7 @@ export const isGeneratorFunction = function (func : any) : boolean {
 }
 
 
+//---------------------------------------------------------------------------------------------------------------------
+export const isPromise = function (obj : any) : obj is Promise<unknown> {
+    return obj && typeof obj.then === 'function'
+}
