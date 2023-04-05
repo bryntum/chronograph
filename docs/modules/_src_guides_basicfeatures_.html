@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>&quot;src/guides/BasicFeatures&quot; | @bryntum/chronograph</title>
-	<meta name="description" content="">
+	<meta name="description" content="Documentation for @bryntum/chronograph">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -13,7 +13,7 @@
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -87,7 +87,7 @@
 					<div class="tsd-signature tsd-kind-icon">Basic<wbr>Features<wbr>Guide<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">""</span><span class="tsd-signature-symbol"> = &quot;&quot;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in DIST/src/guides/BasicFeatures.ts:4</li>
+							<li>Defined in <a href="https://github.com/bryntum/chronograph/blob/89ffa6d/src/guides/BasicFeatures.ts#L4">src/guides/BasicFeatures.ts:4</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
@@ -100,33 +100,33 @@
 							</a>
 							<p>The most convenient view on the ChronoGraph&#39;s data is a small built-in Entity/Relation framework, which is mapped to the ES6 classes.</p>
 							<p>In this framework, the data is organized as a set of entities, each having a set of fields. Entities are mapped to ES6 classes and fields - to its decorated properties.  </p>
-							<pre><code class="language-ts"><span class="hljs-keyword">class</span> Person <span class="hljs-keyword">extends</span> Entity.mix(Base) {
+							<pre><code class="language-ts"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Entity</span>.<span class="hljs-title">mix</span>(<span class="hljs-title">Base</span>) </span>{
     <span class="hljs-meta">@field</span>()
-    firstName       : <span class="hljs-built_in">string</span>
+    <span class="hljs-attr">firstName</span>       : <span class="hljs-built_in">string</span>
 
     <span class="hljs-meta">@field</span>()
-    lastName        : <span class="hljs-built_in">string</span>
+    <span class="hljs-attr">lastName</span>        : <span class="hljs-built_in">string</span>
 
     <span class="hljs-meta">@field</span>()
-    fullName        : <span class="hljs-built_in">string</span>
+    <span class="hljs-attr">fullName</span>        : <span class="hljs-built_in">string</span>
 
-    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">'fullName'</span>)
+    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">&#x27;fullName&#x27;</span>)
     calculateFullName () : <span class="hljs-built_in">string</span> {
-        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.firstName + <span class="hljs-string">' '</span> + <span class="hljs-keyword">this</span>.lastName
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.firstName + <span class="hljs-string">&#x27; &#x27;</span> + <span class="hljs-built_in">this</span>.lastName
     }
 }
 
-<span class="hljs-keyword">const</span> person            = Person.new({ firstName : <span class="hljs-string">'Mark'</span>, lastName : <span class="hljs-string">'Twain'</span> })
+<span class="hljs-keyword">const</span> person            = Person.new({ <span class="hljs-attr">firstName</span> : <span class="hljs-string">&#x27;Mark&#x27;</span>, <span class="hljs-attr">lastName</span> : <span class="hljs-string">&#x27;Twain&#x27;</span> })
 
 <span class="hljs-keyword">const</span> replica           = Replica.new()
 
-replica.addEntity(markTwain)
+replica.addEntity(person)
 
-<span class="hljs-built_in">console</span>.log(person.fullName) <span class="hljs-comment">// "Mark Twain"</span></code></pre>
-							<p>Here, we&#39;ve defined a <code>Person</code> class, as an <a href="../classes/_src_replica_entity_.entity.html">Entity</a> <a href="_src_class_bettermixin_.html#mixin">mixin</a>, applied to the <a href="../classes/_src_class_bettermixin_.base.html">Base</a> class.</p>
-							<p>The <code>Person</code> class has 3 fields - <code>firstName</code>, <code>lastName</code> and <code>fullName</code>, distinct from other properties with the <a href="_src_replica_entity_.html#field">@field()</a> decorator.</p>
+<span class="hljs-built_in">console</span>.log(person.fullName) <span class="hljs-comment">// &quot;Mark Twain&quot;</span></code></pre>
+							<p>Here, we&#39;ve defined a <code>Person</code> class, as an <a href="../classes/_src_replica_entity_.entity.html">Entity</a> <a href="_src_class_mixin_.html#mixin">mixin</a>, applied to the <a href="../classes/_src_class_base_.base.html">Base</a> class.</p>
+							<p>The <code>Person</code> class has 3 fields - <code>firstName</code>, <code>lastName</code> and <code>fullName</code>, distinct from other properties with the <a href="../classes/_src_replica_identifier_.fieldidentifier.html#field">@field()</a> decorator.</p>
 							<p>One more decorator <a href="_src_replica_entity_.html#calculate">@calculate()</a> specifies, that the value of the field <code>fullName</code> is calculated in the method <code>calculateFullName</code>, based on the values of <code>firstName</code> and <code>lastName</code>.</p>
-							<p>The <code>Person</code> class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method <a href="../classes/_src_class_bettermixin_.base.html#new">new</a>, provided by the <a href="../classes/_src_class_bettermixin_.base.html">Base</a> class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the <a href="../classes/_src_class_bettermixin_.base.html">Base</a> class and its type-safe static constructor is optional, any JS class can be used instead. </p>
+							<p>The <code>Person</code> class can be instantiated as any other class. For the type-safety purposes, it uses its own, static constructor method <a href="../classes/_src_class_base_.base.html#new">new</a>, provided by the <a href="../classes/_src_class_base_.base.html">Base</a> class. This constructor accepts a single object, corresponding to the class properties and will issue a compilation error, if you provide a non-existent property to it. Using the <a href="../classes/_src_class_base_.base.html">Base</a> class and its type-safe static constructor is optional, any JS class can be used instead. </p>
 							<p>All data is stored in the <a href="../classes/_src_replica_replica_.replica.html">replica</a>, which is initially empty. You can populate it with data using the <a href="../classes/_src_replica_replica_.replica.html#addentity">Replica.addEntity</a> call. Once the entity &quot;enters&quot; the replica, the reactivity contract starts holding. It is that, whenever the value of <code>firstName</code> or <code>lastName</code> changes, the value of <code>fullName</code> is updated automatically.</p>
 							<p>This simple idea relieves the programmer of burden of updating the outdated data - all data automatically becomes &quot;fresh&quot; and consistent, according to the specified calculation rules.  </p>
 							<a href="#purity-immutability" id="purity-immutability" style="color: inherit; text-decoration: none;">
@@ -148,7 +148,7 @@ replica.addEntity(markTwain)
 								<h2>Adding and removing entities</h2>
 							</a>
 							<p>A replica can be populated with entities using <a href="../classes/_src_replica_replica_.replica.html#addentity">addEntity</a> method and should be freed from them using <a href="../classes/_src_replica_replica_.replica.html#removeentity">removeEntity</a>. The reactivity contract becomes active only after entity has &quot;entered&quot; the replica. In the same way, once the entity is removed from the replica, reactivity contract ends.   </p>
-							<pre><code class="language-ts"><span class="hljs-keyword">const</span> person            = Person.new({ firstName : <span class="hljs-string">'Mark'</span>, lastName : <span class="hljs-string">'Twain'</span> })
+							<pre><code class="language-ts"><span class="hljs-keyword">const</span> person            = Person.new({ <span class="hljs-attr">firstName</span> : <span class="hljs-string">&#x27;Mark&#x27;</span>, <span class="hljs-attr">lastName</span> : <span class="hljs-string">&#x27;Twain&#x27;</span> })
 
 person.fullName === <span class="hljs-literal">undefined</span> <span class="hljs-comment">// not in replica yet</span>
 
@@ -156,7 +156,7 @@ person.fullName === <span class="hljs-literal">undefined</span> <span class="hlj
 
 replica.addEntity(person)
 
-person.fullName === <span class="hljs-string">'Mark Twain'</span> <span class="hljs-comment">// entity in replica</span>
+person.fullName === <span class="hljs-string">&#x27;Mark Twain&#x27;</span> <span class="hljs-comment">// entity in replica</span>
 
 ...
 
@@ -165,15 +165,15 @@ replica.removeEntity(person)</code></pre>
 								<h2>Reading and writing data. Calculated data.</h2>
 							</a>
 							<p>To read from or write to a field, use regular property accessors:</p>
-							<pre><code class="language-ts">person.firstName    = <span class="hljs-string">'Moby'</span>
-person.lastName     = <span class="hljs-string">'Dick'</span>
+							<pre><code class="language-ts">person.firstName    = <span class="hljs-string">&#x27;Moby&#x27;</span>
+person.lastName     = <span class="hljs-string">&#x27;Dick&#x27;</span>
 
-person.fullName === <span class="hljs-string">'Moby Dick'</span></code></pre>
+person.fullName === <span class="hljs-string">&#x27;Moby Dick&#x27;</span></code></pre>
 							<p>For every field, there are also generated getter and setter methods:</p>
-							<pre><code class="language-ts">person.setFirstName(<span class="hljs-string">'Elon'</span>)
-person.setLastName(<span class="hljs-string">'Musk'</span>)
+							<pre><code class="language-ts">person.setFirstName(<span class="hljs-string">&#x27;Elon&#x27;</span>)
+person.setLastName(<span class="hljs-string">&#x27;Musk&#x27;</span>)
 
-person.getFullName() === <span class="hljs-string">'Elon Musk'</span></code></pre>
+person.getFullName() === <span class="hljs-string">&#x27;Elon Musk&#x27;</span></code></pre>
 							<p>Note, that if some field is calculated in a method, it will ignore the writes to it. So the field can either represent a user input (be writeable)
 							or a calculated value (only readable). </p>
 							<p>In the same time, when modelling complex data domains, it might be desirable to actually support both modes for the field. This happens when
@@ -184,79 +184,79 @@ person.getFullName() === <span class="hljs-string">'Elon Musk'</span></code></pr
 								<h2>Cancelable transactions</h2>
 							</a>
 							<p>At any point, if something went wrong, its possible to <a href="../classes/_src_replica_replica_.replica.html#reject">reject</a> the current transaction. Transaction borders are marked with the <a href="../classes/_src_replica_replica_.replica.html#commit">commit</a> call. The end of the previous transaction immediately starts the next one. Transaction rejection resets the whole replica state to the preceding commit.</p>
-							<pre><code class="language-ts">person.firstName    = <span class="hljs-string">'Elon'</span>
-person.lastName     = <span class="hljs-string">'Musk'</span>
+							<pre><code class="language-ts">person.firstName    = <span class="hljs-string">&#x27;Elon&#x27;</span>
+person.lastName     = <span class="hljs-string">&#x27;Musk&#x27;</span>
 
 replica.commit()
 
-person.fullName === <span class="hljs-string">'Elon Musk'</span>
+person.fullName === <span class="hljs-string">&#x27;Elon Musk&#x27;</span>
 
-person.firstName    = <span class="hljs-string">'Mark'</span>
-person.lastName     = <span class="hljs-string">'Twain'</span>
+person.firstName    = <span class="hljs-string">&#x27;Mark&#x27;</span>
+person.lastName     = <span class="hljs-string">&#x27;Twain&#x27;</span>
 
 replica.reject()
 
-person.firstName === <span class="hljs-string">'Elon'</span>
-person.lastName === <span class="hljs-string">'Musk'</span>
-person.fullName === <span class="hljs-string">'Elon Musk'</span></code></pre>
+person.firstName === <span class="hljs-string">&#x27;Elon&#x27;</span>
+person.lastName === <span class="hljs-string">&#x27;Musk&#x27;</span>
+person.fullName === <span class="hljs-string">&#x27;Elon Musk&#x27;</span></code></pre>
 							<p>Transaction rejection will also &quot;cancel&quot; the <a href="../classes/_src_replica_replica_.replica.html#addentity">addEntity</a>/<a href="../classes/_src_replica_replica_.replica.html#removeentity">removeEntity</a>` calls.</p>
 							<a href="#undoredo" id="undoredo" style="color: inherit; text-decoration: none;">
 								<h2>Undo/redo</h2>
 							</a>
 							<p>It is possible to revert a replica to the previous state, using the <a href="../classes/_src_replica_replica_.replica.html#undo">undo</a> call. Similarly, if no changes has been made to the reverted state, its possible to <a href="../classes/_src_replica_replica_.replica.html#redo">redo</a> back to the initial state.</p>
 							<p>To enable the undo/redo functionality, you need to opt-in, by specifying a bigger than 0 value for the <a href="../classes/_src_replica_replica_.replica.html#historylimit">historyLimit</a> config, during replica creation. It specifies how many transactions can be reverted. </p>
-							<pre><code class="language-ts"><span class="hljs-keyword">const</span> replica       = Replica.new({ historyLimit : <span class="hljs-number">10</span> })
+							<pre><code class="language-ts"><span class="hljs-keyword">const</span> replica       = Replica.new({ <span class="hljs-attr">historyLimit</span> : <span class="hljs-number">10</span> })
 
 <span class="hljs-keyword">const</span> person        = Person.new()
 
 replica.addEntity(person)
 
-person.firstName    = <span class="hljs-string">'Elon'</span>
-person.lastName     = <span class="hljs-string">'Musk'</span>
+person.firstName    = <span class="hljs-string">&#x27;Elon&#x27;</span>
+person.lastName     = <span class="hljs-string">&#x27;Musk&#x27;</span>
 
 replica.commit()
 
-person.fullName === <span class="hljs-string">'Elon Musk'</span>
+person.fullName === <span class="hljs-string">&#x27;Elon Musk&#x27;</span>
 
-person.firstName    = <span class="hljs-string">'Mark'</span>
-person.lastName     = <span class="hljs-string">'Twain'</span>
+person.firstName    = <span class="hljs-string">&#x27;Mark&#x27;</span>
+person.lastName     = <span class="hljs-string">&#x27;Twain&#x27;</span>
 
 replica.commit()
 
-person.fullName === <span class="hljs-string">'Mark Twain'</span>
+person.fullName === <span class="hljs-string">&#x27;Mark Twain&#x27;</span>
 
 replica.undo()
 
-person.firstName === <span class="hljs-string">'Elon'</span>
-person.lastName === <span class="hljs-string">'Musk'</span>
-person.fullName === <span class="hljs-string">'Elon Musk'</span>
+person.firstName === <span class="hljs-string">&#x27;Elon&#x27;</span>
+person.lastName === <span class="hljs-string">&#x27;Musk&#x27;</span>
+person.fullName === <span class="hljs-string">&#x27;Elon Musk&#x27;</span>
 
 replica.redo()
 
-person.firstName === <span class="hljs-string">'Mark'</span>
-person.lastName === <span class="hljs-string">'Twain'</span>
-person.fullName === <span class="hljs-string">'Mark Twain'</span></code></pre>
+person.firstName === <span class="hljs-string">&#x27;Mark&#x27;</span>
+person.lastName === <span class="hljs-string">&#x27;Twain&#x27;</span>
+person.fullName === <span class="hljs-string">&#x27;Mark Twain&#x27;</span></code></pre>
 							<a href="#equality" id="equality" style="color: inherit; text-decoration: none;">
 								<h2>Equality</h2>
 							</a>
 							<p>ChronoGrah optimizes the computations, based on the assumption of the purity of computation functions. If none of the inputs of some field computation has changed - there&#39;s no need to re-compute it.</p>
 							<p>The &quot;has not changed&quot; fact is checked using the equality check. It can be overriden by providing a <a href="../classes/_src_schema_field_.field.html#equality">equality</a> config option to the <a href="../classes/_src_replica_identifier_.fieldidentifier.html#field">field</a>. By default equality is checked with <code>===</code> operator. </p>
 							<p>For example, if we don&#39;t care about the case of the letters:</p>
-							<pre><code class="language-ts"><span class="hljs-keyword">const</span> ignoreCaseCompare = (a : <span class="hljs-built_in">string</span>, b : <span class="hljs-built_in">string</span>) : <span class="hljs-function"><span class="hljs-params">boolean</span> =&gt;</span> a.toUpperCase() === b.toUpperCase()
+							<pre><code class="language-ts"><span class="hljs-keyword">const</span> ignoreCaseCompare = (a : <span class="hljs-built_in">string</span>, <span class="hljs-attr">b</span> : <span class="hljs-built_in">string</span>) : <span class="hljs-function"><span class="hljs-params">boolean</span> =&gt;</span> a.toUpperCase() === b.toUpperCase()
 
-<span class="hljs-keyword">class</span> Person <span class="hljs-keyword">extends</span> Entity.mix(Base) {
-    <span class="hljs-meta">@field</span>({ equality : ignoreCaseCompare })
-    firstName       : <span class="hljs-built_in">string</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Person</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Entity</span>.<span class="hljs-title">mix</span>(<span class="hljs-title">Base</span>) </span>{
+    <span class="hljs-meta">@field</span>({ <span class="hljs-attr">equality</span> : ignoreCaseCompare })
+    <span class="hljs-attr">firstName</span>       : <span class="hljs-built_in">string</span>
 
-    <span class="hljs-meta">@field</span>({ equality : ignoreCaseCompare })
-    lastName        : <span class="hljs-built_in">string</span>
+    <span class="hljs-meta">@field</span>({ <span class="hljs-attr">equality</span> : ignoreCaseCompare })
+    <span class="hljs-attr">lastName</span>        : <span class="hljs-built_in">string</span>
 
-    <span class="hljs-meta">@field</span>({ equality : ignoreCaseCompare })
-    fullName        : <span class="hljs-built_in">string</span>
+    <span class="hljs-meta">@field</span>({ <span class="hljs-attr">equality</span> : ignoreCaseCompare })
+    <span class="hljs-attr">fullName</span>        : <span class="hljs-built_in">string</span>
 
-    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">'fullName'</span>)
+    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">&#x27;fullName&#x27;</span>)
     calculateFullName () : <span class="hljs-built_in">string</span> {
-        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.firstName + <span class="hljs-string">' '</span> + <span class="hljs-keyword">this</span>.lastName
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.firstName + <span class="hljs-string">&#x27; &#x27;</span> + <span class="hljs-built_in">this</span>.lastName
     }
 }</code></pre>
 							<p>Make sure you&#39;ve overridden this config property for composite data (data which is represented by JS objects and arrays).</p>
@@ -265,29 +265,29 @@ person.fullName === <span class="hljs-string">'Mark Twain'</span></code></pre>
 							</a>
 							<p>Entities often need to reference each other. Reference and reference buckets forms the Relation part of the ChronoGraph&#39;s Entity/Relation framework.  </p>
 							<p>For example, lets check the <code>Book</code> entity, that has the <code>writtenBy</code> reference field (decorated with <a href="_src_replica_reference_.html#reference">reference</a>) with the <code>Person</code> type, containing a reference to its author.</p>
-							<pre><code class="language-ts"><span class="hljs-keyword">class</span> Book <span class="hljs-keyword">extends</span> Entity.mix(Base) {
+							<pre><code class="language-ts"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Book</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Entity</span>.<span class="hljs-title">mix</span>(<span class="hljs-title">Base</span>) </span>{
     <span class="hljs-meta">@reference</span>()
-    writtenBy       : Person
+    <span class="hljs-attr">writtenBy</span>       : Person
 }
 
-<span class="hljs-keyword">const</span> author        = Person.new({ firstName : <span class="hljs-string">'Mark'</span>, lastName : <span class="hljs-string">'Twain'</span> })
-<span class="hljs-keyword">const</span> book          = Book.new({ writtenBy : author })
+<span class="hljs-keyword">const</span> author        = Person.new({ <span class="hljs-attr">firstName</span> : <span class="hljs-string">&#x27;Mark&#x27;</span>, <span class="hljs-attr">lastName</span> : <span class="hljs-string">&#x27;Twain&#x27;</span> })
+<span class="hljs-keyword">const</span> book          = Book.new({ <span class="hljs-attr">writtenBy</span> : author })
 
 replica.addEntities([ author, book ])</code></pre>
 							<p>This is a simplest form of a reference to another entity. To make it a bit smarter and to answer a question - &quot;what are the books written by Mark Twain&quot;, we can use another types of fields - reference buckets, that uses <a href="_src_replica_referencebucket_.html#bucket">bucket</a> decorator. </p>
 							<p>Buckets are unordered <code>Set</code> collections with all entities, referencing the entity of the bucket:</p>
-							<pre><code class="language-ts"><span class="hljs-keyword">class</span> Author <span class="hljs-keyword">extends</span> Person {
+							<pre><code class="language-ts"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Author</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Person</span> </span>{
     <span class="hljs-meta">@bucket</span>()
-    books           : Set&lt;Book&gt;
+    <span class="hljs-attr">books</span>           : <span class="hljs-built_in">Set</span>&lt;Book&gt;
 }
 
-<span class="hljs-keyword">class</span> Book <span class="hljs-keyword">extends</span> Entity.mix(Base) {
-    <span class="hljs-meta">@reference</span>({ bucket : <span class="hljs-string">'books'</span> })
-    writtenBy       : Author
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Book</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Entity</span>.<span class="hljs-title">mix</span>(<span class="hljs-title">Base</span>) </span>{
+    <span class="hljs-meta">@reference</span>({ <span class="hljs-attr">bucket</span> : <span class="hljs-string">&#x27;books&#x27;</span> })
+    <span class="hljs-attr">writtenBy</span>       : Author
 }
 
-<span class="hljs-keyword">const</span> markTwain         = Author.new({ firstName : <span class="hljs-string">'Mark'</span>, lastName : <span class="hljs-string">'Twain'</span> })
-<span class="hljs-keyword">const</span> tomSawyer         = Book.new({ writtenBy : markTwain })
+<span class="hljs-keyword">const</span> markTwain         = Author.new({ <span class="hljs-attr">firstName</span> : <span class="hljs-string">&#x27;Mark&#x27;</span>, <span class="hljs-attr">lastName</span> : <span class="hljs-string">&#x27;Twain&#x27;</span> })
+<span class="hljs-keyword">const</span> tomSawyer         = Book.new({ <span class="hljs-attr">writtenBy</span> : markTwain })
 
 <span class="hljs-keyword">const</span> replica           = Replica.new()
 
@@ -295,7 +295,7 @@ replica.addEntities([ markTwain, tomSawyer ])
 
 markTwain.books <span class="hljs-comment">// new Set([ tomSawyer ])</span></code></pre>
 							<p>The reactivity contract for buckets is preserved:</p>
-							<pre><code class="language-ts"><span class="hljs-keyword">const</span> huckleberryFinn   = Book.new({ writtenBy : markTwain })
+							<pre><code class="language-ts"><span class="hljs-keyword">const</span> huckleberryFinn   = Book.new({ <span class="hljs-attr">writtenBy</span> : markTwain })
 
 replica.addEntities([ huckleberryFinn ])
 
@@ -316,16 +316,16 @@ markTwain.books <span class="hljs-comment">// new Set([ huckleberryFinn ])</span
 							</a>
 							<p>The computations for some fields may be expensive and not actually needed in every transaction. We would like to compute such fields only at the time when their value is actually needed.</p>
 							<p>We will call such fields - &quot;lazy&quot; and all the other - &quot;strict&quot;. The lazyness of the field is defined with its <a href="../classes/_src_schema_field_.field.html#lazy">lazy</a> config:</p>
-							<pre><code class="language-ts"><span class="hljs-keyword">class</span> SomeClass <span class="hljs-keyword">extends</span> Entity.mix(Base) {
+							<pre><code class="language-ts"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SomeClass</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Entity</span>.<span class="hljs-title">mix</span>(<span class="hljs-title">Base</span>) </span>{
     <span class="hljs-meta">@field</span>()
-    someProperty            : <span class="hljs-built_in">number</span>
+    <span class="hljs-attr">someProperty</span>            : <span class="hljs-built_in">number</span>
 
-    <span class="hljs-meta">@field</span>({ lazy : <span class="hljs-literal">true</span> })
-    expensiveToCompute      : <span class="hljs-built_in">number</span>
+    <span class="hljs-meta">@field</span>({ <span class="hljs-attr">lazy</span> : <span class="hljs-literal">true</span> })
+    <span class="hljs-attr">expensiveToCompute</span>      : <span class="hljs-built_in">number</span>
 
-    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">'expensiveToCompute'</span>)
+    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">&#x27;expensiveToCompute&#x27;</span>)
     calculateExpensiveToCompute () : <span class="hljs-built_in">number</span> {
-        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.someProperty + <span class="hljs-number">1</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.someProperty + <span class="hljs-number">1</span>
     }
 }
 
@@ -374,7 +374,13 @@ instance.expensiveToCompute <span class="hljs-comment">// computation happens on
 						<a href="_src_chrono_transaction_.html">&quot;src/chrono/<wbr>Transaction&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
+						<a href="_src_class_base_.html">&quot;src/class/<wbr>Base&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
 						<a href="_src_class_bettermixin_.html">&quot;src/class/<wbr>Better<wbr>Mixin&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="_src_class_mixin_.html">&quot;src/class/<wbr>Mixin&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="_src_collection_iterator_.html">&quot;src/collection/<wbr>Iterator&quot;</a>
@@ -438,57 +444,19 @@ instance.expensiveToCompute <span class="hljs-comment">// computation happens on
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
 				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
 				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
 				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
 				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
 				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
 				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
 				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
 				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
 			</ul>
 		</div>
 	</div>

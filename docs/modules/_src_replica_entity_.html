@@ -4,7 +4,7 @@
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<title>&quot;src/replica/Entity&quot; | @bryntum/chronograph</title>
-	<meta name="description" content="">
+	<meta name="description" content="Documentation for @bryntum/chronograph">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
 </head>
@@ -13,7 +13,7 @@
 	<div class="tsd-page-toolbar">
 		<div class="container">
 			<div class="table-wrap">
-				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.js" data-base="..">
+				<div class="table-cell" id="tsd-search" data-index="../assets/js/search.json" data-base="..">
 					<div class="field">
 						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
 						<input id="tsd-search-field" type="text" />
@@ -99,32 +99,32 @@
 					<div class="tsd-signature tsd-kind-icon">field<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-symbol">typeof </span><span class="tsd-signature-type">generic_field</span><span class="tsd-signature-symbol"> = generic_field</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in DIST/src/replica/Entity.ts:492</li>
+							<li>Defined in <a href="https://github.com/bryntum/chronograph/blob/89ffa6d/src/replica/Entity.ts#L491">src/replica/Entity.ts:491</a></li>
 						</ul>
 					</aside>
 					<div class="tsd-comment tsd-typography">
 						<div class="lead">
 							<p>Field decorator. The type signature is:</p>
 						</div>
-						<pre><code class="language-ts">field : &lt;T <span class="hljs-keyword">extends</span> <span class="hljs-keyword">typeof</span> Field = <span class="hljs-keyword">typeof</span> Field&gt; <span class="hljs-function">(<span class="hljs-params">fieldConfig? : Partial&lt;InstanceType&lt;T&gt;&gt;, fieldCls : T | <span class="hljs-keyword">typeof</span> Field = Field</span>) =&gt;</span> PropertyDecorator</code></pre>
+						<pre><code class="language-ts">field : &lt;T extends typeof Field = typeof Field&gt; (fieldConfig? : Partial&lt;InstanceType&lt;T&gt;&gt;, fieldCls : T | typeof Field = Field) =&gt; PropertyDecorator</code></pre>
 						<p>Its a function, that accepts field config object and optionally a field class (default is <a href="../classes/_src_schema_field_.field.html">Field</a>) and returns a property decorator.</p>
 						<p>Example:</p>
-						<pre><code class="language-ts"><span class="hljs-keyword">const</span> ignoreCaseCompare = (a : <span class="hljs-built_in">string</span>, b : <span class="hljs-built_in">string</span>) : <span class="hljs-function"><span class="hljs-params">boolean</span> =&gt;</span> a.toUpperCase() === b.toUpperCase()
+						<pre><code class="language-ts"><span class="hljs-keyword">const</span> ignoreCaseCompare = (a : <span class="hljs-built_in">string</span>, <span class="hljs-attr">b</span> : <span class="hljs-built_in">string</span>) : <span class="hljs-function"><span class="hljs-params">boolean</span> =&gt;</span> a.toUpperCase() === b.toUpperCase()
 
-<span class="hljs-keyword">class</span> MyField <span class="hljs-keyword">extends</span> Field {}
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyField</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Field</span> </span>{}
 
-<span class="hljs-keyword">class</span> Author <span class="hljs-keyword">extends</span> Entity.mix(Base) {
-    <span class="hljs-meta">@field</span>({ equality : ignoreCaseCompare })
-    firstName       : <span class="hljs-built_in">string</span>
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Author</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Entity</span>.<span class="hljs-title">mix</span>(<span class="hljs-title">Base</span>) </span>{
+    <span class="hljs-meta">@field</span>({ <span class="hljs-attr">equality</span> : ignoreCaseCompare })
+    <span class="hljs-attr">firstName</span>       : <span class="hljs-built_in">string</span>
 
-    <span class="hljs-meta">@field</span>({ lazy : <span class="hljs-literal">true</span> }, MyField)
-    lastName       : <span class="hljs-built_in">string</span>
+    <span class="hljs-meta">@field</span>({ <span class="hljs-attr">lazy</span> : <span class="hljs-literal">true</span> }, MyField)
+    <span class="hljs-attr">lastName</span>       : <span class="hljs-built_in">string</span>
 }</code></pre>
 						<p>For every field, there are generated get and set accessors, with which you can read/write the data:</p>
-						<pre><code class="language-ts"><span class="hljs-keyword">const</span> author     = Author.new({ firstName : <span class="hljs-string">'Mark'</span> })
+						<pre><code class="language-ts"><span class="hljs-keyword">const</span> author     = Author.new({ <span class="hljs-attr">firstName</span> : <span class="hljs-string">&#x27;Mark&#x27;</span> })
 
 author.firstName <span class="hljs-comment">// Mark</span>
-author.lastName  = <span class="hljs-string">'Twain'</span></code></pre>
+author.lastName  = <span class="hljs-string">&#x27;Twain&#x27;</span></code></pre>
 						<p>The getters are basically using <a href="../classes/_src_replica_replica_.replica.html#get">Replica.get</a> and setters <a href="../classes/_src_replica_replica_.replica.html#write">Replica.write</a>.</p>
 						<p>Note, that if the identifier is asynchronous, reading from it will return a promise. But, immediately after the <a href="../classes/_src_replica_replica_.replica.html#commit">Replica.commit</a> call, getter will return
 						plain value. This is a compromise between the convenience and correctness and this behavior may change (or made configurable) in the future.</p>
@@ -133,10 +133,10 @@ author.lastName  = <span class="hljs-string">'Twain'</span></code></pre>
 						<p>The getter method is an exact equivalent of the get accessor. The setter method, in addition to data write, immediately after that
 							performs a call to <a href="../classes/_src_replica_replica_.replica.html#commit">Replica.commit</a> (or <a href="../classes/_src_replica_replica_.replica.html#commitasync">Replica.commitAsync</a>, depending from the <a href="../classes/_src_replica_replica_.replica.html#autocommitmode">Replica.autoCommitMode</a> option)
 						and return its result.</p>
-						<pre><code class="language-ts"><span class="hljs-keyword">const</span> author     = Author.new({ firstName : <span class="hljs-string">'Mark'</span> })
+						<pre><code class="language-ts"><span class="hljs-keyword">const</span> author     = Author.new({ <span class="hljs-attr">firstName</span> : <span class="hljs-string">&#x27;Mark&#x27;</span> })
 
 author.getFirstName() <span class="hljs-comment">// Mark</span>
-<span class="hljs-keyword">await</span> author.setLastName(<span class="hljs-string">'Twain'</span>) <span class="hljs-comment">// issues asynchronous commit</span></code></pre>
+<span class="hljs-keyword">await</span> author.setLastName(<span class="hljs-string">&#x27;Twain&#x27;</span>) <span class="hljs-comment">// issues asynchronous commit</span></code></pre>
 					</div>
 				</section>
 			</section>
@@ -152,24 +152,26 @@ author.getFirstName() <span class="hljs-comment">// Mark</span>
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in DIST/src/replica/Entity.ts:517</li>
+									<li>Defined in <a href="https://github.com/bryntum/chronograph/blob/89ffa6d/src/replica/Entity.ts#L518">src/replica/Entity.ts:518</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
 								<div class="lead">
 									<p>Decorator for the method, that calculates a value of some field</p>
 								</div>
-								<pre><code class="language-ts"><span class="hljs-keyword">class</span> Author <span class="hljs-keyword">extends</span> Entity.mix(Base) {
+								<pre><code class="language-ts">
+<span class="hljs-meta">@entity</span>()
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Author</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Entity</span>.<span class="hljs-title">mix</span>(<span class="hljs-title">Base</span>) </span>{
     <span class="hljs-meta">@field</span>()
-    firstName       : <span class="hljs-built_in">string</span>
+    <span class="hljs-attr">firstName</span>       : <span class="hljs-built_in">string</span>
     <span class="hljs-meta">@field</span>()
-    lastName        : <span class="hljs-built_in">string</span>
+    <span class="hljs-attr">lastName</span>        : <span class="hljs-built_in">string</span>
     <span class="hljs-meta">@field</span>()
-    fullName        : <span class="hljs-built_in">string</span>
+    <span class="hljs-attr">fullName</span>        : <span class="hljs-built_in">string</span>
 
-    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">'fullName'</span>)
+    <span class="hljs-meta">@calculate</span>(<span class="hljs-string">&#x27;fullName&#x27;</span>)
     calculateFullName () : <span class="hljs-built_in">string</span> {
-        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.firstName + <span class="hljs-string">' '</span> + <span class="hljs-keyword">this</span>.lastName
+        <span class="hljs-keyword">return</span> <span class="hljs-built_in">this</span>.firstName + <span class="hljs-string">&#x27; &#x27;</span> + <span class="hljs-built_in">this</span>.lastName
     }
 }</code></pre>
 							</div>
@@ -212,7 +214,13 @@ author.getFirstName() <span class="hljs-comment">// Mark</span>
 						<a href="_src_chrono_transaction_.html">&quot;src/chrono/<wbr>Transaction&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
+						<a href="_src_class_base_.html">&quot;src/class/<wbr>Base&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
 						<a href="_src_class_bettermixin_.html">&quot;src/class/<wbr>Better<wbr>Mixin&quot;</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="_src_class_mixin_.html">&quot;src/class/<wbr>Mixin&quot;</a>
 					</li>
 					<li class=" tsd-kind-module">
 						<a href="_src_collection_iterator_.html">&quot;src/collection/<wbr>Iterator&quot;</a>
@@ -282,57 +290,19 @@ author.getFirstName() <span class="hljs-comment">// Mark</span>
 		<h2>Legend</h2>
 		<div class="tsd-legend-group">
 			<ul class="tsd-legend">
-				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
 				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
 				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
 				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
 				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
-				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
 				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
 				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
-				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
-				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
-			</ul>
-			<ul class="tsd-legend">
 				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
 				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
-				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
-				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
 			</ul>
 			<ul class="tsd-legend">
-				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
-				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
-				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
-			</ul>
-			<ul class="tsd-legend">
-				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
-				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
 			</ul>
 		</div>
 	</div>
