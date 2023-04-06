@@ -585,6 +585,9 @@ export class Transaction extends Base {
         const entry                 = this.touch(identifier).startOrigin()
 
         entry.setValue(TombStone)
+
+        // removing the identifier from self-dependent, otherwise there will be an attempt to evaluate it
+        this.candidate.selfDependent.delete(identifier)
     }
 
 
