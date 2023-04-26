@@ -547,6 +547,8 @@ export class Transaction extends Base {
         // of some other identifier writes to this identifier
         let entry : Quark           = this.entries.get(identifier)
 
+        const alreadyHadEntry       = Boolean(entry)
+
         const isVariable            = identifier.level === Levels.UserInput
 
         if (!entry) {
@@ -566,7 +568,19 @@ export class Transaction extends Base {
         if (proposedValue !== undefined || isVariable) {
             // TODO change to `this.write()`
             entry.startOrigin()
-            identifier.write.call(identifier.context || identifier, identifier, this, entry, proposedValue === undefined && isVariable ? null : proposedValue, ...args)
+
+            // we should not write if there's already an entry with some values (and we are trying to add it again)
+            // this means there were some other identifier that has written into this one even before it was added
+            // (probably in its `write` method)
+            const shouldNotWrite   = alreadyHadEntry && (entry.proposedValue !== undefined || entry.value !== undefined)
+
+            // however, if that entry contain TombStone marks, we should always write - means we are
+            // actually re-adding the identifier, which has been removed in the same transaction
+            if (!shouldNotWrite || entry.proposedValue === TombStone || entry.value === TombStone) {
+                identifier.isWritingUndefined   = proposedValue === undefined
+                identifier.write.call(identifier.context || identifier, identifier, this, entry, proposedValue === undefined && isVariable ? null : proposedValue, ...args)
+                identifier.isWritingUndefined   = false
+            }
         }
 
         // if we are re-adding the same identifier in the same transaction, clear the TombStone flag

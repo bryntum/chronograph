@@ -154,7 +154,10 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     /**
      * The scope (`this` value) for the calculation function.
      */
-    context             : this[ 'CalcContextT' ]       = undefined
+    context             : this[ 'CalcContextT' ]        = undefined
+
+    // flag to set during the `write` inside the `addIdentifier` call
+    isWritingUndefined  : boolean                       = false
 
 
     newQuark (createdAt : Revision) : InstanceType<this[ 'quarkClass' ]> {
