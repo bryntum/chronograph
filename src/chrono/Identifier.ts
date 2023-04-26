@@ -279,7 +279,7 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
 
 
     calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextSync ] {
-        throw new Error("The 'calculation' method of the variables will never be called. Instead the value will be set directly to quark")
+        throw new Error("The 'calculation' method of the variables should never be called. Instead, the value will be set directly to quark")
     }
 
 
