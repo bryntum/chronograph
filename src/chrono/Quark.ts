@@ -196,38 +196,6 @@ class Quark extends base {
     }
 
 
-    // mergePreviousIntoItself () {
-    //     const origin                = this.origin
-    //
-    //     if (origin === this.previous) {
-    //         this.mergePreviousOrigin(this)
-    //     } else {
-    //
-    //     }
-    //
-    //     // this.copyFrom(origin)
-    //     //
-    //     // const outgoing              = this.getOutgoing()
-    //     //
-    //     // for (const [ identifier, quark ] of origin.getOutgoing()) {
-    //     //     const ownOutgoing       = outgoing.get(identifier)
-    //     //
-    //     //     if (!ownOutgoing) {
-    //     //         const latest        = latestScope.get(identifier)
-    //     //
-    //     //         if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
-    //     //     }
-    //     // }
-    //     //
-    //     // // changing `origin`, but keeping `originId`
-    //     // this.origin                 = this
-    //     //
-    //     // // some help for garbage collector
-    //     // origin.clearProperties()
-    //     // origin.clear()
-    // }
-
-
     setOrigin (origin : Quark) {
         this.origin     = origin
         this.originId   = origin.originId
@@ -330,23 +298,6 @@ class Quark extends base {
 
         return this.proposedValue
     }
-
-
-    // * outgoingInTheFutureGen (revision : RevisionI) : Generator<Quark, void> {
-    //     let current : Quark    = this
-    //
-    //     while (true) {
-    //         for (const outgoing of current.outgoing.keys()) {
-    //             if (outgoing === revision.getLatestEntryFor(outgoing.identifier)) yield outgoing
-    //         }
-    //
-    //         if (current.isShadow())
-    //             current   = current.previous
-    //         else
-    //             break
-    //     }
-    //
-    // }
 
 
     outgoingInTheFutureCb (revision : Revision, forEach : (quark : Quark) => any) {
