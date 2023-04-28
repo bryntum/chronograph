@@ -593,7 +593,7 @@ export class ChronoGraph extends Base {
     }
 
 
-    onComputationCycleHandlerSync (cycle : ComputationCycle) {
+    onComputationCycleHandlerSync (cycle : ComputationCycle, transaction : Transaction) : IteratorResult<any> {
         const exception = new Error("Computation cycle:\n" + cycle)
 
         //@ts-ignore

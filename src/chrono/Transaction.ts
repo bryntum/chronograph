@@ -1169,7 +1169,7 @@ export class Transaction extends Base {
                     if (onReadIdentifierResult instanceof ComputationCycle) {
                         this.walkContext.startNewEpoch()
 
-                        this.graph.onComputationCycleHandlerSync(onReadIdentifierResult)
+                        this.graph.onComputationCycleHandlerSync(onReadIdentifierResult, this)
 
                         entry.cleanupCalculation()
 

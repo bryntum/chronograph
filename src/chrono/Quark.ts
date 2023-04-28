@@ -282,18 +282,13 @@ class Quark extends base {
     }
 
 
-    // setProposedValue (value : any) {
-    //     if (this.origin && this.origin !== this) throw new Error('Can not set proposed value to the shadow entry')
-    //
-    //     this.proposedValue = value
-    // }
-
-
     getProposedValue (transaction : Transaction) : any {
         if (this.needToBuildProposedValue) {
+            this.proposedValue              = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, this.identifier, this, transaction)
+            // setting this flag _after_ attempt to build the proposed value, because it might actually throw
+            // (if there's a cycle during sync computation, like during `effectiveDirection`)
+            // in such case, we need to re-enter this block
             this.needToBuildProposedValue   = false
-
-            this.proposedValue = this.identifier.buildProposedValue.call(this.identifier.context || this.identifier, this.identifier, this, transaction)
         }
 
         return this.proposedValue

@@ -1,3 +1,4 @@
+import { Effect, Reject } from "../chrono/Effect.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -257,7 +258,37 @@ export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends
     let iteration   = gen.next()
 
     while (!iteration.done) {
-        const effectResolution  = effect(iteration.value)
+        let effectResolution
+
+        let repeat = false
+
+        do {
+            repeat = false
+
+            try {
+                effectResolution    = effect(iteration.value)
+            } catch (e) {
+                // this is very bad, or even terrible - the high-level `Effect` class is mentioned in the "primitives",
+                // we compare 'resolution' with the magic string 'Cancel' (defined in Engine) and we also use `Reject`
+                // constructor
+                // but, we are trying to shove an async handling in sync computation (impossible by definition)
+                // so we are desperate, and even seems to work...
+                // other piece of this code is in `onComputationCycleHandlerSync` in `Engine/lib/Engine/chrono/Replica.ts`
+                if (e instanceof Effect) {
+                    // @ts-ignore
+                    let resolution  = await effect(e)
+
+                    if (resolution === 'Cancel') {
+                        // @ts-ignore
+                        effect(Reject(e))
+
+                        return
+                    } else {
+                        repeat = true
+                    }
+                }
+            }
+        } while (repeat)
 
         if (effectResolution instanceof Promise)
             iteration   = gen.next(await effectResolution)
