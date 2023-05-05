@@ -1,5 +1,6 @@
 import { Effect, Reject } from "../chrono/Effect.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
+import { isPromise } from "../util/Helpers.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
@@ -290,7 +291,7 @@ export async function runGeneratorAsyncWithEffect<ResultT, YieldT, ArgsT extends
             }
         } while (repeat)
 
-        if (effectResolution instanceof Promise)
+        if (isPromise(effectResolution))
             iteration   = gen.next(await effectResolution)
         else
             iteration   = gen.next(effectResolution)

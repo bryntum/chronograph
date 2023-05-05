@@ -6,7 +6,7 @@ import {
     runGeneratorAsyncWithEffect,
     SynchronousCalculationStarted
 } from "../primitives/Calculation.js"
-import { delay, MAX_SMI } from "../util/Helpers.js"
+import { delay, isPromise, MAX_SMI } from "../util/Helpers.js"
 import { LeveledQueue } from "../util/LeveledQueue.js"
 import { BreakCurrentStackExecution, Effect, RejectEffect } from "./Effect.js"
 import { ChronoGraph, CommitArguments } from "./Graph.js"
@@ -161,7 +161,7 @@ export class Transaction extends Base {
 
 
     yieldAsync (effect : Effect) : Promise<any> {
-        if (effect instanceof Promise) return effect
+        if (isPromise(effect)) return effect
 
         return this.graph[ effect.handler ](effect, this)
     }
@@ -169,7 +169,7 @@ export class Transaction extends Base {
 
     // see the comment for the `onEffectSync`
     yieldSync (effect : Effect) : any {
-        if (effect instanceof Promise) {
+        if (isPromise(effect)) {
             throw new Error("Can not yield a promise in the synchronous context")
         }
 
@@ -1192,7 +1192,7 @@ export class Transaction extends Base {
                     // bypass the unrecognized effect to the outer context
                     const effectResult          = context(value)
 
-                    if (effectResult instanceof Promise)
+                    if (isPromise(effectResult))
                         throw new Error("Effect resolved to promise in the synchronous context, check that you marked the asynchronous calculations accordingly")
 
                     // the calculation can be interrupted (`cleanupCalculation`) as a result of the effect (WriteEffect)
