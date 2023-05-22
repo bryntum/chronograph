@@ -195,6 +195,7 @@ export class ChronoGraph extends Base {
         return this.activeTransaction.dirty
     }
 
+    isJustCleared : boolean = false
 
     clear () {
         this.reject()
@@ -212,6 +213,8 @@ export class ChronoGraph extends Base {
         this.$activeTransaction = undefined
 
         this.markAndSweep()
+
+        this.isJustCleared = true
     }
 
 
@@ -430,6 +433,8 @@ export class ChronoGraph extends Base {
      * @param args
      */
     commit (args? : CommitArguments) : CommitResult {
+        this.isJustCleared = false
+
         // TODO should have a "while" loop adding extra transactions, similar to `commitAsync`
         this.unScheduleAutoCommit()
 
@@ -469,6 +474,8 @@ export class ChronoGraph extends Base {
     async commitAsync (args? : CommitArguments) : Promise<CommitResult> {
         if (this.isCommitting) return this.ongoing
 
+        this.isJustCleared      = false
+
         this.isCommitting       = true
 
         this.baseRevisionStable = this.baseRevision
@@ -505,6 +512,8 @@ export class ChronoGraph extends Base {
         this.$activeTransaction     = undefined
 
         await this.finalizeCommitAsync(transactionResult)
+
+        if (this.isJustCleared) return { rejectedWith : RejectEffect.new({ reason : 'Graph cleared' }) }
 
         if (activeTransaction.rejectedWith && !rejectedDuringCommit) {
             this.baseRevisionTentative  = prevBaseTentative
