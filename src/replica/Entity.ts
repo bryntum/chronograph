@@ -161,8 +161,8 @@ export class Entity extends Mixin(
         }
 
 
-        forEachFieldIdentifier<T extends this> (func : (field : FieldIdentifier, name : string) => any) {
-            this.$entity.forEachField((field, name) => func(this.$[ name ], name))
+        forEachFieldIdentifier<T extends this> (func : (identifier : FieldIdentifier, name : string, field? : Field) => any) {
+            this.$entity.forEachField((field, name) => func(this.$[ name ], name, field))
         }
 
 
