@@ -209,6 +209,18 @@ export const HasProposedNotPreviousValue = (identifier : Identifier) : HasPropos
 
 
 //---------------------------------------------------------------------------------------------------------------------
+export const HasProposedNotFromPreviousValueSymbol    = Symbol('HasProposedNotFromPreviousValueSymbol')
+
+export class HasProposedNotFromPreviousValueEffect extends Effect {
+    handler         : symbol    = HasProposedNotFromPreviousValueSymbol
+
+    identifier      : Identifier
+}
+
+export const HasProposedNotFromPreviousValue = (identifier : Identifier) : HasProposedNotFromPreviousValueEffect => HasProposedNotFromPreviousValueEffect.new({ identifier })
+
+
+//---------------------------------------------------------------------------------------------------------------------
 export const ProposedOrPreviousValueOfSymbol    = Symbol('ProposedOrPreviousValueOfSymbol')
 
 export class ProposedOrPreviousValueOfEffect extends Effect {
