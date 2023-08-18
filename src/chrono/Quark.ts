@@ -42,10 +42,7 @@ class Quark extends base {
     // quark state
     value                   : any       = undefined
     proposedValue           : any       = undefined
-    // proposed value is restored by STM
     proposedIsPrevious      : boolean   = false
-    // proposed value is set by resetToEpoch() method when new walk epoch starts
-    proposedFromPrevious    : boolean   = false
     proposedArguments       : any[]     = undefined
     usedProposedOrPrevious  : boolean   = false
     // eof quark state
@@ -125,7 +122,6 @@ class Quark extends base {
             // otherwise, keep the proposed value as is
             if (this.value !== undefined) {
                 this.proposedValue          = this.value
-                this.proposedFromPrevious   = true
             }
 
             this.value                      = undefined
