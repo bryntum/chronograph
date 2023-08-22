@@ -834,7 +834,8 @@ export class Transaction extends Base {
         // those references return `hasValue() === false` even that they actually have value
         // (which is `null` and needed to be recalculated)
         if (requestedEntry.hasValue() || requestedEntry.value !== undefined) {
-            const value                 = requestedEntry.getValue()
+            // monkey patch: at certain condition, entry has value, but it is shadowing entry
+            const value                 = requestedEntry.value ?? requestedEntry.getValue()
 
             if (value === TombStone) throwUnknownIdentifier(identifierRead)
 
