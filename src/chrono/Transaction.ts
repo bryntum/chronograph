@@ -800,11 +800,6 @@ export class Transaction extends Base {
             entry.edgesFlow = MAX_SMI
 
             entry.setOrigin(previousEntry.origin)
-
-            // seems not needed anymore?
-            // this is to indicate that this entry should be recalculated (origin removed)
-            // see `resetToEpoch`
-            entry.value     = value
         } else {
             entry.startOrigin()
             entry.setValue(value)
@@ -834,8 +829,7 @@ export class Transaction extends Base {
         // those references return `hasValue() === false` even that they actually have value
         // (which is `null` and needed to be recalculated)
         if (requestedEntry.hasValue() || requestedEntry.value !== undefined) {
-            // monkey patch: at certain condition, entry has value, but it is shadowing entry
-            const value                 = requestedEntry.value ?? requestedEntry.getValue()
+            const value                 = requestedEntry.getValue()
 
             if (value === TombStone) throwUnknownIdentifier(identifierRead)
 
