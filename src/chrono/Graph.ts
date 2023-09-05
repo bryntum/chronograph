@@ -578,6 +578,11 @@ export class ChronoGraph extends Base {
     async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
+
+    async finalizeTransactionAsync (transaction : Transaction) {
+    }
+
+
     * onComputationCycleHandler (cycle : ComputationCycle) : Generator<any, IteratorResult<any>> {
         const exception = new Error("Computation cycle:\n" + cycle)
 

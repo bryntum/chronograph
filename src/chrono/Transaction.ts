@@ -706,14 +706,15 @@ export class Transaction extends Base {
         this.preCommit(args)
 
         return this.ongoing = this.ongoing.then(() => {
-            return runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
-        }).then(() => {
-            return this.postCommit()
-        })
+            return (async () => {
+                do {
+                    await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
+                    await this.graph.finalizeTransactionAsync(this)
+                } while (this.stackGen.length > 0)
 
-        // await runGeneratorAsyncWithEffect(this.onEffectAsync, this.calculateTransitions, [ this.onEffectAsync ], this)
-        //
-        // return this.postCommit()
+                return this.postCommit()
+            })()
+        })
     }
 
 
