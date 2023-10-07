@@ -218,6 +218,30 @@ export class ChronoGraph extends Base {
     }
 
 
+    clearBranch () {
+        this.reject()
+
+        this.unScheduleAutoCommit()
+
+        // dereference all revisions
+        for (const [ revision, isReachable ] of this.eachReachableRevision()) {
+            if (isReachable) revision.reachableCount--
+
+            revision.referenceCount--
+        }
+
+        // some stale state - `clear` called at sensitive time
+        // this.baseRevision.scope && this.baseRevision.scope.clear()
+        this.baseRevision.previous  = null
+        this.listeners.clear()
+
+        this.topRevision    = this.baseRevision
+
+        this.$followingRevision = undefined
+        this.$activeTransaction = undefined
+    }
+
+
     * eachReachableRevision () : IterableIterator<[ Revision, boolean ]> {
         let isBetweenTopBottom      = true
         let counter                 = 0

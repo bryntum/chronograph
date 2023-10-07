@@ -165,7 +165,6 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
         // but instead assign directly to instance
         const newQuark                      = this.quarkClass.new() as InstanceType<this[ 'quarkClass' ]>
 
-        newQuark.createdAt                  = createdAt
         newQuark.identifier                 = this
         newQuark.needToBuildProposedValue   = this.proposedValueIsBuilt
 

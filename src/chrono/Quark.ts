@@ -34,9 +34,6 @@ class Quark extends base {
         return instance as InstanceType<T>
     }
 
-    // required
-    createdAt       : Revision          = undefined
-
     identifier      : Identifier        = undefined
 
     // quark state
