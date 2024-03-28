@@ -914,7 +914,7 @@ export class Transaction extends Base {
 
         let counter : number                = 0
 
-        const prevActiveStack               = this.activeStack
+        let prevActiveStack                 = this.activeStack
 
         this.activeStack = stack
 
@@ -1027,7 +1027,12 @@ export class Transaction extends Base {
                     if (onReadIdentifierResult instanceof ComputationCycle) {
                         this.walkContext.startNewEpoch()
 
+                        this.activeStack    = prevActiveStack
+
                         yield* this.graph.onComputationCycleHandler(onReadIdentifierResult)
+
+                        prevActiveStack     = this.activeStack
+                        this.activeStack    = stack
 
                         entry.cleanupCalculation()
 
@@ -1081,9 +1086,9 @@ export class Transaction extends Base {
 
         const entries                       = this.entries
 
-        const prevActiveStack               = this.activeStack
+        let prevActiveStack                 = this.activeStack
 
-        this.activeStack = stack
+        this.activeStack                    = stack
 
         while (stack.length && !this.rejectedWith && !this.stopped) {
             const entry             = stack[ stack.length - 1 ]
@@ -1164,7 +1169,12 @@ export class Transaction extends Base {
                     if (onReadIdentifierResult instanceof ComputationCycle) {
                         this.walkContext.startNewEpoch()
 
+                        this.activeStack    = prevActiveStack
+
                         this.graph.onComputationCycleHandlerSync(onReadIdentifierResult, this)
+
+                        prevActiveStack     = this.activeStack
+                        this.activeStack    = stack
 
                         entry.cleanupCalculation()
 
