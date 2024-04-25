@@ -120,6 +120,11 @@ export class FormulasCache extends Mixin(
         }
 
 
+        get size () : number {
+            return this.formulas.size
+        }
+
+
         has (formula : Formula) : boolean {
             return this.formulas.has(formula)
         }
@@ -235,8 +240,11 @@ export class CycleResolution extends Base {
     buildResolution (input : CycleResolutionInput) : CycleResolutionValue {
         const walkContext           = WalkState.new({ context : this, input })
 
-        const allResolutions        = Array.from(walkContext.next()).map(state => {
+        const allWalkStates         = Array.from(walkContext.next())
+
+        const allResolutions        = allWalkStates.map(state => {
             return {
+                state,
                 resolution              : state.asResolution(),
                 nbrOfDefaultFormulas    : Array.from(state.activatedFormulas.formulas).reduce(
                     (count : number, formula : Formula) => state.formulaIsDefault(formula) ? count + 1 : count,
@@ -295,7 +303,7 @@ export class CycleResolutionInput extends Base {
     @required
     context             : CycleResolution                       = undefined
 
-    private input       : Map<Variable, VariableInputState>     = undefined
+    input               : Map<Variable, VariableInputState>     = undefined
 
     private $hash       : GraphInputsHash                       = ''
 
@@ -307,6 +315,20 @@ export class CycleResolutionInput extends Base {
     }
 
     get description () : CycleDescription { return this.context.description }
+
+    get inputHR () : Map<Variable, string> {
+        return CI(this.input).map(([ key, value ]) => {
+            let desc = []
+
+            if (value & VariableInputState.KeepIfPossible) desc.push('Keep')
+            if (value & VariableInputState.HasPreviousValue) desc.push('HasPrevious')
+            if (value & VariableInputState.HasProposedValue) desc.push('HasProposed')
+
+            if (desc.length === 0) desc.push('NoInput')
+
+            return [ key, desc.join('&') ] as [ symbol, string ]
+        }).toMap()
+    }
 
 
     /**
