@@ -1034,7 +1034,7 @@ export class ChronoGraph extends Base {
     [WriteSymbol] (effect : WriteEffect, transaction : Transaction) : any {
         const activeEntry   = transaction.getActiveEntry()
 
-        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+        // if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
 
         const writeToHigherLevel    = effect.identifier.level > activeEntry.identifier.level
 
@@ -1056,7 +1056,7 @@ export class ChronoGraph extends Base {
     [WriteSeveralSymbol] (effect : WriteSeveralEffect, transaction : Transaction) : any {
 
         const activeEntry   = transaction.getActiveEntry()
-        if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
+        // if (activeEntry.identifier.lazy) throw new Error('Lazy identifiers can not use `Write` effect')
 
         let writeToHigherLevel    = true
 
