@@ -6,7 +6,10 @@ import { CalculationContext, CalculationFunction, CalculationIterator, Context }
 import { copySetInto, isGeneratorFunction } from "../util/Helpers.js"
 import {
     BreakCurrentStackExecution,
-    Effect, HasProposedNotPreviousValueEffect,
+    Effect,
+    HasPreviousValueEffect,
+    HasPreviousValueSymbol,
+    HasProposedNotPreviousValueEffect,
     HasProposedNotPreviousValueSymbol,
     HasProposedValueEffect,
     HasProposedValueSymbol,
@@ -1081,6 +1084,16 @@ export class ChronoGraph extends Base {
         return writeToHigherLevel ? undefined : BreakCurrentStackExecution
     }
 
+    [HasPreviousValueSymbol] (effect : HasPreviousValueEffect, transaction : Transaction) : any {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark     = transaction.entries.get(source)
+
+        return quark ? transaction.readPrevious(source) != null : false
+    }
 
     [PreviousValueOfSymbol] (effect : PreviousValueOfEffect, transaction : Transaction) : any {
         const activeEntry   = transaction.getActiveEntry()
