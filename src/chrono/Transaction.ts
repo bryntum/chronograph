@@ -726,6 +726,22 @@ export class Transaction extends Base {
     }
 
 
+    getLatestStableOrProposedEntryFor (identifier : Identifier) : Quark {
+        let entry : Quark       = this.entries.get(identifier)
+
+        if (entry) {
+            const value         = entry.getValue()
+
+            if (value === TombStone) return undefined
+
+            return value === undefined && entry.proposedValue === undefined ? this.baseRevision.getLatestEntryFor(identifier) : entry
+
+        } else {
+            return this.baseRevision.getLatestEntryFor(identifier)
+        }
+    }
+
+
     // check the transaction "entries" first, but only return an entry
     // from that, if it is already calculated, otherwise - take it
     // from the base revision
