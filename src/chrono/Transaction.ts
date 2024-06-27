@@ -977,7 +977,7 @@ export class Transaction extends Base {
                 continue
             }
 
-            if (entry.edgesFlow == 0) {
+            if (!identifier.ignoreEdgesFlow && entry.edgesFlow == 0) {
                 // even if we delete the entry there might be other copies in stack, so reduce the `edgesFlow` to -1
                 // to indicate that those are already processed
                 entry.edgesFlow--
@@ -995,7 +995,7 @@ export class Transaction extends Base {
             // thus we don't need to calculate it, moreover, we can remove the quark from the `entries`
             // to expose the value from the previous revision
             // however, we only do it, when there is a quark from previous revision and it has "origin" (some value)
-            if (entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
+            if (!identifier.ignoreEdgesFlow && entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
                 // even if the entry will be deleted from the transaction, we set the correct origin for it
                 // this is because there might be other references to this entry in the stack
                 // and also the entry may be referenced as dependency of some other quark

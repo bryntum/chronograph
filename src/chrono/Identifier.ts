@@ -151,6 +151,8 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
  * declare identifiers as fields (decorated class properties) in the [[Replica|replica]].
  */
 export class Identifier<ValueT = any, ContextT extends Context = Context> extends Meta<ValueT, ContextT> {
+    ignoreEdgesFlow     : boolean                       = false
+
     /**
      * The scope (`this` value) for the calculation function.
      */
