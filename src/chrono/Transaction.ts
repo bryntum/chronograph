@@ -726,6 +726,22 @@ export class Transaction extends Base {
     }
 
 
+    getLatestStableOrProposedEntryFor (identifier : Identifier) : Quark {
+        let entry : Quark       = this.entries.get(identifier)
+
+        if (entry) {
+            const value         = entry.getValue()
+
+            if (value === TombStone) return undefined
+
+            return value === undefined && entry.proposedValue === undefined ? this.baseRevision.getLatestEntryFor(identifier) : entry
+
+        } else {
+            return this.baseRevision.getLatestEntryFor(identifier)
+        }
+    }
+
+
     // check the transaction "entries" first, but only return an entry
     // from that, if it is already calculated, otherwise - take it
     // from the base revision
@@ -961,7 +977,7 @@ export class Transaction extends Base {
                 continue
             }
 
-            if (entry.edgesFlow == 0) {
+            if (!identifier.ignoreEdgesFlow && entry.edgesFlow == 0) {
                 // even if we delete the entry there might be other copies in stack, so reduce the `edgesFlow` to -1
                 // to indicate that those are already processed
                 entry.edgesFlow--
@@ -979,7 +995,7 @@ export class Transaction extends Base {
             // thus we don't need to calculate it, moreover, we can remove the quark from the `entries`
             // to expose the value from the previous revision
             // however, we only do it, when there is a quark from previous revision and it has "origin" (some value)
-            if (entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
+            if (!identifier.ignoreEdgesFlow && entry.edgesFlow < 0 && entry.previous && entry.previous.origin) {
                 // even if the entry will be deleted from the transaction, we set the correct origin for it
                 // this is because there might be other references to this entry in the stack
                 // and also the entry may be referenced as dependency of some other quark

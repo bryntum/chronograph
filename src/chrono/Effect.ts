@@ -159,6 +159,17 @@ export class WriteSeveralEffect extends Effect {
 
 export const WriteSeveral = (writes : WriteInfo[]) : WriteSeveralEffect => WriteSeveralEffect.new({ writes })
 
+//---------------------------------------------------------------------------------------------------------------------
+export const HasPreviousValueSymbol    = Symbol('HasPreviousValueSymbol')
+
+export class HasPreviousValueEffect extends Effect {
+    handler         : symbol    = HasPreviousValueSymbol
+
+    identifier      : Identifier
+}
+
+export const HasPreviousValue = (identifier : Identifier) : HasPreviousValueEffect => HasPreviousValueEffect.new({ identifier })
+
 
 //---------------------------------------------------------------------------------------------------------------------
 export const PreviousValueOfSymbol    = Symbol('PreviousValueOfSymbol')
