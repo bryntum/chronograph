@@ -18,6 +18,7 @@
 /tests/**/*.js.map
 /main.js
 /tsconfig.tsbuildinfo
+/package-lock.json
 
 /examples/basic/**/*.js
 
