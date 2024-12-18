@@ -108,7 +108,15 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
 
 
     continueCalculation (value : unknown) : IteratorResult<any> {
-        return this.iterationResult = this.iterator.next(value)
+        const result = this.iterator.next(value)
+
+        // the calculation might have been reset right during the `this.iterator.next(value)` call above
+        // in such case, should not assign iteration result
+        if (this.iterator) {
+            return this.iterationResult = result
+        } else {
+            return undefined
+        }
     }
 
 
