@@ -272,16 +272,24 @@ export class Transaction extends Base {
         // now need to repeat the logic
         if (!entry.previous || !entry.previous.hasValue()) entry.forceCalculation()
 
+        // need to allow synchronous "gets" from stopped transaction
+        // https://github.com/bryntum/support/issues/10703
+        const wasStopped = this.stopped
+
         //----------------------
         while (this.stackGen.getLowestLevel() < identifier.level) {
+            this.stopped = false
             // here we force the computations for lower level identifiers should be sync
             this.calculateTransitionsStackSync(this.onEffectSync, this.stackGen.takeLowestLevel())
+            this.stopped = wasStopped
         }
 
         this.markSelfDependent()
 
         if (identifier.sync) {
+            this.stopped = false
             this.calculateTransitionsStackSync(this.onEffectSync, [ entry ])
+            this.stopped = wasStopped
 
             const value     = entry.getValue()
 

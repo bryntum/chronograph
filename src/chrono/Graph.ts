@@ -863,18 +863,6 @@ export class ChronoGraph extends Base {
      * @param identifier
      */
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
-        const activeTransaction = this.activeTransaction
-
-        if (activeTransaction.stopped) {
-            return this.getFromStoppedTransaction(identifier)
-        } else {
-            return activeTransaction.get(identifier)
-        }
-    }
-
-
-    getFromStoppedTransaction<T> (identifier : Identifier<T>) : T | Promise<T> {
-        // by default just read from it anyway
         return this.activeTransaction.get(identifier)
     }
 
