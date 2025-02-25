@@ -863,19 +863,20 @@ export class ChronoGraph extends Base {
      * @param identifier
      */
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
-        return this.activeTransaction.get(identifier)
+        const activeTransaction = this.activeTransaction
+
+        if (activeTransaction.stopped) {
+            return this.getFromStoppedTransaction(identifier)
+        } else {
+            return activeTransaction.get(identifier)
+        }
     }
 
-    // // read the identifier value, return the proposed value if no "current" value is calculated yet
-    // readDirty<T> (identifier : Identifier<T>) : T {
-    //     return this.activeTransaction.readDirty(identifier)
-    // }
-    //
-    //
-    // // read the identifier value, return the proposed value if no "current" value is calculated yet
-    // readDirtyAsync<T> (identifier : Identifier<T>) : Promise<T> {
-    //     return this.activeTransaction.readDirtyAsync(identifier)
-    // }
+
+    getFromStoppedTransaction<T> (identifier : Identifier<T>) : T | Promise<T> {
+        // by default just read from it anyway
+        return this.activeTransaction.get(identifier)
+    }
 
 
     observe
