@@ -144,9 +144,12 @@ export class ReferenceIdentifier extends Mixin(
             if (me.hasBucket()) {
                 if (quark) {
                     const prevValue     = quark.getValue()
+                    // if the reference has changed several times before the commit, its value will be undefined
+                    // (not yet calculated), but `proposedValue` will have a value
+                    const prevValue2    = prevValue === undefined ? quark.proposedValue : prevValue
 
-                    if (prevValue instanceof Entity) {
-                        me.getBucket(prevValue).removeFromBucket(transaction, me.self)
+                    if (prevValue2 instanceof Entity) {
+                        me.getBucket(prevValue2).removeFromBucket(transaction, me.self)
                     }
                 }
                 else if (transaction.baseRevision.hasIdentifier(me)) {
