@@ -233,9 +233,6 @@ export class ChronoGraph extends Base {
             revision.referenceCount--
         }
 
-        // some stale state - `clear` called at sensitive time
-        // this.baseRevision.scope && this.baseRevision.scope.clear()
-        // this.baseRevision.previous  = null
         this.listeners.clear()
 
         this.topRevision    = this.baseRevision
