@@ -137,7 +137,7 @@ export class ChronoGraph extends Base {
     // in such case, we shouldn't treat it as user input, but instead as a side-effect free
     // state restoration
     // this flag is used in the CycleResolverChrono and in general is engine specific
-    isWritingPreviousData   : boolean           = false
+    isWritingPreviousData   : number            = 0
 
     $activeTransaction      : Transaction       = undefined
 
