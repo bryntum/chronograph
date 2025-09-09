@@ -24,7 +24,7 @@
     "tslib": "^1.9.3"
   },
   "devDependencies": {
-    "cytoscape": "^3.14.1",
+    "cytoscape": "3.14.1",
     "dagre": "^0.8.5",
     "klayjs": "^0.4.1",
     "cytoscape-dagre": "^2.2.2",
