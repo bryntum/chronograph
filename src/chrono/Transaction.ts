@@ -521,8 +521,11 @@ export class Transaction extends Base {
 
     touch (identifier : Identifier) : Quark {
         const existingEntry         = this.entries.get(identifier)
+        const { walkContext }       = this
 
-        if (!existingEntry || existingEntry.visitEpoch < this.walkContext.currentEpoch) this.walkContext.continueFrom([ identifier ])
+        if (walkContext && (!existingEntry || existingEntry.visitEpoch < walkContext.currentEpoch)) {
+            walkContext.continueFrom([ identifier ])
+        }
 
         const entry                 = existingEntry || this.entries.get(identifier)
 

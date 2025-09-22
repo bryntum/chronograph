@@ -24,7 +24,7 @@
     "tslib": "^1.9.3"
   },
   "devDependencies": {
-    "cytoscape": "^3.14.1",
+    "cytoscape": "3.14.1",
     "dagre": "^0.8.5",
     "klayjs": "^0.4.1",
     "cytoscape-dagre": "^2.2.2",
@@ -37,7 +37,6 @@
     "deoptigate": "^0.5.0",
     "mobx": "^5.13.0",
     "regenerator-runtime": "^0.13.1",
-    "siesta-lite": "^5.5.0",
     "tslint": "^5.16.0",
     "typedoc": "https://github.com/bryntum/typedoc.git#custom",
     "typedoc-default-themes": "https://github.com/bryntum/typedoc-default-themes.git",
