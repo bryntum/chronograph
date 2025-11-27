@@ -352,11 +352,17 @@ export class Transaction extends Base {
         }
     }
 
+    readingIdentifier : Identifier
 
     // this seems to be an optimistic version
     read<T> (identifier : Identifier<T>) : T {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
+
+        // remember the identifier we were reading before this call
+        const _readingIdentifier = this.readingIdentifier
+
+        this.readingIdentifier = identifier
 
         let entry : Quark
 
@@ -370,7 +376,10 @@ export class Transaction extends Base {
             if (!entry) {
                 const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
 
-                if (!previousEntry) throwUnknownIdentifier(identifier)
+                if (!previousEntry) {
+                    this.readingIdentifier = _readingIdentifier
+                    throwUnknownIdentifier(identifier)
+                }
 
                 entry = previousEntry.hasValue() ? previousEntry : this.touch(identifier)
             }
@@ -378,8 +387,14 @@ export class Transaction extends Base {
 
         const value1        = entry.getValue()
 
-        if (value1 === TombStone) throwUnknownIdentifier(identifier)
-        if (value1 !== undefined) return value1
+        if (value1 === TombStone) {
+            this.readingIdentifier = _readingIdentifier
+            throwUnknownIdentifier(identifier)
+        }
+        if (value1 !== undefined) {
+            this.readingIdentifier = _readingIdentifier
+            return value1
+        }
 
         // if (!identifier.sync) throw new Error("Can not calculate asynchronous identifier synchronously")
 
@@ -400,8 +415,17 @@ export class Transaction extends Base {
         const value     = entry.getValue()
 
         // TODO review this exception
-        if (value === undefined) throw new Error('Cycle during synchronous computation')
-        if (value === TombStone) throwUnknownIdentifier(identifier)
+        if (value === undefined) {
+            this.readingIdentifier = _readingIdentifier
+            throw new Error('Cycle during synchronous computation')
+        }
+        if (value === TombStone) {
+            this.readingIdentifier = _readingIdentifier
+            throwUnknownIdentifier(identifier)
+        }
+
+        // restore the identifier we were reading ref
+        this.readingIdentifier = _readingIdentifier
 
         return value
     }
