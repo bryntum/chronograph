@@ -1138,6 +1138,7 @@ export class Transaction extends Base {
         this.activeStack    = prevActiveStack
     }
 
+    cycles : Set<ComputationCycle> = new Set()
 
     // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, stack : Quark[]) {
@@ -1151,9 +1152,17 @@ export class Transaction extends Base {
 
         this.activeStack                    = stack
 
+        const { cycles } = this
+
         while (stack.length && !this.rejectedWith && !this.stopped) {
             const entry             = stack[ stack.length - 1 ]
             const identifier        = entry.identifier
+
+            if ([...cycles].some(c => c.hasIdentifier(identifier))) {
+                entry.cleanup()
+                stack.pop()
+                continue
+            }
 
             // TODO can avoid `.get()` call by comparing some another "epoch" counter on the entry
             const ownEntry          = entries.get(identifier)
@@ -1224,6 +1233,12 @@ export class Transaction extends Base {
                     break
                 }
                 else if (value instanceof Identifier) {
+                    if ([...cycles].some(c => c.hasIdentifier(value))) {
+                        iterationResult = undefined
+                        entry.cleanup()
+                        stack.pop()
+                    }
+
                     const onReadIdentifierResult = this.onReadIdentifier(value, entry, stack)
 
                     // handle the cycle
@@ -1232,6 +1247,11 @@ export class Transaction extends Base {
 
                         this.activeStack    = prevActiveStack
 
+                        cycles.add(onReadIdentifierResult)
+
+                        // TODO
+                        // 1. handle IterationResult case?
+                        // 2. figure out if the cycle is resolved => then do not add it to this.cycles
                         this.graph.onComputationCycleHandlerSync(onReadIdentifierResult, this)
 
                         prevActiveStack     = this.activeStack

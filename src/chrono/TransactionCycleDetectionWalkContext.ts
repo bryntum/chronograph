@@ -9,9 +9,19 @@ import { Quark } from "./Quark.js"
 export class ComputationCycle extends Base {
     cycle           : Identifier[]
 
+    cycleSet        : Set<Identifier>
+
     activeEntry     : Quark
 
     requestedEntry  : Quark
+
+    hasIdentifier (identifier : Identifier) : boolean {
+        if (!this.cycleSet) {
+            this.cycleSet = new Set(this.cycle)
+        }
+
+        return this.cycleSet.has(identifier)
+    }
 
     toString () : string {
         const cycleIdentifiers   = []
