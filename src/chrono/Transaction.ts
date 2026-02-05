@@ -868,7 +868,8 @@ export class Transaction extends Base {
         if (requestedEntry.hasValue() || requestedEntry.value !== undefined) {
             const value                 = requestedEntry.getValue()
 
-            if (value === TombStone) throwUnknownIdentifier(identifierRead)
+            // TODO check if this is really needed
+            // if (value === TombStone) throwUnknownIdentifier(identifierRead)
 
             return activeEntry.continueCalculation(value)
         }
