@@ -119,6 +119,7 @@ class Quark extends base {
             // otherwise, keep the proposed value as is
             if (this.value !== undefined) {
                 this.proposedValue          = this.value
+                this.proposedIsPrevious = true
             }
 
             this.value                      = undefined
