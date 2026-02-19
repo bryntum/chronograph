@@ -1113,7 +1113,7 @@ export class ChronoGraph extends Base {
 
         const quark     = transaction.entries.get(source)
 
-        return quark ? quark.hasProposedValue() && quark.writtenValue !== undefined : false
+        return quark ? quark.hasProposedValue() /* && quark.writtenValue !== undefined */ : false
     }
 
 
