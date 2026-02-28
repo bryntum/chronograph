@@ -71,7 +71,9 @@ export class TransactionWalkDepth extends Base {
 
 
     collectNext (from : Identifier, toVisit : WalkStep[], visitInfo : Quark) {
-        const latestEntry       = this.baseRevision.getLatestEntryFor(from)
+        // Perf: use transaction's cached lookup instead of walking the revision chain directly.
+        // baseRevision.getLatestEntryFor() is O(chain-depth) per call; the transaction cache is O(1) on repeat lookups.
+        const latestEntry       = this.transaction.cachedBaseRevisionLookup(from)
 
         if (latestEntry) {
             // since `collectNext` is called exactly once for every node, all quarks
