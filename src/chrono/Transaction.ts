@@ -94,6 +94,14 @@ export class Transaction extends Base {
 
     hasVariableEntry          : boolean             = false
 
+    // Perf: cache for baseRevision.getLatestEntryFor() results.
+    // The revision chain walk is O(revisions) and the same identifier is looked up
+    // multiple times within a single commit cycle. The base revision doesn't change
+    // during a transaction, so these results are stable and can be safely cached.
+    // Entries are removed from cache when a shadow quark is created for that identifier
+    // (via entries.set), since after that point the transaction's own entry takes precedence.
+    baseRevisionCache        : Map<Identifier, Quark> = new Map()
+
 
     initialize (...args) {
         super.initialize(...args)
@@ -192,7 +200,7 @@ export class Transaction extends Base {
             entry           = this.entries.get(identifier)
 
             if (!entry) {
-                const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+                const previousEntry = this.cachedBaseRevisionLookup(identifier)
 
                 if (!previousEntry) throwUnknownIdentifier(identifier)
 
@@ -261,7 +269,7 @@ export class Transaction extends Base {
             entry           = this.entries.get(identifier)
 
             if (!entry) {
-                const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+                const previousEntry = this.cachedBaseRevisionLookup(identifier)
 
                 if (!previousEntry) throwUnknownIdentifier(identifier)
 
@@ -368,7 +376,7 @@ export class Transaction extends Base {
             entry           = this.entries.get(identifier)
 
             if (!entry) {
-                const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+                const previousEntry = this.cachedBaseRevisionLookup(identifier)
 
                 if (!previousEntry) throwUnknownIdentifier(identifier)
 
@@ -439,7 +447,7 @@ export class Transaction extends Base {
 
 
     readPrevious<T> (identifier : Identifier<T>) : T {
-        const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+        const previousEntry = this.cachedBaseRevisionLookup(identifier)
 
         if (!previousEntry) return undefined
 
@@ -450,7 +458,7 @@ export class Transaction extends Base {
 
 
     readPreviousAsync<T> (identifier : Identifier<T>) : Promise<T> {
-        const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
+        const previousEntry = this.cachedBaseRevisionLookup(identifier)
 
         if (!previousEntry) return undefined
 
@@ -557,7 +565,7 @@ export class Transaction extends Base {
 
         if (activeEntry && activeEntry.getValue() === TombStone) return false
 
-        return Boolean(activeEntry || this.baseRevision.getLatestEntryFor(identifier))
+        return Boolean(activeEntry || this.cachedBaseRevisionLookup(identifier))
     }
 
 
@@ -575,7 +583,7 @@ export class Transaction extends Base {
         if (!entry) {
             entry                   = identifier.newQuark(this.baseRevision)
 
-            entry.previous          = this.baseRevision.getLatestEntryFor(identifier)
+            entry.previous          = this.cachedBaseRevisionLookup(identifier)
 
             entry.forceCalculation()
 
@@ -644,7 +652,12 @@ export class Transaction extends Base {
 
                     // TODO remove the origin/shadowing concepts? this line won't be needed then
                     // and we iterate over the edges from "origin" anyway
-                    quark.getOutgoing().forEach((toQuark, toIdentifier) => latestEntry.getOutgoing().set(toIdentifier, toQuark))
+                    // Perf: for...of avoids closure allocation per edge (was forEach)
+                    const latestOutgoing = latestEntry.getOutgoing()
+
+                    for (const [ toIdentifier, toQuark ] of quark.getOutgoing()) {
+                        latestOutgoing.set(toIdentifier, toQuark)
+                    }
 
                 } else {
                     candidate.scope.set(identifier, quark)
@@ -674,6 +687,9 @@ export class Transaction extends Base {
 
         // for some reason need to cleanup the `walkContext` manually, otherwise the extra revisions hangs in memory
         this.walkContext            = undefined
+
+        // Perf: clear the base revision lookup cache to help GC
+        this.baseRevisionCache      = undefined
 
         return { revision : this.candidate, entries, transaction : this }
     }
@@ -738,8 +754,26 @@ export class Transaction extends Base {
     }
 
 
+    // Perf: cached wrapper for baseRevision.getLatestEntryFor().
+    // Avoids repeated O(revisions) walks for the same identifier within a commit cycle.
+    cachedBaseRevisionLookup (identifier : Identifier) : Quark {
+        const cache = this.baseRevisionCache
+
+        let result = cache.get(identifier)
+
+        if (result !== undefined) return result
+
+        result = this.baseRevision.getLatestEntryFor(identifier)
+
+        // Store in cache (null means "not found in any revision")
+        cache.set(identifier, result)
+
+        return result
+    }
+
+
     getLatestEntryFor (identifier : Identifier) : Quark {
-        let entry : Quark             = this.entries.get(identifier) || this.baseRevision.getLatestEntryFor(identifier)
+        let entry : Quark             = this.entries.get(identifier) || this.cachedBaseRevisionLookup(identifier)
 
         if (entry && entry.getValue() === TombStone) return undefined
 
@@ -755,10 +789,10 @@ export class Transaction extends Base {
 
             if (value === TombStone) return undefined
 
-            return value === undefined && entry.proposedValue === undefined ? this.baseRevision.getLatestEntryFor(identifier) : entry
+            return value === undefined && entry.proposedValue === undefined ? this.cachedBaseRevisionLookup(identifier) : entry
 
         } else {
-            return this.baseRevision.getLatestEntryFor(identifier)
+            return this.cachedBaseRevisionLookup(identifier)
         }
     }
 
@@ -774,10 +808,10 @@ export class Transaction extends Base {
 
             if (value === TombStone) return undefined
 
-            return value === undefined ? this.baseRevision.getLatestEntryFor(identifier) : entry
+            return value === undefined ? this.cachedBaseRevisionLookup(identifier) : entry
 
         } else {
-            return this.baseRevision.getLatestEntryFor(identifier)
+            return this.cachedBaseRevisionLookup(identifier)
         }
     }
 
@@ -791,7 +825,7 @@ export class Transaction extends Base {
 
         // creating "shadowing" entry, to store the new edges
         if (!entry) {
-            const previousEntry = this.baseRevision.getLatestEntryFor(identifierRead)
+            const previousEntry = this.cachedBaseRevisionLookup(identifierRead)
 
             if (!previousEntry) throwUnknownIdentifier(identifierRead)
 

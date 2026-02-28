@@ -294,12 +294,30 @@ class Quark extends base {
     }
 
 
-    outgoingInTheFutureCb (revision : Revision, forEach : (quark : Quark) => any) {
+    // Perf: shared helper for outgoing edge iteration with shadow chain traversal.
+    // Consolidates the 4 callback methods to reduce code duplication and make
+    // optimizations apply once. The `lookup` function resolves an identifier to
+    // its latest quark; `includePast` controls whether past edges are iterated.
+    outgoingInTheFutureHelper (
+        lookup : (identifier : Identifier) => Quark,
+        forEach : (quark : Quark) => any,
+        includePast : boolean
+    ) {
         let current : Quark = this
 
         while (current) {
             for (const outgoing of current.getOutgoing().values()) {
-                if (outgoing.originId === revision.getLatestEntryFor(outgoing.identifier).originId) forEach(outgoing)
+                const latestEntry = lookup(outgoing.identifier)
+
+                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+            }
+
+            if (includePast && current.$outgoingPast !== undefined) {
+                for (const outgoing of current.$outgoingPast.values()) {
+                    const latestEntry = lookup(outgoing.identifier)
+
+                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+                }
             }
 
             if (current.isShadow())
@@ -307,78 +325,43 @@ class Quark extends base {
             else
                 current     = null
         }
+    }
+
+
+    outgoingInTheFutureCb (revision : Revision, forEach : (quark : Quark) => any) {
+        this.outgoingInTheFutureHelper(
+            id => revision.getLatestEntryFor(id),
+            forEach,
+            false
+        )
     }
 
 
     outgoingInTheFutureAndPastCb (revision : Revision, forEach : (quark : Quark) => any) {
-        let current : Quark = this
-
-        while (current) {
-            for (const outgoing of current.getOutgoing().values()) {
-                const latestEntry = revision.getLatestEntryFor(outgoing.identifier)
-
-                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
-            }
-
-            if (current.$outgoingPast !== undefined) {
-                for (const outgoing of current.$outgoingPast.values()) {
-                    const latestEntry = revision.getLatestEntryFor(outgoing.identifier)
-
-                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
-                }
-            }
-
-            if (current.isShadow())
-                current     = current.previous
-            else
-                current     = null
-        }
+        this.outgoingInTheFutureHelper(
+            id => revision.getLatestEntryFor(id),
+            forEach,
+            true
+        )
     }
 
 
     outgoingInTheFutureAndPastTransactionCb (transaction : Transaction, forEach : (quark : Quark) => any) {
-        let current : Quark = this
-
-        while (current) {
-            for (const outgoing of current.getOutgoing().values()) {
-                const latestEntry = transaction.getLatestStableEntryFor(outgoing.identifier)
-
-                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
-            }
-
-            if (current.$outgoingPast !== undefined) {
-                for (const outgoing of current.$outgoingPast.values()) {
-                    const latestEntry = transaction.getLatestStableEntryFor(outgoing.identifier)
-
-                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
-                }
-            }
-
-            if (current.isShadow())
-                current     = current.previous
-            else
-                current     = null
-        }
+        this.outgoingInTheFutureHelper(
+            id => transaction.getLatestStableEntryFor(id),
+            forEach,
+            true
+        )
     }
-
 
 
     // ignores the "past" edges by design, as they do not form cycles
     outgoingInTheFutureTransactionCb (transaction : Transaction, forEach : (quark : Quark) => any) {
-        let current : Quark = this
-
-        while (current) {
-            for (const outgoing of current.getOutgoing().values()) {
-                const latestEntry = transaction.getLatestEntryFor(outgoing.identifier)
-
-                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
-            }
-
-            if (current.isShadow())
-                current     = current.previous
-            else
-                current     = null
-        }
+        this.outgoingInTheFutureHelper(
+            id => transaction.getLatestEntryFor(id),
+            forEach,
+            false
+        )
     }
 
 }){}

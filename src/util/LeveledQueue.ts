@@ -54,16 +54,22 @@ export class LeveledQueue<T extends { level : number }> {
     // }
 
 
+    // Perf: after popping, advance lowestLevel past the current level if it became empty,
+    // so subsequent pop()/getLowestLevel() calls skip empty levels immediately
     pop () : T {
         for (let i = this.lowestLevel !== MAX_SMI ? this.lowestLevel : 0; i < this.levels.length; i++) {
             const level     = this.levels[ i ]
 
-            this.lowestLevel    = i
-
             if (level && level.length > 0) {
                 this.length--
 
-                return level.pop()
+                const result = level.pop()
+
+                // Perf: if this level is now empty, advance lowestLevel past it
+                // so the next call doesn't re-scan it
+                this.lowestLevel = level.length > 0 ? i : i + 1
+
+                return result
             }
         }
 
