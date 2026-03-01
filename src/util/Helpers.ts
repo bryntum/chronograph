@@ -76,6 +76,8 @@ declare const regeneratorRuntime : any
 let isRegeneratorRuntime : boolean | null = null
 
 export const isGeneratorFunction = function (func : any) : boolean {
+    if (func && func.__isTransformedGenerator) return true
+
     if (isRegeneratorRuntime === null) isRegeneratorRuntime = typeof regeneratorRuntime !== 'undefined'
 
     if (isRegeneratorRuntime === true) {
