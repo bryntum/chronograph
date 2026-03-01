@@ -689,7 +689,7 @@ export class Transaction extends Base {
         this.walkContext            = undefined
 
         // Perf: clear the base revision lookup cache to help GC
-        this.baseRevisionCache      = undefined
+        this.baseRevisionCache      = new Map()
 
         return { revision : this.candidate, entries, transaction : this }
     }
