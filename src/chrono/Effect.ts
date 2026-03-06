@@ -3,6 +3,10 @@ import { prototypeValue } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * A sentinel symbol yielded to break the current synchronous stack execution and defer to the next microtask.
+ * Used internally to avoid stack overflow during deep synchronous computation chains.
+ */
 export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
 
 
@@ -22,6 +26,7 @@ export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution'
  * ```
  */
 export class Effect extends Base {
+    /** Symbol identifying which effect handler should process this effect */
     handler     : symbol
 
     /**
@@ -30,6 +35,10 @@ export class Effect extends Base {
     @prototypeValue(true)
     sync        : boolean
 
+    /**
+     * Whether the effect is pure (has no side effects on graph state). Default is `true`.
+     * Impure effects (like [[WriteEffect]], [[RejectEffect]]) modify the graph and are set to `false`.
+     */
     @prototypeValue(true)
     pure        : boolean
 }
@@ -106,18 +115,30 @@ export const Reject = <Reason>(reason : Reason) : RejectEffect<Reason> => Reject
 //---------------------------------------------------------------------------------------------------------------------
 export const TransactionSymbol    = Symbol('TransactionSymbol')
 
+/**
+ * An effect that, when yielded from a calculation function, returns the current [[Transaction]] instance.
+ * Useful for advanced calculations that need to inspect or interact with the transaction directly.
+ */
 export const GetTransaction : Effect = Effect.new({ handler : TransactionSymbol })
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const OwnQuarkSymbol    = Symbol('OwnQuarkSymbol')
 
+/**
+ * An effect that, when yielded from a calculation function, returns the [[Quark]] of the identifier
+ * currently being calculated.
+ */
 export const OwnQuark : Effect = Effect.new({ handler : OwnQuarkSymbol })
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const OwnIdentifierSymbol    = Symbol('OwnIdentifierSymbol')
 
+/**
+ * An effect that, when yielded from a calculation function, returns the [[Identifier]] that is
+ * currently being calculated.
+ */
 export const OwnIdentifier : Effect = Effect.new({ handler : OwnIdentifierSymbol })
 
 
@@ -125,12 +146,21 @@ export const OwnIdentifier : Effect = Effect.new({ handler : OwnIdentifierSymbol
 export const WriteSymbol    = Symbol('WriteSymbol')
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Describes a single write operation: the target identifier and the proposed arguments.
+ */
 export type WriteInfo = {
+    /** The identifier to write to */
     identifier      : Identifier
+    /** The proposed value and any additional arguments */
     proposedArgs    : [ any, ...any[] ]
 }
 
 
+/**
+ * Effect class for a single [[Write]] operation. Writing to another identifier from within a calculation
+ * function allows one identifier to push values to others.
+ */
 export class WriteEffect extends Effect implements WriteInfo {
     handler                 : symbol    = WriteSymbol
 
@@ -142,32 +172,60 @@ export class WriteEffect extends Effect implements WriteInfo {
 }
 
 
+/**
+ * Constructor for [[WriteEffect]]. Yields a write to another identifier from within a calculation function.
+ *
+ * @param identifier The identifier to write to
+ * @param proposedValue The value to propose
+ * @param proposedArgs Additional arguments
+ */
 export const Write = (identifier : Identifier, proposedValue : any, ...proposedArgs : any[]) : WriteEffect =>
     WriteEffect.new({ identifier, proposedArgs : [ proposedValue, ...proposedArgs ] })
 
 
 export const WriteSeveralSymbol    = Symbol('WriteSeveralSymbol')
 
+/**
+ * Effect class for writing to multiple identifiers atomically in a single yield.
+ * More efficient than yielding multiple individual [[Write]] effects.
+ */
 export class WriteSeveralEffect extends Effect {
     handler                 : symbol    = WriteSeveralSymbol
 
+    /** Array of write operations to perform */
     writes                  : WriteInfo[]
 
     @prototypeValue(false)
     pure                    : boolean
 }
 
+/**
+ * Constructor for [[WriteSeveralEffect]]. Writes to multiple identifiers in a single yield.
+ *
+ * @param writes Array of [[WriteInfo]] objects describing each write
+ */
 export const WriteSeveral = (writes : WriteInfo[]) : WriteSeveralEffect => WriteSeveralEffect.new({ writes })
 
 //---------------------------------------------------------------------------------------------------------------------
 export const HasPreviousValueSymbol    = Symbol('HasPreviousValueSymbol')
 
+/**
+ * Effect class for checking whether a given identifier had a value in the previous revision.
+ * Creates a past edge to the target identifier.
+ */
 export class HasPreviousValueEffect extends Effect {
     handler         : symbol    = HasPreviousValueSymbol
 
+    /** The identifier to check for a previous value */
     identifier      : Identifier
 }
 
+/**
+ * Constructor for [[HasPreviousValueEffect]]. Returns `true` if the identifier had a computed value
+ * in the previous revision.
+ *
+ * @param identifier The identifier to check
+ */
 export const HasPreviousValue = (identifier : Identifier) : HasPreviousValueEffect => HasPreviousValueEffect.new({ identifier })
 
 
@@ -234,44 +292,83 @@ export const ProposedOrPreviousValueOf = (identifier : Identifier) : ProposedOrP
 //---------------------------------------------------------------------------------------------------------------------
 export const ProposedArgumentsOfSymbol    = Symbol('ProposedArgumentsOfSymbol')
 
+/**
+ * Effect class for retrieving the proposed arguments (additional arguments passed alongside
+ * the proposed value via [[Write]]) for a given identifier.
+ */
 export class ProposedArgumentsOfEffect extends Effect {
     handler         : symbol    = ProposedArgumentsOfSymbol
 
+    /** The identifier to retrieve proposed arguments for */
     identifier      : Identifier
 }
 
+/**
+ * Constructor for [[ProposedArgumentsOfEffect]]. Returns the proposed arguments array for the given identifier.
+ *
+ * @param identifier The identifier to query
+ */
 export const ProposedArgumentsOf = (identifier : Identifier) : ProposedArgumentsOfEffect => ProposedArgumentsOfEffect.new({ identifier })
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const UnsafeProposedOrPreviousValueOfSymbol    = Symbol('UnsafeProposedOrPreviousValueOfSymbol')
 
+/**
+ * Effect class for reading the proposed-or-previous value of another identifier without creating
+ * a dependency edge. "Unsafe" because changes to the target will not trigger recalculation of the reader.
+ */
 export class UnsafeProposedOrPreviousValueOfEffect extends Effect {
     handler         : symbol    = UnsafeProposedOrPreviousValueOfSymbol
 
+    /** The identifier to read from without creating a dependency */
     identifier      : Identifier
 }
 
+/**
+ * Constructor for [[UnsafeProposedOrPreviousValueOfEffect]]. Reads the proposed-or-previous value
+ * of another identifier without establishing a dependency edge.
+ *
+ * @param identifier The identifier to read from
+ */
 export const UnsafeProposedOrPreviousValueOf = (identifier : Identifier) : UnsafeProposedOrPreviousValueOfEffect => UnsafeProposedOrPreviousValueOfEffect.new({ identifier })
 
 
 //---------------------------------------------------------------------------------------------------------------------
 export const UnsafePreviousValueOfSymbol    = Symbol('UnsafePreviousValueOfSymbol')
 
+/**
+ * Effect class for reading the previous value of another identifier without creating a dependency edge.
+ * "Unsafe" because changes to the target will not trigger recalculation of the reader.
+ */
 export class UnsafePreviousValueOfEffect extends Effect {
     handler         : symbol    = UnsafePreviousValueOfSymbol
 
+    /** The identifier to read the previous value from without creating a dependency */
     identifier      : Identifier
 }
 
+/**
+ * Constructor for [[UnsafePreviousValueOfEffect]]. Reads the previous revision's value
+ * of another identifier without establishing a dependency edge.
+ *
+ * @param identifier The identifier to read from
+ */
 export const UnsafePreviousValueOf = (identifier : Identifier) : UnsafePreviousValueOfEffect => UnsafePreviousValueOfEffect.new({ identifier })
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Type for a progress notification yielded during long-running calculations (e.g., scheduling engine propagation).
+ * Allows the UI to display progress feedback.
+ */
 export type ProgressNotificationEffect = {
+    /** Total number of work items */
     total           : number
 
+    /** Number of work items remaining */
     remaining       : number
 
+    /** Description of the current computation phase */
     phase           : string
 }

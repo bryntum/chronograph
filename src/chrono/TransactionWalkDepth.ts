@@ -7,27 +7,57 @@ import { Revision } from "./Revision.js"
 import { Transaction } from "./Transaction.js"
 
 
+/** A single step in the dependency walk, represented by an [[Identifier]]. */
 export type WalkStep = Identifier
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Depth-first dependency graph walker used during [[Transaction]] propagation.
+ *
+ * When data is written to a graph, the transaction needs to determine which identifiers are
+ * potentially affected and must be recalculated. This class performs that traversal by walking
+ * outgoing dependency edges depth-first, creating new [[Quark]] entries for visited identifiers,
+ * and pushing non-lazy, non-variable quarks into the calculation queue ([[pushTo]]).
+ *
+ * The walk uses an epoch counter to support multiple walk passes within the same transaction
+ * (e.g., when a write effect triggers additional dependency invalidation).
+ */
 export class TransactionWalkDepth extends Base {
+    /** Map of visited identifiers to their quarks. Shared with [[Transaction.entries]]. */
     visited         : Map<Identifier, Quark>    = new Map()
 
+    /** The owning transaction. */
     transaction     : Transaction               = undefined
+
+    /** The base revision used to look up previous quark entries and outgoing edges. */
     baseRevision    : Revision                  = undefined
 
+    /** The [[LeveledQueue]] to push topologically-ordered quarks into for calculation. */
     pushTo          : LeveledQueue<Quark>       = undefined
 
+    /** Stack of identifiers remaining to visit in the current depth-first walk. */
     toVisit         : WalkStep[]                = []
 
+    /** Epoch counter incremented when a new walk pass begins. Prevents revisiting already-processed nodes. */
     currentEpoch    : number                    = 0
 
 
+    /**
+     * Begins a depth-first walk starting from the given source identifiers.
+     *
+     * @param sourceNodes The identifiers to start the walk from
+     */
     startFrom (sourceNodes : Identifier[]) {
         this.continueFrom(sourceNodes)
     }
 
 
+    /**
+     * Continues the walk from additional source identifiers. Adds them to [[toVisit]]
+     * and resumes the depth-first traversal.
+     *
+     * @param sourceNodes Additional identifiers to walk from
+     */
     continueFrom (sourceNodes : Identifier[]) {
         this.toVisit.push.apply(this.toVisit, sourceNodes)
 
@@ -35,6 +65,10 @@ export class TransactionWalkDepth extends Base {
     }
 
 
+    /**
+     * Increments the epoch counter, allowing previously visited nodes to be revisited
+     * in a new walk pass. Must not be called while a walk is in progress.
+     */
     startNewEpoch () {
         if (this.toVisit.length) throw new Error("Can not start new walk epoch in the middle of the walk")
 
@@ -42,11 +76,16 @@ export class TransactionWalkDepth extends Base {
     }
 
 
+    /**
+     * Called when a node reaches topological position (all its dependencies have been visited).
+     * Pushes non-lazy, non-variable quarks into the calculation queue.
+     */
     onTopologicalNode (identifier : Identifier, visitInfo : Quark) {
         if (!identifier.lazy && identifier.level !== Levels.UserInput) this.pushTo.push(visitInfo)
     }
 
 
+    /** Called when a cycle is detected. Default behavior is to resume traversal. */
     onCycle (node : Identifier, stack : WalkStep[]) : OnCycleAction {
         return OnCycleAction.Resume
     }
@@ -70,6 +109,10 @@ export class TransactionWalkDepth extends Base {
     }
 
 
+    /**
+     * Collects outgoing dependencies of the given identifier and adds them to the visit stack.
+     * Populates the quark's `previous` reference from the base revision.
+     */
     collectNext (from : Identifier, toVisit : WalkStep[], visitInfo : Quark) {
         const latestEntry       = this.baseRevision.getLatestEntryFor(from)
 
@@ -94,6 +137,11 @@ export class TransactionWalkDepth extends Base {
     }
 
 
+    /**
+     * The core depth-first traversal loop. Processes the [[toVisit]] stack, visiting each identifier's
+     * dependencies before the identifier itself (topological ordering). Handles cycle detection
+     * and epoch-based revisitation.
+     */
     walkDepth () {
         const visited               = this.visited
         const toVisit               = this.toVisit

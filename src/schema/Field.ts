@@ -21,6 +21,7 @@ export type Type    = string
  * This class describes a field of some [[EntityMeta]].
  */
 export class Field<ValueT = any, ContextT extends Context = Context> extends Meta<ValueT, ContextT> {
+    /** The type of the field (e.g., `'string'`, `'number'`, `'date'`) */
     type                : Type
 
     /**
@@ -38,9 +39,17 @@ export class Field<ValueT = any, ContextT extends Context = Context> extends Met
      */
     identifierCls       : FieldIdentifierConstructor
 
+    /** When `true`, the identifier created from this field will ignore edge flow counts and always recalculate */
     ignoreEdgesFlow     : boolean   = false
 
 
+    /**
+     * Returns the appropriate identifier class for this field based on the calculation function.
+     * If no calculation function is provided, returns a variable identifier class.
+     * Otherwise, returns a generator or sync identifier class based on the function type.
+     *
+     * @param calculationFunction The calculation function, if any
+     */
     getIdentifierClass (calculationFunction : AnyFunction) : FieldIdentifierConstructor {
         if (this.identifierCls) return this.identifierCls
 

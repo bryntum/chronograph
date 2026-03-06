@@ -4,10 +4,18 @@ import { ClassUnion, Mixin } from "../class/Mixin.js"
 import { Schema } from "../schema/Schema.js"
 import { Entity } from "./Entity.js"
 
+/**
+ * Controls how field values are read from the replica. Determines which value is returned
+ * when accessing an entity's field.
+ */
 export enum ReadMode {
+    /** Read the current computed value (default) */
     Current,
+    /** Read the value from the previous revision */
     Previous,
+    /** Read the proposed (user-written) value, falling back to the previous value */
     ProposedOrPrevious,
+    /** Read the current computed value, falling back to proposed-or-previous if not yet computed */
     CurrentOrProposedOrPrevious
 }
 
@@ -43,6 +51,7 @@ export class Replica extends Mixin(
     (base : ClassUnion<typeof ChronoGraph>) =>
 
 class Replica extends base {
+    /** The schema defining the entity structure (entities and their fields) for this replica */
     schema                  : Schema
 
     /**
@@ -50,6 +59,7 @@ class Replica extends base {
      */
     autoCommit              : boolean           = true
 
+    /** Controls how field values are read. See [[ReadMode]] for available modes */
     readMode                : ReadMode          = ReadMode.Current
 
     /**

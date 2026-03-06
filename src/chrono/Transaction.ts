@@ -40,33 +40,67 @@ export const EdgeTypePast      = EdgeType.Past
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The result of a [[Transaction.commit]] or [[Transaction.commitAsync]] call.
+ * Contains the new [[Revision]], the set of affected [[Quark]] entries, and a reference
+ * back to the originating [[Transaction]].
+ */
 export type TransactionCommitResult = { revision : Revision, entries : Scope, transaction : Transaction }
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * The computation context that drives reactive propagation in ChronoGraph. A transaction collects all
+ * writes (data modifications), walks the dependency graph to determine which identifiers need recalculation,
+ * executes those calculations in topological order, and then either commits the results as a new [[Revision]]
+ * or rejects (rolls back) all changes.
+ *
+ * Lifecycle: write → propagate (walk dependency graph) → calculate → commit or reject.
+ *
+ * Transactions are typically created and managed by a [[ChronoGraph]] instance. End users rarely need
+ * to interact with transactions directly.
+ */
 export class Transaction extends Base {
+    /** The base [[Revision]] this transaction is built upon. */
     baseRevision            : Revision              = undefined
 
     candidateClass          : typeof Revision       = Revision
+
+    /** The candidate [[Revision]] being constructed by this transaction. Becomes the new base after commit. */
     candidate               : Revision              = undefined
 
+    /** The [[ChronoGraph]] instance that owns this transaction. */
     graph                   : ChronoGraph              = undefined
 
+    /** Whether this transaction has been closed (committed or in the process of committing). */
     isClosed                : boolean               = false
 
     walkContext             : TransactionWalkDepth   = undefined
 
+    /**
+     * The working set of quarks modified or visited in this transaction.
+     * Maps each affected [[Identifier]] to its corresponding [[Quark]] entry.
+     */
     entries                 : Map<Identifier, Quark> = new Map()
 
     // // we use 2 different stacks, because they support various effects
     // stackSync               : LeveledQueue<Quark>  = new LeveledQueue()
-    // the `stackGen` supports async effects notably
+    /**
+     * The ordered calculation queue. Quarks are pushed here during the graph walk and processed
+     * level-by-level (lowest level first) during propagation.
+     */
     stackGen                : LeveledQueue<Quark>  = new LeveledQueue()
 
-    // is used for tracking the active quark entry (quark entry being computed)
+    /**
+     * Stack tracking the currently-computing quark chain. The last element is the quark
+     * whose calculation function is currently executing.
+     */
     activeStack             : Quark[]               = []
 
+    /** Synchronous effect handler, bound to [[read]] during initialization. */
     onEffectSync            : SyncEffectHandler     = undefined
+
+    /** Asynchronous effect handler, bound to [[readAsync]] during initialization. */
     onEffectAsync           : AsyncEffectHandler    = undefined
 
     //---------------------
@@ -87,6 +121,7 @@ export class Transaction extends Base {
 
     selfDependedMarked      : boolean               = false
 
+    /** If set, indicates the transaction has been rejected. Contains the [[RejectEffect]] with the rejection reason. */
     rejectedWith            : RejectEffect<unknown> = undefined
     stopped                 : boolean               = false
 
@@ -119,6 +154,7 @@ export class Transaction extends Base {
     }
 
 
+    /** Whether this transaction has any pending modifications. */
     get dirty () : boolean {
         return this.entries.size > 0
     }
@@ -150,6 +186,7 @@ export class Transaction extends Base {
     // }
 
 
+    /** Returns the quark currently being computed (top of the [[activeStack]]). */
     getActiveEntry () : Quark {
         return this.activeStack[ this.activeStack.length - 1 ]
 
@@ -177,7 +214,12 @@ export class Transaction extends Base {
     }
 
 
-    // this seems to be an optimistic version
+    /**
+     * Asynchronously reads the value of the given identifier. If the value has not yet been calculated,
+     * schedules its computation. Supports both synchronous and asynchronous identifiers.
+     *
+     * @param identifier The identifier to read
+     */
     readAsync<T> (identifier : Identifier<T>) : Promise<T> {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldAsync(identifier as Effect)
@@ -244,9 +286,13 @@ export class Transaction extends Base {
     }
 
 
-    // `ignoreActiveEntry` should be used when the atom needs to be read outside the currently ongoing transaction context
-    // in such case we still might need to calculate the atom, but should ignore any currently active
-    // calculation of the another atom
+    /**
+     * Reads the value of the given identifier, returning synchronously if the identifier is sync
+     * and returning a `Promise` if the identifier is async. Falls back to on-demand calculation
+     * when the value is not yet available.
+     *
+     * @param identifier The identifier to read
+     */
     get<T> (identifier : Identifier<T>) : T | Promise<T> {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
@@ -353,7 +399,15 @@ export class Transaction extends Base {
     }
 
 
-    // this seems to be an optimistic version
+    /**
+     * Synchronously reads the value of the given identifier. If the value is not yet calculated,
+     * triggers on-demand synchronous computation. Throws if the identifier requires async computation.
+     *
+     * Also serves as the synchronous effect handler — when a non-Identifier effect is yielded,
+     * it delegates to [[yieldSync]].
+     *
+     * @param identifier The identifier to read
+     */
     read<T> (identifier : Identifier<T>) : T {
         // see the comment for the `onEffectSync`
         if (!(identifier instanceof Identifier)) return this.yieldSync(identifier as Effect)
@@ -407,7 +461,13 @@ export class Transaction extends Base {
     }
 
 
-    // semantic is actually - read the most-fresh value
+    /**
+     * Reads the most-fresh value for the identifier: first checks for a calculated value in the current
+     * transaction, then a proposed (written but not yet calculated) value, and finally falls back
+     * to the previous revision's value.
+     *
+     * @param identifier The identifier to read
+     */
     readCurrentOrProposedOrPrevious<T> (identifier : Identifier<T>) : T {
         const dirtyQuark    = this.entries.get(identifier)
 
@@ -438,6 +498,7 @@ export class Transaction extends Base {
     }
 
 
+    /** Reads the value of the identifier from the previous (base) revision. */
     readPrevious<T> (identifier : Identifier<T>) : T {
         const previousEntry = this.baseRevision.getLatestEntryFor(identifier)
 
@@ -460,6 +521,7 @@ export class Transaction extends Base {
     }
 
 
+    /** Reads the proposed value if one exists, otherwise falls back to the previous revision's value. */
     readProposedOrPrevious<T> (identifier : Identifier<T>) : T {
         const dirtyQuark    = this.entries.get(identifier)
 
@@ -482,6 +544,14 @@ export class Transaction extends Base {
     }
 
 
+    /**
+     * Writes a proposed value to the given identifier in this transaction. The value will be processed
+     * during the next [[commit]] or [[commitAsync]] call. Converts `undefined` to `null`.
+     *
+     * @param identifier The identifier to write to
+     * @param proposedValue The value to propose
+     * @param args Additional arguments passed to the identifier's write method
+     */
     write (identifier : Identifier, proposedValue : any, ...args : any[]) {
         if (proposedValue === undefined) proposedValue = null
 
@@ -552,6 +622,12 @@ export class Transaction extends Base {
     // }
 
 
+    /**
+     * Tests whether the given identifier exists in this transaction (either in the working set
+     * or in the [[baseRevision]]). Returns `false` if the identifier has been removed (tombstoned).
+     *
+     * @param identifier
+     */
     hasIdentifier (identifier : Identifier) : boolean {
         const activeEntry = this.entries.get(identifier)
 
@@ -561,8 +637,15 @@ export class Transaction extends Base {
     }
 
 
-    // this is actually an optimized version of `write`, which skips the graph walk phase
-    // (since the identifier is assumed to be new, there should be no dependent quarks)
+    /**
+     * Adds a new identifier to this transaction. Optionally writes an initial proposed value.
+     * This is an optimized version of [[write]] that skips the dependency graph walk phase,
+     * since a newly added identifier is assumed to have no dependents yet.
+     *
+     * @param identifier The identifier to add
+     * @param proposedValue Optional initial value
+     * @param args Additional arguments passed to the identifier's write method
+     */
     addIdentifier (identifier : Identifier, proposedValue? : any, ...args : any[]) : Quark {
         // however, the identifier may be already in the transaction, for example if the `write` method
         // of some other identifier writes to this identifier
@@ -614,6 +697,12 @@ export class Transaction extends Base {
     }
 
 
+    /**
+     * Removes an identifier from this transaction by marking it with a tombstone value.
+     * The identifier's [[Identifier.leaveGraph]] hook is called.
+     *
+     * @param identifier The identifier to remove
+     */
     removeIdentifier (identifier : Identifier) {
         identifier.leaveGraph(this.graph)
 
@@ -679,6 +768,12 @@ export class Transaction extends Base {
     }
 
 
+    /**
+     * Synchronously commits this transaction. Walks the dependency graph, calculates all affected
+     * strict identifiers, and produces a [[TransactionCommitResult]] containing the new revision.
+     *
+     * @param args Optional commit arguments
+     */
     commit (args? : CommitArguments) : TransactionCommitResult {
         this.preCommit(args)
 
@@ -689,6 +784,12 @@ export class Transaction extends Base {
     }
 
 
+    /**
+     * Rejects this transaction, discarding all pending changes. The graph will revert to its
+     * [[baseRevision]] state. Sets [[rejectedWith]] to the given rejection effect.
+     *
+     * @param rejection The rejection effect (defaults to an empty [[RejectEffect]])
+     */
     reject (rejection : RejectEffect<unknown> = RejectEffect.new()) {
         this.rejectedWith           = rejection
 
@@ -723,6 +824,12 @@ export class Transaction extends Base {
     // }
 
 
+    /**
+     * Asynchronously commits this transaction. Similar to [[commit]], but supports async identifier
+     * calculations. Returns a promise that resolves to a [[TransactionCommitResult]].
+     *
+     * @param args Optional commit arguments
+     */
     async commitAsync (args? : CommitArguments) : Promise<TransactionCommitResult> {
         this.preCommit(args)
 
@@ -782,6 +889,14 @@ export class Transaction extends Base {
     }
 
 
+    /**
+     * Records a dependency edge from `identifierRead` to `activeEntry`. If no quark exists
+     * for `identifierRead` in the transaction, a shadowing quark is created.
+     *
+     * @param identifierRead The identifier being read (dependency source)
+     * @param activeEntry The quark currently being computed (dependency target)
+     * @param type The edge type (Normal or Past)
+     */
     addEdge (identifierRead : Identifier, activeEntry : Quark, type : EdgeType) : Quark {
         const identifier    = activeEntry.identifier
 

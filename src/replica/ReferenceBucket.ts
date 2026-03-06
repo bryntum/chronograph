@@ -18,6 +18,7 @@ export class ReferenceBucketField extends Mixin(
     (base : AnyConstructor<Field, typeof Field>) =>
 
 class ReferenceBucketField extends base {
+    /** Bucket fields are not persistent by default — their values are computed from incoming references. */
     persistent          : boolean   = false
 
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceBucketIdentifier
@@ -50,24 +51,33 @@ export const bucket : FieldDecorator<typeof ReferenceBucketField> =
     (fieldConfig?, fieldCls = ReferenceBucketField) => generic_field(fieldConfig, fieldCls)
 
 
+/** The type of mutation applied to a reference bucket. */
 enum BucketMutationType {
     'Add'       = 'Add',
     'Remove'    = 'Remove'
 }
 
+/** A single add or remove mutation recorded against a reference bucket. */
 type BucketMutation  = {
     type        : BucketMutationType,
     entity      : Entity
 }
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Specialized [[Quark]] for reference buckets. Instead of storing a single proposed value,
+ * it accumulates a list of [[BucketMutation|mutations]] (add/remove) that are replayed
+ * on top of the previous value during [[ReferenceBucketIdentifier.buildProposedValue]].
+ */
 export class ReferenceBucketQuark extends Mixin(
     [ Quark ],
     (base : ClassUnion<typeof Quark>) =>
 
 class ReferenceBucketQuark extends base {
+    /** Accumulated add/remove mutations for this bucket in the current transaction. */
     mutations           : BucketMutation[]  = []
 
+    /** Snapshot of the bucket's value from the previous revision, used as the base for replaying mutations. */
     previousValue       : Set<Entity>   = undefined
 
 
@@ -80,6 +90,14 @@ export const MinimalReferenceBucketQuark = ReferenceBucketQuark.mix(QuarkSync)
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Mixin for identifiers that represent a reverse reference collection (bucket). For example,
+ * if `Book` has a `@reference({ bucket: 'books' })` field pointing to `Author`, then `Author.books`
+ * is a reference bucket — a `Set<Book>` automatically maintained as books are added/removed.
+ *
+ * The bucket value is computed by replaying accumulated add/remove [[ReferenceBucketQuark.mutations|mutations]]
+ * on top of the previous revision's `Set`. This avoids full recomputation when only a few references change.
+ */
 export class ReferenceBucketIdentifier extends Mixin(
     [ FieldIdentifier ],
     (base : AnyConstructor<FieldIdentifier, typeof FieldIdentifier>) => {
@@ -99,6 +117,12 @@ export class ReferenceBucketIdentifier extends Mixin(
         quarkClass          : QuarkConstructor
 
 
+        /**
+         * Records an "add" mutation for the given entity in this bucket within the transaction.
+         *
+         * @param transaction The active transaction
+         * @param entity The entity to add to the bucket
+         */
         addToBucket (transaction : Transaction, entity : Entity) {
             const quark         = transaction.getWriteTarget(this) as ReferenceBucketQuark
 
@@ -110,6 +134,13 @@ export class ReferenceBucketIdentifier extends Mixin(
         }
 
 
+        /**
+         * Records a "remove" mutation for the given entity in this bucket within the transaction.
+         * No-op if the bucket itself has already been removed (tombstoned).
+         *
+         * @param transaction The active transaction
+         * @param entity The entity to remove from the bucket
+         */
         removeFromBucket (transaction : Transaction, entity : Entity) {
             const preQuark      = transaction.entries.get(this)
 
@@ -126,6 +157,10 @@ export class ReferenceBucketIdentifier extends Mixin(
         }
 
 
+        /**
+         * Builds the bucket's new value by replaying all accumulated mutations on top of the
+         * previous revision's `Set`.
+         */
         buildProposedValue (me : this, quarkArg : Quark, transaction : Transaction) : Set<Entity> {
             const quark                         = quarkArg as ReferenceBucketQuark
             const newValue : Set<Entity>        = new Set(quark.previousValue)
@@ -159,5 +194,6 @@ export class ReferenceBucketIdentifier extends Mixin(
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/** Concrete class combining [[ReferenceBucketIdentifier]] with [[FieldIdentifier]] and synchronous calculation. */
 export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier.mix(FieldIdentifier.mix(CalculatedValueSync)) {}
 // export class MinimalReferenceBucketIdentifier extends ReferenceBucketIdentifier.derive(CalculatedValueSync) {}

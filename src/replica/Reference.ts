@@ -10,6 +10,10 @@ import { FieldIdentifier, FieldIdentifierConstructor } from "./Identifier.js"
 import { ReferenceBucketIdentifier } from "./ReferenceBucket.js"
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * A function that resolves a raw locator value (e.g., an id string) into an [[Entity]] instance.
+ * Used by [[ReferenceIdentifier]] to convert proposed reference values into actual entity references.
+ */
 export type ResolverFunc    = (locator : any) => Entity
 
 
@@ -25,6 +29,7 @@ export class ReferenceField extends Mixin(
 class ReferenceField extends base {
     identifierCls       : FieldIdentifierConstructor    = MinimalReferenceIdentifier
 
+    /** Optional resolver function that converts raw locator values into entity instances. */
     resolver            : ResolverFunc
 
     /**
@@ -60,6 +65,14 @@ export const reference : FieldDecorator<typeof ReferenceField> =
 
 
 //---------------------------------------------------------------------------------------------------------------------
+/**
+ * Mixin for identifiers that represent a single entity reference (e.g., `event.resource`).
+ * Handles resolution of raw locator values into entity instances and maintains the corresponding
+ * [[ReferenceBucketIdentifier|reference bucket]] on the target entity when configured.
+ *
+ * When a reference value changes, the identifier automatically updates the reverse bucket:
+ * removing the owning entity from the old target's bucket and adding it to the new target's bucket.
+ */
 export class ReferenceIdentifier extends Mixin(
     [ FieldIdentifier ],
     (base : AnyConstructor<FieldIdentifier, typeof FieldIdentifier>) => {
@@ -78,16 +91,21 @@ export class ReferenceIdentifier extends Mixin(
         quarkClass          : QuarkConstructor
 
 
+        /** Whether this reference has a corresponding bucket field configured. */
         hasBucket () : boolean {
             return Boolean(this.field.bucket)
         }
 
 
+        /** Returns the [[ReferenceBucketIdentifier]] for the bucket field on the given entity. */
         getBucket (entity : Entity) : ReferenceBucketIdentifier {
             return entity.$[ this.field.bucket ]
         }
 
 
+        /**
+         * Resolves the proposed value into an entity instance and updates the target's bucket if configured.
+         */
         buildProposedValue (me : this, quark : Quark, transaction : Transaction) : this[ 'ValueT' ] {
             const proposedValue     = quark.proposedValue
 
@@ -103,6 +121,7 @@ export class ReferenceIdentifier extends Mixin(
         }
 
 
+        /** Resolves a raw locator value into an entity using the field's resolver function. */
         resolve (locator : any) : Entity | null {
             const resolver  = this.field.resolver
 
@@ -171,4 +190,5 @@ export class ReferenceIdentifier extends Mixin(
 }){}
 
 
+/** Concrete class combining [[ReferenceIdentifier]] with [[FieldIdentifier]] and synchronous calculation. */
 export class MinimalReferenceIdentifier extends ReferenceIdentifier.mix(FieldIdentifier.mix(CalculatedValueSync)) {}

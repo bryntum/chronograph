@@ -13,8 +13,10 @@ export class EntityMeta extends Base {
      */
     name                : Name                  = undefined
 
+    /** Fields defined directly on this entity (not inherited from parent) */
     ownFields           : Map<Name, Field>      = new Map()
 
+    /** The schema this entity belongs to */
     schema              : Schema                = undefined
 
     /**
@@ -22,6 +24,7 @@ export class EntityMeta extends Base {
      */
     parentEntity        : EntityMeta
 
+    /** Internal skeleton object used as a prototype for entity instances */
     $skeleton           : object                = {}
 
 
@@ -64,6 +67,11 @@ export class EntityMeta extends Base {
     }
 
 
+    /**
+     * Calls the given function for this entity and each parent entity in the inheritance chain.
+     *
+     * @param func
+     */
     forEachParent (func : (entity : EntityMeta) => any) {
         let entity : EntityMeta         = this
 
@@ -75,9 +83,14 @@ export class EntityMeta extends Base {
     }
 
 
+    /** Cached map of all fields (own + inherited), lazily computed */
     $allFields : Map<Name, Field>       = undefined
 
 
+    /**
+     * Returns a map of all fields for this entity, including fields inherited from parent entities.
+     * Own fields take priority over inherited fields with the same name. The result is cached.
+     */
     get allFields () : Map<Name, Field> {
         if (this.$allFields !== undefined) return this.$allFields
 
