@@ -102,6 +102,11 @@ export class Transaction extends Base {
     // (via entries.set), since after that point the transaction's own entry takes precedence.
     baseRevisionCache        : Map<Identifier, Quark> = new Map()
 
+    // A Set of faced computation cycles
+    cycles : Set<ComputationCycle> = new Set()
+
+    // A Map of identifiers that caused a cycle
+    cycledIdentifiers : Map<Identifier, ComputationCycle> = new Map()
 
     initialize (...args) {
         super.initialize(...args)
@@ -709,6 +714,9 @@ export class Transaction extends Base {
         this.rejectedWith           = rejection
 
         this.walkContext            = undefined
+
+        // rejecting the transaction implies forgetting cycles it had
+        this.clearCycles()
     }
 
 
@@ -1100,7 +1108,7 @@ export class Transaction extends Base {
 
                         this.activeStack    = prevActiveStack
 
-                        yield* this.graph.onComputationCycleHandler(onReadIdentifierResult)
+                        yield* this.graph.onComputationCycleHandler(onReadIdentifierResult, this)
 
                         prevActiveStack     = this.activeStack
                         this.activeStack    = stack
@@ -1148,6 +1156,39 @@ export class Transaction extends Base {
         this.activeStack    = prevActiveStack
     }
 
+    addCycle (cycle : ComputationCycle) {
+        this.cycles.add(cycle)
+
+        const { cycledIdentifiers } = this
+
+        // Keep track of the identifiers involved in the cycle
+        cycle.cycle.forEach(identifier => {
+            cycledIdentifiers.set(identifier, cycle)
+        })
+
+        const dependentQuarks : Quark[] = []
+
+        let quark : Quark = cycle.requestedEntry
+
+        // We should also include dependent identifiers that lead
+        // to the cycle. They should also be stored as involved
+        while (quark) {
+            cycledIdentifiers.set(quark.identifier, cycle)
+
+            // add the quark dependent quarks to the processing queue
+            // (skip once that are already found and added to "cycledIdentifiers" map)
+            dependentQuarks.push(...Array.from(quark.values()).filter(q => !cycledIdentifiers.has(q.identifier)))
+
+            // pick next quark to process
+            quark = dependentQuarks.shift()
+        }
+    }
+
+    clearCycles () {
+        this.cycles.clear()
+
+        this.cycledIdentifiers.clear()
+    }
 
     // THIS METHOD HAS TO BE KEPT SYNCED WITH THE `calculateTransitionsStackGen` !!!
     calculateTransitionsStackSync (context : CalculationContext<any>, stack : Quark[]) {
@@ -1161,9 +1202,19 @@ export class Transaction extends Base {
 
         this.activeStack                    = stack
 
+        const { cycledIdentifiers }         = this
+
         while (stack.length && !this.rejectedWith && !this.stopped) {
             const entry             = stack[ stack.length - 1 ]
             const identifier        = entry.identifier
+
+            // If the identifier is involved into a cycle the transaction faced
+            // we ignore it and proceed ot the next step
+            if (cycledIdentifiers.has(identifier)) {
+                entry.cleanup()
+                stack.pop()
+                continue
+            }
 
             // TODO can avoid `.get()` call by comparing some another "epoch" counter on the entry
             const ownEntry          = entries.get(identifier)
@@ -1234,6 +1285,13 @@ export class Transaction extends Base {
                     break
                 }
                 else if (value instanceof Identifier) {
+                    if (cycledIdentifiers.has(value)) {
+                        iterationResult = undefined
+                        entry.cleanup()
+                        stack.pop()
+                        continue
+                    }
+
                     const onReadIdentifierResult = this.onReadIdentifier(value, entry, stack)
 
                     // handle the cycle

@@ -84,6 +84,9 @@ export class Listener extends Base {
     }
 }
 
+export class ComputationCycleError extends Error {
+    cycle : ComputationCycle
+}
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
@@ -602,11 +605,13 @@ export class ChronoGraph extends Base {
     async finalizeCommitAsync (transactionResult : TransactionCommitResult) {
     }
 
-    * onComputationCycleHandler (cycle : ComputationCycle) : Generator<any, IteratorResult<any>> {
-        const exception = new Error("Computation cycle:\n" + cycle)
+    * onComputationCycleHandler (cycle : ComputationCycle, transaction : Transaction) : Generator<any, IteratorResult<any>> {
+        const exception = new ComputationCycleError("Computation cycle:\n" + cycle)
 
-        //@ts-ignore
         exception.cycle = cycle
+
+        // remember the cycle to not get into it again
+        transaction.addCycle(cycle)
 
         switch (this.onComputationCycle) {
             case 'ignore' :
@@ -627,10 +632,12 @@ export class ChronoGraph extends Base {
 
 
     onComputationCycleHandlerSync (cycle : ComputationCycle, transaction : Transaction) : IteratorResult<any> {
-        const exception = new Error("Computation cycle:\n" + cycle)
+        const exception = new ComputationCycleError("Computation cycle:\n" + cycle)
 
-        //@ts-ignore
         exception.cycle = cycle
+
+        // remember the cycle to not get into it again
+        transaction.addCycle(cycle)
 
         switch (this.onComputationCycle) {
             case 'ignore' :
