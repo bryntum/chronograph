@@ -428,18 +428,15 @@ export class Transaction extends Base {
 
         const value     = entry.getValue()
 
-        // TODO review this exception
-        if (value === undefined) {
-            this.readingIdentifier = _readingIdentifier
-            throw new Error('Cycle during synchronous computation')
-        }
-        if (value === TombStone) {
-            this.readingIdentifier = _readingIdentifier
-            throwUnknownIdentifier(identifier)
-        }
-
         // restore the identifier we were reading ref
         this.readingIdentifier = _readingIdentifier
+
+        // if (value === undefined) {
+        //     throw new Error('Cycle during synchronous computation')
+        // }
+        if (value === TombStone) {
+            throwUnknownIdentifier(identifier)
+        }
 
         return value
     }
