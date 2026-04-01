@@ -169,6 +169,9 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
 
         newQuark.identifier                 = this
         newQuark.needToBuildProposedValue   = this.proposedValueIsBuilt
+        // Perf: cache calculation and context to avoid getter delegation per startCalculation
+        newQuark.calculation                = this.calculation
+        newQuark.context                    = this.context || this
 
         return newQuark
     }
