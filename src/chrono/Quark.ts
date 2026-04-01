@@ -229,10 +229,10 @@ class Quark extends base {
     }
 
 
-    addOutgoingTo (toQuark : Quark, type : EdgeType) {
+    addOutgoingTo (toQuark : Quark, type : EdgeType, toIdentifier : Identifier) {
         const outgoing      = type === EdgeType.Normal ? this as Map<Identifier, Quark> : this.getOutgoingPast()
 
-        outgoing.set(toQuark.identifier, toQuark)
+        outgoing.set(toIdentifier, toQuark)
     }
 
 
