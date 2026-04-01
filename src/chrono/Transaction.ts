@@ -1269,13 +1269,15 @@ export class Transaction extends Base {
                 continue
             }
 
-            // TODO can avoid `.get()` call by comparing some another "epoch" counter on the entry
-            const ownEntry          = entries.get(identifier)
-            if (ownEntry !== entry) {
-                entry.cleanup()
+            // Perf: skip ownership check during initial commit — entries are never replaced
+            if (!this.baseRevisionEmpty) {
+                const ownEntry          = entries.get(identifier)
+                if (ownEntry !== entry) {
+                    entry.cleanup()
 
-                stack.pop()
-                continue
+                    stack.pop()
+                    continue
+                }
             }
 
             if (entry.edgesFlow == 0) {
