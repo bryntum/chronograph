@@ -1209,9 +1209,15 @@ export class Transaction extends Base {
             cycledIdentifiers.set(identifier, cycle)
         })
 
+        // Include also identifier that lead to the cycled ones through edges
+        this.markDependentCycledIdentifiers(null, cycle)
+    }
+
+    markDependentCycledIdentifiers (quark : Quark, cycle : ComputationCycle) {
+        const { cycledIdentifiers } = this
         const dependentQuarks : Quark[] = []
 
-        let quark : Quark = cycle.requestedEntry
+        quark = quark || cycle.requestedEntry
 
         // We should also include dependent identifiers that lead
         // to the cycle. They should also be stored as involved
@@ -1255,6 +1261,9 @@ export class Transaction extends Base {
             // If the identifier is involved into a cycle the transaction faced
             // we ignore it and proceed ot the next step
             if (this.hasCycles && cycledIdentifiers.has(identifier)) {
+                // add dependent identifiers to the list of involved in a cycle
+                this.markDependentCycledIdentifiers(entry, cycledIdentifiers.get(identifier))
+
                 entry.cleanup()
                 stack.pop()
                 continue
@@ -1330,6 +1339,9 @@ export class Transaction extends Base {
                 }
                 else if (value instanceof Identifier) {
                     if (this.hasCycles && cycledIdentifiers.has(value)) {
+                        // add dependent identifiers to the list of involved in a cycle
+                        this.markDependentCycledIdentifiers(entry, cycledIdentifiers.get(identifier))
+
                         iterationResult = undefined
                         entry.cleanup()
                         stack.pop()
