@@ -66,9 +66,6 @@ export class Transaction extends Base {
     // is used for tracking the active quark entry (quark entry being computed)
     activeStack             : Quark[]               = []
 
-    // Perf: deferred outgoing edges for initial commit — batch Map.set calls after calculation
-    deferredEdges           : Quark[]               = undefined
-
     onEffectSync            : SyncEffectHandler     = undefined
     onEffectAsync           : AsyncEffectHandler    = undefined
 
