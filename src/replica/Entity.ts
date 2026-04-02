@@ -155,7 +155,8 @@ export class Entity extends Mixin(
 
             identifier.context          = this
             identifier.self             = this
-            identifier.name             = `${this.$$.name}.$.${field.name}`
+            // Perf: use field name directly instead of template string (avoids string allocation per field)
+            identifier.name             = name
 
             return identifier
         }

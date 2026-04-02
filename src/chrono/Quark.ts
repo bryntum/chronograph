@@ -63,14 +63,9 @@ class Quark extends base {
     }
 
 
-    get calculation () : this[ 'identifier' ][ 'calculation' ] {
-        return this.identifier.calculation
-    }
-
-
-    get context () : any {
-        return this.identifier.context || this.identifier
-    }
+    // Perf: cached from identifier at creation time to avoid getter delegation per calculation
+    calculation : this[ 'identifier' ][ 'calculation' ]
+    context     : any
 
 
     forceCalculation () {
@@ -229,10 +224,10 @@ class Quark extends base {
     }
 
 
-    addOutgoingTo (toQuark : Quark, type : EdgeType) {
+    addOutgoingTo (toQuark : Quark, type : EdgeType, toIdentifier : Identifier) {
         const outgoing      = type === EdgeType.Normal ? this as Map<Identifier, Quark> : this.getOutgoingPast()
 
-        outgoing.set(toQuark.identifier, toQuark)
+        outgoing.set(toIdentifier, toQuark)
     }
 
 
