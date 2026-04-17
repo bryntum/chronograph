@@ -243,6 +243,17 @@ export class ProposedArgumentsOfEffect extends Effect {
 export const ProposedArgumentsOf = (identifier : Identifier) : ProposedArgumentsOfEffect => ProposedArgumentsOfEffect.new({ identifier })
 
 
+export const ProposeCountOfSymbol = Symbol('ProposeCountOfSymbol')
+
+export class ProposeCountOfEffect extends Effect {
+    handler    : symbol = ProposeCountOfSymbol
+
+    identifier : Identifier
+}
+
+export const ProposeCountOf = (identifier : Identifier) : ProposeCountOfEffect => ProposeCountOfEffect.new({ identifier })
+
+
 //---------------------------------------------------------------------------------------------------------------------
 export const UnsafeProposedOrPreviousValueOfSymbol    = Symbol('UnsafeProposedOrPreviousValueOfSymbol')
 

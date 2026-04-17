@@ -180,6 +180,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
         quark.proposedArguments     = args.length > 0 ? args : undefined
         quark.proposedIsPrevious    = transaction.graph.isWritingPreviousData > 0
         quark.writtenValue          = proposedValue
+        quark.proposeCount++
     }
 
 

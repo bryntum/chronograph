@@ -41,6 +41,7 @@ class Quark extends base {
     proposedValue           : any       = undefined
     proposedIsPrevious      : boolean   = false
     proposedArguments       : any[]     = undefined
+    proposeCount            : number    = 0
     usedProposedOrPrevious  : boolean   = false
     writtenValue            : any       = undefined
     // eof quark state
@@ -150,6 +151,7 @@ class Quark extends base {
         this.proposedValue          = undefined
         this.proposedArguments      = undefined
         this.writtenValue           = undefined
+        this.proposeCount           = 0
     }
 
 

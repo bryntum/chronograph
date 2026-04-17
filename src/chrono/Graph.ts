@@ -18,6 +18,8 @@ import {
     PreviousValueOfEffect,
     PreviousValueOfSymbol,
     ProgressNotificationEffect,
+    ProposeCountOfEffect,
+    ProposeCountOfSymbol,
     ProposedArgumentsOfSymbol,
     ProposedOrPreviousSymbol,
     ProposedOrPreviousValueOfSymbol,
@@ -1165,6 +1167,20 @@ export class ChronoGraph extends Base {
         const quark         = transaction.entries.get(source)
 
         return quark && !quark.isShadow() ? quark.proposedArguments : undefined
+    }
+
+
+    [ProposeCountOfSymbol] (effect : ProposeCountOfEffect, transaction : Transaction) : number {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+        const quark = transaction.entries.get(source)
+
+        return quark && !quark.isShadow() ?
+            // @ts-ignore
+            quark.proposeCount : undefined
     }
 }
 
