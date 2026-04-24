@@ -1,4 +1,5 @@
 import { ChronoGraph, CommitArguments, CommitResult, CommitZero } from "../chrono/Graph.js"
+import { TombStone } from "../chrono/Quark.js"
 import { Identifier } from "../chrono/Identifier.js"
 import { SyncEffectHandler, YieldableValue } from "../chrono/Transaction.js"
 import { AnyConstructor, Mixin } from "../class/Mixin.js"
@@ -181,7 +182,9 @@ export class Entity extends Mixin(
             this.$entity.forEachField((field, name) => {
                 const identifier : FieldIdentifier   = this.$[ name ]
 
-                replica.addIdentifier(identifier, identifier.DATA)
+                const DATA = identifier.DATA
+
+                replica.addIdentifier(identifier, DATA === TombStone ? undefined : DATA)
 
                 identifier.DATA = undefined
             })
