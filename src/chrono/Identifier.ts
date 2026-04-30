@@ -162,6 +162,10 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     isWritingUndefined  : boolean                       = false
 
 
+    // Perf: flag for sync identifiers — set on prototype by CalculatedValueSync and Variable
+    @prototypeValue(true)
+    genCalc             : boolean
+
     newQuark (createdAt : Revision) : InstanceType<this[ 'quarkClass' ]> {
         // micro-optimization - we don't pass a config object to the `new` constructor
         // but instead assign directly to instance
@@ -169,6 +173,10 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
 
         newQuark.identifier                 = this
         newQuark.needToBuildProposedValue   = this.proposedValueIsBuilt
+        // Perf: cache calculation and context to avoid getter delegation per startCalculation
+        newQuark.calculation                = this.calculation
+        newQuark.context                    = this.context || this
+        ;(newQuark as any)._isGenCalc        = this.genCalc
 
         return newQuark
     }
@@ -264,10 +272,11 @@ export const IdentifierC = <ValueT, ContextT extends Context>(config : Partial<I
     Identifier.new(config) as Identifier<ValueT, ContextT>
 
 
-//@ts-ignore
-export const QuarkSync = Quark.mix(CalculationSync.mix(Map))
+// Perf: unified quark class — both sync and gen identifiers use the same class
+// so V8 sees a single hidden class, eliminating LoadIC_Megamorphic overhead (~14% of CPU)
 //@ts-ignore
 export const QuarkGen = Quark.mix(CalculationGen.mix(Map))
+export const QuarkSync = QuarkGen
 
 //---------------------------------------------------------------------------------------------------------------------
 /**
@@ -279,6 +288,9 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
 
     @prototypeValue(Levels.UserInput)
     level               : Levels
+
+    @prototypeValue(false)
+    genCalc             : boolean
 
     @prototypeValue(QuarkSync)
     quarkClass          : QuarkConstructor
@@ -310,6 +322,9 @@ export function VariableC<ValueT> (...args) : Variable<ValueT> {
  * Subclass of the [[Identifier]], representing synchronous computation.
  */
 export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof ContextSync> {
+
+    @prototypeValue(false)
+    genCalc             : boolean
 
     @prototypeValue(QuarkSync)
     quarkClass          : QuarkConstructor
