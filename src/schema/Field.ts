@@ -40,6 +40,8 @@ export class Field<ValueT = any, ContextT extends Context = Context> extends Met
 
     ignoreEdgesFlow     : boolean   = false
 
+    cacheValue          : boolean   = false
+
 
     getIdentifierClass (calculationFunction : AnyFunction) : FieldIdentifierConstructor {
         if (this.identifierCls) return this.identifierCls

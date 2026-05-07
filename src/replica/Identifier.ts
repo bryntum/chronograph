@@ -36,6 +36,8 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // is cleared during the 1st join to the graph
     DATA        : this[ 'ValueT' ]  = undefined
 
+    cacheValue  : boolean           = false
+
     // standaloneQuark     : InstanceType<this[ 'quarkClass' ]>
 
 
@@ -50,14 +52,45 @@ class FieldIdentifier extends base implements PartOfEntityIdentifier {
     // returns the value itself if there were no affecting writes for it
     // otherwise - promise
     getFromGraph (graph : Replica) : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]> {
-        if (graph) {
-            if (graph.readMode === ReadMode.Current) return graph.get(this)
-            if (graph.readMode === ReadMode.Previous) return graph.activeTransaction.readPrevious(this)
-            if (graph.readMode === ReadMode.ProposedOrPrevious) graph.activeTransaction.readProposedOrPrevious(this)
+        let result : this[ 'ValueT' ] | Promise<this[ 'ValueT' ]>
 
-            return graph.activeTransaction.readCurrentOrProposedOrPrevious(this)
-        } else
-            return this.DATA
+        if (graph) {
+            const
+                { cacheValue } = this,
+                graphIsDirty = graph.dirty && (graph.hasPendingAutoCommit() || graph.isCommitting)
+
+            // if graph is in a clean state
+            if (!cacheValue || !graphIsDirty) {
+                switch (graph.readMode) {
+                    case ReadMode.Current:
+                        result = graph.get(this)
+                        break
+                    case ReadMode.Previous:
+                        result = graph.activeTransaction.readPrevious(this)
+                        break
+                    case ReadMode.ProposedOrPrevious:
+                        result = graph.activeTransaction.readProposedOrPrevious(this)
+                        break
+                    default:
+                        result = graph.activeTransaction.readCurrentOrProposedOrPrevious(this)
+                }
+            }
+
+            // If the field uses cache
+            if (cacheValue) {
+                // update the cache if graph is in a clean state
+                if (!graphIsDirty) {
+                    this.DATA = result
+                }
+
+                // use cached value
+                result = this.DATA
+            }
+        } else {
+            result = this.DATA
+        }
+
+        return result
     }
 
 

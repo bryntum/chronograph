@@ -273,6 +273,7 @@ export class Entity extends Mixin(
             if (field.hasOwnProperty('lazy')) config.lazy = field.lazy
             if (field.hasOwnProperty('equality')) config.equality = field.equality
             if (field.hasOwnProperty('ignoreEdgesFlow')) config.ignoreEdgesFlow = field.ignoreEdgesFlow
+            if (field.hasOwnProperty('cacheValue')) config.cacheValue = field.cacheValue
 
             //------------------
             const calculationFunction   = me.$calculations && me[ me.$calculations[ name ] ]
