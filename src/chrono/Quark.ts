@@ -3,7 +3,7 @@ import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
 import { MAX_SMI, MIN_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
-import { Revision, Scope } from "./Revision.js"
+import { Revision } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
 
 
@@ -155,45 +155,33 @@ class Quark extends base {
     }
 
 
-    mergePreviousOrigin (latestScope : Scope) {
-        const origin                = this.origin
-
-        if (origin !== this.previous) throw new Error("Invalid state")
-
-        this.copyFrom(origin)
-
+    /**
+     * Folds the newly recorded edges of a pure-read shadow of this quark into this one, so that THIS
+     * committed quark can stay the revision's scope entry and the shadow can be dropped.
+     *
+     * This is the reverse copy direction of the merge it replaces: a shadow only ever holds the edges
+     * recorded during one transaction, so the cost is O(new edges) rather than O(all existing edges) -
+     * which is what made identifiers with tens of thousands of dependents so expensive to compact.
+     *
+     * Safe because [[Quark.outgoingInTheFutureHelper]] already treats a shadow and its previous quark
+     * as one union; the merge existed only to materialise that union, and this materialises the same
+     * union from the other side. Old edges pointing at this quark stay valid precisely because it is
+     * the object that survives.
+     */
+    adoptShadow (shadow : Quark) {
         const outgoing              = this.getOutgoing()
 
-        for (const [ identifier, quark ] of origin.getOutgoing()) {
-            const ownOutgoing       = outgoing.get(identifier)
+        for (const [ identifier, quark ] of shadow.getOutgoing()) outgoing.set(identifier, quark)
 
-            if (!ownOutgoing) {
-                const latest        = latestScope.get(identifier)
-
-                if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
-            }
-        }
-
-        if (origin.$outgoingPast !== undefined) {
+        if (shadow.$outgoingPast !== undefined) {
             const outgoingPast      = this.getOutgoingPast()
 
-            for (const [ identifier, quark ] of origin.getOutgoingPast()) {
-                const ownOutgoing       = outgoingPast.get(identifier)
-
-                if (!ownOutgoing) {
-                    const latest        = latestScope.get(identifier)
-
-                    if (!latest || latest.originId === quark.originId) outgoingPast.set(identifier, latest || quark)
-                }
-            }
+            for (const [ identifier, quark ] of shadow.$outgoingPast) outgoingPast.set(identifier, quark)
         }
 
-        // changing `origin`, but keeping `originId`
-        this.origin                 = this
-
-        // some help for garbage collector
-        origin.clearProperties()
-        origin.clear()
+        // some help for garbage collector - the caller drops the shadow
+        shadow.clearProperties()
+        shadow.clearOutgoing()
     }
 
 
