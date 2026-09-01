@@ -171,12 +171,23 @@ class Quark extends base {
     adoptShadow (shadow : Quark) {
         const outgoing              = this.getOutgoing()
 
-        for (const [ identifier, quark ] of shadow.getOutgoing()) outgoing.set(identifier, quark)
+        // A target that recalculated to its previous value was itself turned into a shadow (see
+        // `Transaction.onQuarkCalculationCompleted`) which this same compaction will clear - store its
+        // surviving `origin` (same `originId`) as the edge target instead of retaining a cleared husk
+        for (const [ identifier, quark ] of shadow.getOutgoing()) {
+            const origin        = quark.origin
+
+            outgoing.set(identifier, origin !== undefined && origin !== quark ? origin : quark)
+        }
 
         if (shadow.$outgoingPast !== undefined) {
             const outgoingPast      = this.getOutgoingPast()
 
-            for (const [ identifier, quark ] of shadow.$outgoingPast) outgoingPast.set(identifier, quark)
+            for (const [ identifier, quark ] of shadow.$outgoingPast) {
+                const origin    = quark.origin
+
+                outgoingPast.set(identifier, origin !== undefined && origin !== quark ? origin : quark)
+            }
         }
 
         // some help for garbage collector - the caller drops the shadow
