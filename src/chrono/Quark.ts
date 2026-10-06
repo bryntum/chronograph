@@ -115,10 +115,11 @@ class Quark extends base {
         this.promise                        = undefined
 
         if (this.origin && this.origin === this) {
-            this.proposedArguments          = undefined
-
-            // only overwrite the proposed value if the actual value has been already calculated
-            // otherwise, keep the proposed value as is
+            // only overwrite the proposed value if the actual value has been already
+            // calculated, otherwise keep the proposed value and the arguments as they are. The arguments carry
+            // the user intent (e.g. `keepDuration` for a date write) and the dispatcher needs them when the
+            // calculation is restarted in a new epoch, for example after a scheduling conflict resolution wrote
+            // some fields.
             if (this.value !== undefined) {
                 this.proposedValue          = this.value
             }
