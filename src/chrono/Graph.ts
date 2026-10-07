@@ -591,7 +591,8 @@ export class ChronoGraph extends Base {
 
             this.$followingRevision     = undefined
 
-            this.markAndSweep()
+            // Perf: skip markAndSweep on initial commit — no meaningful revision history to compact
+            if (!this._isInitialCommit) this.markAndSweep()
         } else {
             // `baseRevisionStable` might be already cleared in the `reject` method of the graph
             if (this.baseRevisionStable) this.baseRevision = this.baseRevisionStable
