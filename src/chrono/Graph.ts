@@ -314,14 +314,7 @@ export class ChronoGraph extends Base {
                         }
                     }
                     else if (prevQuark && entry.origin === prevQuark) {
-                        // A pure-read shadow - it carries nothing but the edges recorded this
-                        // transaction. Fold those into the committed quark and keep THAT as the scope
-                        // entry, instead of copying every existing edge the other way into the shadow.
-                        prevQuark.adoptShadow(entry)
-
-                        prevRev.scope.set(identifier, prevQuark)
-
-                        continue
+                        entry.mergePreviousOrigin(newRev.scope)
                     }
                     else if (identifier.lazy && !entry.origin && prevQuark && prevQuark.origin) {
                         // for lazy quarks, that depends on the `ProposedOrPrevious` effect, we need to save the value or proposed value
