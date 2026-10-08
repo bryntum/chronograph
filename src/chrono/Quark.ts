@@ -163,38 +163,35 @@ class Quark extends base {
 
         this.copyFrom(origin)
 
-        const outgoing              = this.getOutgoing()
-
-        for (const [ identifier, quark ] of origin.getOutgoing()) {
-            const ownOutgoing       = outgoing.get(identifier)
-
-            if (!ownOutgoing) {
-                const latest        = latestScope.get(identifier)
-
-                if (!latest || latest.originId === quark.originId) outgoing.set(identifier, latest || quark)
-            }
-        }
-
-        if (origin.$outgoingPast !== undefined) {
-            const outgoingPast      = this.getOutgoingPast()
-
-            for (const [ identifier, quark ] of origin.getOutgoingPast()) {
-                const ownOutgoing       = outgoingPast.get(identifier)
-
-                if (!ownOutgoing) {
-                    const latest        = latestScope.get(identifier)
-
-                    if (!latest || latest.originId === quark.originId) outgoingPast.set(identifier, latest || quark)
-                }
-            }
-        }
+        // take over the origin's edge storage instead of copying it (the origin is dropped right below)
+        this.$outgoing              = this.mergeOutgoing(origin.getOutgoing(), this as Map<Identifier, Quark>, latestScope)
+        if (origin.$outgoingPast !== undefined) this.$outgoingPast = this.mergeOutgoing(origin.$outgoingPast, this.$outgoingPast, latestScope)
 
         // changing `origin`, but keeping `originId`
         this.origin                 = this
 
-        // some help for garbage collector
+        // some help for garbage collector (the origin object itself may now be our storage, see `getOutgoing`)
+        origin.$outgoing            = undefined
+        origin.$outgoingPast        = undefined
         origin.clearProperties()
-        origin.clear()
+    }
+
+
+    // Folds `own` (the few edges this shadow recorded) into `outgoing` (every edge of its origin): edges to
+    // identifiers that changed origin in this transaction are dropped, the rest re-pointed to their latest quark
+    mergeOutgoing (outgoing : Map<Identifier, Quark>, own : Map<Identifier, Quark>, latestScope : Scope) : Map<Identifier, Quark> {
+        // only identifiers present on both sides matter - iterate the smaller one
+        for (const identifier of (latestScope.size < outgoing.size ? latestScope : outgoing).keys()) {
+            if (own?.has(identifier)) continue
+
+            const latest            = latestScope.get(identifier), previous = outgoing.get(identifier)
+
+            if (latest && previous) latest.originId === previous.originId ? outgoing.set(identifier, latest) : outgoing.delete(identifier)
+        }
+
+        if (own) { for (const [ identifier, quark ] of own) outgoing.set(identifier, quark); own.clear() }
+
+        return outgoing
     }
 
 
@@ -218,8 +215,11 @@ class Quark extends base {
     }
 
 
+    // the storage taken over from the previous quark at compaction, see `mergePreviousOrigin`
+    $outgoing           : Map<Identifier, Quark>        = undefined
+
     getOutgoing () : Map<Identifier, Quark> {
-        return this as Map<Identifier, Quark>
+        return this.$outgoing || this as Map<Identifier, Quark>
     }
 
 
@@ -233,14 +233,15 @@ class Quark extends base {
 
 
     addOutgoingTo (toQuark : Quark, type : EdgeType) {
-        const outgoing      = type === EdgeType.Normal ? this as Map<Identifier, Quark> : this.getOutgoingPast()
+        const outgoing      = type === EdgeType.Normal ? this.getOutgoing() : this.getOutgoingPast()
 
         outgoing.set(toQuark.identifier, toQuark)
     }
 
 
     clearOutgoing () {
-        this.clear()
+        this.getOutgoing().clear()
+        this.$outgoing      = undefined
 
         if (this.$outgoingPast !== undefined) this.$outgoingPast.clear()
     }
