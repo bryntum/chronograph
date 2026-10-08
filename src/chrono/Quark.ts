@@ -155,76 +155,42 @@ class Quark extends base {
     }
 
 
-    /**
-     * Keep the newer quark's identity: later revisions and an already-created transaction may refer
-     * to it. Transfer the old edge maps instead of copying every existing dependent into this quark.
-     */
     mergePreviousOrigin (latestScope : Scope) {
-        const origin = this.origin
+        const origin                = this.origin
 
         if (origin !== this.previous) throw new Error("Invalid state")
 
         this.copyFrom(origin)
 
-        const outgoing = origin.getOutgoing()
-        const ownOutgoing = this.getOutgoing()
+        // take over the origin's edge storage instead of copying it (the origin is dropped right below)
+        this.$outgoing              = this.mergeOutgoing(origin.getOutgoing(), this as Map<Identifier, Quark>, latestScope)
+        if (origin.$outgoingPast !== undefined) this.$outgoingPast = this.mergeOutgoing(origin.$outgoingPast, this.$outgoingPast, latestScope)
 
-        this.mergeOutgoing(outgoing, ownOutgoing, latestScope)
-        ownOutgoing.clear()
-        this.$outgoing = outgoing
+        // changing `origin`, but keeping `originId`
+        this.origin                 = this
 
-        if (origin.$outgoingPast !== undefined) {
-            if (this.$outgoingPast !== undefined) {
-                this.mergeOutgoing(origin.$outgoingPast, this.$outgoingPast, latestScope)
-                this.$outgoingPast.clear()
-            }
-            else {
-                this.mergeOutgoing(origin.$outgoingPast, undefined, latestScope)
-            }
-
-            this.$outgoingPast = origin.$outgoingPast
-            origin.$outgoingPast = undefined
-        }
-
-        this.origin = this
-
-        // The original quark can itself be the transferred Map. Do not clear that storage. On later
-        // transfers the origin has a separate backing map, and its own (small) Map can be discarded.
-        origin.$outgoing = undefined
-        if (outgoing !== origin) Map.prototype.clear.call(origin)
+        // some help for garbage collector (the origin object itself may now be our storage, see `getOutgoing`)
+        origin.$outgoing            = undefined
+        origin.$outgoingPast        = undefined
         origin.clearProperties()
     }
 
 
-    mergeOutgoing (outgoing : Map<Identifier, Quark>, ownOutgoing : Map<Identifier, Quark>, latestScope : Scope) {
-        // Preserve the old merge's filtering, but probe changed identifiers when the fan-out is
-        // larger than the transaction. A newly recorded edge always takes precedence.
-        if (latestScope.size < outgoing.size) {
-            for (const [ identifier, latest ] of latestScope) {
-                const previous = outgoing.get(identifier)
+    // Folds `own` (the few edges this shadow recorded) into `outgoing` (every edge of its origin): edges to
+    // identifiers that changed origin in this transaction are dropped, the rest re-pointed to their latest quark
+    mergeOutgoing (outgoing : Map<Identifier, Quark>, own : Map<Identifier, Quark>, latestScope : Scope) : Map<Identifier, Quark> {
+        // only identifiers present on both sides matter - iterate the smaller one
+        for (const identifier of (latestScope.size < outgoing.size ? latestScope : outgoing).keys()) {
+            if (own?.has(identifier)) continue
 
-                if (previous && !ownOutgoing?.has(identifier)) {
-                    if (latest.originId === previous.originId) outgoing.set(identifier, latest)
-                    else outgoing.delete(identifier)
-                }
-            }
-        }
-        else {
-            for (const [ identifier, previous ] of outgoing) {
-                if (!ownOutgoing?.has(identifier)) {
-                    const latest = latestScope.get(identifier)
+            const latest            = latestScope.get(identifier), previous = outgoing.get(identifier)
 
-                    if (latest) {
-                        if (latest.originId === previous.originId) outgoing.set(identifier, latest)
-                        else outgoing.delete(identifier)
-                    }
-                }
-            }
+            if (latest && previous) latest.originId === previous.originId ? outgoing.set(identifier, latest) : outgoing.delete(identifier)
         }
 
-        if (ownOutgoing) {
-            for (const [ identifier, quark ] of ownOutgoing) outgoing.set(identifier, quark)
-        }
+        if (own) { for (const [ identifier, quark ] of own) outgoing.set(identifier, quark); own.clear() }
+
+        return outgoing
     }
 
 
@@ -248,64 +214,11 @@ class Quark extends base {
     }
 
 
-    // A promoted quark owns the preceding origin's Map. Keep the Map interface working too: graph
-    // walkers and callers use size/values directly, in addition to the getOutgoing accessor.
-    $outgoing : Map<Identifier, Quark> = undefined
+    // the storage taken over from the previous quark at compaction, see `mergePreviousOrigin`
+    $outgoing           : Map<Identifier, Quark>        = undefined
 
     getOutgoing () : Map<Identifier, Quark> {
         return this.$outgoing || this as Map<Identifier, Quark>
-    }
-
-    get size () : number {
-        return this.$outgoing ? this.$outgoing.size : super.size
-    }
-
-    get (identifier : Identifier) : Quark {
-        return this.$outgoing ? this.$outgoing.get(identifier) : super.get(identifier)
-    }
-
-    has (identifier : Identifier) : boolean {
-        return this.$outgoing ? this.$outgoing.has(identifier) : super.has(identifier)
-    }
-
-    set (identifier : Identifier, quark : Quark) : this {
-        if (this.$outgoing) this.$outgoing.set(identifier, quark)
-        else super.set(identifier, quark)
-
-        return this
-    }
-
-    delete (identifier : Identifier) : boolean {
-        return this.$outgoing ? this.$outgoing.delete(identifier) : super.delete(identifier)
-    }
-
-    clear () {
-        if (this.$outgoing) this.$outgoing.clear()
-        else super.clear()
-    }
-
-    keys () : IterableIterator<Identifier> {
-        return this.$outgoing ? this.$outgoing.keys() : super.keys()
-    }
-
-    values () : IterableIterator<Quark> {
-        return this.$outgoing ? this.$outgoing.values() : super.values()
-    }
-
-    entries () : IterableIterator<[ Identifier, Quark ]> {
-        return this.$outgoing ? this.$outgoing.entries() : super.entries()
-    }
-
-    [Symbol.iterator] () : IterableIterator<[ Identifier, Quark ]> {
-        return this.entries()
-    }
-
-    forEach (callback : (value : Quark, key : Identifier, map : Map<Identifier, Quark>) => void, thisArg? : any) {
-        if (typeof callback !== 'function') throw new TypeError('Callback must be a function')
-
-        Map.prototype.forEach.call(this.getOutgoing(), (quark : Quark, identifier : Identifier) => {
-            Reflect.apply(callback, thisArg, [ quark, identifier, this ])
-        })
     }
 
 
@@ -326,8 +239,8 @@ class Quark extends base {
 
 
     clearOutgoing () {
-        this.clear()
-        this.$outgoing = undefined
+        this.getOutgoing().clear()
+        this.$outgoing      = undefined
 
         if (this.$outgoingPast !== undefined) this.$outgoingPast.clear()
     }

@@ -1,7 +1,7 @@
 import { PreviousValueOf } from "../../src/chrono/Effect.js"
 import { ChronoGraph } from "../../src/chrono/Graph.js"
 import { Identifier } from "../../src/chrono/Identifier.js"
-import { Quark } from "../../src/chrono/Quark.js"
+import { EdgeType, Quark } from "../../src/chrono/Quark.js"
 
 declare const StartTest : any
 
@@ -109,48 +109,47 @@ StartTest(t => {
         t.isDeeply([ changing, stable ].map(id => graph.read(id)), [ 26, 12 ], 'Branch update leaves current graph intact')
     })
 
-    for (const transferred of [ false, true ]) {
-        t.it(`Map forEach preserves native callback semantics, transferred storage: ${transferred}`, t => {
-            const origin = Quark.new({ originId : 1, value : 1 })
-
-            origin.origin = origin
-
-            const quark = transferred ? Quark.new({ origin, previous : origin, originId : 1 }) : origin
-
-            if (transferred) quark.mergePreviousOrigin(new Map())
-
-            let error : Error
-
-            try {
-                quark.forEach(null as any)
-            }
-            catch (caught) {
-                error = caught
-            }
-
-            t.ok(error instanceof TypeError, 'An empty map rejects a non-callable callback')
-
+    for (const past of [ false, true ]) {
+        t.it(`Repeated compaction reuses one ${past ? 'past' : 'normal'} backing map`, t => {
             const graph = ChronoGraph.new()
             const identifier = graph.variableNamed('target', 1)
-            const target = Quark.new({ identifier })
-            const receiver = {}
-            let calls = 0
+            let origin = Quark.new({ originId : 1, value : 1 })
 
-            quark.set(identifier, target)
-            quark[Symbol.iterator] = () => { throw new Error('forEach must not use Symbol.iterator') }
+            origin.origin = origin
+            origin.addOutgoingTo(Quark.new({ identifier, originId : 2 }), past ? EdgeType.Past : EdgeType.Normal)
 
-            const callback = function (value, key, map) {
-                calls++
-                t.is(value, target, 'Callback receives the stored value')
-                t.is(key, identifier, 'Callback receives the stored key')
-                t.is(map, quark, 'Callback receives the quark, not its backing map')
-                t.is(this, receiver, 'Callback receives thisArg')
+            const storage = past ? origin.getOutgoingPast() : origin.getOutgoing()
+
+            for (let i = 0; i < 4; i++) {
+                const target = Quark.new({ identifier, originId : i + 3 })
+                const shadow = Quark.new({ origin, previous : origin, originId : 1 })
+
+                shadow.addOutgoingTo(target, past ? EdgeType.Past : EdgeType.Normal)
+
+                const recorded = past ? shadow.getOutgoingPast() : shadow.getOutgoing()
+
+                shadow.mergePreviousOrigin(new Map([ [ identifier, target ] ]))
+
+                // The very first normal quark is the physical backing Map. All later retired owners
+                // can be cleared independently because their forwarding pointer has been removed.
+                if (origin !== storage) origin.clearOutgoing()
+
+                t.is(past ? shadow.getOutgoingPast() : shadow.getOutgoing(), storage, 'Every promotion reuses the same backing map')
+                t.is(past ? origin.$outgoingPast : origin.$outgoing, undefined, 'The retired owner has no forwarding pointer')
+                t.is(storage.get(identifier), target, 'The current edge survives promotion and retired-owner cleanup')
+                t.is(recorded.size, 0, 'The merged temporary map is cleared')
+                origin = shadow
             }
 
-            callback.call = () => { throw new Error('forEach must not invoke an overridden callback.call') }
+            const replacement = Quark.new({ identifier, originId : 99 })
 
-            quark.forEach(callback, receiver)
-            t.is(calls, 1, 'Calls the callback without consulting an overridden iterator or call method')
+            origin.addOutgoingTo(replacement, past ? EdgeType.Past : EdgeType.Normal)
+            t.is(storage.get(identifier), replacement, 'Writes on the promoted quark reach the effective outgoing map')
+
+            origin.clearOutgoing()
+
+            t.is(storage.size, 0, 'Clearing the current owner clears transferred storage')
+            t.is(past ? origin.getOutgoingPast() : origin.getOutgoing(), past ? storage : origin, 'Clearing releases normal indirection and keeps empty past storage')
         })
     }
 
@@ -188,14 +187,15 @@ StartTest(t => {
 
         graph.commit()
 
-        const outgoing = graph.baseRevision.getLatestEntryFor(source).getOutgoing()
-        const iterator = outgoing[Symbol.iterator]
+        const original = graph.baseRevision.getLatestEntryFor(source)
+        const outgoing = original.getOutgoing()
+        const keys = outgoing.keys
         let visited = 0
 
-        outgoing[Symbol.iterator] = function* () {
-            for (const entry of iterator.call(this)) {
+        outgoing.keys = function* () {
+            for (const identifier of keys.call(this)) {
                 visited++
-                yield entry
+                yield identifier
             }
         }
 
@@ -203,34 +203,17 @@ StartTest(t => {
         graph.commit()
 
         t.is(visited, 0, 'Does not iterate the large old outgoing map')
-        outgoing[Symbol.iterator] = iterator
+        outgoing.keys = keys
 
         const current = graph.baseRevision.getLatestEntryFor(source)
 
         t.is(current.getOutgoing(), outgoing, 'Transfers the existing map')
-        t.is(current.size, readers.length, 'Map size uses transferred storage')
+        t.is(outgoing.size, readers.length, 'Transferred storage keeps all current consumers')
+        t.is(outgoing, original, 'The original native Map remains the backing container')
+        t.is(original.$outgoing, undefined, 'The backing container does not add another forwarding layer')
+        t.notOk(current === original, 'The newer quark survives independently of the storage object')
         t.isDeeply(readers.slice(0, 10).map(id => graph.read(id)), Array(10).fill(3), 'Updated readers are correct')
         t.is(graph.read(readers[100]), 1, 'Untouched reader is correct')
-        t.is(current.get(readers[0]), outgoing.get(readers[0]), 'Map get uses transferred storage')
-        t.ok(current.has(readers[0]), 'Map has uses transferred storage')
-
-        const target = current.get(readers[0])
-
-        t.ok(current.delete(readers[0]), 'Map delete removes an existing edge')
-        t.notOk(outgoing.has(readers[0]), 'Map delete updates transferred storage')
-        t.is(current.set(readers[0], target), current, 'Map set returns its receiver')
-        t.is(outgoing.get(readers[0]), target, 'Map set updates transferred storage')
-        t.is([ ...current.keys() ].length, readers.length, 'Map keys uses transferred storage')
-        t.is([ ...current.values() ].length, readers.length, 'Map values uses transferred storage')
-        t.is([ ...current.entries() ].length, readers.length, 'Map entries uses transferred storage')
-        t.is([ ...current ].length, readers.length, 'Map iterator uses transferred storage')
-
-        let callbacks = 0
-
-        current.forEach((value, key, map) => {
-            if (map === current && value === outgoing.get(key)) callbacks++
-        })
-        t.is(callbacks, readers.length, 'Map forEach keeps its receiver')
 
         graph.write(source, 2)
         graph.commit()
