@@ -33,7 +33,9 @@ import {
     WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
-    WriteSymbol
+    WriteSymbol,
+    SetSelfDependentSymbol,
+    SetSelfDependentEffect
 } from "./Effect.js"
 import {
     CalculatedValueGen,
@@ -1181,6 +1183,12 @@ export class ChronoGraph extends Base {
         return quark && !quark.isShadow() ?
             // @ts-ignore
             quark.proposeCount : undefined
+    }
+
+    [SetSelfDependentSymbol] (effect : SetSelfDependentEffect, transaction : Transaction) : any {
+        const activeEntry = transaction.getActiveEntry()
+
+        activeEntry.selfDependent = effect.selfDependent
     }
 }
 

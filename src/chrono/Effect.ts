@@ -1,6 +1,7 @@
 import { Base } from "../class/Base.js"
 import { prototypeValue } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
+import { SelfDependencyType } from "./Quark.js"
 
 //---------------------------------------------------------------------------------------------------------------------
 export const BreakCurrentStackExecution    = Symbol('BreakCurrentStackExecution')
@@ -286,3 +287,23 @@ export type ProgressNotificationEffect = {
 
     phase           : string
 }
+
+/**
+ * Symbol for [[SetSelfDependentEffect]] handler
+ */
+export const SetSelfDependentSymbol = Symbol('SetSelfDependentSymbol')
+
+/**
+ * Effect that establishes the active entry Quark#selfDependent
+ * to the provided value
+ */
+export class SetSelfDependentEffect extends Effect {
+    handler       : symbol = SetSelfDependentSymbol
+    selfDependent : SelfDependencyType
+}
+
+/**
+ * Creates [[SetSelfDependentEffect]] instance with the provided `selfDependent` value
+ * @param selfDependent `selfDependent` value for the active entry
+ */
+export const SetSelfDependent = (selfDependent : SelfDependencyType) : SetSelfDependentEffect => SetSelfDependentEffect.new({ selfDependent })
