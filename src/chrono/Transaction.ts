@@ -11,7 +11,7 @@ import { LeveledQueue } from "../util/LeveledQueue.js"
 import { BreakCurrentStackExecution, Effect, RejectEffect } from "./Effect.js"
 import { ChronoGraph, CommitArguments } from "./Graph.js"
 import { Identifier, Levels, throwUnknownIdentifier } from "./Identifier.js"
-import { EdgeType, Quark, TombStone } from "./Quark.js"
+import { EdgeType, Quark, TombStone, SelfDependencyType } from "./Quark.js"
 import { Revision, Scope } from "./Revision.js"
 import { ComputationCycle, TransactionCycleDetectionWalkContext } from "./TransactionCycleDetectionWalkContext.js"
 import { TransactionWalkDepth } from "./TransactionWalkDepth.js"
@@ -906,19 +906,28 @@ export class Transaction extends Base {
             entry.setValue(value)
         }
 
-        //--------------------
-        let ignoreSelfDependency : boolean = false
+        switch (entry.selfDependent) {
+            case SelfDependencyType.On :
+                this.candidate.selfDependent.add(identifier)
+                break
+            case SelfDependencyType.Off :
+                this.candidate.selfDependent.delete(identifier)
+                break
+            case SelfDependencyType.Auto :
+                //--------------------
+                let ignoreSelfDependency : boolean = false
 
-        if (entry.usedProposedOrPrevious) {
-            if (entry.proposedValue !== undefined) {
-                if (identifier.equality(value, entry.proposedValue)) ignoreSelfDependency = true
-            } else {
-                // ignore the uninitialized atoms (`proposedValue` === undefined && !previousEntry)
-                // which has been calculated to `null` - we don't consider this as a change
-                if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
-            }
+                if (entry.usedProposedOrPrevious) {
+                    if (entry.proposedValue !== undefined) {
+                        if (identifier.equality(value, entry.proposedValue)) ignoreSelfDependency = true
+                    } else {
+                        // ignore the uninitialized atoms (`proposedValue` === undefined && !previousEntry)
+                        // which has been calculated to `null` - we don't consider this as a change
+                        if (sameAsPrevious || (!previousEntry && value === null)) ignoreSelfDependency = true
+                    }
 
-            if (!ignoreSelfDependency) this.candidate.selfDependent.add(identifier)
+                    if (!ignoreSelfDependency) this.candidate.selfDependent.add(identifier)
+                }
         }
     }
 
