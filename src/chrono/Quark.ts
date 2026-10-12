@@ -1,7 +1,7 @@
 import { AnyConstructor, MixinAny } from "../class/Mixin.js"
 import { NOT_VISITED } from "../graph/WalkDepth.js"
 import { CalculationContext, Context, GenericCalculation } from "../primitives/Calculation.js"
-import { MAX_SMI, MIN_SMI } from "../util/Helpers.js"
+import { copyMapInto, MAX_SMI, MIN_SMI } from "../util/Helpers.js"
 import { Identifier } from "./Identifier.js"
 import { Revision, Scope } from "./Revision.js"
 import { Transaction, YieldableValue } from "./Transaction.js"
@@ -22,7 +22,8 @@ let ORIGIN_ID : OriginId    = 0
 //---------------------------------------------------------------------------------------------------------------------
 export class Quark extends MixinAny(
     [ Map ],
-    (base : AnyConstructor<Map<any, any> & GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>) =>
+    // the `Map` members are hidden from the Quark type on purpose, so edges are only reachable through `getOutgoing()`
+    (base : AnyConstructor<GenericCalculation<Context, any, any, [ CalculationContext<YieldableValue>, ...any[] ]>>) =>
 
 class Quark extends base {
 
@@ -162,22 +163,24 @@ class Quark extends base {
 
         this.copyFrom(origin)
 
-        // take over the origin's edge storage instead of copying it (the origin is dropped right below)
-        this.$outgoing              = this.mergeOutgoing(origin.getOutgoing(), this as Map<Identifier, Quark>, latestScope)
+        // take over the origin's edges: by reference once a plain Map, copied once while still the origin's own storage
+        this.$outgoing              = this.mergeOutgoing(origin.$outgoing || new Map(origin.getOutgoing()), this.getOutgoing(), latestScope)
         if (origin.$outgoingPast !== undefined) this.$outgoingPast = this.mergeOutgoing(origin.$outgoingPast, this.$outgoingPast, latestScope)
 
         // changing `origin`, but keeping `originId`
         this.origin                 = this
 
-        // some help for garbage collector (the origin object itself may now be our storage, see `getOutgoing`)
+        // detach the retired origin - order matters: its forwarding pointers must be reset before `clearOutgoing()`,
+        // so that it empties only the origin's own storage and cannot touch ours
         origin.$outgoing            = undefined
         origin.$outgoingPast        = undefined
+        origin.clearOutgoing()
         origin.clearProperties()
     }
 
 
-    // Folds `own` (the few edges this shadow recorded) into `outgoing` (every edge of its origin): edges to
-    // identifiers that changed origin in this transaction are dropped, the rest re-pointed to their latest quark
+    // Folds `own` into `outgoing`, EMPTIES `own` and RETURNS `outgoing` for the caller to adopt as its storage. Edges to
+    // identifiers also in `latestScope` are re-pointed to the latest quark, or dropped if it changed origin; others untouched
     mergeOutgoing (outgoing : Map<Identifier, Quark>, own : Map<Identifier, Quark>, latestScope : Scope) : Map<Identifier, Quark> {
         // only identifiers present on both sides matter - iterate the smaller one
         for (const identifier of (latestScope.size < outgoing.size ? latestScope : outgoing).keys()) {
@@ -185,12 +188,17 @@ class Quark extends base {
 
             const latest            = latestScope.get(identifier), previous = outgoing.get(identifier)
 
-            if (latest && previous) latest.originId === previous.originId ? outgoing.set(identifier, latest) : outgoing.delete(identifier)
+            if (latest && previous) latest.sameOriginAs(previous) ? outgoing.set(identifier, latest) : outgoing.delete(identifier)
         }
 
-        if (own) { for (const [ identifier, quark ] of own) outgoing.set(identifier, quark); own.clear() }
+        if (own) { copyMapInto(own, outgoing); own.clear() }
 
         return outgoing
+    }
+
+
+    sameOriginAs (quark : Quark) : boolean {
+        return this.originId === quark.originId
     }
 
 
@@ -218,7 +226,7 @@ class Quark extends base {
     $outgoing           : Map<Identifier, Quark>        = undefined
 
     getOutgoing () : Map<Identifier, Quark> {
-        return this.$outgoing || this as Map<Identifier, Quark>
+        return this.$outgoing || this as unknown as Map<Identifier, Quark>
     }
 
 
@@ -312,14 +320,14 @@ class Quark extends base {
             for (const outgoing of current.getOutgoing().values()) {
                 const latestEntry = lookup(outgoing.identifier)
 
-                if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+                if (latestEntry && outgoing.sameOriginAs(latestEntry)) forEach(outgoing)
             }
 
             if (includePast && current.$outgoingPast !== undefined) {
                 for (const outgoing of current.$outgoingPast.values()) {
                     const latestEntry = lookup(outgoing.identifier)
 
-                    if (latestEntry && outgoing.originId === latestEntry.originId) forEach(outgoing)
+                    if (latestEntry && outgoing.sameOriginAs(latestEntry)) forEach(outgoing)
                 }
             }
 
