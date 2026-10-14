@@ -13,6 +13,27 @@ export enum EdgeType {
     Past        = 2
 }
 
+/**
+ * Enumerates possible values of Quark#selfDependent
+ *
+ */
+export enum SelfDependencyType {
+    /**
+     * The Quark is self-dependent and will be re-validated automatically on the next transaction
+     */
+    On = 1,
+    /**
+     * The Quark is NOT self-dependent and won't be re-validated automatically on the next transaction
+     * until some of values it depends on gets changed
+     */
+    Off = 0,
+    /**
+     * Backward compatible mode when the quark is treated as self-dependent if it used its proposed
+     * value when calculation but the resulting value does not match the proposed one
+     */
+    Auto = -1
+}
+
 // TODO: combine all boolean flags into single SMI bitmap (field & 8 etc)
 
 export type OriginId    = number
@@ -58,6 +79,7 @@ class Quark extends base {
 
     promise         : Promise<any>      = undefined
 
+    selfDependent   : SelfDependencyType
 
     get level () : number {
         return this.identifier.level
