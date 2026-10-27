@@ -74,6 +74,10 @@ class ReferenceBucketQuark extends base {
     hasProposedValueInner () : boolean {
         return this.mutations.length > 0
     }
+
+    hasRemovedEntity () : boolean {
+        return this.mutations.some(m => m.type === BucketMutationType.Remove)
+    }
 }){}
 
 export const MinimalReferenceBucketQuark = ReferenceBucketQuark.mix(QuarkSync)
