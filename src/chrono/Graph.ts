@@ -33,7 +33,8 @@ import {
     WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
-    WriteSymbol
+    WriteSymbol,
+    HasRemovedEntitySymbol
 } from "./Effect.js"
 import {
     CalculatedValueGen,
@@ -43,10 +44,11 @@ import {
     Variable,
     VariableC
 } from "./Identifier.js"
-import { TombStone } from "./Quark.js"
+import { TombStone, Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { EdgeTypePast, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 import { ComputationCycle } from "./TransactionCycleDetectionWalkContext.js"
+import { ReferenceBucketQuark } from "../replica/ReferenceBucket.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -1181,6 +1183,24 @@ export class ChronoGraph extends Base {
         return quark && !quark.isShadow() ?
             // @ts-ignore
             quark.proposeCount : undefined
+    }
+
+    [HasRemovedEntitySymbol] (effect : ProposeCountOfEffect, transaction : Transaction) : boolean {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        let quark : Quark
+
+        if (source) {
+            transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+            quark = transaction.entries.get(source)
+        }
+        else {
+            quark = activeEntry
+        }
+
+        return quark && !quark.isShadow() && (quark as ReferenceBucketQuark).hasRemovedEntity()
     }
 }
 
