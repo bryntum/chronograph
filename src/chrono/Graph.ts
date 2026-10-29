@@ -555,7 +555,10 @@ export class ChronoGraph extends Base {
 
         if (activeTransaction.rejectedWith) activeTransaction.clearRejected()
 
-        if (this.dirty && !activeTransaction.rejectedWith) {
+        // Writes made while the transaction was being finalized went into a new active transaction and need a commit
+        // of their own. This includes a rejected transaction: the finalization of a rejected commit reverts the
+        // changes made outside the graph (e.g. the STM undoing the recorded data changes), which writes to the graph
+        if (this.dirty) {
             await this.doCommitAsync(args)
         }
 
