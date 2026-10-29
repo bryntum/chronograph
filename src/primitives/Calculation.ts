@@ -100,10 +100,24 @@ class CalculationGen extends base implements GenericCalculation<typeof ContextGe
     }
 
 
-    startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
-        const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.context || this, onEffect, ...args)
+    // Perf: `_isGenCalc` flag set at quark creation time to branch sync vs gen
+    // without runtime type checking. Unified QuarkGen/QuarkSync eliminates V8 megamorphic deopt.
+    _isGenCalc          : boolean    = true
 
-        return this.iterationResult = iterator.next()
+    startCalculation (onEffect : CalculationContext<YieldT>, ...args : any[]) : IteratorResult<any> {
+        if (this._isGenCalc) {
+            const iterator : this[ 'iterator' ] = this.iterator = this.calculation.call(this.context || this, onEffect, ...args)
+
+            return this.iterationResult = iterator.next()
+        }
+
+        // Sync calculation — mark as started for cycle detection, then return completed result
+        this.iterationResult = calculationStartedConstant
+
+        return this.iterationResult = {
+            done    : true,
+            value   : this.calculation.call(this.context || this, onEffect, ...args)
+        }
     }
 
 
