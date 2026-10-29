@@ -1088,7 +1088,7 @@ export class Transaction extends Base {
                 entry.setOrigin(entry.previous.origin)
 
                 // if there's no outgoing edges we remove the quark
-                if (entry.size === 0) {
+                if (entry.getOutgoing().size === 0) {
                     entries.delete(identifier)
                 }
 
@@ -1205,7 +1205,7 @@ export class Transaction extends Base {
 
             // add the quark dependent quarks to the processing queue
             // (skip once that are already found and added to "cycledIdentifiers" map)
-            dependentQuarks.push(...Array.from(quark.values()).filter(q => !cycledIdentifiers.has(q.identifier)))
+            dependentQuarks.push(...Array.from(quark.getOutgoing().values()).filter(q => !cycledIdentifiers.has(q.identifier)))
 
             // pick next quark to process
             quark = dependentQuarks.shift()
@@ -1282,7 +1282,7 @@ export class Transaction extends Base {
                 entry.setOrigin(entry.previous.origin)
 
                 // if there's no outgoing edges we remove the quark
-                if (entry.size === 0) {
+                if (entry.getOutgoing().size === 0) {
                     entries.delete(identifier)
                 }
 

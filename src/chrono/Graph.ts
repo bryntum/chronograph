@@ -311,7 +311,7 @@ export class ChronoGraph extends Base {
 
                     if (entry.origin === entry) {
                         if (prevQuark) {
-                            prevQuark.clear()
+                            prevQuark.clearOutgoing()
                             prevQuark.clearProperties()
                         }
                     }
