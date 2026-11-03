@@ -1,5 +1,6 @@
 import { ChronoGraph } from "../../src/chrono/Graph.js"
-import { CalculatedValueGen } from "../../src/chrono/Identifier.js"
+import { CalculatedValueGen, CalculatedValueSync, Levels } from "../../src/chrono/Identifier.js"
+import { SyncEffectHandler, Transaction } from "../../src/chrono/Transaction.js"
 import { delay } from "../../src/util/Helpers.js"
 
 declare const StartTest : any
@@ -134,6 +135,57 @@ StartTest(t => {
         await graph.commitAsync()
 
         t.isDeeply(nodes.map(node => graph.get(node)), [ 1, 2, 0, 3, 4, 4 ], "Correct result calculated #2")
+    })
+
+
+    // https://github.com/bryntum/bryntum/issues/14096
+    t.it('Should not emit progress notifications while calculating the sync levels', async t => {
+        class EagerProgressTransaction extends Transaction {
+            startProgressNotificationsAfterMs           = -1
+            emitProgressNotificationsEveryMs            = -1
+            emitProgressNotificationsEveryCalculations  = 1
+        }
+
+        const graph : ChronoGraph       = ChronoGraph.new({
+            enableProgressNotifications : true,
+            transactionClass            : EagerProgressTransaction
+        })
+
+        const syncCount         = 5
+        let syncCalculated      = 0
+
+        const i1        = graph.variableNamed('i1', 1)
+
+        const syncLevel = Array.from({ length : syncCount }, (v, index) => graph.addIdentifier(CalculatedValueSync.new({
+            name    : `s${index}`,
+            level   : Levels.DependsOnlyOnUserInput,
+            calculation (YIELD : SyncEffectHandler) : number {
+                syncCalculated++
+
+                return (YIELD(i1) as number) + index
+            }
+        })))
+
+        const c1        = graph.addIdentifier(CalculatedValueGen.new({
+            name    : 'c1',
+            *calculation () {
+                let sum = 0
+
+                for (const identifier of syncLevel) sum += yield identifier
+
+                return sum
+            }
+        }))
+
+        const calculatedAtNotification : number[] = []
+
+        graph.onPropagationProgressNotification = () => calculatedAtNotification.push(syncCalculated)
+
+        await graph.commitAsync()
+
+        t.is(graph.get(c1), 15, 'Correct result calculated')
+        t.isGreater(calculatedAtNotification.length, 0, 'Progress notifications emitted for the async level')
+        t.isDeeply(calculatedAtNotification, calculatedAtNotification.map(() => syncCount), 'All sync level identifiers calculated before any progress notification')
     })
 
 })
