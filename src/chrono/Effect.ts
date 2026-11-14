@@ -307,3 +307,14 @@ export class SetSelfDependentEffect extends Effect {
  * @param selfDependent `selfDependent` value for the active entry
  */
 export const SetSelfDependent = (selfDependent : SelfDependencyType) : SetSelfDependentEffect => SetSelfDependentEffect.new({ selfDependent })
+
+//---------------------------------------------------------------------------------------------------------------------
+export const HasRemovedEntitySymbol    = Symbol('HasRemovedEntitySymbol')
+
+export class HasRemovedEntityEffect extends Effect {
+    handler         : symbol    = HasRemovedEntitySymbol
+
+    identifier      : Identifier
+}
+
+export const HasRemovedEntity = (identifier? : Identifier) : HasRemovedEntityEffect => HasRemovedEntityEffect.new({ identifier })

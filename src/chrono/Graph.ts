@@ -13,6 +13,7 @@ import {
     HasProposedNotPreviousValueSymbol,
     HasProposedValueEffect,
     HasProposedValueSymbol,
+    HasRemovedEntitySymbol,
     OwnIdentifierSymbol,
     OwnQuarkSymbol,
     PreviousValueOfEffect,
@@ -27,15 +28,15 @@ import {
     ProposedValueOfSymbol,
     RejectEffect,
     RejectSymbol,
+    SetSelfDependentSymbol,
+    SetSelfDependentEffect,
     TransactionSymbol,
     UnsafePreviousValueOfSymbol,
     UnsafeProposedOrPreviousValueOfSymbol,
     WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
-    WriteSymbol,
-    SetSelfDependentSymbol,
-    SetSelfDependentEffect
+    WriteSymbol
 } from "./Effect.js"
 import {
     CalculatedValueGen,
@@ -45,10 +46,11 @@ import {
     Variable,
     VariableC
 } from "./Identifier.js"
-import { TombStone } from "./Quark.js"
+import { TombStone, Quark } from "./Quark.js"
 import { Revision } from "./Revision.js"
 import { EdgeTypePast, Transaction, TransactionCommitResult, YieldableValue } from "./Transaction.js"
 import { ComputationCycle } from "./TransactionCycleDetectionWalkContext.js"
+import { ReferenceBucketQuark } from "../replica/ReferenceBucket.js"
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -1189,6 +1191,24 @@ export class ChronoGraph extends Base {
         const activeEntry = transaction.getActiveEntry()
 
         activeEntry.selfDependent = effect.selfDependent
+    }
+
+    [HasRemovedEntitySymbol] (effect : ProposeCountOfEffect, transaction : Transaction) : boolean {
+        const activeEntry   = transaction.getActiveEntry()
+        const source        = effect.identifier
+
+        let quark : Quark
+
+        if (source) {
+            transaction.addEdge(source, activeEntry, EdgeTypePast)
+
+            quark = transaction.entries.get(source)
+        }
+        else {
+            quark = activeEntry
+        }
+
+        return quark && !quark.isShadow() && (quark as ReferenceBucketQuark).hasRemovedEntity()
     }
 }
 
