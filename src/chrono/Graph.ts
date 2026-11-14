@@ -13,6 +13,7 @@ import {
     HasProposedNotPreviousValueSymbol,
     HasProposedValueEffect,
     HasProposedValueSymbol,
+    HasRemovedEntitySymbol,
     OwnIdentifierSymbol,
     OwnQuarkSymbol,
     PreviousValueOfEffect,
@@ -27,14 +28,15 @@ import {
     ProposedValueOfSymbol,
     RejectEffect,
     RejectSymbol,
+    SetSelfDependentSymbol,
+    SetSelfDependentEffect,
     TransactionSymbol,
     UnsafePreviousValueOfSymbol,
     UnsafeProposedOrPreviousValueOfSymbol,
     WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
-    WriteSymbol,
-    HasRemovedEntitySymbol
+    WriteSymbol
 } from "./Effect.js"
 import {
     CalculatedValueGen,
@@ -1183,6 +1185,12 @@ export class ChronoGraph extends Base {
         return quark && !quark.isShadow() ?
             // @ts-ignore
             quark.proposeCount : undefined
+    }
+
+    [SetSelfDependentSymbol] (effect : SetSelfDependentEffect, transaction : Transaction) : any {
+        const activeEntry = transaction.getActiveEntry()
+
+        activeEntry.selfDependent = effect.selfDependent
     }
 
     [HasRemovedEntitySymbol] (effect : ProposeCountOfEffect, transaction : Transaction) : boolean {
