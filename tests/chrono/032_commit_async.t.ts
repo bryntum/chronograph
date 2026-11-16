@@ -185,7 +185,7 @@ StartTest(t => {
 
         t.is(graph.get(c1), 15, 'Correct result calculated')
         t.isGreater(calculatedAtNotification.length, 0, 'Progress notifications emitted for the async level')
-        t.isDeeply(calculatedAtNotification, calculatedAtNotification.map(() => syncCount), 'All sync level identifiers calculated before any progress notification')
+        t.ok(calculatedAtNotification.every(v => v === syncCount), 'All sync level identifiers calculated before any progress notification')
     })
 
 })
