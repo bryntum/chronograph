@@ -149,6 +149,19 @@ export class ReferenceBucketIdentifier extends Mixin(
         }
 
 
+        // Returns the bucket content as of the current state of the transaction, w/o triggering its calculation
+        readCurrentContent (transaction : Transaction) : Set<Entity> {
+            const quark = transaction.entries.get(this) as ReferenceBucketQuark
+
+            // not calculated yet (or reset by a later mutation) - the calculated/previous value misses the mutations
+            if (quark && !quark.isShadow() && quark.getValue() === undefined && quark.mutations.length) {
+                return this.buildProposedValue(this, quark, transaction)
+            }
+
+            return transaction.readCurrentOrProposedOrPrevious(this)
+        }
+
+
         leaveGraph (graph : ChronoGraph) {
             super.leaveGraph(graph)
 

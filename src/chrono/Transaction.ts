@@ -1011,7 +1011,11 @@ export class Transaction extends Base {
         const entries                       = this.entries
         const propagationStartDate          = this.propagationStartDate
 
-        const enableProgressNotifications   = this.graph ? this.graph.enableProgressNotifications : false
+        // levels below `DependsOnSelfKind` must be calculated synchronously, so external code
+        // (which may modify the graph) should not get control in the middle of them
+        const isAsyncLevel                  = stack.length > 0 && stack[ 0 ].identifier.level >= Levels.DependsOnSelfKind
+
+        const enableProgressNotifications   = this.graph ? this.graph.enableProgressNotifications && isAsyncLevel : false
 
         let counter : number                = 0
 

@@ -1,7 +1,7 @@
 import { Base } from "../../src/class/Base.js"
 import { calculate, Entity, field } from "../../src/replica/Entity.js"
 import { reference } from "../../src/replica/Reference.js"
-import { bucket } from "../../src/replica/ReferenceBucket.js"
+import { bucket, ReferenceBucketIdentifier } from "../../src/replica/ReferenceBucket.js"
 import { Replica } from "../../src/replica/Replica.js"
 import { Schema } from "../../src/schema/Schema.js"
 
@@ -487,5 +487,59 @@ StartTest(t => {
 
         await t.waitFor(() => !replica1.dirty)
         t.is(replica1.hasPendingAutoCommit(), false, 'No pending commit')
+    })
+
+
+    // https://github.com/bryntum/bryntum/issues/14096
+    t.it('Should read the current bucket content w/o triggering its calculation', async t => {
+        const SomeSchema        = Schema.new({ name : 'Cool data schema' })
+
+        const entity            = SomeSchema.getEntityDecorator()
+
+        @entity
+        class Author extends Entity.mix(Base) {
+            @bucket()
+            books           : Set<Book>
+        }
+
+        @entity
+        class Book extends Entity.mix(Base) {
+            @reference({ bucket : 'books' })
+            writtenBy       : Author
+        }
+
+        const replica1          = Replica.new({ schema : SomeSchema })
+
+        const markTwain         = Author.new()
+        const tomSoyer          = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(markTwain)
+        replica1.addEntity(tomSoyer)
+
+        const books             = markTwain.$.books as ReferenceBucketIdentifier
+
+        //--------------------
+        let transaction         = replica1.activeTransaction
+
+        t.is(transaction.readCurrentOrProposedOrPrevious(books), undefined, 'No bucket value before calculation')
+        t.isDeeply(books.readCurrentContent(transaction), new Set([ tomSoyer ]), 'Pending mutations included #1')
+
+        replica1.commit()
+
+        //--------------------
+        const tomSoyer2         = Book.new({ writtenBy : markTwain })
+
+        replica1.addEntity(tomSoyer2)
+
+        transaction             = replica1.activeTransaction
+
+        t.isDeeply(transaction.readCurrentOrProposedOrPrevious(books), new Set([ tomSoyer ]), 'Previous bucket value misses the pending mutation')
+        t.isDeeply(books.readCurrentContent(transaction), new Set([ tomSoyer, tomSoyer2 ]), 'Pending mutations included #2')
+
+        //--------------------
+        const calculated        = markTwain.books
+
+        t.isDeeply(calculated, new Set([ tomSoyer, tomSoyer2 ]), 'Correctly calculated bucket')
+        t.is(books.readCurrentContent(transaction), calculated, 'Calculated value returned after calculation')
     })
 })
