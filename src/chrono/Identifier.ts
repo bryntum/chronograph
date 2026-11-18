@@ -126,7 +126,7 @@ export class Meta<ValueT = any, ContextT extends Context = Context> extends Base
      *
      * @param Y
      */
-    calculation (this : this[ 'CalcContextT' ], Y : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ ContextT ] {
+    calculation (this : any, Y : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ ContextT ] {
         throw new Error("Abstract method `calculation` called")
     }
 
@@ -156,7 +156,7 @@ export class Identifier<ValueT = any, ContextT extends Context = Context> extend
     /**
      * The scope (`this` value) for the calculation function.
      */
-    context             : this[ 'CalcContextT' ]        = undefined
+    context             : any                           = undefined
 
     // flag to set during the `write` inside the `addIdentifier` call
     isWritingUndefined  : boolean                       = false
@@ -284,7 +284,7 @@ export class Variable<ValueT = any> extends Identifier<ValueT, typeof ContextSyn
     quarkClass          : QuarkConstructor
 
 
-    calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextSync ] {
+    calculation (this : any, YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextSync ] {
         throw new Error("The 'calculation' method of the variables should never be called. Instead, the value will be set directly to quark")
     }
 
@@ -315,7 +315,7 @@ export class CalculatedValueSync<ValueT = any> extends Identifier<ValueT, typeof
     quarkClass          : QuarkConstructor
 
 
-    calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextSync ] {
+    calculation (this : any, YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextSync ] {
         return YIELD(ProposedOrPrevious)
     }
 }
@@ -338,7 +338,7 @@ export class CalculatedValueGen<ValueT = any> extends Identifier<ValueT, typeof 
     quarkClass          : QuarkConstructor
 
 
-    * calculation (this : this[ 'CalcContextT' ], YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextGen ] {
+    * calculation (this : any, YIELD : CalculationContext<this[ 'YieldT' ]>) : Contexts<ValueT, this[ 'YieldT' ]>[ typeof ContextGen ] {
         return yield ProposedOrPrevious
     }
 }

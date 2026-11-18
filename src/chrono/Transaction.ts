@@ -28,8 +28,8 @@ export type YieldableValue = Effect | Identifier | Promise<any>
 /**
  * A type for the synchronous effect handler function
  */
-export type SyncEffectHandler = <T extends any>(effect : YieldableValue) => T & NotPromise<T>
-export type AsyncEffectHandler = <T extends any>(effect : YieldableValue) => Promise<T>
+export type SyncEffectHandler = <T = any>(effect : YieldableValue) => T & NotPromise<T>
+export type AsyncEffectHandler = <T = any>(effect : YieldableValue) => Promise<T>
 
 
 //---------------------------------------------------------------------------------------------------------------------

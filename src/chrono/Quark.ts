@@ -64,7 +64,7 @@ class Quark extends base {
     }
 
 
-    get calculation () : this[ 'identifier' ][ 'calculation' ] {
+    get calculation () : Identifier[ 'calculation' ] {
         return this.identifier.calculation
     }
 
