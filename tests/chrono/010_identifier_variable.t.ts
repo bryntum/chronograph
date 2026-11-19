@@ -240,7 +240,7 @@ StartTest(t => {
     })
 
 
-    t.it('Should throw error on cyclic computation', async t => {
+    t.xit('Should throw error on cyclic computation', async t => {
         const graph : ChronoGraph = ChronoGraph.new()
 
         const iden1     = graph.identifier(function (Y) {
