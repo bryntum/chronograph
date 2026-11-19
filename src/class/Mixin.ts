@@ -274,13 +274,13 @@ type SuppressNew<T> = {
  */
 export type AnyFunction<Result = any>        = (...input : any[]) => Result
 
-type AnyConstructorRaw<Instance = object, Static = object>  = (new (...input : any[]) => Instance) & Static
+type AnyConstructorRaw<Instance extends object = object, Static extends object = object>  = (new (...input : any[]) => Instance) & Static
 
 /**
  * A type that represents a constructor function, that returns `Instance` type on instantiation. The properties of the function itself
  * are typed with `Static` argument. These properties will correspond to the static methods/properties of the class.
  */
-export type AnyConstructor<Instance = object, Static = object>  = (new (...input : any[]) => Instance) & SuppressNew<Static>
+export type AnyConstructor<Instance extends object = object, Static extends object = object>  = (new (...input : any[]) => Instance) & SuppressNew<Static>
 
 //---------------------------------------------------------------------------------------------------------------------
 type ZeroBaseClassConstructor = typeof ZeroBaseClass
