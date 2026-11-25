@@ -157,8 +157,9 @@ export class ChronoGraph extends Base {
     _isInitialCommit        : boolean           = true
 
     //-------------------------------------
-    // a "cross-platform" trick to avoid specifying the type of the `autoCommitTimeoutId` explicitly
-    autoCommitTimeoutId     : ReturnType<typeof setTimeout> = null
+    // both the DOM and the Node typings are loaded, TypeScript 3.8 resolves `setTimeout` to the Node one (`Timeout`),
+    // TypeScript 7 to the DOM one (`number`). `clearTimeout` of the DOM typings takes a `number` in both versions
+    autoCommitTimeoutId     : ReturnType<typeof setTimeout> | number = null
 
     /**
      * If this option is enabled with `true` value, all data modification calls ([[write]], [[addIdentifier]], [[removeIdentifier]]) will trigger
@@ -676,7 +677,7 @@ export class ChronoGraph extends Base {
 
     unScheduleAutoCommit () {
         if (this.autoCommitTimeoutId !== null) {
-            clearTimeout(this.autoCommitTimeoutId)
+            clearTimeout(this.autoCommitTimeoutId as number)
             this.autoCommitTimeoutId    = null
         }
     }
