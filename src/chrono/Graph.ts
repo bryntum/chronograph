@@ -179,6 +179,13 @@ export class ChronoGraph extends Base {
 
     onComputationCycle      : 'throw' | 'warn' | 'reject' | 'ignore' | 'effect' = 'throw'
 
+    /**
+     * If this option is enabled with `true` value (default), an atom that used `ProposedOrPrevious` and was calculated
+     * to a value different from the proposed one is treated as self-dependent automatically and recalculated in the next transaction.
+     * With `false` value only the atoms yielding [[SetSelfDependent]] effect are self-dependent.
+     */
+    autoSelfDependency      : boolean           = true
+
     transactionClass        : typeof Transaction    = Transaction
 
 

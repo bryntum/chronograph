@@ -906,7 +906,8 @@ export class Transaction extends Base {
             entry.setValue(value)
         }
 
-        switch (entry.selfDependent) {
+        // explicit `SetSelfDependent` value wins (`Off` is 0, so `??` is used), otherwise the graph default applies
+        switch (entry.selfDependent ?? (this.graph.autoSelfDependency ? SelfDependencyType.Auto : undefined)) {
             case SelfDependencyType.On :
                 this.candidate.selfDependent.add(identifier)
                 break
