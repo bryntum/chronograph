@@ -13,6 +13,7 @@ import {
     HasProposedNotPreviousValueSymbol,
     HasProposedValueEffect,
     HasProposedValueSymbol,
+    HasRemovedEntitySymbol,
     OwnIdentifierSymbol,
     OwnQuarkSymbol,
     PreviousValueOfEffect,
@@ -27,14 +28,15 @@ import {
     ProposedValueOfSymbol,
     RejectEffect,
     RejectSymbol,
+    SetSelfDependentSymbol,
+    SetSelfDependentEffect,
     TransactionSymbol,
     UnsafePreviousValueOfSymbol,
     UnsafeProposedOrPreviousValueOfSymbol,
     WriteEffect,
     WriteSeveralEffect,
     WriteSeveralSymbol,
-    WriteSymbol,
-    HasRemovedEntitySymbol
+    WriteSymbol
 } from "./Effect.js"
 import {
     CalculatedValueGen,
@@ -176,6 +178,13 @@ export class ChronoGraph extends Base {
     onWriteDuringCommit     : 'throw' | 'warn' | 'ignore' = 'throw'
 
     onComputationCycle      : 'throw' | 'warn' | 'reject' | 'ignore' | 'effect' = 'throw'
+
+    /**
+     * If this option is enabled with `true` value (default), an atom that used `ProposedOrPrevious` and was calculated
+     * to a value different from the proposed one is treated as self-dependent automatically and recalculated in the next transaction.
+     * With `false` value only the atoms yielding [[SetSelfDependent]] effect are self-dependent.
+     */
+    autoSelfDependency      : boolean           = true
 
     transactionClass        : typeof Transaction    = Transaction
 
@@ -1186,6 +1195,12 @@ export class ChronoGraph extends Base {
         return quark && !quark.isShadow() ?
             // @ts-ignore
             quark.proposeCount : undefined
+    }
+
+    [SetSelfDependentSymbol] (effect : SetSelfDependentEffect, transaction : Transaction) : any {
+        const activeEntry = transaction.getActiveEntry()
+
+        activeEntry.selfDependent = effect.selfDependent
     }
 
     [HasRemovedEntitySymbol] (effect : ProposeCountOfEffect, transaction : Transaction) : boolean {
